@@ -15,4 +15,5 @@ test_results.csv
 *.xmt
 output*.dat
 *.swp
-**/*.swp
+.*.swp
+#.todo
