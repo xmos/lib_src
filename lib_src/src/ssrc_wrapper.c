@@ -9,7 +9,7 @@
 #include "ssrc.h"
 
 static void bomb_out(int code){
-    printf("SSRC_proc Error code %d\n", code);
+    printf("SSRC Error code %d\n", code);
     delay_milliseconds(1);
 	_Exit(0);
 }
@@ -36,7 +36,7 @@ void ssrc_init(unsigned sr_in, unsigned sr_out, unsigned thread_number)
 
     // Set dither flag and random seeds
     sSSRCCtrl[thread_number].uiDitherOnOff             = SSRC_DITHER_OFF;
-    sSSRCCtrl[thread_number].uiRndSeedInit[0]             = 1234567;
+    sSSRCCtrl[thread_number].uiRndSeedInit             = 1234567;
 
 
     sSSRCCtrl[thread_number].eInFs                     = sr_in;

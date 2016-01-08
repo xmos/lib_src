@@ -79,26 +79,17 @@
 			SSRC_FS_96								= 3,								// Fs = 96kHz code
 			SSRC_FS_176								= 4,								// Fs = 176.4kHz code
 			SSRC_FS_192								= 5,								// Fs = 192kHz code
-			SSRC_FS_352								= 6,								// Fs = 352.8kHz code
-			SSRC_FS_384								= 7,								// Fs = 384kHz code
-
 		} SSRCFs_t;
-		#define		SSRC_N_FS_IN						(SSRC_FS_384 + 1)
-		#define		SSRC_N_FS_OUT						(SSRC_FS_192 + 1)
-		#define		SSRC_FS_MIN_IN						SSRC_FS_44
-		#define		SSRC_FS_MAX_IN						SSRC_FS_384
-		#define		SSRC_FS_MIN_OUT						SSRC_FS_44
-		#define		SSRC_FS_MAX_OUT						SSRC_FS_192
-
-
+		#define		SSRC_N_FS						(SSRC_FS_192 + 1)
+		#define		SSRC_FS_MIN						SSRC_FS_44
+		#define		SSRC_FS_MAX						SSRC_FS_192
 
 		
 		// SSRC Filters IDs structure
 		// --------------------------
 		#define		SSRC_F1_INDEX					0
 		#define		SSRC_F2_INDEX					1
-		#define		SSRC_F2_5_INDEX					2
-		#define		SSRC_F3_INDEX					3
+		#define		SSRC_F3_INDEX					2
 		#define		SSRC_N_F						(SSRC_F3_INDEX + 1)
 
 		typedef struct _SSRCFiltersIDs										
@@ -112,12 +103,12 @@
 		// --------------------
 		typedef struct _SSRCState							
 		{
-			unsigned int							uiRndSeed[SSRC_N_CHANNELS];			// Dither random seeds current values
-			int										iDelayFIRLong[SSRC_N_CHANNELS][2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];		// Doubled length for circular buffer simulation
-			int										iDelayFIRLong2[SSRC_N_CHANNELS][2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];		// Doubled length for circular buffer simulation	
-			int										iDelayFIRShort[SSRC_N_CHANNELS][2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];	// Doubled length for circular buffer simulation
-            		int                                        					iDelayFIRShort2[SSRC_N_CHANNELS][2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];    // Doubled length for circular buffer simulation
-			int										iDelayPPFIR[SSRC_N_CHANNELS][2 * FILTER_DEFS_PPFIR_PHASE_MAX_TAPS];		// Doubled length for circular buffer simulation
+			long long                               pad_to_64b_alignment;
+			int										iDelayFIRLong[2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];		// Doubled length for circular buffer simulation
+			int										iDelayFIRShort[2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];		// Doubled length for circular buffer simulation
+			int										iDelayPPFIR[2 * FILTER_DEFS_PPFIR_PHASE_MAX_TAPS];		// Doubled length for circular buffer simulation
+            unsigned int                            uiRndSeed;                                              // Dither random seeds current values
+
 		} SSRCState_t;
 	
 
@@ -125,27 +116,24 @@
 		// ----------------------
 		typedef struct _SSRCCtrl											
 		{
-			int*									piIn;								// Input buffer pointer (PCM, 32bits, time-domain interleaved L/R)
-			unsigned int							uiNInSamples;						// Number of input samples pairs to process in one call to the processing function
+			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
+			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			SSRCFs_t								eInFs;								// Input sampling rate code
-			int*									piOut;								// Output buffer poin ter (PCM, 32bits, time-domain interleaved L/R)							
-			unsigned int*							puiNOutSamples;						// Pointer to number of output sample pairs (L/R) produced during last call to the processing function
+			int*									piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)							
+			unsigned int*							puiNOutSamples;						// Pointer to number of output samples produced during last call to the processing function
 			SSRCFs_t								eOutFs;								// Output sampling rate code
 
-			int**									ppiOut[SSRC_N_CHANNELS];			// Pointers to (PP)FIR output data pointer for last filter in the chain
+			int**									ppiOut;								// Pointer to (PP)FIR output data pointer for last filter in the chain
 
-			FIRCtrl_t								sFIRF1Ctrl[SSRC_N_CHANNELS];		// F1 FIR controllers
-			FIRCtrl_t								sFIRF2Ctrl[SSRC_N_CHANNELS];		// F2 FIR controllers
-			FIRCtrl_t								sFIRF2_5Ctrl[SSRC_N_CHANNELS];		// F2.5 FIR controllers
-			PPFIRCtrl_t								sPPFIRF3Ctrl[SSRC_N_CHANNELS];		// F3 PPFIR controllers
+			FIRCtrl_t								sFIRF1Ctrl;							// F1 FIR controller
+			FIRCtrl_t								sFIRF2Ctrl;							// F2 FIR controller
+			PPFIRCtrl_t								sPPFIRF3Ctrl;						// F3 PPFIR controller
 		
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
-			unsigned int							uiRndSeedInit[SSRC_N_CHANNELS];		// Dither random seeds initial values
+			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
 			SSRCState_t*							psState;							// Pointer to state structure
 			int*									piStack;							// Pointer to stack buffer
-
-			float									fCycleCount;						// Variable to hold cycle count for MIPS estimations
 		} SSRCCtrl_t;
 
 
