@@ -16,4 +16,5 @@ test_results.csv
 output*.dat
 *.swp
 .*.swp
-#.todo
+.*.*.swp
+*.todo
