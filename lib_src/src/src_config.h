@@ -20,7 +20,6 @@
 #define     SRC_DITHER_SETTING              SRC_DITHER_OFF
                                                //Enables or disables quantisation of output with dithering to 24b 
 
-
 //SSRC defines
 #define     SSRC_N_CHANNELS                 SRC_N_CHANNELS
 #define     SSRC_N_CORES                    SRC_N_CORES
@@ -37,7 +36,7 @@
 #define     ASRC_N_IN_SAMPLES               SRC_N_IN_SAMPLES
 #define     ASRC_N_OUT_IN_RATIO_MAX         SRC_N_OUT_IN_RATIO_MAX
 #define     ASRC_DITHER_SETTING             SRC_DITHER_SETTING
-#define     ASRC_NOMINAL_FS_SCALE           (268435456)      //Nominal Fs Ratio scale value multiplied by 2^28
+#define     ASRC_NOMINAL_FS_SCALE           (268435456)      //Nominal Fs Ratio scale value in 4.28 format
 
 
 //Compile time checks on SRC configuration defines 
