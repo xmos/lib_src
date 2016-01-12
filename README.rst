@@ -35,11 +35,10 @@ SSRC implementations typically consume the following amount of RAM:
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
     - globals: int in_buff[4]; int out_buff[20];
-    - ports:
+    - ports: 0
     - locals:
-    - ports:
     - flags:
-    - pins:
+    - pins: 0
     - fn: ssrc_process(in_buff, out_buff, 0);
 
 .. list-table:: SSRC Processor MHz Usage MHz
@@ -65,9 +64,9 @@ ASRC implementations typically take XXKB of code, coefficient, and buffer memory
     - target: XCORE-200-EXPLORER
     - globals: int in_buff[4]; int out_buff[20];
     - locals:
-    - ports:
+    - ports: 0
     - flags:
-    - pins:
+    - pins: 0
     - fn: asrc_process(in_buff, out_buff, 0, 0);
 
 .. list-table:: ASRC Processor Usage (MHz)

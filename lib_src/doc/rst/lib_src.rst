@@ -11,6 +11,18 @@ Following initialisation, the procesing API is call for each block of input samp
 
 The processing function call always returns the number of output samples produced by the sample rate conversion. This number may be between zero and ``(SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX)``, depending on the sample ratios selected.
 
+The format of the buffers sent and received from each SRC instance depends on the number of channels is shown below.
+
+Buffer Format
+.............
+
+.. figure:: images/buffer_format.pdf
+   :width: 80%
+
+   Buffer Format
+
+For example, in the case where four channels are processed by two instances, channels 0 & 1 are processed by instance 0 and channels 2 & 3 are processed by instance 1. For each instance, four pairs of samples are passed into the SRC processing function and n pairs of samples are returned, where n depends on the sample ratio.
+
 In addition to requiring the input/output arrays and logical core index, the ``asrc_process()`` call requires a Q4.28 fixed point ratio value indicating the actual input to output ratio. This allows the input and output rates to be asynchronous by dynamically computing coefficients for a spline interpolation withn the last filter stage. It is up to the callee to maintain the input and output sample rate ratio differenece. An example of this calculation is provided in ANXXXX.
 
 There are a number of static configuration parameters which are contained within the file ``src_config.h`` which control the setting for both SSRC and ASRC implementations (although these may be separated if required). These set the number of channels and processing cores to be used as well as control the inclusion of the optional dithering stage, which can reduce quantisation noise when truncating to 24b output samples. An overview of these parameters is shown below. 
