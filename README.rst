@@ -1,6 +1,10 @@
 XMOS Sample Rate Conversion Library
 ===================================
 
+.. rheader::
+
+   Sample Rate Convertor |version|
+
 Overview
 --------
 
@@ -23,19 +27,63 @@ Features
 
 Typical Resource Usage
 ......................
- .. resusage::
-    SSRC implementations typically take XXKB of code, coefficient, and buffer memory and around XBytes of stack
-     * - SSRC 176.4KHz -> 192KHz. 75MHz per channel
-     * - SSRC 48KHz    -> 192KHz. 30MHz per channel
-     * - SSRC 192KHz   -> 48KHz.  40MHz per channel
-     * - SSRC 44.1KHz  -> 48KHz.  25MHz per channel
 
- ASRC implementations typically take XXKB of code, coefficient, and buffer memory and around XBytes of stack
-     * - ASRC 176.4KHz -> 192KHz. 95MHz per channel
-     * - ASRC 48KHz    -> 48KHz.  25MHz per channel
+SSRC implementations typically consume the following amount of RAM:
+
+.. resusage::
+
+  * - configuration: SSRC
+    - target: XCORE-200-EXPLORER
+    - globals: int in_buff[4]; int out_buff[20];
+    - ports:
+    - locals:
+    - ports:
+    - flags:
+    - pins:
+    - fn: ssrc_process(in_buff, out_buff, 0);
+
+.. list-table:: SSRC Processor MHz Usage MHz
+     :header-rows: 1
+
+     * - configuration 
+       - Processor usage
+     * - SSRC 172.4KHz to 192KHz
+       - 75MHz per channel
+     * - SSRC 48KHz to 192KHz. 
+       - 30MHz per channel
+     * - SSRC 192KHz to 48KHz.  
+       - 40MHz per channel
+     * - SSRC 44.1KHz to 48KHz.  
+       - 25MHz per channel
+
+
+ASRC implementations typically take XXKB of code, coefficient, and buffer memory and around XBytes of stack. Specific examples are shown below.
+
+.. resusage::
+
+  * - configuration: ASRC
+    - target: XCORE-200-EXPLORER
+    - globals: int in_buff[4]; int out_buff[20];
+    - locals:
+    - ports:
+    - flags:
+    - pins:
+    - fn: asrc_process(in_buff, out_buff, 0, 0);
+
+.. list-table:: ASRC Processor Usage (MHz)
+     :header-rows: 1
+
+     * - configuration 
+       - Processor usage
+     * - ASRC 176.4KHz to 192KHz.  
+       - 95MHz per channel
+     * - ASRC 48KHz to 48KHz.   
+       - 25MHz per channel
+
 
 Software version and dependencies
 .................................
+
 .. libdeps::
 
 Related application notes

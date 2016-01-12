@@ -16,7 +16,7 @@ In addition to requiring the input/output arrays and logical core index, the ``a
 There are a number of static configuration parameters which are contained within the file ``src_config.h`` which control the setting for both SSRC and ASRC implementations (although these may be separated if required). These set the number of channels and processing cores to be used as well as control the inclusion of the optional dithering stage, which can reduce quantisation noise when truncating to 24b output samples. An overview of these parameters is shown below. 
 
 
-.. literalinclude:: src_config.h
+.. literalinclude:: ../../../lib_src/src/src_config.h
    :start-on: //General SRC configuration defines.
    :end-before: //SSRC defines
 
@@ -39,12 +39,14 @@ Initialisation
 
 .. doxygenfunction:: ssrc_init
 
-|newpage|
 
 SSRC processing
 ...............
 
-.. doxygeninterface:: ssrc_process
+.. doxygenfunction:: ssrc_process
+
+|newpage|
+
 
 ASRC API
 --------
@@ -54,12 +56,11 @@ Initialisation
 
 .. doxygenfunction:: asrc_init
 
-|newpage|
 
-SSRC processing
+ASRC processing
 ...............
 
-.. doxygeninterface:: asrc_process
+.. doxygenfunction:: asrc_process
 
 
 |appendix|

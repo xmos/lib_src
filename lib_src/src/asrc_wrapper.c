@@ -70,8 +70,6 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, unsigned thread_number)
     }
 
     return (sASRCCtrl[chan_start].uiFsRatio);
-
-
 }
 
 unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned thread_number){

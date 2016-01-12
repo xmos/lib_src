@@ -18,3 +18,4 @@ output*.dat
 .*.swp
 .*.*.swp
 *.todo
+org.eclipse.cdt.core.prefs
