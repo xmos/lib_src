@@ -150,11 +150,6 @@
 			ASRCState_t* unsafe						psState;							// Pointer to state structure
 			int* unsafe								piStack;							// Pointer to stack buffer
 			int* unsafe								piADCoefs;							// Pointer to AD coefficients
-
-			float									fCycleCountF1F2;					// Variable to hold cycle count for MIPS estimations for F1 and F2 stages
-			float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation
-			float									fCycleCountF3;						// Variable to hold cycle count for MIPS estimations for F3 computation
-			float									fCycleCountDither;					// Variable to hold cycle count for MIPS estimations for dither computation
 #else
                         			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
@@ -181,12 +176,6 @@
 			ASRCState_t*							psState;							// Pointer to state structure
 			int*									piStack;							// Pointer to stack buffer
 			int*									piADCoefs;							// Pointer to AD coefficients
-
-			float									fCycleCountF1F2;					// Variable to hold cycle count for MIPS estimations for F1 and F2 stages
-			float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation
-			float									fCycleCountF3;						// Variable to hold cycle count for MIPS estimations for F3 computation
-			float									fCycleCountDither;					// Variable to hold cycle count for MIPS estimations for dither computation
-	
 #endif
 		} ASRCCtrl_t;
 
