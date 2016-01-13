@@ -68,8 +68,111 @@
 			FIR_TYPE_SYNC							= 1,			// Asynchronous (low-pass) FIR
 			FIR_TYPE_DS2							= 2,			// Down-sampler by two FIR
 		} FIRTypeCodes_t;
-		
+	
+#ifdef __XC__
 		// FIR Descriptor
+		// --------------
+		typedef struct _FIRDescriptor										
+		{
+			FIRTypeCodes_t							eType;			// Type of filter
+			unsigned int							uiNCoefs;		// Number of coefficients
+			int* unsafe								piCoefs;		// Pointer to coefficients
+		} FIRDescriptor_t;
+
+
+		// FIR Ctrl
+		// --------
+		typedef struct _FIRCtrl										
+		{
+			FIROnOffCodes_t							eEnable;		// FIR on/off
+
+			int* unsafe								piIn;			// Pointer to input data
+			unsigned int							uiNInSamples;	// Number of input samples to process
+			unsigned int							uiInStep;		// Step between input data samples
+			int* unsafe								piOut;			// Pointer to output data
+			unsigned int							uiNOutSamples;	// Number of output samples produced
+			unsigned int							uiOutStep;		// Step between output data samples
+
+			FIRReturnCodes_t * unsafe					pvProc;			// Processing function address
+
+			int* unsafe								piDelayB;		// Pointer to delay line base
+			unsigned int							uiDelayL;		// Total length of delay line
+			int* unsafe								piDelayI;		// Pointer to current position in delay line
+			int* unsafe								piDelayW;		// Delay buffer wrap around address (for circular buffer simulation)
+			unsigned int							uiDelayO;		// Delay line offset for second write (for circular buffer simulation)
+
+			unsigned int							uiNLoops;		// Number of inner loop iterations
+			unsigned int							uiNCoefs;		// Number of coefficients
+			int* unsafe								piCoefs;		// Pointer to coefficients
+		} FIRCtrl_t;
+
+
+		// ADFIR Descriptor
+		// ----------------
+		typedef struct _ADFIRDescriptor										
+		{
+			unsigned int							uiNCoefsPerPhase;	// Number of coefficients
+			unsigned int							uiNPhases;			// Number of phases
+			int* unsafe								piCoefs;			// Pointer to coefficients
+		} ADFIRDescriptor_t;
+
+		// ADFIR Ctrl
+		// ----------
+		typedef struct _ADFIRCtrl										
+		{
+			int										iIn;				// Input sample
+			int* unsafe								piOut;				// Pointer to output sample
+			
+			int* unsafe								piDelayB;			// Pointer to delay line base
+			unsigned int							uiDelayL;			// Total length of delay line
+			int* unsafe								piDelayI;			// Pointer to current position in delay line
+			int* unsafe								piDelayW;			// Delay buffer wrap around address (for circular buffer simulation)
+			unsigned int							uiDelayO;			// Delay line offset for second write (for circular buffer simulation)
+
+			unsigned int							uiNLoops;			// Number of inner loop iterations
+			int* unsafe								piADCoefs;			// Pointer to adaptive coefficients
+		} ADFIRCtrl_t;
+
+
+                		// PPFIR Descriptor
+		// --------------
+		typedef struct _PPFIRDescriptor										
+		{
+			unsigned int							uiNCoefs;		// Number of coefficients
+			unsigned int							uiNPhases;		// Number of phases
+			int* unsafe								piCoefs;		// Pointer to coefficients
+		} PPFIRDescriptor_t;
+
+		// PPFIR Ctrl
+		// ----------
+		typedef struct _PPFIRCtrl										
+		{
+			FIROnOffCodes_t							eEnable;		// PPFIR on/off
+
+			int* unsafe								piIn;				// Pointer to input data
+			unsigned int							uiNInSamples;		// Number of input samples to process
+			unsigned int							uiInStep;			// Step between input data samples
+			int* unsafe								piOut;				// Pointer to output data
+			unsigned int							uiNOutSamples;		// Number of output samples produced
+			unsigned int							uiOutStep;			// Step between output data samples
+
+			int* unsafe								piDelayB;			// Pointer to delay line base
+			unsigned int							uiDelayL;			// Total length of delay line
+			int* unsafe								piDelayI;			// Pointer to current position in delay line
+			int* unsafe								piDelayW;			// Delay buffer wrap around address (for circular buffer simulation)
+			unsigned int							uiDelayO;			// Delay line offset for second write (for circular buffer simulation)
+
+			unsigned int							uiNLoops;			// Number of inner loop iterations
+			unsigned int							uiNCoefs;			// Number of coefficients
+			int* unsafe								piCoefs;			// Pointer to coefficients
+			unsigned int							uiNPhases;			// Number of phases
+			unsigned int							uiPhaseStep;		// Phase step
+			unsigned int							uiCoefsPhaseStep;	// Number of coefficients for a phase step
+			unsigned int							uiCoefsPhase;		// Current phase coefficient offset from base
+			
+		} PPFIRCtrl_t;
+#else
+                		// FIR Descriptor
 		// --------------
 		typedef struct _FIRDescriptor										
 		{
@@ -170,7 +273,7 @@
 			unsigned int							uiCoefsPhase;		// Current phase coefficient offset from base
 			
 		} PPFIRCtrl_t;
-
+#endif
 
 		// ===========================================================================
 		//

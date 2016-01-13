@@ -23,7 +23,7 @@
 // Integer arithmetic include
 #include "IntArithmetic.h"
 // ASRC include
-#include "asrc.h"
+#include "src.h"
 
 // ===========================================================================
 //

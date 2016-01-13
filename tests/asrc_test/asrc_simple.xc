@@ -21,13 +21,21 @@
 
 const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000, 352800, 384000};
 
-void dsp_slave(chanend c_dsp, unsigned thread_num)
+void dsp_slave(chanend c_dsp)
 {
+// ASRC instances variables
+// ------------------------
+// State, Stack, Coefs and Control structures (one for each channel)
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_CORE]; //ASRC state machine state
+    int             iASRCStack[ASRC_CHANNELS_PER_CORE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_CORE];  //Control structure
+    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+
     unsigned int    sr_in_out = 99999; //Invalid SR code to force initialisation on first run
     unsigned int    sr_in_out_new;
 
-    int             in_buff[ASRC_N_IN_SAMPLES * ASRC_N_CHANNELS];
-    int             out_buff[ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_CHANNELS];
+    int             in_buff[ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_CORE];
+    int             out_buff[ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_CORE];
 
     timer t;
     unsigned t1=0,t2=0,t_dsp=0;
@@ -36,15 +44,26 @@ void dsp_slave(chanend c_dsp, unsigned thread_num)
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through ASRC
     unsigned int    FsRatio = ASRC_NOMINAL_FS_SCALE; //Deviation between in Fs and out Fs
 
-    memset(out_buff, 0, ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_CORE * 4);
+    for(int ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+    unsafe {
+        // Set state, stack and coefs into ctrl structure
+        sASRCCtrl[ui].psState                   = &sASRCState[ui];
+        sASRCCtrl[ui].piStack                   = iASRCStack[ui];
+        sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
+        printf("sASRCCtrl[%d].piADCoefs0x%p\n",ui, sASRCCtrl[ui].piADCoefs);
+    }
+    
+        
+
+    memset(out_buff, 0, ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_CORE * sizeof(int));
 
     while(1){
         t :> t2;
         t_dsp = (t2 - t1);
 	int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
 #if 1
-        if (n_samps_in_tot) printf("T%d proc time chan=%d, In sample period=%d, Thread util=%d%%, Tot samp in count=%d\n",
-            thread_num, (t_dsp / (ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
+        if (n_samps_in_tot) printf("proc time chan=%d, In sample period=%d, Thread util=%d%%, Tot samp in count=%d\n",
+           (t_dsp / (ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
 #endif
         c_dsp :> sr_in_out_new;
         c_dsp :> FsRatio;
@@ -77,12 +96,12 @@ void dsp_slave(chanend c_dsp, unsigned thread_num)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            FsRatio = asrc_init(InFs, OutFs, thread_num);
+            FsRatio = asrc_init(InFs, OutFs, sASRCCtrl);
             sr_in_out = sr_in_out_new;
-            printf("DSP init thread=%d, Initial FsRatio=%d, SR in=%d, SR out=%d\n", thread_num, FsRatio, InFs, OutFs);
+            printf("DSP init Initial FsRatio=%d, SR in=%d, SR out=%d\n", FsRatio, InFs, OutFs);
         }
         t:> t1;
-        n_samps_out = asrc_process(in_buff, out_buff, FsRatio, thread_num);
+        n_samps_out = asrc_process(in_buff, out_buff, FsRatio, sASRCCtrl);
     }
 }
 
@@ -195,7 +214,7 @@ int main(void)
     chan c_dsp[ASRC_N_CORES];
     par
     {
-        par (unsigned i=0; i<ASRC_N_CORES; i++) dsp_slave(c_dsp[i], i);
+        par (unsigned i=0; i<ASRC_N_CORES; i++) dsp_slave(c_dsp[i]);
         dsp_mgr(c_dsp);
 
     }

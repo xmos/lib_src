@@ -6,7 +6,9 @@
 #include <timer.h>
 
 // ASRC includes
-#include "asrc.h"
+#include "src.h"
+
+extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
 static void bomb_out(int code){
     printf("ASRC_proc Error code %d\n", code);
@@ -14,37 +16,18 @@ static void bomb_out(int code){
 	_Exit(0);
 }
 
-// ASRC instances variables
-// ------------------------
-// State, Stack, Coefs and Control structures (one for each channel)
-ASRCState_t     sASRCState[ASRC_N_CHANNELS];
-int             iASRCStack[ASRC_N_CHANNELS][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES];
-ASRCCtrl_t      sASRCCtrl[ASRC_N_CHANNELS];
-int             iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH];
 
-
-extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
-
-unsigned asrc_init(unsigned sr_in, unsigned sr_out, unsigned thread_number)
+unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE])
 {
     int ui;
-    int chan_start  = thread_number * ASRC_CHANNELS_PER_CORE;         //Index of first channel processed by this thread
-    int chan_end    = ((thread_number + 1) * ASRC_CHANNELS_PER_CORE); //Index + 1 of the last channel processed by this thread
 
     ASRCReturnCodes_t ret_code;
-
-    printf("Thread %d, chan_start=%d, chan_end=%d\n", thread_number, chan_start, chan_end);
 
     ret_code = ASRC_prepare_coefs();
     if (ret_code != ASRC_NO_ERROR) bomb_out(10);
 
-    for(ui = chan_start; ui < chan_end; ui++)
+    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
     {
-        // Set state, stack and coefs into ctrl structure
-        sASRCCtrl[ui].psState                   = &sASRCState[ui];
-        sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-        sASRCCtrl[ui].piADCoefs                 = iASRCADFIRCoefs;
-
         // Set input/output sampling rate codes
         sASRCCtrl[ui].eInFs                     = sr_in;
         sASRCCtrl[ui].eOutFs                    = sr_out;
@@ -64,23 +47,21 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, unsigned thread_number)
     // Sync
     // ----
     // Sync ASRC. This is just to show that the function works and returns success
-    for(ui = chan_start; ui < chan_end; ui++)    {
+    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)    {
         ret_code = ASRC_sync(&sASRCCtrl[ui]);
         if (ret_code != ASRC_NO_ERROR) bomb_out(12);
     }
 
-    return (sASRCCtrl[chan_start].uiFsRatio);
+    return (sASRCCtrl[0].uiFsRatio);
 }
 
-unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned thread_number){
+unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]){
 
     int ui, uj; //General counters
     int             uiSplCntr;  //Spline counter
-    int chan_start  = thread_number * ASRC_CHANNELS_PER_CORE;
-    int chan_end    = ((thread_number + 1) * ASRC_CHANNELS_PER_CORE);
 
 
-    for(ui = chan_start; ui < chan_end; ui++)
+    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
     {
     // Update Fs Ratio
         sASRCCtrl[ui].uiFsRatio     = FsRatio;
@@ -99,8 +80,8 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
 
 
         // Set input and output data pointers
-        sASRCCtrl[ui].piIn          = in_buff + ui - (thread_number * ASRC_CHANNELS_PER_CORE);
-        sASRCCtrl[ui].piOut         = out_buff + ui - (thread_number * ASRC_CHANNELS_PER_CORE);
+        sASRCCtrl[ui].piIn          = in_buff + ui;
+        sASRCCtrl[ui].piOut         = out_buff + ui;
 
 
     // Process synchronous part (F1 + F2)
@@ -125,10 +106,10 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
     uiSplCntr = 0; // This is actually only used because of the bizarre mix of block and sample based processing
 
     // Driven by samples produced during the synchronous phase
-    for(ui = 0; ui < sASRCCtrl[chan_start].uiNSyncSamples; ui++)
+    for(ui = 0; ui < sASRCCtrl[0].uiNSyncSamples; ui++)
     {
         // Push new samples into F3 delay line (input from stack) for each new "synchronous" sample (i.e. output of F1, respectively F2)
-        for(uj = chan_start; uj < chan_end; uj++)
+        for(uj = 0; uj < ASRC_CHANNELS_PER_CORE; uj++)
         {
 
             //The following is replicated/inlined code from ASRC_proc_F3_in_spl in ASRC.c
@@ -152,7 +133,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
         // Check if a new output sample needs to be produced
         // Note that this will also update the adaptive filter coefficients
         // These must be computed for one channel only and reused in the macc loop of other channels
-        while(sASRCCtrl[chan_start].iTimeInt < FILTER_DEFS_ADFIR_N_PHASES)
+        while(sASRCCtrl[0].iTimeInt < FILTER_DEFS_ADFIR_N_PHASES)
         {
             unsigned int    uiTemp;
             int             iAlpha;
@@ -164,7 +145,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
 
             // Compute adative coefficients spline factors
             // The fractional part of time gives alpha
-            iAlpha      = sASRCCtrl[chan_start].uiTimeFract>>1;      // Now alpha can be seen as a signed number
+            iAlpha      = sASRCCtrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
             i64Acc0 = iAlpha * iAlpha;
             iH[0]           = (int)(i64Acc0>>32);
             iH[2]           = 0x40000000;                       // Load H2 with 0.5;
@@ -175,30 +156,30 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
             iH[2]           = iH[2] + iH[0];                        // H2 = 0.5 - alpha + 0.5 * alpha * alpha
 
             // The integer part of time gives the phase
-            piPhase0        = iADFirCoefs[sASRCCtrl[chan_start].iTimeInt];
+            piPhase0        = iADFirCoefs[sASRCCtrl[0].iTimeInt];
             // These are calculated by the asm funcion  piPhase1        = piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
             //                                          piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
-            piADCoefs       = sASRCCtrl[chan_start].piADCoefs;       // Given limited number of registers, this should be DP
+            piADCoefs       = sASRCCtrl[0].piADCoefs;       // Given limited number of registers, this could be DP
 
             spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
             // Step time for next output sample
             // --------------------------------
             // Step to next output time (add integer and fractional parts)
-            sASRCCtrl[chan_start].iTimeInt       += sASRCCtrl[chan_start].iTimeStepInt;
+            sASRCCtrl[0].iTimeInt       += sASRCCtrl[0].iTimeStepInt;
             // For fractional part, this can be optimized using the add with carry instruction of XS2
-            uiTemp      = sASRCCtrl[chan_start].uiTimeFract;
-            sASRCCtrl[chan_start].uiTimeFract        += sASRCCtrl[chan_start].uiTimeStepFract;
-            if(sASRCCtrl[chan_start].uiTimeFract < uiTemp)
-                sASRCCtrl[chan_start].iTimeInt++;
+            uiTemp      = sASRCCtrl[0].uiTimeFract;
+            sASRCCtrl[0].uiTimeFract        += sASRCCtrl[0].uiTimeStepFract;
+            if(sASRCCtrl[0].uiTimeFract < uiTemp)
+                sASRCCtrl[0].iTimeInt++;
 
 
             // Not really needed, just for the beauty of it...
-            //sASRCCtrl[chan_start+1].iTimeInt     = sASRCCtrl[chan_start].iTimeInt;
-            //sASRCCtrl[chan_start+1].uiTimeFract  = sASRCCtrl[chan_start].uiTimeFract;
+            //sASRCCtrl[0+1].iTimeInt     = sASRCCtrl[0].iTimeInt;
+            //sASRCCtrl[0+1].uiTimeFract  = sASRCCtrl[0].uiTimeFract;
 
             // Apply filter F3 with just computed adaptive coefficients
-            for(uj = chan_start; uj < chan_end; uj++)    {
+            for(uj = 0; uj < ASRC_CHANNELS_PER_CORE; uj++)    {
 
                 //The following is replicated/inlined code from ADFIR_F3_proc_macc in ASRC.c
                 sASRCCtrl[uj].sADFIRF3Ctrl.piOut      = (sASRCCtrl[uj].piOut + ASRC_CHANNELS_PER_CORE * uiSplCntr);
@@ -210,6 +191,8 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
                 // Clear accumulator and set access pointers
                 piData                  = sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI;
                 piCoefs                 = sASRCCtrl[uj].sADFIRF3Ctrl.piADCoefs;
+
+                // Do FIR
                 if ((unsigned)piData & 0b0100) adfir_inner_loop_asm_odd(piData, piCoefs, &iData, sASRCCtrl[uj].sADFIRF3Ctrl.uiNLoops);
                 else                               adfir_inner_loop_asm(piData, piCoefs, &iData, sASRCCtrl[uj].sADFIRF3Ctrl.uiNLoops);
 
@@ -236,6 +219,6 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, unsigned th
     }
 #endif
 
-    unsigned n_samps_out = sASRCCtrl[chan_start].uiNASRCOutSamples;
+    unsigned n_samps_out = sASRCCtrl[0].uiNASRCOutSamples;
     return n_samps_out;
 }

@@ -17,5 +17,6 @@ output*.dat
 *.swp
 .*.swp
 .*.*.swp
+*.swo
 *.todo
 org.eclipse.cdt.core.prefs

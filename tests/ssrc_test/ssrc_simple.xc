@@ -21,8 +21,18 @@
 #define         SAMP_IN_LIMIT                                   512
 #define         SAMP_IN_CHANGE_SR                               SAMP_IN_LIMIT + 1
 
-void dsp_slave(chanend c_dsp, unsigned core_num)
+void dsp_slave(chanend c_dsp)
 {
+    SSRCState_t     sSSRCState;                                              //State of SSRC module
+    int             iSSRCStack[SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];  //Buffers between processing stages
+    SSRCCtrl_t      sSSRCCtrl;                                               //SSRC Control structure
+
+    // Set state, stack and coefs into ctrl structure
+    unsafe{
+      sSSRCCtrl.psState                   = &sSSRCState;
+      sSSRCCtrl.piStack                   = iSSRCStack;
+    }
+
     unsigned int    sr_in_out = 99999; //Invalid SR code to force initialisation on first run
     unsigned int    sr_in_out_new;
 
@@ -75,12 +85,16 @@ void dsp_slave(chanend c_dsp, unsigned core_num)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            ssrc_init(InFs, OutFs, core_num);
+            unsafe{
+              ssrc_init(InFs, OutFs, &sSSRCCtrl);
+            }
             sr_in_out = sr_in_out_new;
-            printf("DSP init thread=%d, SR in=%d, SR out=%d\n", core_num, InFs, OutFs);
+            printf("DSP SR in=%d, SR out=%d\n", InFs, OutFs);
         }
         t:> t1;
-        n_samps_out = ssrc_process(in_buff, out_buff, core_num);
+        unsafe {
+          n_samps_out = ssrc_process(in_buff, out_buff, &sSSRCCtrl);
+        }
     }
 }
 
@@ -190,7 +204,7 @@ int main(void)
     chan c_dsp[SSRC_N_CORES];
     par
     {
-        par (unsigned i=0; i<SSRC_N_CORES; i++) dsp_slave(c_dsp[i], i);
+        par (unsigned i=0; i<SSRC_N_CORES; i++) dsp_slave(c_dsp[i]);
         dsp_mgr(c_dsp);
 
     }

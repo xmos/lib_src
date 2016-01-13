@@ -11,8 +11,8 @@
 // ===========================================================================
 // ===========================================================================
 
-#ifndef _ASRC_ENGINE_H_
-#define _ASRC_ENGINE_H_
+#ifndef _ASRC_H_
+#define _ASRC_H_
 
 	// ===========================================================================
 	//
@@ -22,6 +22,8 @@
 	#include "FIR.h"
 	#include "FilterDefs.h"
 	#include "src.h"
+        #include "spline_coeff_gen_inner_loop_asm.h"
+        #include "adfir_inner_loop_asm.h"
 
 	// ===========================================================================
 	//
@@ -122,7 +124,39 @@
 		// ----------------------
 		typedef struct _ASRCCtrl											
 		{
-			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
+#ifdef __XC__
+			int* unsafe								piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
+			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
+			unsigned int							uiNSyncSamples;						// Number of synchronous samples produced in one call to the processing function
+			ASRCFs_t								eInFs;								// Input sampling rate code
+			int* unsafe								piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)							
+			unsigned int							uiNASRCOutSamples;					// Number of output samples produced during last call to the asynchronous processing function
+			ASRCFs_t								eOutFs;								// Output sampling rate code
+
+			FIRCtrl_t								sFIRF1Ctrl;							// F1 FIR controller
+			FIRCtrl_t								sFIRF2Ctrl;							// F2 FIR controller
+			ADFIRCtrl_t								sADFIRF3Ctrl;						// F3 ADFIR controller
+
+			unsigned int							uiFsRatio;							// Fs ratio: Fsin / Fsout
+
+			int										iTimeInt;							// Integer part of time
+			unsigned int							uiTimeFract;						// Fractional part of time
+			int										iTimeStepInt;						// Integer part of time step
+			unsigned int							uiTimeStepFract;					// Fractional part of time step
+		
+			unsigned int							uiDitherOnOff;						// Dither on/off flag
+			unsigned int							uiRndSeedInit;						// Dither random seed initial value
+
+			ASRCState_t* unsafe						psState;							// Pointer to state structure
+			int* unsafe								piStack;							// Pointer to stack buffer
+			int* unsafe								piADCoefs;							// Pointer to AD coefficients
+
+			float									fCycleCountF1F2;					// Variable to hold cycle count for MIPS estimations for F1 and F2 stages
+			float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation
+			float									fCycleCountF3;						// Variable to hold cycle count for MIPS estimations for F3 computation
+			float									fCycleCountDither;					// Variable to hold cycle count for MIPS estimations for dither computation
+#else
+                        			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			unsigned int							uiNSyncSamples;						// Number of synchronous samples produced in one call to the processing function
 			ASRCFs_t								eInFs;								// Input sampling rate code
@@ -152,7 +186,22 @@
 			float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation
 			float									fCycleCountF3;						// Variable to hold cycle count for MIPS estimations for F3 computation
 			float									fCycleCountDither;					// Variable to hold cycle count for MIPS estimations for dither computation
+	
+#endif
 		} ASRCCtrl_t;
+
+
+		// Adaptive filter coefficients. Note this is a workaround to force the compiler to align the array to 64b boundary (required by inner loop assembler that uses load/store double)
+		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+                typedef struct _iASRCADFIRCoefs_t 
+                {
+                    long long       padding_to_64b;                           //Force 64b alignment
+                    int             iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH]; //Adaptive FIR coefficients (one per instance)
+                } iASRCADFIRCoefs_t;
+
+
+
 
 
 		// ===========================================================================
@@ -247,4 +296,4 @@
 		
 	#endif // nINCLUDE_FROM_ASM
 
-#endif // _ASRC_ENGINE_H_
+#endif // _ASRC_H_
