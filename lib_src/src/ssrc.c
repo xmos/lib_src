@@ -24,6 +24,8 @@
 
 // Integer arithmetic include
 #include "IntArithmetic.h"
+// XMOS built in functions
+#include <xs1.h>
 // SSRC include
 #include "src.h"
 
@@ -205,7 +207,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return SSRC_ERROR;
 	
 
 	// Filter F2
@@ -227,7 +229,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return SSRC_ERROR;
 
 
 	// Filter F3
@@ -252,7 +254,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 		
 	// Call init for PPFIR F3
 	if(PPFIR_init_from_desc(&psSSRCCtrl->sPPFIRF3Ctrl, psPPFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return SSRC_ERROR;
 
 
 	// Setup input/output buffers
@@ -402,8 +404,8 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 	// F1 is enabled, so call F1
 
     //start_timer();
-	if(psSSRCCtrl->sFIRF1Ctrl.pvProc(&psSSRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
-		return SSRC_ERROR;
+	if(psSSRCCtrl->sFIRF1Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+		return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
     //printf("F1 took %d ticks\n", stop_timer());
 
 
@@ -412,8 +414,8 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 	{
 		// F2 is enabled, so call F2
 	    //start_timer();
-		if(psSSRCCtrl->sFIRF2Ctrl.pvProc(&psSSRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
-			return SSRC_ERROR;
+		if(psSSRCCtrl->sFIRF2Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+			return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
 	    //printf("F1 took %d ticks\n", stop_timer());
 
 	}
@@ -456,7 +458,7 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 	int*			piData;
 	unsigned int	uiR;
 	int				iDither;
-	__int64			i64Acc;
+	__int64_t			i64Acc;
 	unsigned int	ui;
 
 
@@ -483,11 +485,15 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 			iDither		+= ((uiR>>SSRC_RPDF_BITS_SHIFT) & SSRC_RPDF_MASK);
 
 			// Use MACC instruction to saturate and dither + signal
-			i64Acc		= ((__int64)iDither <<32);	// On XMOS this is not necessary, just load dither in the top word of the ACC register
+			i64Acc		= ((__int64_t)iDither <<32);	// On XMOS this is not necessary, just load dither in the top word of the ACC register
 			MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
-			LSAT30(&i64Acc);
-			// Extract 32bits result
+			
+                        // Saturate to 31 bits
+                        LSAT30(&i64Acc);
+			
+                        // Extract 32bits result
 			EXT30(&piData[ui], i64Acc);
+                        
 
 			// Mask to 24bits
 			piData[ui]	&= SSRC_DATA24_MASK;

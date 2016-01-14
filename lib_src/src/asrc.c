@@ -342,7 +342,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psASRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return ASRC_ERROR;
 
 	// Update synchronous number of samples
 	if( psFiltersID->uiFID[ASRC_F1_INDEX] != FILTER_DEFS_FIR_NONE_ID )
@@ -362,7 +362,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	
 	// Call init for FIR F2
 	if(FIR_init_from_desc(&psASRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return ASRC_ERROR;
 
 	// Update synchronous number of samples
 	if( psFiltersID->uiFID[ASRC_F2_INDEX] != FILTER_DEFS_FIR_NONE_ID )
@@ -390,7 +390,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	
 	// Call init for ADFIR F3
 	if(ADFIR_init_from_desc(&psASRCCtrl->sADFIRF3Ctrl, psADFIRDescriptor) != FIR_NO_ERROR)
-		return FIR_ERROR;
+		return ASRC_ERROR;
 
 	// Call sync function
 	if(ASRC_sync(psASRCCtrl) != ASRC_NO_ERROR)
@@ -449,15 +449,16 @@ ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
 	psASRCCtrl->sFIRF1Ctrl.piIn			= psASRCCtrl->piIn;
 
 	// F1 is always enabled, so call F1
-	if(psASRCCtrl->sFIRF1Ctrl.pvProc(&psASRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
-		return ASRC_ERROR;
+	if(psASRCCtrl->sFIRF1Ctrl.pvProc((int *)&psASRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+		return ASRC_ERROR; //Notice blatant cast to int * - works around no FP support in XC
 		
 	// Check if F2 is enabled
 	if(psASRCCtrl->sFIRF2Ctrl.eEnable == FIR_ON)
 	{
 		// F2 is enabled, so call F2
-		if(psASRCCtrl->sFIRF2Ctrl.pvProc(&psASRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
-			return ASRC_ERROR;
+		if(psASRCCtrl->sFIRF2Ctrl.pvProc((int *)&psASRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+			return ASRC_ERROR;  //Notice blatant cast to int * - works around no FP support in XC
+
 	}
 
 	return ASRC_NO_ERROR;
@@ -522,7 +523,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	int				iAlpha;
 	int				iH[3]; //iH0, iH1, iH2;
 	int				iZero;
-	__int64			i64Acc0;
+	__int64_t			i64Acc0;
 	int*			piPhase0;
 	int*			piPhase1;
 	int*			piPhase2;
@@ -619,7 +620,7 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 	int*			piData;
 	unsigned int	uiR;
 	int				iDither;
-	__int64			i64Acc;
+	__int64_t			i64Acc;
 	unsigned int	ui;
 
 
@@ -645,8 +646,12 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 			uiR			= (unsigned int)(ASRC_R_CONS + uiR);
 			iDither		+= ((uiR>>ASRC_RPDF_BITS_SHIFT) & ASRC_RPDF_MASK);
 
+                        //unsigned iACCl = 0;
+                        //int iACCh = iDither;
+                        //pi_Data[ui] = dither_maths_asm(piData[ui],iACCh, iACCl);
+
 			// Use MACC instruction to saturate and dither + signal
-			i64Acc		= ((__int64)iDither <<32);	// On XMOS this is not necessary, just load dither in the top word of the ACC register
+			i64Acc		= ((__int64_t)iDither <<32);	// On XMOS this is not necessary, just load dither in the top word of the ACC register
 			MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
 			LSAT30(&i64Acc);
 			// Extract 32bits result

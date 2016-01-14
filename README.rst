@@ -62,7 +62,7 @@ ASRC implementations typically take XXKB of code, coefficient, and buffer memory
 
   * - configuration: ASRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2];
+    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs;
     - locals:
     - ports: 0
     - flags:

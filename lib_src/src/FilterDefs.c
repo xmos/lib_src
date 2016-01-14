@@ -19,8 +19,6 @@
 #include <time.h>
 #include <math.h>
 
-// Integer arithmetic include
-#include "IntArithmetic.h"
 // FIR and FilterDefs includes
 #include "FIR.h"
 #include "FilterDefs.h"
@@ -101,7 +99,7 @@ int					iFirOSCoefs[FILTER_DEFS_FIR_OS_N_TAPS]	 = {
 // ADFIR filters descriptor
 ADFIRDescriptor_t		sADFirDescriptor = 
 {
-	FILTER_DEFS_ADFIR_PHASE_N_TAPS,		FILTER_DEFS_ADFIR_N_PHASES + 2,		iADFirCoefs
+	FILTER_DEFS_ADFIR_PHASE_N_TAPS,		FILTER_DEFS_ADFIR_N_PHASES + 2,		(int *)iADFirCoefs
 };
 
 // ADFIR filter coefficients
