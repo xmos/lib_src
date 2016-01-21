@@ -32,7 +32,6 @@ void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t *sSSRCCtrl)
     sSSRCCtrl->eInFs                     = sr_in;
     sSSRCCtrl->eOutFs                    = sr_out;
 
-    printf("structure initialised\n");
     // Init SSRC instances
 
     ret_code = SSRC_init(sSSRCCtrl) ;

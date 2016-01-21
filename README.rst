@@ -88,7 +88,7 @@ Software version and dependencies
 Related application notes
 .........................
 The following application notes use this library:
-    * ANxxxx - [SPDIF to I2S Synchronous Sample Rate Conversion
+    * ANxxxx - [SPDIF to I2S Synchronous Sample Rate Conversion]
     * ANxxxx - [USB Audio Synchronous Sample Rate Conversion]
     * ANxxxx - [SPDIF to I2S Asynchronous Sample Rate Conversion]
     * ANxxxx - [USB Audio with Asynchronous Sample Rate Converted SPDIF Receive]

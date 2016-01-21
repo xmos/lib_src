@@ -9,17 +9,16 @@
 // SSRC includes
 #include "src.h"
 
-#define			INPUT_FILE_CHANNEL_0_DEFAULT					"../input_sines/s1k_0dB_192.dat"
-#define         INPUT_FILE_CHANNEL_1_DEFAULT                    "../input_sines/s1k_0dB_176.dat"
-#define			OUTPUT_FILE_CHANNEL_0_DEFAULT					"output_ch0.dat"
-#define         OUTPUT_FILE_CHANNEL_1_DEFAULT                   "output_ch1.dat"
+//Input and output files
+char * unsafe pzInFileName[SSRC_N_CHANNELS] = {null};
+char * unsafe pzOutFileName[SSRC_N_CHANNELS] = {null};
 
+//Number of samples to process
+int uiNTotalInSamples = -1;
 
-#define			INPUT_FS_DEFAULT								5 //See ssrc.h SSRCFs_t for these codes. 0=44.1 - 5=192
-#define			OUTPUT_FS_DEFAULT								1
-
-#define         SAMP_IN_LIMIT                                   512
-#define         SAMP_IN_CHANGE_SR                               SAMP_IN_LIMIT + 1
+//Input and output frequency indicies. See ssrc.h SSRCFs_t for these codes. 0=44.1 - 5=192
+int uiInFs = -1;
+int uiOutFs = -1;
 
 void dsp_slave(chanend c_dsp)
 {
@@ -36,7 +35,7 @@ void dsp_slave(chanend c_dsp)
     unsigned int    sr_in_out = 99999; //Invalid SR code to force initialisation on first run
     unsigned int    sr_in_out_new;
 
-    const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000, 352800, 384000};
+    const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
 
     int             in_buff[SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_CORE];
     int             out_buff[SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_CORE];
@@ -44,39 +43,37 @@ void dsp_slave(chanend c_dsp)
     timer t;
     unsigned t1=0,t2=0,t_dsp=0;
 
-    unsigned int    n_samps_out = 0;	//number of samples produced by last call to SSRC
+    unsigned int    n_samps_out = 0;  //number of samples produced by last call to SSRC
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through SSRC
 
     memset(out_buff, 0, SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_CORE * 4);
 
     while(1){
-        t :> t2;
+        t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
-	int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
+        int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
         if (n_samps_in_tot) printf("Process time per chan=%d, Input sample period=%d, Thread utilisation=%d%%, Tot samp in count=%d\n", 
-	 	(t_dsp / (SSRC_CHANNELS_PER_CORE * SSRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( SSRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
+    (t_dsp / (SSRC_CHANNELS_PER_CORE * SSRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( SSRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
         c_dsp :> sr_in_out_new;
 
         for(unsigned i=0; i<SSRC_N_IN_SAMPLES; i++) {
             unsigned tmp;
             for (unsigned j=0; j<SSRC_CHANNELS_PER_CORE; j++) {
-            	c_dsp :> tmp;
-            	in_buff[i*SSRC_CHANNELS_PER_CORE + j] = tmp;
-                //printf("n_samp=%d chan=%d, tmp=%d\n", i, j, tmp);
+                c_dsp :> tmp;
+                in_buff[i*SSRC_CHANNELS_PER_CORE + j] = tmp;
             }
         }
 
         n_samps_in_tot += SSRC_N_IN_SAMPLES;
         
-	    c_dsp <: n_samps_out;
+        c_dsp <: n_samps_out;       //Send number of samples to receive
 
         for(unsigned uj = 0; uj < n_samps_out; uj++)
         {
             unsigned tmp;
             for (unsigned j=0; j<SSRC_CHANNELS_PER_CORE; j++) {
-            	tmp = out_buff[uj*SSRC_CHANNELS_PER_CORE + j];
+                tmp = out_buff[uj*SSRC_CHANNELS_PER_CORE + j];
                 c_dsp <: tmp;
-                //printf("n_samp=%d chan=%d, tmp=%d\n", i, j, tmp);
             }
         }
 
@@ -86,121 +83,287 @@ void dsp_slave(chanend c_dsp)
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
             unsafe{
-              ssrc_init(InFs, OutFs, &sSSRCCtrl);
+                ssrc_init(InFs, OutFs, &sSSRCCtrl);
             }
             sr_in_out = sr_in_out_new;
-            printf("DSP SR in=%d, SR out=%d\n", InFs, OutFs);
+            printf("SSRC sample rate in=%d, out=%d\n", sample_rates[InFs], sample_rates[OutFs]);
         }
-        t:> t1;
+        t:> t1; //Grab time at start of processing
         unsafe {
-          n_samps_out = ssrc_process(in_buff, out_buff, &sSSRCCtrl);
+            n_samps_out = ssrc_process(in_buff, out_buff, &sSSRCCtrl);
         }
     }
 }
 
 void dsp_mgr(chanend c_dsp[]){
 
-    FILE            * movable InFileDat[2];
-    FILE            * movable OutFileDat[2];
+    FILE            * movable InFileDat[SSRC_N_CHANNELS];
+    FILE            * movable OutFileDat[SSRC_N_CHANNELS];
 
 
     unsigned count_in = 0, count_out = 0;
-
     unsigned iEndOfFile  = 0;
-
-    unsigned int    sr_in_out = INPUT_FS_DEFAULT << 16 | OUTPUT_FS_DEFAULT ; //(192/176)
-
-    //int             out_buff[SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX];
+    unsigned int    sr_in_out = uiInFs << 16 | uiOutFs ; //Input fs in upper 16bits and Output fs in lower 16bits
 
 
-    if ((InFileDat[0] = fopen(INPUT_FILE_CHANNEL_0_DEFAULT, "rt")) == NULL)
+    for (int i=0; i<SSRC_N_CHANNELS; i++)
+    unsafe
+    {
+        if ((InFileDat[i] = fopen((char *)pzInFileName[i], "rt")) == NULL)
         {
-            printf("Error while opening input file, %s", INPUT_FILE_CHANNEL_0_DEFAULT);
+            printf("Error while opening input file, %s", pzInFileName[i]);
+            exit(1);
         }
-
-    if ((InFileDat[1] = fopen(INPUT_FILE_CHANNEL_1_DEFAULT, "rt")) == NULL)
+        if ((OutFileDat[i] = fopen((char *)pzOutFileName[i], "wt")) == NULL)
         {
-            printf("Error while opening input file, %s", INPUT_FILE_CHANNEL_1_DEFAULT);
+            printf("Error while opening output file, %s", pzOutFileName[i]);
         }
-    
-    if ((OutFileDat[0] = fopen(OUTPUT_FILE_CHANNEL_0_DEFAULT, "wt")) == NULL)
-        {
-            printf("Error while opening output file, %s", OUTPUT_FILE_CHANNEL_0_DEFAULT);
-        }
-    if ((OutFileDat[1] = fopen(OUTPUT_FILE_CHANNEL_1_DEFAULT, "wt")) == NULL)
-        {
-            printf("Error while opening output file, %s", OUTPUT_FILE_CHANNEL_1_DEFAULT);
-        }
+    }
 
     while(!iEndOfFile)
     {
-        for (unsigned j=0; j<SSRC_N_CORES; j++) {
-            c_dsp[j] <: sr_in_out;
+        for (unsigned j=0; j<SSRC_N_CORES; j++) 
+        {
+            c_dsp[j] <: sr_in_out;  //Send in/out sample rate
         }
 
-        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_CORE; i++) {
+        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_CORE; i++) 
+        {
             int samp;
             for (unsigned j=0; j<SSRC_N_CORES; j++) {
                 unsigned file_index = (i * SSRC_N_CORES + j) % SSRC_N_CHANNELS;
-                if ((fscanf(InFileDat[file_index], "%i\n", &samp) == EOF) || (count_in >= SAMP_IN_LIMIT))  {
-                        iEndOfFile = 1;     // We are at the end of the file
-                        printf("EOF\n");
+                if ((fscanf(InFileDat[file_index], "%i\n", &samp) == EOF) || (count_in >= uiNTotalInSamples))  \
+                {
+                    iEndOfFile = 1;     //We are at the end of the file
+                    printf("EOF\n");
                 }
-                c_dsp[j] <: samp;
+                c_dsp[j] <: samp;       //Send the sample
             }            
-	    }
-		count_in += SSRC_N_IN_SAMPLES; 
+        }
+        count_in += SSRC_N_IN_SAMPLES; 
 
 
         unsigned n_samps;
-        for (unsigned j=0; j<SSRC_N_CORES; j++) {
-            c_dsp[j] :> n_samps;
+        for (unsigned j=0; j<SSRC_N_CORES; j++) 
+        {
+            c_dsp[j] :> n_samps;  //Get number of samps to receive
         }
 
-        //printf("n_samps from dsp=%d\n", n_samps);
-        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_CORE; i++) {
+        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_CORE; i++) 
+        {
             int samp;
-            for (unsigned j=0; j<SSRC_N_CORES; j++) {
+            for (unsigned j=0; j<SSRC_N_CORES; j++) 
+            {
                 unsigned file_index = (i * SSRC_N_CORES + j) % SSRC_N_CHANNELS;
-                c_dsp[j] :> samp;
+                c_dsp[j] :> samp; //Get samples
                 if(fprintf(OutFileDat[file_index], "%i\n", samp) < 0)
                     printf("Error while writing to output file\n");
                 //xscope_int(j, samp);
-	        }
+          }
         }
 
         count_out += n_samps;
 
-
-        //printf("Count in=%d, count out=%d\n", count_in, count_out);
-        if (count_in >= SAMP_IN_CHANGE_SR) sr_in_out = INPUT_FS_DEFAULT << 16 | INPUT_FS_DEFAULT;
+        //Force a sample rate change at a given count
+        //if (count_in >= SAMP_IN_CHANGE_SR) sr_in_out = INPUT_FS_DEFAULT << 16 | INPUT_FS_DEFAULT;
     }
 
     printf("DSP manager done\n");
-    if (fclose(move(InFileDat[0])))
+
+    for (int i=0; i<SSRC_N_CHANNELS; i++)
+    unsafe
     {
-        printf("Error while closing input file, %s", INPUT_FILE_CHANNEL_0_DEFAULT);
-    }
-    if (fclose(move(InFileDat[1])))
-    {
-        printf("Error while closing input file, %s", INPUT_FILE_CHANNEL_1_DEFAULT);
+        fclose(move(InFileDat[i]));
+        fclose(move(OutFileDat[i]));
     }
 
-    if (fclose(move(OutFileDat[0])))
-    {
-        printf("Error while closing output file, %s", OUTPUT_FILE_CHANNEL_0_DEFAULT);
-    }
-    if (fclose(move(OutFileDat[1])))
-    {
-        printf("Error while closing output file, %s", OUTPUT_FILE_CHANNEL_1_DEFAULT);
-    }
-
-
-    _Exit(0);
+    exit(0);
 }
 
-int main(void)
+void ShowUsage()
 {
+	puts(
+		"Usage: xsim ssrc_simple.xe\n"
+                "Note: the file <xsim.args> must exist in the current directory. This file cotains the arguments in the following format:\n\n"
+		"         -i     Dat format input file names (eg. -i in_0.dat in_1.dat)\n\n"
+		"         -o     Dat format output file names (eg. -o out_0.dat out_1.dat)\n\n"
+		"         -h     Show this usage message and abort\n\n"
+		"         -f     Input sample rate (44100 - 192000)\n\n"
+		"         -g     Output sample rate (44100 - 192000)\n\n"
+		"         -n     Total number of input samples to process (value is per channel)\n\n"
+		);
+	
+	exit(0);
+}
+
+//Helper function for converting SR to index value
+int samp_rate_to_code(int samp_rate){
+    int samp_code = -1;
+    switch (samp_rate){
+    case 44100:
+        samp_code = 0;
+        break;
+    case 48000:
+        samp_code = 1;
+        break;
+    case 88200:
+        samp_code = 2;
+        break;
+    case 96000:
+        samp_code = 3;
+        break;
+    case 176400:
+        samp_code = 4;
+        break;
+    case 192000:
+        samp_code = 5;
+        break;
+    default:
+        break;
+    }
+    return samp_code;
+}
+
+
+void ParseCmdLine(char *input, char * unsafe * argv, int ui)
+{
+  switch (*input)
+  {
+  
+    case 'h':
+    case 'H':
+      ShowUsage();
+      exit(0);
+      break;
+    
+    case 'i':
+    case 'I':
+      for (int i=0; i<SSRC_N_CHANNELS; i++)
+      {
+        if (*input == '-'){
+          printf("Error - expecting %d input file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
+          exit(1);
+        }
+        unsafe{
+          pzInFileName[i] = argv[ui + 1 + i];
+        }
+      }
+      break;
+
+    case 'f':
+    case 'F':
+      unsafe{
+        uiInFs = (unsigned int)(atoi((char *)argv[ui + 1]));
+      }
+      uiInFs = samp_rate_to_code(uiInFs);
+      if((uiInFs < SSRC_FS_MIN) || (uiInFs > SSRC_FS_MAX))
+      {
+        printf("Error - invalid frequency index %d\n", uiInFs);
+        exit(1);
+      }
+      break;
+
+    case 'g':
+    case 'G':
+      uiOutFs = (unsigned int)(atoi((char *)argv[ui + 1]));
+      uiOutFs = samp_rate_to_code(uiOutFs);      
+      if((uiOutFs < SSRC_FS_MIN) || (uiOutFs > SSRC_FS_MAX))
+      {
+        printf("Error - invalid frequency index %d\n", uiOutFs);
+        exit(1);
+      }
+      break;
+
+
+    case 'n':
+    case 'N':
+      uiNTotalInSamples = (unsigned int)(atoi((char *)argv[ui + 1]));
+      break;
+
+    case 'o':
+    case 'O':
+      for (int i=0; i<SSRC_N_CHANNELS; i++)
+      {
+        if (*input == '-'){
+          printf("Error - expecting %d output file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
+          exit(1);
+        }
+        unsafe{
+          pzOutFileName[i] = argv[ui + 1 + i];
+        }
+      }
+      break;
+
+      break;
+
+    default:
+      ShowUsage();
+      break;
+  }
+}
+
+int main(void) 
+{
+    int ui;
+    FILE            * movable args_file;
+    char args[1024];
+    int argc = 1;
+    char * unsafe argv[64]; 
+    char * unsafe tmp_ptr;
+
+    printf("Running SSRC test simulation\n");
+
+    if ((args_file = fopen("xsim.args", "rt")) == NULL)
+    {
+        printf("Error while opening arguments file. Ensure xsim.args exists in current directory.\n");
+        exit(1);
+    }
+    
+    fgets(args, sizeof(args), args_file);
+    fclose(move(args_file));
+
+    printf("Using arguments: %s \n", args);
+
+    char * unsafe ptr_strtok;
+    tmp_ptr = strtok_r (args, " ", &ptr_strtok);
+    while (tmp_ptr != NULL)
+    unsafe {
+        argv[argc] = tmp_ptr;
+        tmp_ptr = strtok_r (NULL, " ", &ptr_strtok);
+        argc++;
+    }
+    if (argc == 1) ShowUsage();
+
+    //Parse command line arguments 
+    for (ui = 1; ui < (unsigned int)argc; ui++)
+    unsafe{
+        if (*(argv[ui]) == '-')
+        {
+            ParseCmdLine((char *)argv[ui] + 1, argv, ui);
+        }
+    }
+
+
+
+    //Test for valid arguments
+    if (uiNTotalInSamples == -1)
+    {
+        printf("Error - number input samples not set\n");
+        exit(1);
+    }
+    
+    if (uiInFs == -1)
+    {
+        printf("Error - input sample rate not set\n");
+        exit(1);
+    }
+
+    if (uiOutFs == -1)
+    {
+        printf("Error - output sample rate not set\n");
+        exit(1);
+    }
+
     chan c_dsp[SSRC_N_CORES];
     par
     {
