@@ -19,7 +19,6 @@
 // ===========================================================================
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <math.h>
 
 // Integer arithmetic include
@@ -351,24 +350,18 @@ SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl)
 	
 	// F1 and F2 process
 	// -----------------
-	//start_timer();
 	if( SSRC_proc_F1_F2(psSSRCCtrl) != SSRC_NO_ERROR)
 		return SSRC_ERROR;
-    //printf("SSRC_proc_F1_F2 took %d ticks\n", stop_timer());
 
 	// F3 process
 	// ----------
-	//start_timer();
 	if( SSRC_proc_F3(psSSRCCtrl)	!= SSRC_NO_ERROR)
 		return SSRC_ERROR;	
-    //printf("SSRC_proc_F3 took %d ticks\n", stop_timer());
 
 	// Dither process
 	// --------------
-    //start_timer();
 	if( SSRC_proc_dither(psSSRCCtrl) != SSRC_NO_ERROR)
 		return SSRC_ERROR;
-    //printf("SSRC_proc_dither took %d ticks\n", stop_timer());
 
 	return SSRC_NO_ERROR;
 }
@@ -391,33 +384,24 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 	// Check if F1 is disabled, in which case we just copy input to output as all filters are disabled
 	if(psSSRCCtrl->sFIRF1Ctrl.eEnable == FIR_OFF)
 	{
-	    //start_timer();
 		// F1 is not enabled, which means that we are in 1:1 rate, so just copy input to output
 		for(ui = 0; ui < psSSRCCtrl->uiNInSamples; ui+= SSRC_CHANNELS_PER_CORE)
 			piOut[ui]		= piIn[ui];
-
-	    //printf("F1 bypass took %d ticks\n", stop_timer());
 
 		return SSRC_NO_ERROR;
 	}
 
 	// F1 is enabled, so call F1
-
-    //start_timer();
 	if(psSSRCCtrl->sFIRF1Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
 		return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
-    //printf("F1 took %d ticks\n", stop_timer());
 
 
 	// Check if F2 is enabled
 	if(psSSRCCtrl->sFIRF2Ctrl.eEnable == FIR_ON)
 	{
 		// F2 is enabled, so call F2
-	    //start_timer();
 		if(psSSRCCtrl->sFIRF2Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
 			return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
-	    //printf("F1 took %d ticks\n", stop_timer());
-
 	}
 
 	return SSRC_NO_ERROR;
@@ -484,6 +468,7 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 			uiR			= (unsigned int)(SSRC_R_CONS + uiR);
 			iDither		+= ((uiR>>SSRC_RPDF_BITS_SHIFT) & SSRC_RPDF_MASK);
 
+                        //TODO - optimise this and remove IntArithmetic
 			// Use MACC instruction to saturate and dither + signal
 			i64Acc		= ((__int64_t)iDither <<32);	// On XMOS this is not necessary, just load dither in the top word of the ACC register
 			MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
@@ -494,7 +479,6 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
                         // Extract 32bits result
 			EXT30(&piData[ui], i64Acc);
                         
-
 			// Mask to 24bits
 			piData[ui]	&= SSRC_DATA24_MASK;
 
