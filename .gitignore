@@ -20,3 +20,4 @@ output*.dat
 *.swo
 *.todo
 org.eclipse.cdt.core.prefs
+xsim.args
