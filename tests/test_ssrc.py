@@ -1,8 +1,10 @@
 import xmostest
 
+supported_sr = [44100, 48000, 88200, 96000, 176400, 192000]
+num_in_samps = 256
+
 def runtest():
     
-#   simargs_ssrc = "--args ./ssrc_test/bin/ssrc_test.xe -i ./input_sines/s1k_0dB_192.dat ./input_sines/s1k_0dB_176.dat -o output_ch0.dat output_ch1.dat -f 192000 -g 44100 -n 512"
     simargs_ssrc = ""
 
     resources = xmostest.request_resource("xsim")
@@ -12,8 +14,18 @@ def runtest():
 
     tester = FileComparisonTester(open("output_ch0.dat"), open("ssrc_test/expected/s1k_0dB_192_44_512.expect"), "lib_src", "ssrc_tests", "ssrc_test", {}, regexp = False, ignore=[])
 
+    args = "-i ./input_sines/s1k_0dB_192.dat ./input_sines/s1k_0dB_176.dat -o output_ch0.dat output_ch1.dat"
 
 
+    for input_sr in supported_sr:
+        for output_sr in supported_sr:
+            print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
+            if (input_sr == 192000) and (output_sr == 44100):
+                args_file = open("xsim.args", 'wt')
+                args += " -f " + str(input_sr) + " -g " + str(output_sr) + " -n " + str(num_in_samps)
+                args_file.write(args)
+
+    args_file.close()
     xmostest.run_on_simulator(resources["xsim"],
                               "./ssrc_test/bin/ssrc_test.xe",
                               simargs=[simargs_ssrc],

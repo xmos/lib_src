@@ -1,1 +1,0 @@
--i ./input_sines/s1k_0dB_192.dat ./input_sines/s1k_0dB_176.dat -o output_ch0.dat output_ch1.dat -f 192000 -g 44100 -n 256
