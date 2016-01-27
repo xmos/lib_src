@@ -13,11 +13,23 @@ def runtest():
 #    xmostest.set_test_result("lib_src", "ssrc_tests", "ssrc_smoke_test", "ssrc_test"
 
     test_files = ("output_ch0.dat", "output_ch1.dat")
+
     golden_files = ("ssrc_test/expected/s1k_0dB_192_44_256.expect", "ssrc_test/expected/s1k1_0dB_192_44_256.expect")
     tester = FileComparisonTester(test_files, golden_files, "lib_src", "ssrc_tests", "ssrc_test", {}, regexp = False, ignore=[])
 
     args = "-i ./input_sines/s1k_0dB_192.dat ./input_sines/s1k_0dB_176.dat -o output_ch0.dat output_ch1.dat"
 
+    len_test_files = len(test_files)
+    len_golden_files = len(golden_files)
+    
+    if isinstance(test_files, str):
+        len_test_files = 1
+    if isinstance(golden_files, str):
+        len_golden_files = 1
+    if (len_test_files != len_golden_files):
+        print("ERROR: %d test file(s) specified and %d golden file(s)" % (len_test_files), len_golden_files))
+        xmostest.set_test_result(product, group, test, config, result=False, output = "Number of inout and output files does not match", env = env)
+    print("Found %d audio channels to process" % len(test_files))
 
     for input_sr in supported_sr:
         for output_sr in supported_sr:
@@ -26,15 +38,16 @@ def runtest():
                 args_file = open("xsim.args", 'wt')
                 args += " -f " + str(input_sr) + " -g " + str(output_sr) + " -n " + str(num_in_samps)
                 args_file.write(args)
-            else:
-                print ('NOT running test SR input = %d, output = %d' % (input_sr, output_sr))
-
-
     args_file.close()
     xmostest.run_on_simulator(resources["xsim"],
                               "./ssrc_test/bin/ssrc_test.xe",
                               simargs=[simargs_ssrc],
                               tester=tester)
+            else:
+                print ('NOT running test SR input = %d, output = %d' % (input_sr, output_sr))
+
+
+
 
 class FileComparisonTester(xmostest.Tester):
     """
