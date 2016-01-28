@@ -113,10 +113,12 @@ void dsp_mgr(chanend c_dsp[]){
             printf("Error while opening input file, %s", pzInFileName[i]);
             exit(1);
         }
+        printf("Simulator opening input file, %s\n",  pzInFileName[i]);
         if ((OutFileDat[i] = fopen((char *)pzOutFileName[i], "wt")) == NULL)
         {
             printf("Error while opening output file, %s", pzOutFileName[i]);
         }
+        printf("Simulator opening output file, %s\n",  pzOutFileName[i]);
     }
 
     while(!iEndOfFile)
@@ -167,7 +169,7 @@ void dsp_mgr(chanend c_dsp[]){
         //if (count_in >= SAMP_IN_CHANGE_SR) sr_in_out = INPUT_FS_DEFAULT << 16 | INPUT_FS_DEFAULT;
     }
 
-    printf("DSP manager done\n");
+    printf("DSP manager done - %d output samples produced\n", count_out);
 
     for (int i=0; i<SSRC_N_CHANNELS; i++)
     unsafe
@@ -239,7 +241,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
       for (int i=0; i<SSRC_N_CHANNELS; i++)
       {
         if (*input == '-'){
-          printf("Error - expecting %d input file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
+          printf("ERROR: expecting %d input file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
           exit(1);
         }
         unsafe{
@@ -256,7 +258,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
       uiInFs = samp_rate_to_code(uiInFs);
       if((uiInFs < SSRC_FS_MIN) || (uiInFs > SSRC_FS_MAX))
       {
-        printf("Error - invalid frequency index %d\n", uiInFs);
+        printf("ERROR: invalid frequency index %d\n", uiInFs);
         exit(1);
       }
       break;
@@ -267,7 +269,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
       uiOutFs = samp_rate_to_code(uiOutFs);      
       if((uiOutFs < SSRC_FS_MIN) || (uiOutFs > SSRC_FS_MAX))
       {
-        printf("Error - invalid frequency index %d\n", uiOutFs);
+        printf("ERROR: invalid frequency index %d\n", uiOutFs);
         exit(1);
       }
       break;
@@ -283,7 +285,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
       for (int i=0; i<SSRC_N_CHANNELS; i++)
       {
         if (*input == '-'){
-          printf("Error - expecting %d output file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
+          printf("ERROR: expecting %d output file names and only found %d\n", SSRC_N_CHANNELS, i + 1);
           exit(1);
         }
         unsafe{
@@ -322,19 +324,19 @@ int main(int argc, char * unsafe argv[])
     //Test for valid arguments
     if (uiNTotalInSamples == -1)
     {
-        printf("Error - number input samples not set\n");
+        printf("ERROR: number input samples not set\n");
         exit(1);
     }
     
     if (uiInFs == -1)
     {
-        printf("Error - input sample rate not set\n");
+        printf("ERROR: input sample rate not set\n");
         exit(1);
     }
 
     if (uiOutFs == -1)
     {
-        printf("Error - output sample rate not set\n");
+        printf("ERROR: output sample rate not set\n");
         exit(1);
     }
 
