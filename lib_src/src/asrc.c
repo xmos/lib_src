@@ -118,57 +118,57 @@ ASRCFiltersIDs_t		sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =				// Filter configura
 {
 	{	// Fsin = 44.1kHz
 		// F1							F2								
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 48kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 88.2kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 48kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 88.2kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	},
 	{	// Fsin = 48kHz
 		// F1							F2							
-		{FILTER_DEFS_FIR_UP4844_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 48kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 88.2kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_UP4844_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 48kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 88.2kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	},
 	{	// Fsin = 88.2kHz
 		// F1							F2						
-		{FILTER_DEFS_FIR_BL_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_BL8848_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 48kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 88.2kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_BL_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_BL8848_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 48kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 88.2kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	},
 	{	// Fsin = 96kHz
 		// F1							F2								
-		{FILTER_DEFS_FIR_BL9644_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_BL_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 48kHz
-		{FILTER_DEFS_FIR_UP4844_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 88.2kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UP_ID,			FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_BL9644_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_BL_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 48kHz
+		{FILTER_DEFS_ASRC_FIR_UP4844_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 88.2kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UP_ID,			FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	},
 	{	// Fsin = 176.4kHz
 		// F1							F2								
-		{FILTER_DEFS_FIR_DS_ID,			FILTER_DEFS_FIR_BL_ID},			// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_DS_ID,			FILTER_DEFS_FIR_BL8848_ID},		// Fsout = 48kHz
-		{FITLER_DEFS_FIR_BLF_ID,		FILTER_DEFS_FIR_NONE_ID,},		// Fsout = 88.2kHz
-		{FILTER_DEFS_FIR_BL17696_ID,	FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UPF_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UPF_ID,		FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_DS_ID,			FILTER_DEFS_ASRC_FIR_BL_ID},			// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_DS_ID,			FILTER_DEFS_ASRC_FIR_BL8848_ID},		// Fsout = 48kHz
+		{FITLER_DEFS_ASRC_FIR_BLF_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID,},		// Fsout = 88.2kHz
+		{FILTER_DEFS_ASRC_FIR_BL17696_ID,	FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UPF_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UPF_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	},
 	{	// Fsin = 192kHz
 		// F1							F2								
-		{FILTER_DEFS_FIR_DS_ID,			FILTER_DEFS_FIR_BL9644_ID},		// Fsout = 44.1kHz
-		{FILTER_DEFS_FIR_DS_ID,			FILTER_DEFS_FIR_BL_ID},			// Fsout = 48kHz
-		{FITLER_DEFS_FIR_BL19288_ID,	FILTER_DEFS_FIR_NONE_ID},		// Fsout = 88.2kHz
-		{FITLER_DEFS_FIR_BLF_ID,		FILTER_DEFS_FIR_NONE_ID},		// Fsout = 96kHz
-		{FILTER_DEFS_FIR_UP192176_ID,	FILTER_DEFS_FIR_NONE_ID},		// Fsout = 176.4kHz
-		{FILTER_DEFS_FIR_UPF_ID,		FILTER_DEFS_FIR_NONE_ID}		// Fsout = 192kHz
+		{FILTER_DEFS_ASRC_FIR_DS_ID,			FILTER_DEFS_ASRC_FIR_BL9644_ID},		// Fsout = 44.1kHz
+		{FILTER_DEFS_ASRC_FIR_DS_ID,			FILTER_DEFS_ASRC_FIR_BL_ID},			// Fsout = 48kHz
+		{FITLER_DEFS_ASRC_FIR_BL19288_ID,	FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 88.2kHz
+		{FITLER_DEFS_ASRC_FIR_BLF_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 96kHz
+		{FILTER_DEFS_ASRC_FIR_UP192176_ID,	FILTER_DEFS_ASRC_FIR_NONE_ID},		// Fsout = 176.4kHz
+		{FILTER_DEFS_ASRC_FIR_UPF_ID,		FILTER_DEFS_ASRC_FIR_NONE_ID}		// Fsout = 192kHz
 	}
 };
 
@@ -328,12 +328,12 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	
 	// Filter F1
 	// ---------
-	psFIRDescriptor							= &sFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
+	psFIRDescriptor							= &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
 	// Set number of input samples and input samples step
 	psASRCCtrl->sFIRF1Ctrl.uiNInSamples		= psASRCCtrl->uiNInSamples;
 	psASRCCtrl->sFIRF1Ctrl.uiInStep			= ASRC_CHANNELS_PER_CORE;
 	// Set delay line base pointer
-	if( psFiltersID->uiFID[ASRC_F1_INDEX] == FILTER_DEFS_FIR_DS_ID )
+	if( psFiltersID->uiFID[ASRC_F1_INDEX] == FILTER_DEFS_ASRC_FIR_DS_ID )
 		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRShort;
 	else
 		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRLong;
@@ -345,13 +345,13 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 		return ASRC_ERROR;
 
 	// Update synchronous number of samples
-	if( psFiltersID->uiFID[ASRC_F1_INDEX] != FILTER_DEFS_FIR_NONE_ID )
+	if( psFiltersID->uiFID[ASRC_F1_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
 		psASRCCtrl->uiNSyncSamples				= psASRCCtrl->sFIRF1Ctrl.uiNOutSamples;
 	
 
 	// Filter F2
 	// ---------
-	psFIRDescriptor							= &sFirDescriptor[psFiltersID->uiFID[ASRC_F2_INDEX]];
+	psFIRDescriptor							= &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F2_INDEX]];
 	// Set number of input samples and input samples step
 	psASRCCtrl->sFIRF2Ctrl.uiNInSamples		= psASRCCtrl->sFIRF1Ctrl.uiNOutSamples;
 	psASRCCtrl->sFIRF2Ctrl.uiInStep			= psASRCCtrl->sFIRF1Ctrl.uiOutStep;
@@ -365,7 +365,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 		return ASRC_ERROR;
 
 	// Update synchronous number of samples
-	if( psFiltersID->uiFID[ASRC_F2_INDEX] != FILTER_DEFS_FIR_NONE_ID )
+	if( psFiltersID->uiFID[ASRC_F2_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
 		psASRCCtrl->uiNSyncSamples				= psASRCCtrl->sFIRF2Ctrl.uiNOutSamples;
 	
 

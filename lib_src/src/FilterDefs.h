@@ -19,22 +19,37 @@
 	
 	// General defines
 	// ---------------
-	// FIR filters IDs
-	#define		FILTER_DEFS_FIR_BL_ID				0			// ID of BL FIR filter
-	#define		FILTER_DEFS_FIR_BL9644_ID			1			// ID of BL9644 FIR filter
-	#define		FILTER_DEFS_FIR_BL8848_ID			2			// ID of BL8848 FIR filter
-	#define		FITLER_DEFS_FIR_BLF_ID				3			// ID of BLF FIR filter
-	#define		FITLER_DEFS_FIR_BL19288_ID			4			// ID of BL19288 FIR filter
-	#define		FILTER_DEFS_FIR_BL17696_ID			5			// ID of BL17696 FIR filter
-	#define		FILTER_DEFS_FIR_UP_ID				6			// ID of UP FIR filter
-	#define		FILTER_DEFS_FIR_UP4844_ID			7			// ID of UP4844 FIR filter
-	#define		FILTER_DEFS_FIR_UPF_ID				8			// ID of UPF FIR filter
-	#define		FILTER_DEFS_FIR_UP192176_ID			9			// ID of UP192176 FIR filter
-	#define		FILTER_DEFS_FIR_DS_ID				10			// ID of DS FIR filter
-        #define		FILTER_DEFS_FIR_OS_ID				11			// ID of OS FIR filter
-	#define		FILTER_DEFS_FIR_NONE_ID				12			// ID of disabled FIR filter
+	// SSRC FIR filters IDs
+	#define		FILTER_DEFS_SSRC_FIR_BL_ID				0			// ID of BL FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_BL9644_ID			1			// ID of BL9644 FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_BL8848_ID			2			// ID of BL8848 FIR filter
+	#define		FITLER_DEFS_SSRC_FIR_BL19288_ID			3			// ID of BL19288 FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_BL17696_ID			4			// ID of BL17696 FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_UP_ID				5			// ID of UP FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_UP4844_ID			6			// ID of UP4844 FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_UPF_ID				7			// ID of UPF FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_UP192176_ID			8			// ID of UP192176 FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_DS_ID				9			// ID of DS FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_OS_ID				10			// ID of OS FIR filter
+	#define		FILTER_DEFS_SSRC_FIR_NONE_ID				11			// ID of disabled FIR filter
 
-	#define		FILTER_DEFS_N_FIR_ID				(FILTER_DEFS_FIR_NONE_ID + 1)		// Number of FIR IDs corresponding to real FIRs
+	// ASRC FIR filters IDs
+	#define		FILTER_DEFS_ASRC_FIR_BL_ID				0			// ID of BL FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_BL9644_ID			1			// ID of BL9644 FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_BL8848_ID			2			// ID of BL8848 FIR filter
+	#define		FITLER_DEFS_ASRC_FIR_BLF_ID				3			// ID of BLF FIR filter
+	#define		FITLER_DEFS_ASRC_FIR_BL19288_ID			4			// ID of BL19288 FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_BL17696_ID			5			// ID of BL17696 FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_UP_ID				6			// ID of UP FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_UP4844_ID			7			// ID of UP4844 FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_UPF_ID				8			// ID of UPF FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_UP192176_ID			9			// ID of UP192176 FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_DS_ID				10			// ID of DS FIR filter
+	#define		FILTER_DEFS_ASRC_FIR_NONE_ID				11			// ID of disabled FIR filter
+
+
+	#define		FILTER_DEFS_SSRC_N_FIR_ID		      	(FILTER_DEFS_SSRC_FIR_NONE_ID + 1)		// Number of FIR IDs corresponding to real FIRs
+        #define		FILTER_DEFS_ASRC_N_FIR_ID	      		(FILTER_DEFS_ASRC_FIR_NONE_ID + 1)		// Number of FIR IDs corresponding to real FIRs
 
 	// FIR filter number of taps
 	#define		FILTER_DEFS_FIR_BL_N_TAPS			144			// Number of taps of BL FIR filter
@@ -111,7 +126,9 @@
 	// ===========================================================================
 	
 	// FIR filters descriptors (ordered by ID)
-	extern		FIRDescriptor_t						sFirDescriptor[FILTER_DEFS_N_FIR_ID];
+	extern		FIRDescriptor_t						sSSRCFirDescriptor[FILTER_DEFS_SSRC_N_FIR_ID];
+	extern		FIRDescriptor_t						sASRCFirDescriptor[FILTER_DEFS_ASRC_N_FIR_ID];
+        
 	// FIR filters coefficients
 	extern		int									iFirBLCoefs[FILTER_DEFS_FIR_BL_N_TAPS];
 	extern		int									iFirBL9644Coefs[FILTER_DEFS_FIR_BL9644_N_TAPS];
