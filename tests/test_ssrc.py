@@ -1,6 +1,6 @@
 import xmostest
 
-supported_sr = (44100, 48000, 88200, 96000, 172400, 192000)
+supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
 num_in_samps = 256
 
 def runtest():
@@ -16,7 +16,7 @@ def runtest():
 
     for input_sr in supported_sr:
         for output_sr in supported_sr:
-            if input_sr == 192000:
+            if input_sr and output_sr:
                 print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
                 test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
                 golden_files = ("ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
@@ -33,6 +33,7 @@ def runtest():
                                           appargs=appargs_ssrc,
                                           simargs=simargs_ssrc,
                                           tester=tester)
+                xmostest.complete_all_jobs()
 
 
 def check_file_count(test_files, golden_files):
@@ -53,7 +54,7 @@ class file_name_builder:
     """Helper to build the input/output/golden filenames from various input output sample rares"""
 
     signal_types = {"pure_sine": "s1k_0db", "inter_modulation": "im10k11k_m6dB"}
-    file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 172400: "172", 192000: "192"}
+    file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
 
     def test_signal(self, input_sr, signal_type):
         file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + ".dat"
@@ -96,7 +97,7 @@ class FileComparisonTester(xmostest.Tester):
         input_files = self._input
         index = 0
         for input_file_name in input_files:
-            print("Opening input file %s" % input_file_name)
+            print("Tester opening input file %s" % input_file_name)
             input_file = open(input_file_name, "r")
             test_result = [x.strip() for x in input_file.readlines()]
             
@@ -104,7 +105,7 @@ class FileComparisonTester(xmostest.Tester):
             regexp = self._regexp
 
             golden_file_name = self._golden[index]
-            print("Opening golden file %s" % golden_file_name)
+            print("Tester opening golden file %s" % golden_file_name)
             golden = open(golden_file_name, "r")
             expected = [x.strip() for x in golden.readlines()]
             
