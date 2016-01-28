@@ -1,6 +1,6 @@
 import xmostest
 
-supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
+supported_sr = (44100, 48000, 88200, 96000, 172400, 192000)
 num_in_samps = 256
 
 def runtest():
@@ -12,13 +12,30 @@ def runtest():
 #    xmostest.build("ssrc_test", env = {})
 #    xmostest.set_test_result("lib_src", "ssrc_tests", "ssrc_smoke_test", "ssrc_test"
 
-    test_files = ("output_ch0.dat", "output_ch1.dat")
+    file_name = file_name_builder()
 
-    golden_files = ("ssrc_test/expected/s1k_0dB_192_44_256.expect", "ssrc_test/expected/s1k1_0dB_192_44_256.expect")
-    tester = FileComparisonTester(test_files, golden_files, "lib_src", "ssrc_tests", "ssrc_test", {}, regexp = False, ignore=[])
+    for input_sr in supported_sr:
+        for output_sr in supported_sr:
+            if input_sr == 192000:
+                print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
+                test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
+                golden_files = ("ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
+                tester = FileComparisonTester(test_files, golden_files, "lib_src", "ssrc_tests", "ssrc_test", {}, regexp = False, ignore=[])
+    
+                args = ["-i", "./src_input/" + file_name.test_signal(input_sr, "pure_sine"), "./src_input/" + file_name.test_signal(input_sr, "inter_modulation"), "-o", test_files[0], test_files[1]]
+                args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
+                
 
-    args = "-i ./input_sines/s1k_0dB_192.dat ./input_sines/s1k_0dB_176.dat -o output_ch0.dat output_ch1.dat"
+                appargs_ssrc = args
+                print("xsim cmd line = %s" % " ".join(appargs_ssrc))
+                xmostest.run_on_simulator(resources["xsim"],
+                                          "./ssrc_test/bin/ssrc_test.xe",
+                                          appargs=appargs_ssrc,
+                                          simargs=simargs_ssrc,
+                                          tester=tester)
 
+
+def check_file_count(test_files, golden_files):
     len_test_files = len(test_files)
     len_golden_files = len(golden_files)
     
@@ -26,27 +43,29 @@ def runtest():
         len_test_files = 1
     if isinstance(golden_files, str):
         len_golden_files = 1
-    if (len_test_files != len_golden_files):
-        print("ERROR: %d test file(s) specified and %d golden file(s)" % (len_test_files), len_golden_files))
+    if len_test_files != len_golden_files:
+        print("ERROR: %d test file(s) specified and %d golden file(s)" % (len_test_files, len_golden_files))
         xmostest.set_test_result(product, group, test, config, result=False, output = "Number of inout and output files does not match", env = env)
     print("Found %d audio channels to process" % len(test_files))
 
-    for input_sr in supported_sr:
-        for output_sr in supported_sr:
-            if (input_sr == 192000) and (output_sr == 44100):
-                print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
-                args_file = open("xsim.args", 'wt')
-                args += " -f " + str(input_sr) + " -g " + str(output_sr) + " -n " + str(num_in_samps)
-                args_file.write(args)
-    args_file.close()
-    xmostest.run_on_simulator(resources["xsim"],
-                              "./ssrc_test/bin/ssrc_test.xe",
-                              simargs=[simargs_ssrc],
-                              tester=tester)
-            else:
-                print ('NOT running test SR input = %d, output = %d' % (input_sr, output_sr))
 
+class file_name_builder:
+    """Helper to build the input/output/golden filenames from various input output sample rares"""
 
+    signal_types = {"pure_sine": "s1k_0db", "inter_modulation": "im10k11k_m6dB"}
+    file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 172400: "172", 192000: "192"}
+
+    def test_signal(self, input_sr, signal_type):
+        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + ".dat"
+        return file_name
+
+    def golden_signal(self, input_sr, output_sr, signal_type):
+        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + "_" + file_name_builder.file_name_helper[output_sr] + ".expect"
+        return file_name
+
+    def output_signal(self, input_sr, output_sr, signal_type):
+        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + "_" + file_name_builder.file_name_helper[output_sr] + ".result"
+        return file_name
 
 
 class FileComparisonTester(xmostest.Tester):

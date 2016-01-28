@@ -182,14 +182,13 @@ void dsp_mgr(chanend c_dsp[]){
 void ShowUsage()
 {
 	puts(
-		"Usage: xsim ssrc_simple.xe\n"
-                "Note: the file <xsim.args> must exist in the current directory. This file cotains the arguments in the following format:\n\n"
-		"         -i     Dat format input file names (eg. -i in_0.dat in_1.dat)\n\n"
-		"         -o     Dat format output file names (eg. -o out_0.dat out_1.dat)\n\n"
+		"Usage: xsim ssrc_simple.xe <args>\n\n"
+		"         -i     Q1.31 line separated format input file names (eg. -i in_l.dat in_r.dat)\n\n"
+		"         -o     Q1.31 line separated format output file names (eg. -o out_l.dat out_r.dat)\n\n"
 		"         -h     Show this usage message and abort\n\n"
 		"         -f     Input sample rate (44100 - 192000)\n\n"
 		"         -g     Output sample rate (44100 - 192000)\n\n"
-		"         -n     Total number of input samples to process (value is per channel)\n\n"
+		"         -n     Number of input samples (all channels) to process\n\n"
 		);
 	
 	exit(0);
@@ -301,36 +300,12 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(void) 
+int main(int argc, char * unsafe argv[]) 
 {
     int ui;
-    FILE            * movable args_file;
-    char args[1024];
-    int argc = 1;
-    char * unsafe argv[64]; 
-    char * unsafe tmp_ptr;
 
     printf("Running SSRC test simulation\n");
 
-    if ((args_file = fopen("xsim.args", "rt")) == NULL)
-    {
-        printf("Error while opening arguments file. Ensure xsim.args exists in current directory.\n");
-        exit(1);
-    }
-    
-    fgets(args, sizeof(args), args_file);
-    fclose(move(args_file));
-
-    printf("Using arguments: %s \n", args);
-
-    char * unsafe ptr_strtok;
-    tmp_ptr = strtok_r (args, " ", &ptr_strtok);
-    while (tmp_ptr != NULL)
-    unsafe {
-        argv[argc] = tmp_ptr;
-        tmp_ptr = strtok_r (NULL, " ", &ptr_strtok);
-        argc++;
-    }
     if (argc == 1) ShowUsage();
 
     //Parse command line arguments 
