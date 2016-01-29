@@ -16,7 +16,7 @@ def runtest():
 
     for input_sr in supported_sr:
         for output_sr in supported_sr:
-            if input_sr and output_sr:
+            if input_sr ==48000 and output_sr == 96000:
                 print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
                 test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
                 golden_files = ("ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
