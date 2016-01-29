@@ -228,11 +228,11 @@ main_loop_odd:
 
 done_odd:
 	//pop return value pointer from stack so we can use it to write back
-	ldw iDataRet_p, sp[8]
+	{ldw iDataRet_p, sp[8]; ldc counter, 31}  //Resuse counter (r3)
+
 
 	//Write back the two return values
-	ldc counter, 31						//Resuse counter (r3)
-	lsats Acc0_h, Acc0_l, r3			//Saturate first
+      	lsats Acc0_h, Acc0_l, r3			//Saturate first
 	lsats Acc1_h, Acc1_l, r3
 	lextract iData0, Acc0_h, Acc0_l, counter, 32	//Extract
 	lextract iData1, Acc1_h, Acc1_l, counter, 32
