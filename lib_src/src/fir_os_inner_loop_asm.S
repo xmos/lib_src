@@ -181,12 +181,12 @@ main_loop_odd:
 	//Constant for adding onto stuff. Gets updated later
 	{ldc step, 0x18; sub counter, counter, 1}
 
-	ldw iData0, piData_p[0]				//Single word data load
+	{ldw iData0, piData_p[0]; add piData_p, piData_p, 0x4}	//Single word data load
 	ldd iCoef0, iCoef1, piCoefs_p[0]	//Double word coef load
 	maccs Acc0_h, Acc0_l, iData0, iCoef0
 	maccs Acc1_h, Acc1_l, iData0, iCoef1
 
-	add piData_p, piData_p, 0x4				//Now double word aligned for 64b goodness
+	//Now double word aligned for 64b goodness
 
 	ldd iData1, iData0, piData_p[0]
 	ldd iCoef0, iCoef1, piCoefs_p[1]
@@ -223,8 +223,8 @@ main_loop_odd:
 	//Increment pointers and branch if still running
 
 	ldc step, 0x40
-	add piCoefs_p, piCoefs_p, step
-	bt counter, main_loop_odd
+	{add piCoefs_p, piCoefs_p, step; bt counter, main_loop_odd}
+	
 
 done_odd:
 	//pop return value pointer from stack so we can use it to write back
