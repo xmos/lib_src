@@ -149,7 +149,7 @@ class FileComparisonTester(xmostest.Tester):
                 self.record_failure("Length of expected file greater than test result")
                 test_result = {'test_result':''.join(test_result)}
             if not self.result:
-                test_result['failures'] = ''.join(self.failures)
+                test_result = ''.join(self.failures)
             index += 1
         xmostest.set_test_result(product, group, test, config, self.result,
                              output = test_result, env = env)
