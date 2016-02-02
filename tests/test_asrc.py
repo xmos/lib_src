@@ -16,10 +16,10 @@ def runtest():
 
     for input_sr in supported_sr:
         for output_sr in supported_sr:
-            if input_sr and output_sr :
+            if input_sr == 44100 and output_sr == 48000:
                 print ('Running test SR input = %d, output = %d' % (input_sr, output_sr))
-                test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
-                golden_files = ("asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
+                test_files = ("./src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "./src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
+                golden_files = ("./asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "./asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
                 tester = FileComparisonTester(test_files, golden_files, "lib_src", "asrc_test", str(input_sr) + "->" + str(output_sr), {}, regexp = False, ignore=[])
     
                 args = ["-i", "./src_input/" + file_name.test_signal(input_sr, "pure_sine"), "./src_input/" + file_name.test_signal(input_sr, "inter_modulation"), "-o", test_files[0], test_files[1]]
