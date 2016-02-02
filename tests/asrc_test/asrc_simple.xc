@@ -126,7 +126,7 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
     unsigned iEndOfFile  = 0;
     unsigned int    sr_in_out = uiInFs << 16 | uiOutFs ; //Input fs in upper 16bits and Output fs in lower 16bits
 
-    unsigned fsRatio[ASRC_N_CHANNELS] = {0};
+    //unsigned fsRatio[ASRC_N_CHANNELS] = {0};
     
 
     for (int i=0; i<ASRC_N_CHANNELS; i++)
