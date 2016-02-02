@@ -23,7 +23,7 @@ Features
  * No external memory required
  * Block based processing. Minimum 4 samples input, must be power of 2.
  * Up to 10000 ppm sample rate ratio deviation (ASRC only)
- * Very high quality. SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001%
+ * Very high quality. SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
 
 Typical Resource Usage
 ......................
@@ -41,20 +41,65 @@ SSRC implementations typically consume the following amount of RAM:
     - pins: 0
     - fn: unsafe{ssrc_process(in_buff, out_buff, &sSSRCCtrl);}
 
-.. list-table:: SSRC Processor MHz Usage MHz
-     :header-rows: 1
+.. list-table:: SSRC Processor Usage (MHz)
+     :header-rows: 2
 
-     * - configuration 
-       - Processor usage
-     * - SSRC 172.4KHz to 192KHz
-       - 75MHz per channel
-     * - SSRC 48KHz to 192KHz. 
-       - 30MHz per channel
-     * - SSRC 192KHz to 48KHz.  
-       - 40MHz per channel
-     * - SSRC 44.1KHz to 48KHz.  
-       - 25MHz per channel
-
+     * - 
+       - Output sample rate
+       -
+       -
+       -
+       -
+       -
+     * - Input sample rate
+       - 44.1KHz
+       - 48KHz
+       - 88.2KHz
+       - 96KHz
+       - 176.4KHz
+       - 192KHz
+     * - 44.1KHz
+       - 1MHz
+       - 23MHz
+       - 16MHz
+       - 26MHz
+       - 26MHz
+       - 46MHz
+     * - 48KHz
+       - 26MHz
+       - 1MHz
+       - 28MHz
+       - 17MHz
+       - 48MHz
+       - 29MHz
+     * - 88.2KHz
+       - 18MHz
+       - 43MHz
+       - 1MHz
+       - 46MHz
+       - 32MHz
+       - 53MHz
+     * - 96KHz
+       - 48MHz
+       - 20MHz
+       - 52MHz
+       - 2MHz
+       - 56MHz
+       - 35MHz
+     * - 176.4KHz
+       - 33MHz
+       - 61MHz
+       - 37MHz
+       - 67MHz
+       - 3MHz
+       - 76MHz
+     * - 192KHz
+       - 66MHz
+       - 36MHz
+       - 70MHz
+       - 40MHz
+       - 80MHz
+       - 4MHz
 
 ASRC implementations typically take XXKB of code, coefficient, and buffer memory and around XBytes of stack. Specific examples are shown below.
 
