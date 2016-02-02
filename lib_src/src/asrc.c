@@ -549,7 +549,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	// Compute adative coefficients spline factors
 	// The fractional part of time gives alpha
 	iAlpha		= psASRCCtrl->uiTimeFract>>1;		// Now alpha can be seen as a signed number
-	i64Acc0 = iAlpha * iAlpha;
+	i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
 	iH[0]			= (int)(i64Acc0>>32);
 	iH[2]			= 0x40000000;						// Load H2 with 0.5;

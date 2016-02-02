@@ -146,7 +146,8 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
             // Compute adative coefficients spline factors
             // The fractional part of time gives alpha
             iAlpha      = sASRCCtrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
-            i64Acc0 = iAlpha * iAlpha;
+            i64Acc0 = (long long)iAlpha * (long long)iAlpha;
+            
             iH[0]           = (int)(i64Acc0>>32);
             iH[2]           = 0x40000000;                       // Load H2 with 0.5;
             iH[1]           = iH[2] - iH[0];                        // H1 = 0.5 - 0.5 * alpha * alpha;
@@ -161,7 +162,9 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
             //                                          piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
             piADCoefs       = sASRCCtrl[0].piADCoefs;       // Given limited number of registers, this could be DP
 
+            // Apply spline coefficients to filter coefficients
             spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+
 
             // Step time for next output sample
             // --------------------------------
