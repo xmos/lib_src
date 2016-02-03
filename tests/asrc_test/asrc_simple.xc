@@ -52,7 +52,6 @@ void dsp_slave(chanend c_dsp)
         sASRCCtrl[ui].psState                   = &sASRCState[ui];
         sASRCCtrl[ui].piStack                   = iASRCStack[ui];
         sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
-        printf("sASRCCtrl[%d].piADCoefs0x%p\n",ui, sASRCCtrl[ui].piADCoefs);
     }
     
 /*
@@ -107,9 +106,10 @@ void dsp_slave(chanend c_dsp)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            FsRatio = asrc_init(InFs, OutFs, sASRCCtrl);
+            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl);
+            
             sr_in_out = sr_in_out_new;
-            printf("DSP init Initial FsRatio=%d, SR in=%d, SR out=%d\n", FsRatio, InFs, OutFs);
+            printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
         }
         t:> t1;
         n_samps_out = asrc_process(in_buff, out_buff, FsRatio, sASRCCtrl);
@@ -125,8 +125,11 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
     unsigned count_in = 0, count_out = 0;
     unsigned iEndOfFile  = 0;
     unsigned int    sr_in_out = uiInFs << 16 | uiOutFs ; //Input fs in upper 16bits and Output fs in lower 16bits
+    unsigned FsRatio = (unsigned) (((unsigned long long)sample_rates[uiInFs] * (unsigned long long)(1<<28)) / (unsigned long long)sample_rates[uiOutFs]);
+    
+    FsRatio =  (unsigned int)((float)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
+    printf("Adjusted FsRatio dsp_mgr = %d, 0x%x\n", FsRatio, FsRatio);
 
-    //unsigned fsRatio[ASRC_N_CHANNELS] = {0};
     
 
     for (int i=0; i<ASRC_N_CHANNELS; i++)
@@ -147,10 +150,7 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
 
 
     while(!iEndOfFile)
-    {
-        //quick hack to get it going - TODO - do proper calc
-        unsigned FsRatio = (((sample_rates[sr_in_out >> 16] * 16384) / sample_rates[sr_in_out & 0xffff]) * 16384);
-
+    {        
         for (unsigned j=0; j<ASRC_N_CORES; j++) {
             c_dsp[j] <: sr_in_out;
             c_dsp[j] <: FsRatio;
@@ -301,7 +301,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
 
     case 'e':
     case 'E':
-      fFsRatioDeviation = (float)(atof(input + 1));
+      fFsRatioDeviation = (float)(atof((char *)argv[ui + 1]));
       //Note no check. This is done at run-time.
       break;
 
