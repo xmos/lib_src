@@ -4,16 +4,18 @@
 #include <time.h>
 #include <math.h>
 #include <timer.h>
+#include "debug_print.h"
 
 // ASRC includes
 #include "src.h"
 
 extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
-static void bomb_out(int code){
-    printf("ASRC_proc Error code %d\n", code);
+static void asrc_error(int code)
+{
+    debug_printf("ASRC_proc Error code %d\n", code);
     delay_milliseconds(1);
-	_Exit(0);
+	_Exit(code);
 }
 
 
@@ -24,7 +26,7 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CH
     ASRCReturnCodes_t ret_code;
 
     ret_code = ASRC_prepare_coefs();
-    if (ret_code != ASRC_NO_ERROR) bomb_out(10);
+    if (ret_code != ASRC_NO_ERROR) asrc_error(10);
 
     for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
     {
@@ -41,7 +43,7 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CH
 
         // Init ASRC instances
         ret_code = ASRC_init(&sASRCCtrl[ui]);
-        if (ret_code != ASRC_NO_ERROR) bomb_out(11);
+        if (ret_code != ASRC_NO_ERROR) asrc_error(11);
     }
 
     // Sync
@@ -49,7 +51,7 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CH
     // Sync ASRC. This is just to show that the function works and returns success
     for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)    {
         ret_code = ASRC_sync(&sASRCCtrl[ui]);
-        if (ret_code != ASRC_NO_ERROR) bomb_out(12);
+        if (ret_code != ASRC_NO_ERROR) asrc_error(12);
     }
 
     return (sASRCCtrl[0].uiFsRatio);
@@ -70,7 +72,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         // Check for bounds of new Fs ratio
         if( (FsRatio < sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMinFsRatio) ||
             (FsRatio > sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMaxFsRatio) )
-            printf("FsRatio error");
+            debug_printf("FsRatio error\n");
 #endif
         // Apply shift to time ratio to build integer and fractional parts of time step
         sASRCCtrl[ui].iTimeStepInt     = FsRatio >> (sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].iFsRatioShift);
@@ -91,7 +93,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         // and there will be sASRCCtrl[chan_start].uiNSyncSamples samples per channel produced
         if(ASRC_proc_F1_F2(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
         {
-            bomb_out(12);
+            asrc_error(12);
         }
 
 
@@ -217,7 +219,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         // Note: this is block based similar to SSRC
         if(ASRC_proc_dither(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
         {
-            bomb_out(4);
+            asrc_error(4);
         }
     }
 #endif
