@@ -6,12 +6,12 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>com.xmos.cdt.core.ProjectInfoSyncBuilder</name>
+			<name>com.xmos.cdt.core.LegacyProjectCheckerBuilder</name>
 			<arguments>
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>com.xmos.cdt.core.LegacyProjectCheckerBuilder</name>
+			<name>com.xmos.cdt.core.ProjectInfoSyncBuilder</name>
 			<arguments>
 			</arguments>
 		</buildCommand>
