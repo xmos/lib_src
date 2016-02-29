@@ -11,11 +11,13 @@
 
 extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
+#define DO_FS_BOUNDS_CHECK      1
+
 static void asrc_error(int code)
 {
     debug_printf("ASRC_proc Error code %d\n", code);
     delay_milliseconds(1);
-	_Exit(code);
+    _Exit(code);
 }
 
 
@@ -72,7 +74,10 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         // Check for bounds of new Fs ratio
         if( (FsRatio < sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMinFsRatio) ||
             (FsRatio > sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMaxFsRatio) )
-            debug_printf("FsRatio error\n");
+        {
+            FsRatio = sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
+            debug_printf("!");
+        }
 #endif
         // Apply shift to time ratio to build integer and fractional parts of time step
         sASRCCtrl[ui].iTimeStepInt     = FsRatio >> (sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].iFsRatioShift);
