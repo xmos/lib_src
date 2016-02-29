@@ -1,0 +1,552 @@
+#include <xs1.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <platform.h>
+#include <string.h>
+
+#include <src.h>
+#include <audio_codec.h>
+#include <spdif.h>
+#include <i2s.h>
+#include <i2c.h>
+#include <gpio.h>
+#include <string.h>
+#include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
+
+#include <xscope.h>
+
+#define OUT_FIFO_SIZE           (SRC_N_OUT_IN_RATIO_MAX * SRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial FIFO
+
+
+
+#define DEFAULT_FREQ_HZ     48000
+#define MCLK_FREQUENCY_48  24576000
+#define MCLK_FREQUENCY_441 22579200
+
+
+/* These port assignments all correspond to the Slicekit U16 Audio 8
+   developement kit. Details can be found in the hardware manual
+   for that board.
+
+   The port assignments can be changed for a different port map.
+*/
+
+#define AUDIO_TILE                  0
+#define SPDIF_TILE                  1
+
+in buffered port:32  ports_i2s_adc[4]   = on tile[AUDIO_TILE]: {XS1_PORT_1I,
+                                                     XS1_PORT_1J,
+                                                     XS1_PORT_1K,
+                                                     XS1_PORT_1L};
+port port_i2s_mclk                       = on tile[AUDIO_TILE]: XS1_PORT_1F;
+out buffered port:32 port_i2s_bclk       = on tile[AUDIO_TILE]: XS1_PORT_1H;
+out buffered port:32 port_i2s_wclk       = on tile[AUDIO_TILE]: XS1_PORT_1G;
+clock clk_i2s                            = on tile[AUDIO_TILE]: XS1_CLKBLK_1;
+
+out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
+                                                     XS1_PORT_1N,
+                                                     XS1_PORT_1O,
+                                                     XS1_PORT_1P};
+port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
+
+port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
+/*
+ * 0 DSD_MODE
+ * 1 DAC_RST_N
+ * 2 USB_SEL0
+ * 3 USB_SEL1
+ * 4 VBUS_OUT_EN
+ * 5 PLL_SELECT
+ * 6 ADC_RST_N
+ * 7 MCLK_FSEL
+ */
+
+out buffered port:32 port_pll_ref        = on tile[AUDIO_TILE]: XS1_PORT_1A;
+clock clk_mclk                           = on tile[AUDIO_TILE]: XS1_CLKBLK_2;
+port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
+clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
+port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;    //MIDI OUT
+
+static const unsigned CODEC_I2C_DEVICE_ADDR = 0x18;
+static const unsigned PLL_I2C_DEVICE_ADDR   = 0x4E;
+
+static const enum codec_mode_t codec_mode = CODEC_IS_I2S_SLAVE;
+
+
+
+typedef interface block_transfer_if {
+    void push(int * movable &p_buffer, const unsigned n_samps);
+} block_transfer_if;
+
+typedef interface serial_transfer_push_if {
+    void push(int samples[], const size_t n_samps);
+} serial_transfer_push_if;
+
+typedef interface serial_transfer_pull_if {
+    [[notification]] slave void pull_ready();
+    [[clears_notification]] void do_pull(int samples[], const size_t n_samps);
+} serial_transfer_pull_if;
+
+typedef interface sample_rate_enquiry_if {
+    unsigned get_sample_count(void);
+    unsigned get_buffer_level(void);
+} sample_rate_enquiry_if;
+
+typedef interface fs_ratio_enquiry_if {
+    unsigned get(unsigned nominal_fs_ratio);
+} fs_ratio_enquiry_if;
+
+typedef unsigned fs_ratio_t;
+
+void spdif(chanend c_spdif_rx);
+void serial2block(streaming chanend c_spdif_rx, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_spdif_rx_rate);
+void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
+void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_i2s_rate);
+[[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
+void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate, server fs_ratio_enquiry_if i_fs_ratio);
+
+int main(void){
+    block_transfer_if i_serial2block, i_block2serial;
+    //serial_transfer_push_if i_serial_in;
+    serial_transfer_pull_if i_serial_out;
+    sample_rate_enquiry_if i_sr_spdif_rx, i_sr_i2s;
+    fs_ratio_enquiry_if i_fs_ratio;
+    interface audio_codec_config_if i_codec;
+    interface i2c_master_if i_i2c[1];
+    interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
+    interface i2s_callback_if i_i2s;
+
+    streaming chan c_spdif_rx;
+
+    par{
+        on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ);
+        on tile[SPDIF_TILE]: serial2block(c_spdif_rx, i_serial2block, i_sr_spdif_rx);
+        on tile[SPDIF_TILE]: src(i_serial2block, i_block2serial, i_fs_ratio);
+        on tile[SPDIF_TILE]: block2serial(i_block2serial, i_serial_out, i_sr_i2s);
+
+        on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], codec_mode, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
+        on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
+        on tile[AUDIO_TILE]: output_gpio(i_gpio, 8, port_audio_config, null);
+        on tile[AUDIO_TILE]: {
+            i_gpio[5].output(0); // Select fixed local clock
+            configure_clock_src(clk_mclk, port_i2s_mclk);
+            start_clock(clk_mclk);
+            debug_printf("Starting I2S\n");
+            i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
+        }
+        on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec);
+        on tile[AUDIO_TILE]: rate_server(i_sr_spdif_rx, i_sr_i2s, i_fs_ratio);
+    }
+    return 0;
+}
+
+
+int buffer[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];              //Half of the double buffer used for transferring blocks to src
+
+void serial2block(streaming chanend c_spdif_rx, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_spdif_rx_rate)
+{
+
+    int * movable p_buffer = buffer;
+
+    memset(p_buffer, 0, sizeof(buffer));
+
+    unsigned samp_count = 0;            //Keeps track of samples processed since last query
+    unsigned buff_idx = 0;
+    int32_t sample;
+    size_t index;
+
+    timer t_tick;
+    //int trig_time;
+    int t0, t1;
+
+    while(1){
+        select{
+            //Request to receive samples into double buffer
+            case spdif_receive_sample(c_spdif_rx, sample, index):
+                p_buffer[buff_idx + index] = sample;
+                if (index == 1){    //We have completed a L/R pair
+                    //xscope_int(0, p_buffer[buff_idx]);
+                    buff_idx += 2;  //Move on 2 samples
+                    samp_count ++;  //Keep track of L/R pairs
+                    if(buff_idx == (SRC_N_CHANNELS * SRC_N_IN_SAMPLES)){  //When full..
+                        buff_idx = 0;
+                        //for (int i=0; i<BUFF_SIZE; i++) debug_printf("buf[%d]=%d\n", i, p_buffer[i]);
+                        t_tick :> t0;
+                        i_block_transfer.push(p_buffer, (SRC_N_CHANNELS * SRC_N_IN_SAMPLES)); //Exchange with src task
+                        t_tick :> t1;
+                        //debug_printf("interface call time = %d\n", t1 - t0);
+                    }
+                }
+            break;
+
+            //Request to report number of samples processed since last time
+            case i_spdif_rx_rate.get_sample_count() -> unsigned count:
+                count = samp_count;
+                samp_count = 0;
+            break;
+
+            //Request to report buffer level. Note this is always zero because we do not have a FIFO here
+            //This method is more useful for block2serial, which does have a FIFO. This should never be called.
+            case i_spdif_rx_rate.get_buffer_level() -> unsigned level:
+                level = 0;
+            break;
+        }
+    }
+}
+
+int from_spdif[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
+int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
+
+void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
+{
+    int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
+    int * movable p_to_i2s = to_i2s;
+
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_CORE]; //ASRC state machine state
+    int             iASRCStack[ASRC_CHANNELS_PER_CORE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_CORE];  //Control structure
+    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+
+    set_core_high_priority_on();                //Give me guarranteed 100MHz
+
+    printf("ASRC_CHANNELS_PER_CORE=%d\n", ASRC_CHANNELS_PER_CORE);
+
+    for(int ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+    unsafe {
+        // Set state, stack and coefs into ctrl structure
+        sASRCCtrl[ui].psState                   = &sASRCState[ui];
+        sASRCCtrl[ui].piStack                   = iASRCStack[ui];
+        sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
+    }
+
+    unsigned nominal_fs_ratio = asrc_init(1, 1, sASRCCtrl);
+
+    printf("nominal_fs_ratio=0x%x\n", nominal_fs_ratio);
+
+
+    unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on pushg case below
+    while(1){
+        select{
+            case i_serial2block.push(int * movable &p_buffer_other, const unsigned n_samps):
+                int * movable tmp;
+                tmp = move(p_buffer_other);
+                p_buffer_other = move(p_from_spdif);    //Swap buffer ownership between tasks
+                p_from_spdif = move(tmp);
+                do_dsp_flag = 1;                        //We have a fresh buffer to process
+            break;
+
+            default:
+                if (do_dsp_flag){                        //Do the sample rate conversion
+                    port_debug <: 1;                     //debug
+                    unsigned n_samps_out;
+                    fs_ratio_t fs_ratio = i_fs_ratio.get(nominal_fs_ratio); //Find out how many samples to produce
+                    //debug_printf("Using fs_ratio=0x%x\n",fs_ratio);
+                    //xscope_int(LEFT, p_to_i2s[0]);
+
+#if 1
+                   n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
+                   xscope_int(2, fs_ratio);
+#else
+                    for(int i=0;i<SRC_N_IN_SAMPLES;i++){
+                        p_to_i2s[2*i] = p_from_spdif[2*i];
+                        p_to_i2s[2*i + 1] = p_from_spdif[2*i + 1];
+                    }
+                    n_samps_out = SRC_N_IN_SAMPLES;
+#endif
+                    i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
+                    //xscope_int(LEFT, p_to_i2s[0]);
+                    do_dsp_flag = 0;                        //Clear flag and wait for next input block
+                    port_debug <: 0;                     //debug
+                    //debug_printf("n_samps_out=%d\n",n_samps_out);
+                }
+            break;
+        }
+    }
+}
+
+
+
+//block2serial helper - sets FIFOs pointers to half and clears contents
+static inline void init_fifos( int * unsafe * unsafe wr_ptr, int * unsafe * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries)
+{
+    unsafe{
+        *wr_ptr = fifo_base;
+        *rd_ptr = fifo_base + (fifo_size_entries / 2);
+        memset(fifo_base, 0, fifo_size_entries * sizeof(int));
+    }
+    //debug_printf("Init FIFO\n");
+}
+
+//Used by block2serial to push samples from ASRC output into FIFO
+static inline unsigned push_sample_into_fifo(int samp, int * unsafe * unsafe wr_ptr, int * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries){
+    unsigned success = 1;
+    unsafe{
+        **wr_ptr = samp;    //write value into fifo
+
+        (*wr_ptr)++; //increment write pointer (by reference)
+        if (*wr_ptr >= fifo_base + fifo_size_entries) *wr_ptr = fifo_base; //wrap pointer
+        if (*wr_ptr == rd_ptr) {
+            success = 0;
+        }
+    }
+    return success;
+}
+
+//Used by block2serial of samples to pull from output FIFO filled by ASRC
+static inline unsigned pull_sample_from_fifo(int &samp, int * unsafe wr_ptr, int * unsafe * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries){
+    unsigned success = 1;
+    unsafe{
+        samp = **rd_ptr;    //read value from fifo
+        (*rd_ptr)++; //increment write pointer (by reference)
+        if (*rd_ptr >= fifo_base + fifo_size_entries) *rd_ptr = fifo_base; //wrap pointer
+        if (*rd_ptr == wr_ptr){
+            success = 0;
+        }
+    }
+    return success;
+}
+
+//Used by block2serial to find out how many samples we have in FIFO
+static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, int * const unsafe fifo_base, const unsigned fifo_size_entries){
+    unsigned fill_level;
+    if (wr_ptr >= rd_ptr){
+        fill_level = wr_ptr - rd_ptr;
+    }
+    else{
+        fill_level = fifo_size_entries + wr_ptr - rd_ptr;
+    }
+    return fill_level;
+}
+
+//Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
+void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_i2s_rate)
+{
+    unsafe
+    { //To keep pointers in scope throughout function
+
+        int samps_to_i2s[2][OUT_FIFO_SIZE];         //Circular buffers and pointers for output from block2serial
+        int * unsafe ptr_base_samps_to_i2s[2];
+        int * unsafe ptr_rd_samps_to_i2s[2];
+        int * unsafe ptr_wr_samps_to_i2s[2];
+
+        //Double buffer from output from SRC
+        int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
+        int * movable p_to_i2s = to_i2s;            //Movable pointer for swapping with SRC
+
+        unsigned samp_count = 0;                    //Keeps track of number of samples passed through
+
+        //timer t_tick;
+        //int trig_time;
+        //int t0, t1;
+
+        for (unsigned i=0; i<2; i++)                //Initialise FIFOs
+        {
+            ptr_base_samps_to_i2s[i] = samps_to_i2s[i];
+            init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+        }
+
+        while(1){
+            select{
+                //Request for pair of samples from I2S
+                case i_serial_out.pull_ready():
+
+                    unsigned success = 1;
+                    int samp[2];
+                    for (int i=0; i<2; i++) {
+                        success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                    }
+                    //xscope_int(1, samp[0]);
+                    i_serial_out.do_pull(samp, 2);
+                    if (!success) {
+                        for (int i=0; i<2; i++) {   //Init all FIFOs if any of them have under/overflowed
+                            debug_printf("-");      //FIFO empty
+                            init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                        }
+                    }
+                    samp_count ++;                  //Keep track of number of samples served to I2S
+                break;
+
+                //Request to push block of samples from SRC
+                case i_block2serial.push(int * movable &p_buffer_other, const unsigned n_samps):
+                    int * movable tmp;
+                    tmp = move(p_buffer_other);         //First swap buffer pointers
+                    p_buffer_other = move(p_to_i2s);
+                    p_to_i2s = move(tmp);
+
+                    for(int i=0; i<n_samps; i++) {     //Get entire buffer
+                        unsigned success = 1;           //Keep track of status of FIFO operations
+                        for (int j=0; j<2; j++) {       //Push samples into FIFO
+                            int samp = p_to_i2s[2*i + j];
+                            success &= push_sample_into_fifo(samp, &ptr_wr_samps_to_i2s[j], ptr_rd_samps_to_i2s[j], ptr_base_samps_to_i2s[j], OUT_FIFO_SIZE);
+                        }
+
+                        //xscope_int(LEFT, p_to_i2s[0]);
+
+                        if (!success) {                 //One of the FIFOs has overflowed
+                            for (int i=0; i<2; i++){
+                                debug_printf("+");  //FIFO full
+                                //debug_printf("push fail - buffer fill=%d, ", get_fill_level(ptr_wr_samps_to_i2s[i], ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE));
+                                init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                            }
+                        }
+                    }
+                break;
+
+                //Request to report number of samples processed since last request
+                case i_i2s_rate.get_sample_count() -> unsigned count:
+                    count = samp_count;
+                    samp_count = 0;
+                break;
+
+                //Request to report on the current buffer level
+                case i_i2s_rate.get_buffer_level() -> unsigned fill_level:
+                    //Currently just reports the level of first FIFO. Each FIFO should be the same
+                    fill_level = get_fill_level(ptr_wr_samps_to_i2s[0], ptr_rd_samps_to_i2s[0], ptr_base_samps_to_i2s[0], OUT_FIFO_SIZE);
+                break;
+            }
+        }
+    }//end of unsafe region
+}
+
+//Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
+[[distributable]]
+void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
+    {
+
+    int samples[2] = {0,0};
+    unsigned sample_rate = DEFAULT_FREQ_HZ;
+    unsigned mclk_rate = MCLK_FREQUENCY_48;
+
+
+    while (1) {
+        select {
+            case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
+            i2s_config.mclk_bclk_ratio = mclk_rate / (sample_rate << 6);
+            i2s_config.mode = I2S_MODE_I2S;
+            i_codec.reset(sample_rate, mclk_rate);
+            debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
+            break;
+
+            //Start of I2S frame
+            case i2s.restart_check() -> i2s_restart_t ret:
+            ret = I2S_NO_RESTART;
+            break;
+
+            //Get samples from ADC
+            case i2s.receive(size_t index, int32_t sample):
+            break;
+
+            //Send samples to DAC
+            case i2s.send(size_t index) -> int32_t sample:
+            sample = samples[index];
+            if (index == 1){
+                i_serial_out.pull_ready();
+            }
+            break;
+
+            case i_serial_out.do_pull(int new_samples[], const size_t n_samps):
+            memcpy(samples, new_samples, n_samps * sizeof(int));
+            break;
+        }
+    }
+}
+
+
+//Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
+//to produce to keep the output FIFO in block2serial rougly centered. Uses an average of averages to
+//filter the sample counts requested from serial2block and block2serial
+
+#define SR_CALC_PERIOD  2000000 //20ms The period over which we count samples to find the rate
+#define SR_CALC_BLOCKS  10      //How many blocks of period SR_CALC_PERIOD to average out
+
+#define REPORT_PERIOD   50000000//500ms
+
+void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
+        server fs_ratio_enquiry_if i_fs_ratio)
+{
+    unsigned samp_count_spdif[SR_CALC_BLOCKS];  //Array of samples counts for each period
+    unsigned samp_count_i2s[SR_CALC_BLOCKS];
+    unsigned samp_count_idx = 0;                //Index to point to current sample count block
+    unsigned samp_count_valid = 0;              //Flag which gets set after we have filled the whole array
+    unsigned samp_rate_spdif = 0;               //Current average SR
+    unsigned samp_rate_i2s = 0;                 //Current average SR
+    unsigned i2s_buff_level = 0;                //Buffer fill level
+
+    timer t_print;
+    int t_print_trigger;
+
+    t_print :> t_print_trigger;
+    t_print_trigger += REPORT_PERIOD;
+
+    fs_ratio_t fs_ratio;                        //4.28 fixed point value of how many samples we want SRC to produce
+                                                //input fs/output fs. ie. below 1 means inoput faster than output
+    fs_ratio_t fs_ratio_old;                    //Last time round value for filtering
+    timer t_period_calc;                        //Timer to govern sample count periods
+    int t_calc_trigger;                         //Trigger comparison for above
+
+    t_period_calc :> t_calc_trigger;            //Get current time and set trigger for the future
+    t_calc_trigger += SR_CALC_PERIOD;
+
+    while(1){
+        select{
+            //Serve up latest sample count value when required
+            case i_fs_ratio.get(unsigned nominal_fs_ratio) -> fs_ratio_t fs_ratio_ret:
+                if (!samp_count_valid) fs_ratio = nominal_fs_ratio; //Pass back nominal until we have valid rate data
+                fs_ratio_ret = fs_ratio;
+            break;
+
+            //Timeout to trigger calculation of new fs_ratio
+            case t_period_calc when timerafter(t_calc_trigger) :> int _:
+                t_calc_trigger += SR_CALC_PERIOD;
+
+                samp_count_spdif[samp_count_idx] = i_spdif_rate.get_sample_count(); //get spdif sample count;
+                samp_count_i2s[samp_count_idx] = i_i2s_rate.get_sample_count();     //And I2S
+                i2s_buff_level = i_i2s_rate.get_buffer_level();
+
+                samp_count_idx ++;                                      //Wrap index and set valid
+                if (samp_count_idx == SR_CALC_BLOCKS){
+                    samp_count_valid = 1;
+                    samp_count_idx = 0;
+                }
+
+                if (samp_count_valid) {                                 //Only do this if count is valid
+                    samp_rate_spdif = 0;
+                    samp_rate_i2s = 0;
+                    for (int i=0; i<SR_CALC_BLOCKS; i++)                //Sum the array of averages to get long term rate
+                    {
+                        samp_rate_spdif += samp_count_spdif[i];
+                        samp_rate_i2s += samp_count_i2s[i];
+                    }
+
+                    //Calculate fs_ratio to tell src how many samples to produce
+                    if (samp_rate_spdif != 0 && samp_rate_i2s != 0) {
+                        fs_ratio_old = fs_ratio;        //Save old value
+                        fs_ratio = (unsigned) ((samp_rate_i2s * 0x10000000ULL) / samp_rate_spdif);
+                        int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
+
+                        //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
+                        //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
+                        fs_ratio = (unsigned) (((100000 + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / 100000);
+
+#define OLD_VAL_WEIGHTING   20
+                        //Apply simple low pass filter
+                        fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
+                                (1 + OLD_VAL_WEIGHTING));
+                    }
+                }
+            break;
+
+            case t_print when timerafter(t_print_trigger) :> int _:
+                t_print_trigger += REPORT_PERIOD;
+                //Calculate sample rates in Hz for human readability
+                static const unsigned multiplier = XS1_TIMER_MHZ * 1000000 / (unsigned) (SR_CALC_PERIOD * SR_CALC_BLOCKS);
+                debug_printf("Average spdif rate=%d, i2s rate = %d, i2s_buff=%d, fs_ratio=0x%x\n",
+                        samp_rate_spdif * multiplier, samp_rate_i2s * multiplier, i2s_buff_level, fs_ratio);
+            break;
+
+
+        }
+    }
+}
+
