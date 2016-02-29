@@ -11,9 +11,8 @@
 #include <i2s.h>
 #include <i2c.h>
 #include <gpio.h>
-#include <string.h>
-#include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 
+#include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
 
 #define OUT_FIFO_SIZE           (SRC_N_OUT_IN_RATIO_MAX * SRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial FIFO
@@ -89,7 +88,7 @@ typedef interface serial_transfer_pull_if {
 } serial_transfer_pull_if;
 
 typedef interface sample_rate_enquiry_if {
-    unsigned get_sample_count(void);
+    unsigned get_sample_count(int &elapsed_time_in_ticks);
     unsigned get_buffer_level(void);
 } sample_rate_enquiry_if;
 
@@ -148,7 +147,6 @@ void serial2block(streaming chanend c_spdif_rx, client block_transfer_if i_block
 {
 
     int * movable p_buffer = buffer;
-
     memset(p_buffer, 0, sizeof(buffer));
 
     unsigned samp_count = 0;            //Keeps track of samples processed since last query
@@ -156,9 +154,11 @@ void serial2block(streaming chanend c_spdif_rx, client block_transfer_if i_block
     int32_t sample;
     size_t index;
 
-    timer t_tick;
-    //int trig_time;
-    int t0, t1;
+    timer t_tick;                       //100MHz timer for keeping track of sample ime
+    int t_last_count, t_this_count;     //Keeps track of time when querying sample count
+    t_tick :> t_last_count;             //Get time for zero samples counted
+
+    int t0, t1; //debug
 
     while(1){
         select{
@@ -177,11 +177,16 @@ void serial2block(streaming chanend c_spdif_rx, client block_transfer_if i_block
                         t_tick :> t1;
                         //debug_printf("interface call time = %d\n", t1 - t0);
                     }
+                }                
+                else {                      //First sample in pair
+                  t_tick :> t_this_count;   //Grab timestamp of this sample
                 }
             break;
 
             //Request to report number of samples processed since last time
-            case i_spdif_rx_rate.get_sample_count() -> unsigned count:
+            case i_spdif_rx_rate.get_sample_count(int &elapsed_time_in_ticks) -> unsigned count:  
+                elapsed_time_in_ticks = t_this_count - t_last_count;  //Set elapsed time in 10ns ticks
+                t_last_count = t_this_count;                          //Store for next time around
                 count = samp_count;
                 samp_count = 0;
             break;
@@ -336,9 +341,9 @@ void block2serial(server block_transfer_if i_block2serial, client serial_transfe
 
         unsigned samp_count = 0;                    //Keeps track of number of samples passed through
 
-        //timer t_tick;
-        //int trig_time;
-        //int t0, t1;
+        timer t_tick;                               //100MHz timer for keeping track of sample ime
+        int t_last_count, t_this_count;             //Keeps track of time when querying sample count
+        t_tick :> t_last_count;                     //Get time for zero samples counted
 
         for (unsigned i=0; i<2; i++)                //Initialise FIFOs
         {
@@ -394,7 +399,9 @@ void block2serial(server block_transfer_if i_block2serial, client serial_transfe
                 break;
 
                 //Request to report number of samples processed since last request
-                case i_i2s_rate.get_sample_count() -> unsigned count:
+                case i_i2s_rate.get_sample_count(int &elapsed_time_in_ticks) -> unsigned count:
+                    elapsed_time_in_ticks = t_this_count - t_last_count;  //Set elapsed time in 10ns ticks
+                    t_last_count = t_this_count;                          //Store for next time around
                     count = samp_count;
                     samp_count = 0;
                 break;
@@ -484,6 +491,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     fs_ratio_t fs_ratio_old;                    //Last time round value for filtering
     timer t_period_calc;                        //Timer to govern sample count periods
     int t_calc_trigger;                         //Trigger comparison for above
+    int sample_time_spdif;                      //Used for passing to get_sample_count method by refrence
+    int sample_time_i2s;                        //Used for passing to get_sample_count method by refrence
 
     t_period_calc :> t_calc_trigger;            //Get current time and set trigger for the future
     t_calc_trigger += SR_CALC_PERIOD;
@@ -500,8 +509,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             case t_period_calc when timerafter(t_calc_trigger) :> int _:
                 t_calc_trigger += SR_CALC_PERIOD;
 
-                samp_count_spdif[samp_count_idx] = i_spdif_rate.get_sample_count(); //get spdif sample count;
-                samp_count_i2s[samp_count_idx] = i_i2s_rate.get_sample_count();     //And I2S
+                samp_count_spdif[samp_count_idx] = i_spdif_rate.get_sample_count(sample_time_spdif); //get spdif sample count;
+                samp_count_i2s[samp_count_idx] = i_i2s_rate.get_sample_count(sample_time_i2s);     //And I2S
                 i2s_buff_level = i_i2s_rate.get_buffer_level();
 
                 samp_count_idx ++;                                      //Wrap index and set valid
