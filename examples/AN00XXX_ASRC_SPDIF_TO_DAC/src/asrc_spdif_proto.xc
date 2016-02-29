@@ -129,8 +129,11 @@ int main(void){
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
         on tile[AUDIO_TILE]: output_gpio(i_gpio, 8, port_audio_config, null);
         on tile[AUDIO_TILE]: {
-            i_gpio[5].output(0); // Select fixed local clock
-            configure_clock_src(clk_mclk, port_i2s_mclk);
+            i_gpio[5].output(0); //Select fixed local clock on MCLK mux
+            i_gpio[2].output(0); //Output something to this interface (value is don't care) to avoid compiler warning of unused end
+            i_gpio[3].output(0); //As above
+            i_gpio[4].output(0); //As above
+            configure_clock_src(clk_mclk, port_i2s_mclk) //Connect MCLK clock block to input pin
             start_clock(clk_mclk);
             debug_printf("Starting I2S\n");
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
@@ -164,10 +167,10 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
     }
 }
 
-int buffer[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];              //Half of the double buffer used for transferring blocks to src
+
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_input_rate)
 {
-
+    int buffer[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];              //Half of the double buffer used for transferring blocks to src
     int * movable p_buffer = buffer;    //One half of the double buffer
     memset(p_buffer, 0, sizeof(buffer));
 
@@ -438,7 +441,6 @@ void block2serial(server block_transfer_if i_block2serial, client serial_transfe
 [[distributable]]
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
-
     int samples[2] = {0,0};
     unsigned sample_rate = DEFAULT_FREQ_HZ;
     unsigned mclk_rate = MCLK_FREQUENCY_48;
