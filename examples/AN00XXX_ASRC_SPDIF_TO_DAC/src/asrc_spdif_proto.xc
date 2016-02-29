@@ -99,11 +99,11 @@ typedef interface fs_ratio_enquiry_if {
 typedef unsigned fs_ratio_t;
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
-void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_input_rate);
+[[distributable]] void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_input_rate);
 void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
-void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate);
+[[distributable]] unsafe void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
-void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio);
+[[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio);
 
 int main(void){
     serial_transfer_push_if i_serial_in;
@@ -123,7 +123,7 @@ int main(void){
         on tile[SPDIF_TILE]: spdif_handler(c_spdif_rx, i_serial_in);
         on tile[SPDIF_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
         on tile[SPDIF_TILE]: src(i_serial2block, i_block2serial, i_fs_ratio);
-        on tile[SPDIF_TILE]: block2serial(i_block2serial, i_serial_out, i_sr_i2s);
+        on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_i2s);}
 
         on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], codec_mode, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
@@ -133,7 +133,7 @@ int main(void){
             i_gpio[2].output(0); //Output something to this interface (value is don't care) to avoid compiler warning of unused end
             i_gpio[3].output(0); //As above
             i_gpio[4].output(0); //As above
-            configure_clock_src(clk_mclk, port_i2s_mclk) //Connect MCLK clock block to input pin
+            configure_clock_src(clk_mclk, port_i2s_mclk); //Connect MCLK clock block to input pin
             start_clock(clk_mclk);
             debug_printf("Starting I2S\n");
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
@@ -167,7 +167,7 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
     }
 }
 
-
+[[distributable]]
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer, server sample_rate_enquiry_if i_input_rate)
 {
     int buffer[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];              //Half of the double buffer used for transferring blocks to src
@@ -346,95 +346,93 @@ static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, 
 }
 
 //Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
-void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
+//This task is marked as unsafe keep pointers in scope throughout function
+[[distributable]]
+unsafe void block2serial(server block_transfer_if i_block2serial, client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
-    unsafe
-    { //To keep pointers in scope throughout function
+    int samps_to_i2s[2][OUT_FIFO_SIZE];         //Circular buffers and pointers for output from block2serial
+    int * unsafe ptr_base_samps_to_i2s[2];
+    int * unsafe ptr_rd_samps_to_i2s[2];
+    int * unsafe ptr_wr_samps_to_i2s[2];
 
-        int samps_to_i2s[2][OUT_FIFO_SIZE];         //Circular buffers and pointers for output from block2serial
-        int * unsafe ptr_base_samps_to_i2s[2];
-        int * unsafe ptr_rd_samps_to_i2s[2];
-        int * unsafe ptr_wr_samps_to_i2s[2];
+    //Double buffer from output from SRC
+    int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
+    int * movable p_to_i2s = to_i2s;            //Movable pointer for swapping with SRC
 
-        //Double buffer from output from SRC
-        int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
-        int * movable p_to_i2s = to_i2s;            //Movable pointer for swapping with SRC
+    unsigned samp_count = 0;                    //Keeps track of number of samples passed through
 
-        unsigned samp_count = 0;                    //Keeps track of number of samples passed through
+    timer t_tick;                               //100MHz timer for keeping track of sample ime
+    int t_last_count, t_this_count;             //Keeps track of time when querying sample count
+    t_tick :> t_last_count;                     //Get time for zero samples counted
 
-        timer t_tick;                               //100MHz timer for keeping track of sample ime
-        int t_last_count, t_this_count;             //Keeps track of time when querying sample count
-        t_tick :> t_last_count;                     //Get time for zero samples counted
+    for (unsigned i=0; i<2; i++)                //Initialise FIFOs
+    {
+        ptr_base_samps_to_i2s[i] = samps_to_i2s[i];
+        init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+    }
 
-        for (unsigned i=0; i<2; i++)                //Initialise FIFOs
-        {
-            ptr_base_samps_to_i2s[i] = samps_to_i2s[i];
-            init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
-        }
+    while(1){
+        select{
+            //Request for pair of samples from I2S
+            case i_serial_out.pull_ready():
 
-        while(1){
-            select{
-                //Request for pair of samples from I2S
-                case i_serial_out.pull_ready():
-
-                    unsigned success = 1;
-                    int samp[2];
-                    for (int i=0; i<2; i++) {
-                        success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                unsigned success = 1;
+                int samp[2];
+                for (int i=0; i<2; i++) {
+                    success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                }
+                //xscope_int(1, samp[0]);
+                i_serial_out.do_pull(samp, 2);
+                if (!success) {
+                    for (int i=0; i<2; i++) {   //Init all FIFOs if any of them have under/overflowed
+                        debug_printf("-");      //FIFO empty
+                        init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
                     }
-                    //xscope_int(1, samp[0]);
-                    i_serial_out.do_pull(samp, 2);
-                    if (!success) {
-                        for (int i=0; i<2; i++) {   //Init all FIFOs if any of them have under/overflowed
-                            debug_printf("-");      //FIFO empty
+                }
+                samp_count ++;                  //Keep track of number of samples served to I2S
+            break;
+
+            //Request to push block of samples from SRC
+            case i_block2serial.push(int * movable &p_buffer_other, const unsigned n_samps):
+                int * movable tmp;
+                tmp = move(p_buffer_other);         //First swap buffer pointers
+                p_buffer_other = move(p_to_i2s);
+                p_to_i2s = move(tmp);
+
+                for(int i=0; i<n_samps; i++) {     //Get entire buffer
+                    unsigned success = 1;           //Keep track of status of FIFO operations
+                    for (int j=0; j<2; j++) {       //Push samples into FIFO
+                        int samp = p_to_i2s[2*i + j];
+                        success &= push_sample_into_fifo(samp, &ptr_wr_samps_to_i2s[j], ptr_rd_samps_to_i2s[j], ptr_base_samps_to_i2s[j], OUT_FIFO_SIZE);
+                    }
+
+                    //xscope_int(LEFT, p_to_i2s[0]);
+
+                    if (!success) {                 //One of the FIFOs has overflowed
+                        for (int i=0; i<2; i++){
+                            debug_printf("+");  //FIFO full
+                            //debug_printf("push fail - buffer fill=%d, ", get_fill_level(ptr_wr_samps_to_i2s[i], ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE));
                             init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
                         }
                     }
-                    samp_count ++;                  //Keep track of number of samples served to I2S
-                break;
+                }
+            break;
 
-                //Request to push block of samples from SRC
-                case i_block2serial.push(int * movable &p_buffer_other, const unsigned n_samps):
-                    int * movable tmp;
-                    tmp = move(p_buffer_other);         //First swap buffer pointers
-                    p_buffer_other = move(p_to_i2s);
-                    p_to_i2s = move(tmp);
+            //Request to report number of samples processed since last request
+            case i_output_rate.get_sample_count(int &elapsed_time_in_ticks) -> unsigned count:
+                elapsed_time_in_ticks = t_this_count - t_last_count;  //Set elapsed time in 10ns ticks
+                t_last_count = t_this_count;                          //Store for next time around
+                count = samp_count;
+                samp_count = 0;
+            break;
 
-                    for(int i=0; i<n_samps; i++) {     //Get entire buffer
-                        unsigned success = 1;           //Keep track of status of FIFO operations
-                        for (int j=0; j<2; j++) {       //Push samples into FIFO
-                            int samp = p_to_i2s[2*i + j];
-                            success &= push_sample_into_fifo(samp, &ptr_wr_samps_to_i2s[j], ptr_rd_samps_to_i2s[j], ptr_base_samps_to_i2s[j], OUT_FIFO_SIZE);
-                        }
-
-                        //xscope_int(LEFT, p_to_i2s[0]);
-
-                        if (!success) {                 //One of the FIFOs has overflowed
-                            for (int i=0; i<2; i++){
-                                debug_printf("+");  //FIFO full
-                                //debug_printf("push fail - buffer fill=%d, ", get_fill_level(ptr_wr_samps_to_i2s[i], ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE));
-                                init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
-                            }
-                        }
-                    }
-                break;
-
-                //Request to report number of samples processed since last request
-                case i_output_rate.get_sample_count(int &elapsed_time_in_ticks) -> unsigned count:
-                    elapsed_time_in_ticks = t_this_count - t_last_count;  //Set elapsed time in 10ns ticks
-                    t_last_count = t_this_count;                          //Store for next time around
-                    count = samp_count;
-                    samp_count = 0;
-                break;
-
-                //Request to report on the current buffer level
-                case i_output_rate.get_buffer_level() -> unsigned fill_level:
-                    //Currently just reports the level of first FIFO. Each FIFO should be the same
-                    fill_level = get_fill_level(ptr_wr_samps_to_i2s[0], ptr_rd_samps_to_i2s[0], ptr_base_samps_to_i2s[0], OUT_FIFO_SIZE);
-                break;
-            }
+            //Request to report on the current buffer level
+            case i_output_rate.get_buffer_level() -> unsigned fill_level:
+                //Currently just reports the level of first FIFO. Each FIFO should be the same
+                fill_level = get_fill_level(ptr_wr_samps_to_i2s[0], ptr_rd_samps_to_i2s[0], ptr_base_samps_to_i2s[0], OUT_FIFO_SIZE);
+            break;
         }
-    }//end of unsafe region
+    }
 }
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
@@ -489,6 +487,7 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
 
 #define REPORT_PERIOD   50000000//500ms
 
+[[combinable]]
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
         server fs_ratio_enquiry_if i_fs_ratio)
 {
