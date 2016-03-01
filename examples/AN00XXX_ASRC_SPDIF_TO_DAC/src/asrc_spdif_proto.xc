@@ -19,7 +19,7 @@
 
 
 
-#define DEFAULT_FREQ_HZ     48000
+#define DEFAULT_FREQ_HZ    48000
 #define MCLK_FREQUENCY_48  24576000
 #define MCLK_FREQUENCY_441 22579200
 
@@ -394,6 +394,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial, client serial_
 
             //Request to push block of samples from SRC
             case i_block2serial.push(int * movable &p_buffer_other, const unsigned n_samps):
+                t_tick :> t_this_count;
                 int * movable tmp;
                 tmp = move(p_buffer_other);         //First swap buffer pointers
                 p_buffer_other = move(p_to_i2s);
@@ -477,27 +478,81 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
     }
 }
 
+//Type which tells us the current status of the detected sample rate - is it supported?
+typedef enum sample_rate_status_t{
+    INVALID,
+    VALID }
+    sample_rate_status_t;
+
+#define SR_TOLERANCE_PPM    1000
+#define LOWER_LIMIT(freq) (freq - (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
+#define UPPER_LIMIT(freq) (freq + (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
+
+static const unsigned sr_range[6 * 3] = {
+        44100, LOWER_LIMIT(44100), UPPER_LIMIT(44100),
+        48000, LOWER_LIMIT(48000), UPPER_LIMIT(48000),
+        88200, LOWER_LIMIT(88200), UPPER_LIMIT(88200),
+        96000, LOWER_LIMIT(96000), UPPER_LIMIT(96000),
+        176400, LOWER_LIMIT(176400), UPPER_LIMIT(176400),
+        192000, LOWER_LIMIT(192000), UPPER_LIMIT(192000) };
+
+//Helper function for rate_server to check for validity of detected sample rate. Takes sample rate as integer
+static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nominal_sample_rate)
+{
+    sample_rate_status_t result = INVALID;
+    nominal_sample_rate = 0;
+    for (int i = 0; i < 6 * 3; i+=3) {
+        if ((sr_range[i + 1] < sample_rate) && (sample_rate < sr_range[i + 2])){
+            nominal_sample_rate = sr_range[i];
+            result = VALID;
+        }
+    }
+    return result;
+}
 
 //Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
 //to produce to keep the output FIFO in block2serial rougly centered. Uses an average of averages to
 //filter the sample counts requested from serial2block and block2serial
 
-#define SR_CALC_PERIOD  2000000 //20ms The period over which we count samples to find the rate
-#define SR_CALC_BLOCKS  10      //How many blocks of period SR_CALC_PERIOD to average out
+#define SR_CALC_PERIOD  10000000    //100ms The period over which we count samples to find the rate
+#define REPORT_PERIOD   50000000    //500ms How often we print the rates to the screen for debug
+#define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
+                                    //Using 12 gives us 20 bits of integer - up to 1.048MHz SR
+//This multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
+//to support a measurement period of 1s at 192KHz with over 2 order of magnitude margin
+#define SR_MULTIPLIER   ((1<<SR_FRAC_BITS) * (unsigned long long) XS1_TIMER_HZ)
 
-#define REPORT_PERIOD   50000000//500ms
+typedef struct rate_info_t{
+    unsigned samp_count;    //Sample count over last period
+    unsigned time_ticks;    //Time in ticks for last count
+    unsigned current_rate;  //Current average rate in 20.12 fixed point format
+    unsigned last_rate;     //Average rate from last period in 20.12 fixed point
+    sample_rate_status_t status;    //Lock status
+    unsigned nominal_rate;  //Snapped-to nominal rate
+} rate_info_t;
+
 
 [[combinable]]
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
         server fs_ratio_enquiry_if i_fs_ratio)
 {
-    unsigned samp_count_spdif[SR_CALC_BLOCKS];  //Array of samples counts for each period
-    unsigned samp_count_i2s[SR_CALC_BLOCKS];
-    unsigned samp_count_idx = 0;                //Index to point to current sample count block
-    unsigned samp_count_valid = 0;              //Flag which gets set after we have filled the whole array
-    unsigned samp_rate_spdif = 0;               //Current average SR
-    unsigned samp_rate_i2s = 0;                 //Current average SR
-    unsigned i2s_buff_level = 0;                //Buffer fill level
+    rate_info_t spdif_info = {  //Initialise to nominal values for default frequency
+            ((DEFAULT_FREQ_HZ * 10000000ULL) / XS1_TIMER_HZ),
+            SR_CALC_PERIOD,
+            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            INVALID,
+            DEFAULT_FREQ_HZ};
+
+    rate_info_t i2s_info = {    //Initialise to nominal values for default frequency
+            ((DEFAULT_FREQ_HZ * 10000000ULL) / XS1_TIMER_HZ),
+            SR_CALC_PERIOD,
+            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            INVALID,
+            DEFAULT_FREQ_HZ};
+
+    unsigned i2s_buff_level = 0;                //Buffer fill level. Initialise to empty.
 
     timer t_print;
     int t_print_trigger;
@@ -510,6 +565,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     fs_ratio_t fs_ratio_old;                    //Last time round value for filtering
     timer t_period_calc;                        //Timer to govern sample count periods
     int t_calc_trigger;                         //Trigger comparison for above
+
     int sample_time_spdif;                      //Used for passing to get_sample_count method by refrence
     int sample_time_i2s;                        //Used for passing to get_sample_count method by refrence
 
@@ -520,57 +576,64 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
         select{
             //Serve up latest sample count value when required
             case i_fs_ratio.get(unsigned nominal_fs_ratio) -> fs_ratio_t fs_ratio_ret:
-                if (!samp_count_valid) fs_ratio = nominal_fs_ratio; //Pass back nominal until we have valid rate data
-                fs_ratio_ret = fs_ratio;
+                if (spdif_info.status == VALID && i2s_info.status == VALID){
+                    fs_ratio_ret = fs_ratio;    //Pass back calculated value
+                }
+                else {
+                    fs_ratio = nominal_fs_ratio; //Pass back nominal until we have valid rate data
+                }
             break;
 
             //Timeout to trigger calculation of new fs_ratio
             case t_period_calc when timerafter(t_calc_trigger) :> int _:
                 t_calc_trigger += SR_CALC_PERIOD;
 
-                samp_count_spdif[samp_count_idx] = i_spdif_rate.get_sample_count(sample_time_spdif); //get spdif sample count;
-                samp_count_i2s[samp_count_idx] = i_i2s_rate.get_sample_count(sample_time_i2s);     //And I2S
+                unsigned samp_count_spdif = i_spdif_rate.get_sample_count(sample_time_spdif); //get spdif sample count;
+                unsigned samp_count_i2s   = i_i2s_rate.get_sample_count(sample_time_i2s);     //And I2S
                 i2s_buff_level = i_i2s_rate.get_buffer_level();
 
-                samp_count_idx ++;                                      //Wrap index and set valid
-                if (samp_count_idx == SR_CALC_BLOCKS){
-                    samp_count_valid = 1;
-                    samp_count_idx = 0;
+                //debug_printf("samp_count_spdif=%d, sample_time_spdif=%d, samp_count_i2s=%d, sample_time_i2s=%d\n", samp_count_spdif, sample_time_spdif, samp_count_i2s, sample_time_i2s);
+
+                if (sample_time_spdif){
+                    spdif_info.current_rate = (((unsigned long long)samp_count_spdif * SR_MULTIPLIER) / sample_time_spdif);
+                }
+                if (sample_time_i2s){
+                    i2s_info.current_rate   = (((unsigned long long)samp_count_i2s * SR_MULTIPLIER) / sample_time_i2s);
                 }
 
-                if (samp_count_valid) {                                 //Only do this if count is valid
-                    samp_rate_spdif = 0;
-                    samp_rate_i2s = 0;
-                    for (int i=0; i<SR_CALC_BLOCKS; i++)                //Sum the array of averages to get long term rate
-                    {
-                        samp_rate_spdif += samp_count_spdif[i];
-                        samp_rate_i2s += samp_count_i2s[i];
-                    }
+                //debug_printf("spdif_info.current_rate=%d, i2s_info.current_rate=%d\n", spdif_info.current_rate, i2s_info.current_rate);
 
-                    //Calculate fs_ratio to tell src how many samples to produce
-                    if (samp_rate_spdif != 0 && samp_rate_i2s != 0) {
-                        fs_ratio_old = fs_ratio;        //Save old value
-                        fs_ratio = (unsigned) ((samp_rate_i2s * 0x10000000ULL) / samp_rate_spdif);
-                        int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
+                spdif_info.status = detect_frequency(spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.nominal_rate);
+                i2s_info.status   = detect_frequency(i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.nominal_rate);
 
-                        //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
-                        //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
-                        fs_ratio = (unsigned) (((100000 + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / 100000);
+
+                //Calculate fs_ratio to tell src how many samples to produce
+                if (spdif_info.status == VALID && i2s_info.status == VALID) {
+                    fs_ratio_old = fs_ratio;        //Save old value
+                    fs_ratio = (unsigned) ((i2s_info.current_rate * 0x10000000ULL) / spdif_info.current_rate);
+                    int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
+
+                    //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
+                    //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
+                    fs_ratio = (unsigned) (((100000 + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / 100000);
 
 #define OLD_VAL_WEIGHTING   20
-                        //Apply simple low pass filter
-                        fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
-                                (1 + OLD_VAL_WEIGHTING));
-                    }
+                    //Apply simple low pass filter
+                    fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
+                            (1 + OLD_VAL_WEIGHTING));
                 }
+
+                if (spdif_info.status == VALID) spdif_info.last_rate = spdif_info.current_rate;
+                if (i2s_info.status == VALID)   i2s_info.last_rate = i2s_info.current_rate;
             break;
 
             case t_print when timerafter(t_print_trigger) :> int _:
                 t_print_trigger += REPORT_PERIOD;
                 //Calculate sample rates in Hz for human readability
-                static const unsigned multiplier = XS1_TIMER_MHZ * 1000000 / (unsigned) (SR_CALC_PERIOD * SR_CALC_BLOCKS);
-                debug_printf("Average spdif rate=%d, i2s rate = %d, i2s_buff=%d, fs_ratio=0x%x\n",
-                        samp_rate_spdif * multiplier, samp_rate_i2s * multiplier, i2s_buff_level, fs_ratio);
+                debug_printf("spdif rate ave=%d, valid=%d, i2s rate=%d, valid=%d, i2s_buff=%d, fs_ratio=0x%x\n",
+                        spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.status,
+                        i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.status,
+                        i2s_buff_level, fs_ratio);
             break;
 
 
