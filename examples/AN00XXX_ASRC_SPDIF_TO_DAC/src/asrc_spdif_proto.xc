@@ -612,12 +612,12 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     fs_ratio_old = fs_ratio;        //Save old value
                     fs_ratio = (unsigned) ((i2s_info.current_rate * 0x10000000ULL) / spdif_info.current_rate);
                     int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
-
+#define BUFFER_LEVEL_TERM   10000   //How much apply the buffer level feedback term
                     //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
                     //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
-                    fs_ratio = (unsigned) (((100000 + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / 100000);
-
-#define OLD_VAL_WEIGHTING   20
+                    fs_ratio = (unsigned) (((BUFFER_LEVEL_TERM + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / BUFFER_LEVEL_TERM);
+                    debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
+#define OLD_VAL_WEIGHTING   100
                     //Apply simple low pass filter
                     fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
                             (1 + OLD_VAL_WEIGHTING));
@@ -630,10 +630,12 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             case t_print when timerafter(t_print_trigger) :> int _:
                 t_print_trigger += REPORT_PERIOD;
                 //Calculate sample rates in Hz for human readability
+#if 0
                 debug_printf("spdif rate ave=%d, valid=%d, i2s rate=%d, valid=%d, i2s_buff=%d, fs_ratio=0x%x\n",
                         spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.status,
                         i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.status,
                         i2s_buff_level, fs_ratio);
+#endif
             break;
 
 
