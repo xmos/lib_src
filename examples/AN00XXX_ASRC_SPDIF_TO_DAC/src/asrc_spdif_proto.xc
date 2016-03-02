@@ -361,10 +361,10 @@ static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, 
 [[distributable]]
 unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
-    int samps_to_i2s[2][OUT_FIFO_SIZE];         //Circular buffers and pointers for output from block2serial
-    int * unsafe ptr_base_samps_to_i2s[2];
-    int * unsafe ptr_rd_samps_to_i2s[2];
-    int * unsafe ptr_wr_samps_to_i2s[2];
+    int samps_to_i2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //Circular buffers and pointers for output from block2serial
+    int * unsafe ptr_base_samps_to_i2s[ASRC_N_CHANNELS];
+    int * unsafe ptr_rd_samps_to_i2s[ASRC_N_CHANNELS];
+    int * unsafe ptr_wr_samps_to_i2s[ASRC_N_CHANNELS];
 
     //Double buffer from output from SRC
     int to_i2s[ASRC_N_CORES][ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
@@ -382,7 +382,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
     int t_last_count, t_this_count;             //Keeps track of time when querying sample count
     t_tick :> t_last_count;                     //Get time for zero samples counted
 
-    for (unsigned i=0; i<2; i++)                //Initialise FIFOs
+    for (unsigned i=0; i<ASRC_N_CHANNELS; i++)  //Initialise FIFOs
     {
         ptr_base_samps_to_i2s[i] = samps_to_i2s[i];
         init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
@@ -394,15 +394,15 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
             case i_serial_out.pull_ready():
 
                 unsigned success = 1;
-                int samp[2];
-                for (int i=0; i<2; i++) {
+                int samp[ASRC_N_CHANNELS];
+                for (int i=0; i<ASRC_N_CHANNELS; i++) {
                     success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
                 }
                 //xscope_int(1, samp[0]);
-                i_serial_out.do_pull(samp, 2);
+                i_serial_out.do_pull(samp, ASRC_N_CHANNELS);
                 if (!success) {
-                    for (int i=0; i<2; i++) {   //Init all FIFOs if any of them have under/overflowed
-                        debug_printf("-");      //FIFO empty
+                    for (int i=0; i<ASRC_N_CHANNELS; i++) {   //Init all FIFOs if any of them have under/overflowed
+                        debug_printf("-");                    //FIFO empty
                         init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
                     }
                 }
@@ -429,7 +429,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
                     //xscope_int(LEFT, p_to_i2s[0]);
 
                     if (!success) {                 //One of the FIFOs has overflowed
-                        for (int i=0; i<2; i++){
+                        for (int i=0; i<ASRC_N_CHANNELS; i++){
                             debug_printf("+");  //FIFO full
                             //debug_printf("push fail - buffer fill=%d, ", get_fill_level(ptr_wr_samps_to_i2s[i], ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE));
                             init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
@@ -459,7 +459,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
 [[distributable]]
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
-    int samples[2] = {0,0};
+    int samples[ASRC_N_CHANNELS] = {0,0};
     unsigned sample_rate = DEFAULT_FREQ_HZ;
     unsigned mclk_rate = MCLK_FREQUENCY_48;
 
@@ -485,7 +485,7 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
             //Send samples to DAC
             case i2s.send(size_t index) -> int32_t sample:
             sample = samples[index];
-            if (index == 1){
+            if (index == ASRC_N_CHANNELS - 1){
                 i_serial_out.pull_ready();
             }
             break;
