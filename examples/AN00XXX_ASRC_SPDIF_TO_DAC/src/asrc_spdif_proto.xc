@@ -515,7 +515,7 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 //filter the sample counts requested from serial2block and block2serial
 
 #define SR_CALC_PERIOD  10000000    //100ms The period over which we count samples to find the rate
-#define REPORT_PERIOD   50000000    //500ms How often we print the rates to the screen for debug
+#define REPORT_PERIOD   100100000   //1000ms How often we print the rates to the screen for debug
 #define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
                                     //Using 12 gives us 20 bits of integer - up to 1.048MHz SR
 //This multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
@@ -616,7 +616,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
                     //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
                     fs_ratio = (unsigned) (((BUFFER_LEVEL_TERM + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / BUFFER_LEVEL_TERM);
-                    debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
+                    //debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
 #define OLD_VAL_WEIGHTING   100
                     //Apply simple low pass filter
                     fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
@@ -630,10 +630,10 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             case t_print when timerafter(t_print_trigger) :> int _:
                 t_print_trigger += REPORT_PERIOD;
                 //Calculate sample rates in Hz for human readability
-#if 0
+#if 1
                 debug_printf("spdif rate ave=%d, valid=%d, i2s rate=%d, valid=%d, i2s_buff=%d, fs_ratio=0x%x\n",
-                        spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.status,
-                        i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.status,
+                        spdif_info.current_rate, spdif_info.status,
+                        i2s_info.current_rate, i2s_info.status,
                         i2s_buff_level, fs_ratio);
 #endif
             break;
