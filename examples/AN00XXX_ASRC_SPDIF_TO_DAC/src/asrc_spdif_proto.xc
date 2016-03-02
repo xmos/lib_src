@@ -275,7 +275,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
 
             default:
                 if (do_dsp_flag){                        //Do the sample rate conversion
-                    port_debug <: 1;                     //debug
+                    //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
                     fs_ratio_t fs_ratio = i_fs_ratio.get(nominal_fs_ratio); //Find out how many samples to produce
                     //debug_printf("Using fs_ratio=0x%x\n",fs_ratio);
@@ -294,7 +294,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                     i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
                     //xscope_int(LEFT, p_to_i2s[0]);
                     do_dsp_flag = 0;                        //Clear flag and wait for next input block
-                    port_debug <: 0;                     //debug
+                    //port_debug <: 0;                     //debug
                     //debug_printf("n_samps_out=%d\n",n_samps_out);
                 }
             break;
@@ -417,8 +417,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
                 tmp = move(p_buffer_other);         //First swap buffer pointers
                 p_buffer_other = move(p_to_i2s[if_index]);
                 p_to_i2s[if_index] = move(tmp);
-
-                for(int i=0; i < n_samps / ASRC_CHANNELS_PER_CORE; i++) {   //Get entire buffer
+                for(int i=0; i < n_samps; i++) {   //Get entire buffer
                     unsigned success = 1;                                   //Keep track of status of FIFO operations
                     for (int j=0; j < ASRC_CHANNELS_PER_CORE; j++) {        //Push samples into FIFO
                         int samp = p_to_i2s[if_index][ASRC_CHANNELS_PER_CORE * i + j];
@@ -504,7 +503,7 @@ typedef enum sample_rate_status_t{
     VALID }
     sample_rate_status_t;
 
-#define SR_TOLERANCE_PPM    1000
+#define SR_TOLERANCE_PPM    1000    //How far the detect_frequency function will allow before declaring invalid
 #define LOWER_LIMIT(freq) (freq - (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
 #define UPPER_LIMIT(freq) (freq + (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
 
@@ -636,7 +635,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
                     //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
                     fs_ratio = (unsigned) (((BUFFER_LEVEL_TERM + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / BUFFER_LEVEL_TERM);
-                    debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
+                    //debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
 #define OLD_VAL_WEIGHTING   100
                     //Apply simple low pass filter
                     fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
