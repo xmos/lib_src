@@ -15,13 +15,12 @@
 #include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
 
-#define OUT_FIFO_SIZE           (SRC_N_OUT_IN_RATIO_MAX * SRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial FIFO
+#define OUT_FIFO_SIZE           (ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial output FIFO
 
-
-
-#define DEFAULT_FREQ_HZ    48000
-#define MCLK_FREQUENCY_48  24576000
-#define MCLK_FREQUENCY_441 22579200
+#define DEFAULT_FREQ_HZ_SPDIF       48000
+#define DEFAULT_FREQ_HZ_I2S         48000
+#define MCLK_FREQUENCY_48           24576000
+#define MCLK_FREQUENCY_441          22579200
 
 
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
@@ -91,6 +90,9 @@ typedef interface sample_rate_enquiry_if {
 
 typedef interface fs_ratio_enquiry_if {
     unsigned get(unsigned nominal_fs_ratio);
+    [[notification]] slave void new_sr_notify(void);
+    [[clears_notification]] unsigned get_in_fs(void);
+    [[clears_notification]] unsigned get_out_fs(void);
 } fs_ratio_enquiry_if;
 
 typedef unsigned fs_ratio_t;
@@ -116,7 +118,7 @@ int main(void){
     streaming chan c_spdif_rx;
 
     par{
-        on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ);
+        on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ_SPDIF);
         on tile[SPDIF_TILE]: spdif_handler(c_spdif_rx, i_serial_in);
         on tile[SPDIF_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
         on tile[SPDIF_TILE]: src(i_serial2block, i_block2serial, i_fs_ratio);
@@ -218,6 +220,33 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
     }
 }
 
+//Helper function for converting sample to fs index value
+static unsigned samp_rate_to_code(unsigned samp_rate){
+    unsigned samp_code = 0xdead;
+    switch (samp_rate){
+    case 44100:
+        samp_code = 0;
+        break;
+    case 48000:
+        samp_code = 1;
+        break;
+    case 88200:
+        samp_code = 2;
+        break;
+    case 96000:
+        samp_code = 3;
+        break;
+    case 176400:
+        samp_code = 4;
+        break;
+    case 192000:
+        samp_code = 5;
+        break;
+    }
+    return samp_code;
+}
+
+
 int from_spdif[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
 int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
 
@@ -231,9 +260,12 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
     ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_CORE];  //Control structure
     iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
+    unsigned in_fs = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);
+    unsigned out_fs = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
+
     set_core_high_priority_on();                //Give me guarranteed 100MHz
 
-    printf("ASRC_CHANNELS_PER_CORE=%d\n", ASRC_CHANNELS_PER_CORE);
+    debug_printf("ASRC_CHANNELS_PER_CORE=%d\n", ASRC_CHANNELS_PER_CORE);
 
     for(int ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
     unsafe {
@@ -243,9 +275,9 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
         sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
     }
 
-    unsigned nominal_fs_ratio = asrc_init(1, 1, sASRCCtrl);
+    unsigned nominal_fs_ratio = asrc_init(1, 1, sASRCCtrl);     //Initialise ASRC
 
-    printf("nominal_fs_ratio=0x%x\n", nominal_fs_ratio);
+    debug_printf("nominal_fs_ratio=0x%x\n", nominal_fs_ratio);
 
 
     unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on pushg case below
@@ -257,6 +289,12 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                 p_buffer_other = move(p_from_spdif);    //Swap buffer ownership between tasks
                 p_from_spdif = move(tmp);
                 do_dsp_flag = 1;                        //We have a fresh buffer to process
+            break;
+
+            case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
+                in_fs = i_fs_ratio.get_in_fs();         //Get the new SRs
+                out_fs = i_fs_ratio.get_out_fs();
+                nominal_fs_ratio = asrc_init(1, 1, sASRCCtrl);//Initialise ASRC
             break;
 
             default:
@@ -438,7 +476,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial, client serial_
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
     int samples[2] = {0,0};
-    unsigned sample_rate = DEFAULT_FREQ_HZ;
+    unsigned sample_rate = DEFAULT_FREQ_HZ_I2S;
     unsigned mclk_rate = MCLK_FREQUENCY_48;
 
 
@@ -534,20 +572,20 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
         server fs_ratio_enquiry_if i_fs_ratio)
 {
     rate_info_t spdif_info = {  //Initialise to nominal values for default frequency
-            ((DEFAULT_FREQ_HZ * 10000000ULL) / XS1_TIMER_HZ),
+            ((DEFAULT_FREQ_HZ_SPDIF * 10000000ULL) / XS1_TIMER_HZ),
             SR_CALC_PERIOD,
-            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
-            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ_SPDIF << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ_SPDIF << SR_FRAC_BITS,
             INVALID,
-            DEFAULT_FREQ_HZ};
+            DEFAULT_FREQ_HZ_SPDIF};
 
     rate_info_t i2s_info = {    //Initialise to nominal values for default frequency
-            ((DEFAULT_FREQ_HZ * 10000000ULL) / XS1_TIMER_HZ),
+            ((DEFAULT_FREQ_HZ_I2S * 10000000ULL) / XS1_TIMER_HZ),
             SR_CALC_PERIOD,
-            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
-            DEFAULT_FREQ_HZ << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ_I2S << SR_FRAC_BITS,
+            DEFAULT_FREQ_HZ_I2S << SR_FRAC_BITS,
             INVALID,
-            DEFAULT_FREQ_HZ};
+            DEFAULT_FREQ_HZ_I2S};
 
     unsigned i2s_buff_level = 0;                //Buffer fill level. Initialise to empty.
 
@@ -579,6 +617,16 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 else {
                     fs_ratio = nominal_fs_ratio; //Pass back nominal until we have valid rate data
                 }
+            break;
+
+            //Serve up the input sample rate
+            case i_fs_ratio.get_in_fs(void) -> unsigned fs:
+                fs = spdif_info.nominal_rate;
+            break;
+
+            //Serve up the output sample rate
+            case i_fs_ratio.get_out_fs(void) -> unsigned fs:
+                fs = i2s_info.nominal_rate;
             break;
 
             //Timeout to trigger calculation of new fs_ratio
