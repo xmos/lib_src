@@ -24,10 +24,7 @@
 #define MCLK_FREQUENCY_441 22579200
 
 
-/* These port assignments all correspond to the Slicekit U16 Audio 8
-   developement kit. Details can be found in the hardware manual
-   for that board.
-
+/* These port assignments all correspond to XU216 multichannel audio board 2V0
    The port assignments can be changed for a different port map.
 */
 
