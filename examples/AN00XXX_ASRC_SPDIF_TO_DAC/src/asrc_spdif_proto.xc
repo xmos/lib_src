@@ -375,6 +375,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial, client serial_
         select{
             //Request for pair of samples from I2S
             case i_serial_out.pull_ready():
+                t_tick :> t_this_count;         //Grab timestamp of request from I2S
 
                 unsigned success = 1;
                 int samp[2];
@@ -394,7 +395,6 @@ unsafe void block2serial(server block_transfer_if i_block2serial, client serial_
 
             //Request to push block of samples from SRC
             case i_block2serial.push(int * movable &p_buffer_other, const unsigned n_samps):
-                t_tick :> t_this_count;
                 int * movable tmp;
                 tmp = move(p_buffer_other);         //First swap buffer pointers
                 p_buffer_other = move(p_to_i2s);
