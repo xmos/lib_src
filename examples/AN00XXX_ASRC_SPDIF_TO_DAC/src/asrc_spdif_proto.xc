@@ -688,8 +688,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     for(int i = 0; i < ASRC_N_CORES; i++){
                         i_fs_ratio[i].new_sr_notify();
                     }
-                    skip_validity = 3;
-                    fs_ratio_old = fs_ratio_nominal;
+                    skip_validity = 3;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init
+                    fs_ratio = (unsigned) ((spdif_info.nominal_rate * 0x10000000ULL) / i2s_info.nominal_rate); //Initialise rate to nominal
                 }
 
                 //debug_printf("skip=%d\n", skip_validity);
