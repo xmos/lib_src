@@ -294,7 +294,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
             case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
                 in_fs = i_fs_ratio.get_in_fs();         //Get the new SRs
                 out_fs = i_fs_ratio.get_out_fs();
-                nominal_fs_ratio = asrc_init(1, 1, sASRCCtrl);//Initialise ASRC
+                nominal_fs_ratio = asrc_init(in_fs, out_fs, sASRCCtrl);//Initialise ASRC
             break;
 
             default:
@@ -546,24 +546,24 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 }
 
 //Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
-//to produce to keep the output FIFO in block2serial rougly centered. Uses an average of averages to
-//filter the sample counts requested from serial2block and block2serial
+//to produce to keep the output FIFO in block2serial rougly centered. Uses the timestamped sample counts
+//requested from serial2block and block2serial and FIFO level as P and I terms
 
 #define SR_CALC_PERIOD  10000000    //100ms The period over which we count samples to find the rate
-#define REPORT_PERIOD   100100000   //1000ms How often we print the rates to the screen for debug
+                                    //Because we timestamp at 10ns resolution, we get 10000000/10 = 20bits of precision
+#define REPORT_PERIOD   100100000   //1001ms How often we print the rates to the screen for debug. CHosen to not clash with above
 #define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
-                                    //Using 12 gives us 20 bits of integer - up to 1.048MHz SR
-//This multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
-//to support a measurement period of 1s at 192KHz with over 2 order of magnitude margin
+                                    //Using 12 gives us 20 bits of integer - up to 1.048MHz SR before overflow
+//Below is the multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
+//to support a measurement period of 1s at 192KHz with over 2 order of magnitude margin against overflow
 #define SR_MULTIPLIER   ((1<<SR_FRAC_BITS) * (unsigned long long) XS1_TIMER_HZ)
 
 typedef struct rate_info_t{
     unsigned samp_count;    //Sample count over last period
     unsigned time_ticks;    //Time in ticks for last count
     unsigned current_rate;  //Current average rate in 20.12 fixed point format
-    unsigned last_rate;     //Average rate from last period in 20.12 fixed point
     sample_rate_status_t status;    //Lock status
-    unsigned nominal_rate;  //Snapped-to nominal rate
+    unsigned nominal_rate;  //Snapped-to nominal rate as unsigned integer
 } rate_info_t;
 
 
@@ -575,14 +575,12 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             ((DEFAULT_FREQ_HZ_SPDIF * 10000000ULL) / XS1_TIMER_HZ),
             SR_CALC_PERIOD,
             DEFAULT_FREQ_HZ_SPDIF << SR_FRAC_BITS,
-            DEFAULT_FREQ_HZ_SPDIF << SR_FRAC_BITS,
             INVALID,
             DEFAULT_FREQ_HZ_SPDIF};
 
     rate_info_t i2s_info = {    //Initialise to nominal values for default frequency
             ((DEFAULT_FREQ_HZ_I2S * 10000000ULL) / XS1_TIMER_HZ),
             SR_CALC_PERIOD,
-            DEFAULT_FREQ_HZ_I2S << SR_FRAC_BITS,
             DEFAULT_FREQ_HZ_I2S << SR_FRAC_BITS,
             INVALID,
             DEFAULT_FREQ_HZ_I2S};
@@ -648,8 +646,20 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
                 //debug_printf("spdif_info.current_rate=%d, i2s_info.current_rate=%d\n", spdif_info.current_rate, i2s_info.current_rate);
 
-                spdif_info.status = detect_frequency(spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.nominal_rate);
-                i2s_info.status   = detect_frequency(i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.nominal_rate);
+                //Find lock status of input/output sample rates
+                sample_rate_status_t spdif_status_new = detect_frequency(spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.nominal_rate);
+                sample_rate_status_t i2s_status_new  = detect_frequency(i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.nominal_rate);
+
+                //If either has changed from invalid to valid, send message to SRC to initialise
+                if ((spdif_status_new == VALID && spdif_info.status == INVALID) || ((i2s_status_new == VALID && i2s_info.status == INVALID))){
+                    i_fs_ratio.new_sr_notify();
+                }
+
+                spdif_info.status = spdif_status_new;
+                i2s_info.status   = i2s_status_new;
+
+#define BUFFER_LEVEL_TERM   10000   //How much apply the buffer level feedback term
+#define OLD_VAL_WEIGHTING   100     //Simple low pass filter. Set proportion of old value to carry over
 
 
                 //Calculate fs_ratio to tell src how many samples to produce
@@ -657,19 +667,15 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     fs_ratio_old = fs_ratio;        //Save old value
                     fs_ratio = (unsigned) ((i2s_info.current_rate * 0x10000000ULL) / spdif_info.current_rate);
                     int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
-#define BUFFER_LEVEL_TERM   10000   //How much apply the buffer level feedback term
                     //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
                     //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
                     fs_ratio = (unsigned) (((BUFFER_LEVEL_TERM + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / BUFFER_LEVEL_TERM);
                     //debug_printf("sp=%d\ti2s=%d\tbuff=%d\tfs_raw=0x%x\tfs_av=0x%x\n", spdif_info.current_rate, i2s_info.current_rate, i2s_buffer_level_from_half, fs_ratio, fs_ratio_old);
-#define OLD_VAL_WEIGHTING   100
                     //Apply simple low pass filter
                     fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
                             (1 + OLD_VAL_WEIGHTING));
                 }
 
-                if (spdif_info.status == VALID) spdif_info.last_rate = spdif_info.current_rate;
-                if (i2s_info.status == VALID)   i2s_info.last_rate = i2s_info.current_rate;
             break;
 
             case t_print when timerafter(t_print_trigger) :> int _:
