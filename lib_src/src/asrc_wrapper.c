@@ -11,7 +11,7 @@
 
 extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
-#define DO_FS_BOUNDS_CHECK      1
+#define DO_FS_BOUNDS_CHECK      1   //This is important to prevent pointers going out of bounds when invalid fs_ratios are sent
 
 static void asrc_error(int code)
 {
@@ -75,6 +75,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         if( (FsRatio < sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMinFsRatio) ||
             (FsRatio > sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMaxFsRatio) )
         {
+            //debug_printf("Passed = %x, Nominal = 0x%x\n", FsRatio, sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio);
             FsRatio = sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
             debug_printf("!");
         }

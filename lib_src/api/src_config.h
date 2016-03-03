@@ -9,7 +9,7 @@
 //General SRC configuration defines. Both SSRC and ASRC configurations are dervied from these
 #define     SRC_N_CHANNELS                  2  //Total number of audio channels to be processed by SRC (minimum 1)
 
-#define     SRC_N_CORES			            1  //Number of instances (each run a logical core) used to process audio (minimum 1)
+#define     SRC_N_CORES			            2  //Number of instances (each run a logical core) used to process audio (minimum 1)
 #define     SRC_CHANNELS_PER_CORE           (SRC_N_CHANNELS/SRC_N_CORES)
                                                //Calcualted number of audio channels processed by each core
 #define     SRC_N_IN_SAMPLES                4  //Number of samples per channel in each block passed into SRC each call
