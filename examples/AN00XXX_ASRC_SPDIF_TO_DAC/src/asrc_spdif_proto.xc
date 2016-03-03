@@ -688,7 +688,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 spdif_info.status = spdif_status_new;
                 i2s_info.status   = i2s_status_new;
 
-#define BUFFER_LEVEL_TERM   10000   //How much apply the buffer level feedback term
+#define BUFFER_LEVEL_TERM   100000   //How much apply the buffer level feedback term
 #define OLD_VAL_WEIGHTING   10      //Simple low pass filter. Set proportion of old value to carry over
 
                 //Calculate fs_ratio to tell src how many samples to produce in 4.28 fixed point format
