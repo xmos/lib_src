@@ -15,7 +15,7 @@
 #include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
 
-#define OUT_FIFO_SIZE           (ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial output FIFO
+#define OUT_FIFO_SIZE               (ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial output FIFO
 
 #define DEFAULT_FREQ_HZ_SPDIF       48000
 #define DEFAULT_FREQ_HZ_I2S         48000
@@ -43,8 +43,6 @@ out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
                                                      XS1_PORT_1N,
                                                      XS1_PORT_1O,
                                                      XS1_PORT_1P};
-port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
-
 port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
 /*
  * 0 DSD_MODE
@@ -62,6 +60,12 @@ clock clk_mclk                           = on tile[AUDIO_TILE]: XS1_CLKBLK_2;
 port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
 clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
 port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;    //MIDI OUT
+
+
+out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
+out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
+
+port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
 
 static const unsigned CODEC_I2C_DEVICE_ADDR = 0x18;
 static const unsigned PLL_I2C_DEVICE_ADDR   = 0x4E;
@@ -636,6 +640,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 else {
                     fs_ratio = nominal_fs_ratio; //Pass back nominal until we have valid rate data
                 }
+
             break;
 
             //Serve up the input sample rate
@@ -656,7 +661,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 unsigned samp_count_i2s   = i_i2s_rate.get_sample_count(sample_time_i2s);     //And I2S
                 i2s_buff_level = i_i2s_rate.get_buffer_level();
 
-                if (sample_time_spdif){
+                if (sample_time_spdif){ //If time is non-zero - avoids divide by zero if no input
                     spdif_info.current_rate = (((unsigned long long)samp_count_spdif * SR_MULTIPLIER) / sample_time_spdif);
                 }
                 if (sample_time_i2s){
