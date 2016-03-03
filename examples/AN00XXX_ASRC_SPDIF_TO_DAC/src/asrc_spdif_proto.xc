@@ -20,7 +20,7 @@
 #define DEFAULT_FREQ_HZ_SPDIF       48000
 #define DEFAULT_FREQ_HZ_I2S         48000
 #define MCLK_FREQUENCY_48           24576000
-#define MCLK_FREQUENCY_441          22579200
+#define MCLK_FREQUENCY_44           22579200
 
 
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
@@ -150,6 +150,7 @@ int main(void){
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[combinable]]
+#pragma unsafe arrays   //Performance optimisation
 void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 {
 
@@ -171,6 +172,7 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
 }
 
 [[distributable]]
+#pragma unsafe arrays   //Performance optimisation
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_CORES], server sample_rate_enquiry_if i_input_rate)
 {
     int buffer[ASRC_N_CORES][ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
@@ -262,8 +264,8 @@ static unsigned samp_rate_to_code(unsigned samp_rate){
 
 void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
 {
-    int from_spdif[SRC_N_CHANNELS * SRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
-    int to_i2s[SRC_N_CHANNELS * SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
+    int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
+    int to_i2s[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX];
 
     int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
     int * movable p_to_i2s = to_i2s;
@@ -316,15 +318,14 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                     //debug_printf("Using fs_ratio=0x%x\n",fs_ratio);
                     //xscope_int(LEFT, p_to_i2s[0]);
 
-#if 1
-                   n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
-                   xscope_int(2, fs_ratio);
+#if !SIMPLE_PASS_THROUGH_DECIMATE_BY_TWO
+                    n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
+
 #else
-                    for(int i=0;i<SRC_N_IN_SAMPLES;i++){
-                        p_to_i2s[2*i] = p_from_spdif[2*i];
-                        p_to_i2s[2*i + 1] = p_from_spdif[2*i + 1];
+                    for(int i = 0;i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_CORE; i++){
+                        p_to_i2s[i/2] = p_from_spdif[i];
                     }
-                    n_samps_out = SRC_N_IN_SAMPLES;
+                    n_samps_out = SRC_N_IN_SAMPLES / 2;
 #endif
                     i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
                     //xscope_int(LEFT, p_to_i2s[0]);
@@ -394,6 +395,7 @@ static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, 
 //Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
 //This task is marked as unsafe keep pointers in scope throughout function
 [[distributable]]
+#pragma unsafe arrays   //Performance optimisation
 unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
     int samps_to_i2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //Circular buffers and pointers for output from block2serial
@@ -493,16 +495,19 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[distributable]]
+#pragma unsafe arrays   //Performance optimisation
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
     int samples[ASRC_N_CHANNELS] = {0,0};
     unsigned sample_rate = DEFAULT_FREQ_HZ_I2S;
-    unsigned mclk_rate = MCLK_FREQUENCY_48;
+    unsigned mclk_rate;
 
 
     while (1) {
         select {
             case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
+            if (!(sample_rate % 48000)) mclk_rate = MCLK_FREQUENCY_48;  //Initialise MCLK to appropriate multiple of sample_rate
+            else mclk_rate  = MCLK_FREQUENCY_44;
             i2s_config.mclk_bclk_ratio = mclk_rate / (sample_rate << 6);
             i2s_config.mode = I2S_MODE_I2S;
             i_codec.reset(sample_rate, mclk_rate);
@@ -590,6 +595,7 @@ typedef struct rate_info_t{
 
 
 [[combinable]]
+#pragma unsafe arrays   //Performance optimisation
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
         server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES])
 {
