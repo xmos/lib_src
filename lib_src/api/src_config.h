@@ -12,7 +12,7 @@
 #define     SRC_N_CORES			            2  //Number of instances (each run a logical core) used to process audio (minimum 1)
 #define     SRC_CHANNELS_PER_CORE           (SRC_N_CHANNELS/SRC_N_CORES)
                                                //Calcualted number of audio channels processed by each core
-#define     SRC_N_IN_SAMPLES                8  //Number of samples per channel in each block passed into SRC each call
+#define     SRC_N_IN_SAMPLES                16  //Number of samples per channel in each block passed into SRC each call
                                                //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
 #define     SRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
 #define     SRC_DITHER_ON                   1
