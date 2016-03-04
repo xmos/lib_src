@@ -62,8 +62,8 @@ clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
 port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;    //MIDI OUT
 
 
-out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
-out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
+out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
+out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
 
 port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
 
@@ -99,6 +99,12 @@ typedef interface fs_ratio_enquiry_if {
     [[clears_notification]] unsigned get_out_fs(void);
 } fs_ratio_enquiry_if;
 
+//Sets or clears pixel. Origin is bottom left scanning right
+typedef interface led_matrix_if {
+    void set(unsigned col, unsigned row, unsigned val);
+} led_matrix_if;
+
+
 typedef unsigned fs_ratio_t;
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
@@ -106,7 +112,9 @@ typedef unsigned fs_ratio_t;
 void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
-[[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES]);
+[[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES], client led_matrix_if i_leds);
+[[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
+
 
 int main(void){
     serial_transfer_push_if i_serial_in;
@@ -118,6 +126,7 @@ int main(void){
     interface i2c_master_if i_i2c[1];
     interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
     interface i2s_callback_if i_i2s;
+    led_matrix_if i_leds;
 
     streaming chan c_spdif_rx;
 
@@ -142,7 +151,8 @@ int main(void){
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
         on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec);
-        on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_i2s, i_fs_ratio);
+        on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_i2s, i_fs_ratio, i_leds);
+        on tile[SPDIF_TILE]: led_driver(i_leds, p_leds_row, p_leds_col);
     }
     return 0;
 }
@@ -597,7 +607,7 @@ typedef struct rate_info_t{
 [[combinable]]
 #pragma unsafe arrays   //Performance optimisation
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
-        server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES])
+        server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES], client led_matrix_if i_leds)
 {
     rate_info_t spdif_info = {  //Initialise to nominal values for default frequency
             ((DEFAULT_FREQ_HZ_SPDIF * 10000000ULL) / XS1_TIMER_HZ),
@@ -723,8 +733,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 //Calculate sample rates in Hz for human readability
 #if 1
                 debug_printf("spdif rate ave=%d, valid=%d, i2s rate=%d, valid=%d, i2s_buff=%d, fs_ratio=0x%x, nom_fs=0x%x\n",
-                        spdif_info.current_rate, spdif_info.status,
-                        i2s_info.current_rate, i2s_info.status,
+                        spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.status,
+                        i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.status,
                         (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2), fs_ratio, fs_ratio_nominal);
 #endif
             break;
@@ -733,4 +743,44 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
         }
     }
 }
+
+
+//Task that drives the multiplexed 4x4 display on the xCORE-200 MC AUDIO board. Very low performance requirements so can be combined
+
+#define LED_SCAN_TIME   200000   //2ms - How long each column is displayed. ANy less than this and you start to see flicker
+[[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_col, out port p_leds_row){
+    unsigned col_frame_buffer[4] = {0xf, 0xf, 0xf, 0xf};  //4 x 4 bitmap frame buffer scanning from left to right
+                                                          //Active low drive hence initialise to 0b1111
+    unsigned col_idx = 0;                                 //Index for above
+    unsigned col_sel = 0x1;                               //Column select 0x8 -> 0x4 -> 0x2 -> 0x1
+    timer t_scan;
+    int scan_time_trigger;
+
+    t_scan :> scan_time_trigger;                          //Get current time
+
+    while(1){
+        select{
+            //Scan through 4 columns and output bitmap for each
+            case t_scan when timerafter(scan_time_trigger + LED_SCAN_TIME) :> scan_time_trigger:
+                p_leds_col <: col_sel;
+                p_leds_row <: col_frame_buffer[col_idx];
+                col_idx = (col_idx + 1) & 0x3;
+                col_sel = col_sel << 1;
+                if(col_sel > 0x8) col_sel = 0x1;
+            break;
+
+            case i_leds.set(unsigned col, unsigned row, unsigned val):
+                row = row & 0x3;  //Prevent out of bounds access
+                col = col & 0x3;
+                if (val) {  //Need to clear corresponding bit (active low)
+                    col_frame_buffer[col] &= ~(0x8 >> row);
+                }
+                else {      ///Set bit to turn off (active low)
+                    col_frame_buffer[col] |= (0x8 >> row);
+                }
+            break;
+        }
+    }
+}
+
 
