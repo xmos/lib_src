@@ -680,9 +680,11 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 if (sample_time_spdif){ //If time is non-zero - avoids divide by zero if no input
                     spdif_info.current_rate = (((unsigned long long)samp_count_spdif * SR_MULTIPLIER) / sample_time_spdif);
                 }
+                else spdif_info.current_rate = 0;
                 if (sample_time_i2s){
                     i2s_info.current_rate   = (((unsigned long long)samp_count_i2s * SR_MULTIPLIER) / sample_time_i2s);
                 }
+                else i2s_info.current_rate = 0;
 
                 //debug_printf("spdif_info.current_rate=%d, i2s_info.current_rate=%d\n", spdif_info.current_rate, i2s_info.current_rate);
 
@@ -712,11 +714,13 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 #define BUFFER_LEVEL_TERM   100000   //How much apply the buffer level feedback term
 #define OLD_VAL_WEIGHTING   10      //Simple low pass filter. Set proportion of old value to carry over
 
+
                 //Calculate fs_ratio to tell src how many samples to produce in 4.28 fixed point format
+                int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
                 if (spdif_info.status == VALID && i2s_info.status == VALID) {
                     fs_ratio_old = fs_ratio;        //Save old value
                     fs_ratio = (unsigned) ((spdif_info.current_rate * 0x10000000ULL) / i2s_info.current_rate);
-                    int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
+
                     //If buffer is negative, we need to produce more samples so fs_ratio needs to be < 1
                     //If positive, we need to back off a bit so fs_ratio needs to be over unity to get more samples from asrc
                     fs_ratio = (unsigned) (((BUFFER_LEVEL_TERM + i2s_buffer_level_from_half) * (unsigned long long)fs_ratio) / BUFFER_LEVEL_TERM);
@@ -725,6 +729,37 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     fs_ratio = (unsigned) (((unsigned long long)(fs_ratio_old) * OLD_VAL_WEIGHTING + (unsigned long long)(fs_ratio) ) /
                             (1 + OLD_VAL_WEIGHTING));
                 }
+
+                //Set Sample rate LEDs
+                unsigned spdif_fs_code = samp_rate_to_code(spdif_info.nominal_rate) + 1;
+                unsigned i2s_fs_code = samp_rate_to_code(i2s_info.nominal_rate) + 1;
+                if (spdif_info.status == INVALID) spdif_fs_code = 0;
+                if (i2s_info.status  == INVALID) i2s_fs_code = 0;
+
+                for (int i = 0; i< 4; i++){
+                    if (spdif_fs_code > i) i_leds.set(3, i, 1);
+                    else i_leds.set(3, i, 0);
+                    if (i2s_fs_code > i) i_leds.set(0, i, 1);
+                    else i_leds.set(0, i, 0);
+                }
+
+#define THRESH_0    6   //First led comes on when non-zero. Second when > THRESH_0
+#define THRESH_1    12  //Third led comes on when > THRESH_1
+
+                //Show buffer level in column 3
+                if (i2s_buffer_level_from_half > 0) i_leds.set(2, 2, 1);
+                else i_leds.set(2, 2, 0);
+                if (i2s_buffer_level_from_half > THRESH_0) i_leds.set(2, 3, 1);
+                else i_leds.set(2, 3, 0);
+                if (i2s_buffer_level_from_half > THRESH_1) i_leds.set(1, 3, 1);
+                else i_leds.set(1, 3, 0);
+
+                if (i2s_buffer_level_from_half < 0) i_leds.set(2, 1, 1);
+                else i_leds.set(2, 1, 0);
+                if (i2s_buffer_level_from_half < -THRESH_0) i_leds.set(2, 0, 1);
+                else i_leds.set(2, 0, 0);
+                if (i2s_buffer_level_from_half < -THRESH_1) i_leds.set(1, 0, 1);
+                else i_leds.set(1, 0, 0);
 
             break;
 
@@ -769,6 +804,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 if(col_sel > 0x8) col_sel = 0x1;
             break;
 
+            //Sets a pixel at col, row (origin bottom left) to 0 or on
             case i_leds.set(unsigned col, unsigned row, unsigned val):
                 row = row & 0x3;  //Prevent out of bounds access
                 col = col & 0x3;
