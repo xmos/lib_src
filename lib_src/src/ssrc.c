@@ -190,7 +190,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	psFIRDescriptor								= &sSSRCFirDescriptor[psFiltersID->uiFID[SSRC_F1_INDEX]];
 	// Set number of input samples and input samples step
 	psSSRCCtrl->sFIRF1Ctrl.uiNInSamples		= psSSRCCtrl->uiNInSamples;
-	psSSRCCtrl->sFIRF1Ctrl.uiInStep			= SSRC_CHANNELS_PER_CORE;
+	psSSRCCtrl->sFIRF1Ctrl.uiInStep			= psSSRCCtrl->uiNchannels;
 	
 	// Set delay line base pointer
 	if( (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_DS_ID) || (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID) )
@@ -201,9 +201,9 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	// Set output buffer step
 	if(psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID)
 		// F2 in use in over-sampling by 2 mode
-		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= 2 * SSRC_CHANNELS_PER_CORE;
+		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= 2 * psSSRCCtrl->uiNchannels;
 	else
-		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= SSRC_CHANNELS_PER_CORE;
+		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= psSSRCCtrl->uiNchannels;
 
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
@@ -225,7 +225,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 		psSSRCCtrl->sFIRF2Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayFIRLong;
 
 	// Set output buffer step
-	psSSRCCtrl->sFIRF2Ctrl.uiOutStep	= SSRC_CHANNELS_PER_CORE;
+	psSSRCCtrl->sFIRF2Ctrl.uiOutStep	= psSSRCCtrl->uiNchannels;
 	
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
@@ -247,7 +247,7 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	psSSRCCtrl->sPPFIRF3Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayPPFIR;
 		
 	// Set output buffer step
-	psSSRCCtrl->sPPFIRF3Ctrl.uiOutStep		= SSRC_CHANNELS_PER_CORE;
+	psSSRCCtrl->sPPFIRF3Ctrl.uiOutStep		= psSSRCCtrl->uiNchannels;
 
 	// Set phase step 
 	psSSRCCtrl->sPPFIRF3Ctrl.uiPhaseStep	= psFiltersID->uiPPFIRPhaseStep;
@@ -386,7 +386,7 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 	if(psSSRCCtrl->sFIRF1Ctrl.eEnable == FIR_OFF)
 	{
 		// F1 is not enabled, which means that we are in 1:1 rate, so just copy input to output
-		for(ui = 0; ui < psSSRCCtrl->uiNInSamples; ui+= SSRC_CHANNELS_PER_CORE)
+		for(ui = 0; ui < psSSRCCtrl->uiNInSamples; ui+= psSSRCCtrl->uiNchannels)
 			piOut[ui]		= piIn[ui];
 
 		return SSRC_NO_ERROR;
@@ -456,7 +456,7 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 		uiR		= psSSRCCtrl->psState->uiRndSeed;
 
 		// Loop through samples
-		for(ui = 0; ui < *(psSSRCCtrl->puiNOutSamples) * SSRC_CHANNELS_PER_CORE; ui += SSRC_CHANNELS_PER_CORE)
+		for(ui = 0; ui < *(psSSRCCtrl->puiNOutSamples) * psSSRCCtrl->uiNchannels; ui += psSSRCCtrl->uiNchannels)
 		{
 			// Compute dither sample (TPDF)
 			iDither		= SSRC_DITHER_BIAS;

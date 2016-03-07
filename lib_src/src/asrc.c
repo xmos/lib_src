@@ -331,7 +331,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	psFIRDescriptor							= &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
 	// Set number of input samples and input samples step
 	psASRCCtrl->sFIRF1Ctrl.uiNInSamples		= psASRCCtrl->uiNInSamples;
-	psASRCCtrl->sFIRF1Ctrl.uiInStep			= ASRC_CHANNELS_PER_CORE;
+	psASRCCtrl->sFIRF1Ctrl.uiInStep			= psASRCCtrl->uiNchannels;
 	// Set delay line base pointer
 	if( psFiltersID->uiFID[ASRC_F1_INDEX] == FILTER_DEFS_ASRC_FIR_DS_ID )
 		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRShort;
@@ -633,7 +633,7 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 		uiR		= psASRCCtrl->psState->uiRndSeed;
 
 		// Loop through samples
-		for(ui = 0; ui < psASRCCtrl->uiNASRCOutSamples * ASRC_CHANNELS_PER_CORE; ui += ASRC_CHANNELS_PER_CORE)
+		for(ui = 0; ui < psASRCCtrl->uiNASRCOutSamples * psASRCCtrl->uiNchannels; ui += psASRCCtrl->uiNchannels)
 		{
 			// Compute dither sample (TPDF)
 			iDither		= ASRC_DITHER_BIAS;

@@ -117,6 +117,7 @@
 		typedef struct _SSRCCtrl											
 		{
 #ifdef __XC__
+            unsigned int                            uiNchannels;                        // Number of channels in this instance
 			int* unsafe								piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			SSRCFs_t								eInFs;								// Input sampling rate code
@@ -136,14 +137,16 @@
 			SSRCState_t* unsafe						psState;							// Pointer to state structure
 			int* unsafe								piStack;							// Pointer to stack buffer
 #else
-                        			int*  								piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
+            unsigned int                            uiNchannels;                        // Number of channels in this instance
+
+            int*  								    piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			SSRCFs_t								eInFs;								// Input sampling rate code
-			int*  								piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)							
-			unsigned int* 						puiNOutSamples;						// Pointer to number of output samples produced during last call to the processing function
+			int*  								    piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)
+			unsigned int* 						    puiNOutSamples;						// Pointer to number of output samples produced during last call to the processing function
 			SSRCFs_t								eOutFs;								// Output sampling rate code
 
-			int* *    							ppiOut;								// Pointer to (PP)FIR output data pointer for last filter in the chain
+			int* *    							    ppiOut;								// Pointer to (PP)FIR output data pointer for last filter in the chain
 
 			FIRCtrl_t								sFIRF1Ctrl;							// F1 FIR controller
 			FIRCtrl_t								sFIRF2Ctrl;							// F2 FIR controller
@@ -152,7 +155,7 @@
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
-			SSRCState_t*  						psState;							// Pointer to state structure
+			SSRCState_t*  						    psState;							// Pointer to state structure
 			int*    								piStack;							// Pointer to stack buffer
 #endif
 		} SSRCCtrl_t;

@@ -21,7 +21,7 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE])
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance)
 {
     int ui;
 
@@ -30,8 +30,11 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_
     ret_code = ASRC_prepare_coefs();
     if (ret_code != ASRC_NO_ERROR) asrc_error(10);
 
-    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+    for(ui = 0; ui < n_channels_per_instance; ui++)
     {
+        // Set number of channels per instance
+        sASRCCtrl[ui].uiNchannels               = n_channels_per_instance;
+
         // Set input/output sampling rate codes
         sASRCCtrl[ui].eInFs                     = (int)sr_in;
         sASRCCtrl[ui].eOutFs                    = (int)sr_out;
@@ -51,7 +54,7 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_
     // Sync
     // ----
     // Sync ASRC. This is just to show that the function works and returns success
-    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)    {
+    for(ui = 0; ui < n_channels_per_instance; ui++)    {
         ret_code = ASRC_sync(&sASRCCtrl[ui]);
         if (ret_code != ASRC_NO_ERROR) asrc_error(12);
     }
@@ -59,13 +62,16 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_
     return (sASRCCtrl[0].uiFsRatio);
 }
 
-unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]){
+unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE]){
 
     int ui, uj; //General counters
     int             uiSplCntr;  //Spline counter
 
+    // Get the number of channels per instance from first channel
+    unsigned n_channels_per_instance = sASRCCtrl[0].uiNchannels;
 
-    for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+
+    for(ui = 0; ui < n_channels_per_instance; ui++)
     {
     // Update Fs Ratio
         sASRCCtrl[ui].uiFsRatio     = FsRatio;
@@ -117,7 +123,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
     for(ui = 0; ui < sASRCCtrl[0].uiNSyncSamples; ui++)
     {
         // Push new samples into F3 delay line (input from stack) for each new "synchronous" sample (i.e. output of F1, respectively F2)
-        for(uj = 0; uj < ASRC_CHANNELS_PER_CORE; uj++)
+        for(uj = 0; uj < n_channels_per_instance; uj++)
         {
 
             //The following is replicated/inlined code from ASRC_proc_F3_in_spl in ASRC.c
@@ -190,10 +196,10 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
             //sASRCCtrl[0+1].uiTimeFract  = sASRCCtrl[0].uiTimeFract;
 
             // Apply filter F3 with just computed adaptive coefficients
-            for(uj = 0; uj < ASRC_CHANNELS_PER_CORE; uj++)    {
+            for(uj = 0; uj < n_channels_per_instance; uj++)    {
 
                 //The following is replicated/inlined code from ADFIR_F3_proc_macc in ASRC.c
-                sASRCCtrl[uj].sADFIRF3Ctrl.piOut      = (sASRCCtrl[uj].piOut + ASRC_CHANNELS_PER_CORE * uiSplCntr);
+                sASRCCtrl[uj].sADFIRF3Ctrl.piOut      = (sASRCCtrl[uj].piOut + n_channels_per_instance * uiSplCntr);
 
                 //The following is replicated/inlined code from ADFIR_proc_macc in FIR.c
                 int*            piData;
@@ -216,12 +222,12 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
     }
 
 
-#if (ASRC_DITHER_SETTING != ASRC_DITHER_OFF)
+#if (ASRC_DITHER_SETTING != ASRC_DITHER_OFF)    //Removed for speed optimisation
     // Process dither part
     // ===================
     // We are back to block based processing. This is where the number of ASRC output samples is required again
     // (would not be used if sample by sample based (on output samples))
-    for(ui = chan_start; ui < chan_end; ui++)    {
+    for(ui = 0; ui < n_channels_per_instance; ui++)
         // Note: this is block based similar to SSRC
         if(ASRC_proc_dither(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
         {

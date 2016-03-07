@@ -9,10 +9,10 @@
 //General SRC configuration defines. Both SSRC and ASRC configurations are dervied from these
 #define     SRC_N_CHANNELS                  2  //Total number of audio channels to be processed by SRC (minimum 1)
 
-#define     SRC_N_CORES			            2  //Number of instances (each run a logical core) used to process audio (minimum 1)
-#define     SRC_CHANNELS_PER_CORE           (SRC_N_CHANNELS/SRC_N_CORES)
+#define     SRC_N_INSTANCES			        2  //Number of instances (each usuall run a logical core) used to process audio (minimum 1)
+#define     SRC_CHANNELS_PER_INSTANCE       (SRC_N_CHANNELS/SRC_N_INSTANCES)
                                                //Calcualted number of audio channels processed by each core
-#define     SRC_N_IN_SAMPLES                16  //Number of samples per channel in each block passed into SRC each call
+#define     SRC_N_IN_SAMPLES                16 //Number of samples per channel in each block passed into SRC each call
                                                //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
 #define     SRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
 #define     SRC_DITHER_ON                   1
@@ -22,8 +22,8 @@
 
 //SSRC defines
 #define     SSRC_N_CHANNELS                 SRC_N_CHANNELS
-#define     SSRC_N_CORES                    SRC_N_CORES
-#define     SSRC_CHANNELS_PER_CORE          SRC_CHANNELS_PER_CORE
+#define     SSRC_N_INSTANCES                SRC_N_INSTANCES
+#define     SSRC_CHANNELS_PER_INSTANCE      SRC_CHANNELS_PER_INSTANCE
 #define     SSRC_N_IN_SAMPLES               SRC_N_IN_SAMPLES
 #define     SSRC_N_OUT_IN_RATIO_MAX         SRC_N_OUT_IN_RATIO_MAX
 #define     SSRC_DITHER_SETTING             SRC_DITHER_SETTING
@@ -31,8 +31,8 @@
 
 //ASRC defines
 #define     ASRC_N_CHANNELS                 SRC_N_CHANNELS
-#define     ASRC_N_CORES                    SRC_N_CORES
-#define     ASRC_CHANNELS_PER_CORE          SRC_CHANNELS_PER_CORE
+#define     ASRC_N_INSTANCES                SRC_N_INSTANCES
+#define     ASRC_CHANNELS_PER_INSTANCE      SRC_CHANNELS_PER_INSTANCE
 #define     ASRC_N_IN_SAMPLES               SRC_N_IN_SAMPLES
 #define     ASRC_N_OUT_IN_RATIO_MAX         SRC_N_OUT_IN_RATIO_MAX
 #define     ASRC_DITHER_SETTING             SRC_DITHER_SETTING
@@ -40,14 +40,14 @@
 
 
 //Compile time checks on SRC configuration defines 
-#if (SRC_N_CHANNELS % SRC_N_CORES != 0) 
-#error "Each core must process an integer number of channels. Check SRC_N_CHANNELS & SRC_N_CORES."
+#if (SRC_N_CHANNELS % SRC_N_INSTANCES != 0) 
+#error "Each core must process an integer number of channels. Check SRC_N_CHANNELS & SRC_N_INSTANCES."
 #endif
-#if (SRC_N_CHANNELS < SRC_N_CORES) 
-#error "Each instance (logical core) must process at least one channel. Check SRC_N_CHANNELS & SRC_N_CORES."
+#if (SRC_N_CHANNELS < SRC_N_INSTANCES) 
+#error "Each instance (logical core) must process at least one channel. Check SRC_N_CHANNELS & SRC_N_INSTANCES."
 #endif
-#if (SRC_N_CORES < 1)
-#error "Number of instances (logical cores) must be at least 1. Check SRC_N_CORES."
+#if (SRC_N_INSTANCES < 1)
+#error "Number of instances (logical cores) must be at least 1. Check SRC_N_INSTANCES."
 #endif
 #if (SRC_N_CHANNELS < 1)
 #error "Number of audio channels must be at least 1. Check SRC_N_CHANNELS."

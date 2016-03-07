@@ -108,20 +108,20 @@ typedef interface led_matrix_if {
 typedef unsigned fs_ratio_t;
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
-[[distributable]] void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_CORES], server sample_rate_enquiry_if i_input_rate);
+[[distributable]] void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate);
 void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
-[[distributable]] unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate);
+[[distributable]] unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
-[[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES], client led_matrix_if i_leds);
+[[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
 
 
 int main(void){
     serial_transfer_push_if i_serial_in;
-    block_transfer_if i_serial2block[ASRC_N_CORES], i_block2serial[ASRC_N_CORES];
+    block_transfer_if i_serial2block[ASRC_N_INSTANCES], i_block2serial[ASRC_N_INSTANCES];
     serial_transfer_pull_if i_serial_out;
     sample_rate_enquiry_if i_sr_input, i_sr_i2s;
-    fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES];
+    fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES];
     interface audio_codec_config_if i_codec;
     interface i2c_master_if i_i2c[1];
     interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
@@ -134,7 +134,7 @@ int main(void){
         on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ_SPDIF);
         on tile[SPDIF_TILE]: spdif_handler(c_spdif_rx, i_serial_in);
         on tile[SPDIF_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
-        on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_CORES; i++) src(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
+        on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) src(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
         on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_i2s);}
 
         on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], codec_mode, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
@@ -183,15 +183,15 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
 
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation
-void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_CORES], server sample_rate_enquiry_if i_input_rate)
+void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 {
-    int buffer[ASRC_N_CORES][ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
+    int buffer[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
     memset(buffer, 0, sizeof(buffer));
 
-#if (ASRC_N_CORES == 2)
-    int * movable p_buffer[ASRC_N_CORES] = {buffer[0], buffer[1]};    //One half of the double buffer
+#if (ASRC_N_INSTANCES == 2)
+    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0], buffer[1]};    //One half of the double buffer
 #else
-    int * movable p_buffer[ASRC_N_CORES] = {buffer[0]};
+    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0]};
 #endif
 
 
@@ -209,19 +209,19 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
             //Request to receive all channels of one sample period into double buffer
             case i_serial_in.push(int sample[], const unsigned n_chan):
                 t_tick :> t_this_count;     //Grab timestamp of this sample group
-                for(int i=0; i < n_chan / ASRC_N_CORES; i++){
-                    for(int j=0; j < ASRC_N_CORES; j++){
-                        p_buffer[j][buff_idx + i] = sample[i * ASRC_N_CORES + j];
+                for(int i=0; i < n_chan / ASRC_N_INSTANCES; i++){
+                    for(int j=0; j < ASRC_N_INSTANCES; j++){
+                        p_buffer[j][buff_idx + i] = sample[i * ASRC_N_INSTANCES + j];
                     }
                 }
-                buff_idx += n_chan / ASRC_N_CORES;  //Move index on by number of samples received
+                buff_idx += n_chan / ASRC_N_INSTANCES;  //Move index on by number of samples received
                 samp_count++;                       //Keep track of samples received
 
-                if(buff_idx == (ASRC_CHANNELS_PER_CORE * SRC_N_IN_SAMPLES)){  //When full..
+                if(buff_idx == (ASRC_CHANNELS_PER_INSTANCE * SRC_N_IN_SAMPLES)){  //When full..
                     buff_idx = 0;
                     t_tick :> t0;
-                    for(int i=0; i < ASRC_N_CORES; i++){
-                        i_block_transfer[i].push(p_buffer[i], (ASRC_CHANNELS_PER_CORE * SRC_N_IN_SAMPLES)); //Exchange with src task
+                    for(int i=0; i < ASRC_N_INSTANCES; i++){
+                        i_block_transfer[i].push(p_buffer[i], (ASRC_CHANNELS_PER_INSTANCE * SRC_N_IN_SAMPLES)); //Exchange with src task
                     }
                     t_tick :> t1;
                     //debug_printf("interface call time = %d\n", t1 - t0);
@@ -280,9 +280,9 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
     int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
     int * movable p_to_i2s = to_i2s;
 
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_CORE]; //ASRC state machine state
-    int             iASRCStack[ASRC_CHANNELS_PER_CORE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_CORE];  //Control structure
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
     iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
     unsigned in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
@@ -290,9 +290,9 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
 
     set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
-    debug_printf("ASRC_CHANNELS_PER_CORE=%d\n", ASRC_CHANNELS_PER_CORE);
+    debug_printf("ASRC_CHANNELS_PER_INSTANCE=%d\n", ASRC_CHANNELS_PER_INSTANCE);
 
-    for(int ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+    for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
     unsafe {
         // Set state, stack and coefs into ctrl structure
         sASRCCtrl[ui].psState                   = &sASRCState[ui];
@@ -332,7 +332,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                     n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
 
 #else
-                    for(int i = 0;i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_CORE; i++){
+                    for(int i = 0;i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE; i++){
                         p_to_i2s[i/2] = p_from_spdif[i];
                     }
                     n_samps_out = SRC_N_IN_SAMPLES / 2;
@@ -406,7 +406,7 @@ static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, 
 //This task is marked as unsafe keep pointers in scope throughout function
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation
-unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
+unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
     int samps_to_i2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //Circular buffers and pointers for output from block2serial
     int * unsafe ptr_base_samps_to_i2s[ASRC_N_CHANNELS];
@@ -414,13 +414,13 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
     int * unsafe ptr_wr_samps_to_i2s[ASRC_N_CHANNELS];
 
     //Double buffer from output from SRC
-    int to_i2s[ASRC_N_CORES][ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
+    int to_i2s[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
     memset(to_i2s, 0, sizeof(to_i2s));
 
-#if (ASRC_N_CORES == 2)
-    int * movable p_to_i2s[ASRC_N_CORES] = {to_i2s[0], to_i2s[1]}; //Movable pointer for swapping with SRC
+#if (ASRC_N_INSTANCES == 2)
+    int * movable p_to_i2s[ASRC_N_INSTANCES] = {to_i2s[0], to_i2s[1]}; //Movable pointer for swapping with SRC
 #else
-    int * movable p_to_i2s[ASRC_N_CORES] = {to_i2s[0]};            //Movable pointer for swapping with SRC
+    int * movable p_to_i2s[ASRC_N_INSTANCES] = {to_i2s[0]};            //Movable pointer for swapping with SRC
 #endif
 
     unsigned samp_count = 0;                    //Keeps track of number of samples passed through
@@ -467,8 +467,8 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_CORES], 
                 p_to_i2s[if_index] = move(tmp);
                 for(int i=0; i < n_samps; i++) {   //Get entire buffer
                     unsigned success = 1;                                   //Keep track of status of FIFO operations
-                    for (int j=0; j < ASRC_CHANNELS_PER_CORE; j++) {        //Push samples into FIFO
-                        int samp = p_to_i2s[if_index][ASRC_CHANNELS_PER_CORE * i + j];
+                    for (int j=0; j < ASRC_CHANNELS_PER_INSTANCE; j++) {        //Push samples into FIFO
+                        int samp = p_to_i2s[if_index][ASRC_CHANNELS_PER_INSTANCE * i + j];
                         int channel_num = if_index + j;
                         success &= push_sample_into_fifo(samp, &ptr_wr_samps_to_i2s[channel_num], ptr_rd_samps_to_i2s[channel_num],
                                 ptr_base_samps_to_i2s[channel_num], OUT_FIFO_SIZE);
@@ -607,7 +607,7 @@ typedef struct rate_info_t{
 [[combinable]]
 #pragma unsafe arrays   //Performance optimisation
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
-        server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_CORES], client led_matrix_if i_leds)
+        server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds)
 {
     rate_info_t spdif_info = {  //Initialise to nominal values for default frequency
             ((DEFAULT_FREQ_HZ_SPDIF * 10000000ULL) / XS1_TIMER_HZ),
@@ -697,7 +697,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
                 //If either has changed from invalid to valid, send message to SRC to initialise
                 if ((spdif_status_new == VALID && i2s_status_new == VALID) && ((spdif_info.status == INVALID || i2s_info.status == INVALID)) && !skip_validity){
-                    for(int i = 0; i < ASRC_N_CORES; i++){
+                    for(int i = 0; i < ASRC_N_INSTANCES; i++){
                         i_fs_ratio[i].new_sr_notify();
                     }
                     skip_validity = 3;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init

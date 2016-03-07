@@ -17,9 +17,12 @@ static void ssrc_error(int code)
 }
 
 
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl)
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl, const unsigned n_channels_per_instance)
 {
     SSRCReturnCodes_t ret_code;
+
+    // Set number of channels per instance
+    sSSRCCtrl->uiNchannels               = n_channels_per_instance;
 
     // Set number of samples
     sSSRCCtrl->uiNInSamples              = SSRC_N_IN_SAMPLES;
@@ -28,14 +31,13 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl)
     sSSRCCtrl->uiDitherOnOff             = SSRC_DITHER_OFF;
     sSSRCCtrl->uiRndSeedInit             = 1234567;
 
-
+    // Set the sample rate codes
     sSSRCCtrl->eInFs                     = (int)sr_in;
     sSSRCCtrl->eOutFs                    = (int)sr_out;
 
     // Init SSRC instances
     ret_code = SSRC_init(sSSRCCtrl) ;
     if(ret_code != SSRC_NO_ERROR) ssrc_error(ret_code);
-
 }
 
 unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl){

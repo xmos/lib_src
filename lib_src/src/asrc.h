@@ -125,6 +125,7 @@
 		typedef struct _ASRCCtrl											
 		{
 #ifdef __XC__
+		    unsigned int                            uiNchannels;                        // Number of channels in this instance
 			int* unsafe								piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			unsigned int							uiNSyncSamples;						// Number of synchronous samples produced in one call to the processing function
@@ -151,7 +152,8 @@
 			int* unsafe								piStack;							// Pointer to stack buffer
 			int* unsafe								piADCoefs;							// Pointer to AD coefficients
 #else
-                        			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
+            unsigned int                            uiNchannels;                        // Number of channels in this instance
+            int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			unsigned int							uiNSyncSamples;						// Number of synchronous samples produced in one call to the processing function
 			ASRCFs_t								eInFs;								// Input sampling rate code

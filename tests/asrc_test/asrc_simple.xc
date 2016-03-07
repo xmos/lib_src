@@ -28,16 +28,16 @@ void dsp_slave(chanend c_dsp)
 // ASRC instances variables
 // ------------------------
 // State, Stack, Coefs and Control structures (one for each channel)
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_CORE]; //ASRC state machine state
-    int             iASRCStack[ASRC_CHANNELS_PER_CORE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_CORE];  //Control structure
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES]; //Buffer between filter stages
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
     iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
     unsigned int    sr_in_out = 99999; //Invalid SR code to force initialisation on first run
     unsigned int    sr_in_out_new;
 
-    int             in_buff[ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_CORE];
-    int             out_buff[ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_CORE];
+    int             in_buff[ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE];
+    int             out_buff[ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_INSTANCE];
 
     timer t;
     unsigned t1=0,t2=0,t_dsp=0;
@@ -46,7 +46,7 @@ void dsp_slave(chanend c_dsp)
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through ASRC
     unsigned int    FsRatio = ASRC_NOMINAL_FS_SCALE; //Deviation between in Fs and out Fs
 
-    for(int ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
+    for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
     unsafe {
         // Set state, stack and coefs into ctrl structure
         sASRCCtrl[ui].psState                   = &sASRCState[ui];
@@ -67,23 +67,23 @@ void dsp_slave(chanend c_dsp)
     }
 */
 
-    memset(out_buff, 0, ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_CORE * sizeof(int));
+    memset(out_buff, 0, ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_INSTANCE * sizeof(int));
 
     while(1){
         t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
 	int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
         if (n_samps_in_tot) printf("proc time chan=%d, In sample period=%d, Thread util=%d%%, Tot samp in count=%d\n",
-           (t_dsp / (ASRC_CHANNELS_PER_CORE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
+           (t_dsp / (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
 
         c_dsp :> sr_in_out_new;
         c_dsp :> FsRatio;
 
         for(unsigned i=0; i<ASRC_N_IN_SAMPLES; i++) {
             unsigned tmp;
-            for (unsigned j=0; j<ASRC_CHANNELS_PER_CORE; j++) {
+            for (unsigned j=0; j<ASRC_CHANNELS_PER_INSTANCE; j++) {
             	c_dsp :> tmp;
-            	in_buff[i*ASRC_CHANNELS_PER_CORE + j] = tmp;
+            	in_buff[i*ASRC_CHANNELS_PER_INSTANCE + j] = tmp;
                 //printf("n_samp=%d chan=%d, tmp=%d\n", i, j, tmp);
             }
         }
@@ -95,8 +95,8 @@ void dsp_slave(chanend c_dsp)
         for(unsigned uj = 0; uj < n_samps_out; uj++)
         {
             unsigned tmp;
-            for (unsigned j=0; j<ASRC_CHANNELS_PER_CORE; j++) {
-            	tmp = out_buff[uj*ASRC_CHANNELS_PER_CORE + j];
+            for (unsigned j=0; j<ASRC_CHANNELS_PER_INSTANCE; j++) {
+            	tmp = out_buff[uj*ASRC_CHANNELS_PER_INSTANCE + j];
                 c_dsp <: tmp;
             }
         }
@@ -106,7 +106,7 @@ void dsp_slave(chanend c_dsp)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl);
+            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE);
             
             sr_in_out = sr_in_out_new;
             printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
@@ -151,15 +151,15 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
 
     while(!iEndOfFile)
     {        
-        for (unsigned j=0; j<ASRC_N_CORES; j++) {
+        for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
             c_dsp[j] <: sr_in_out;
             c_dsp[j] <: FsRatio;
         }
 
-        for(unsigned i = 0; i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_CORE; i++) {
+        for(unsigned i = 0; i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE; i++) {
             int samp;
-            for (unsigned j=0; j<ASRC_N_CORES; j++) {
-                unsigned file_index = (i * ASRC_N_CORES + j) % ASRC_N_CHANNELS;
+            for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
+                unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
                 if ((fscanf(InFileDat[file_index], "%i\n", &samp) == EOF) || (count_in >= uiNTotalInSamples))  \
                 {
                     iEndOfFile = 1;     //We are at the end of the file
@@ -172,17 +172,17 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
 
 
         unsigned n_samps;
-        for (unsigned j=0; j<ASRC_N_CORES; j++) 
+        for (unsigned j=0; j<ASRC_N_INSTANCES; j++) 
         {
             c_dsp[j] :> n_samps;  //Get number of samps to receive
         }
 
-        for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_CORE; i++) 
+        for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_INSTANCE; i++) 
         {
             int samp;
-            for (unsigned j=0; j<ASRC_N_CORES; j++) 
+            for (unsigned j=0; j<ASRC_N_INSTANCES; j++) 
             {
-                unsigned file_index = (i * ASRC_N_CORES + j) % ASRC_N_CHANNELS;
+                unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
                 c_dsp[j] :> samp; //Get samples
                 if(fprintf(OutFileDat[file_index], "%i\n", samp) < 0)
                     printf("Error while writing to output file\n");
@@ -375,10 +375,10 @@ int main(int argc, char * unsafe argv[])
         exit(1);
     }
 
-    chan c_dsp[ASRC_N_CORES];
+    chan c_dsp[ASRC_N_INSTANCES];
     par
     {
-        par (unsigned i=0; i<ASRC_N_CORES; i++) dsp_slave(c_dsp[i]);
+        par (unsigned i=0; i<ASRC_N_INSTANCES; i++) dsp_slave(c_dsp[i]);
         dsp_mgr(c_dsp, fFsRatioDeviation);
 
     }

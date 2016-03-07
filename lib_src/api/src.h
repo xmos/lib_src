@@ -24,7 +24,7 @@ typedef enum fs_code_t {
    *  \param   sr_out          Nominal sample rate of output stream in Hz
    *  \param   sSSRCCtrl       Pointer to SSRC control stucture
    */
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl);
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl, const unsigned n_channels_per_instance);
 
    /** Perform synchronous sample rate conversion processing on block of input samples.
    * 
@@ -42,7 +42,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl);
    *  \param   sASRCCtrl       Reference to array of ASRC control structures
    *  \returns The nominal sample rate ratio of in to out in Q4.28 format
    */
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]);
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance);
 
    /** Perform asynchronous sample rate conversion processing on block of input samples.
    * 
@@ -52,7 +52,7 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_
    *  \param   sASRCCtrl        Reference to array of ASRC control structures
    *  \returns The number of output samples produced by the SRC operation.
    */
-unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]);
+unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE]);
 
 #if defined(__cplusplus) || defined(__XC__)
 }

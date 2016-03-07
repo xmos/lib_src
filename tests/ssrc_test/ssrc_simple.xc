@@ -6,7 +6,9 @@
 
 
 // SSRC includes
+
 #include "src.h"
+
 
 //Input and output files
 char * unsafe pzInFileName[SSRC_N_CHANNELS] = {null};
@@ -36,8 +38,8 @@ void dsp_slave(chanend c_dsp)
 
     const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
 
-    int             in_buff[SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_CORE];
-    int             out_buff[SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_CORE];
+    int             in_buff[SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_INSTANCE];
+    int             out_buff[SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_INSTANCE];
 
     timer t;
     unsigned t1=0,t2=0,t_dsp=0;
@@ -45,21 +47,21 @@ void dsp_slave(chanend c_dsp)
     unsigned int    n_samps_out = 0;  //number of samples produced by last call to SSRC
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through SSRC
 
-    memset(out_buff, 0, SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_CORE * 4);
+    memset(out_buff, 0, SSRC_N_IN_SAMPLES * SSRC_N_OUT_IN_RATIO_MAX * SSRC_CHANNELS_PER_INSTANCE * 4);
 
     while(1){
         t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
         int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
         if (n_samps_in_tot) printf("Process time per chan=%d, Input sample period=%d, Thread utilisation=%d%%, Tot samp in count=%d\n", 
-    (t_dsp / (SSRC_CHANNELS_PER_CORE * SSRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( SSRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
+    (t_dsp / (SSRC_CHANNELS_PER_INSTANCE * SSRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( SSRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
         c_dsp :> sr_in_out_new;
 
         for(unsigned i=0; i<SSRC_N_IN_SAMPLES; i++) {
             unsigned tmp;
-            for (unsigned j=0; j<SSRC_CHANNELS_PER_CORE; j++) {
+            for (unsigned j=0; j<SSRC_CHANNELS_PER_INSTANCE; j++) {
                 c_dsp :> tmp;
-                in_buff[i*SSRC_CHANNELS_PER_CORE + j] = tmp;
+                in_buff[i*SSRC_CHANNELS_PER_INSTANCE + j] = tmp;
             }
         }
 
@@ -70,8 +72,8 @@ void dsp_slave(chanend c_dsp)
         for(unsigned uj = 0; uj < n_samps_out; uj++)
         {
             unsigned tmp;
-            for (unsigned j=0; j<SSRC_CHANNELS_PER_CORE; j++) {
-                tmp = out_buff[uj*SSRC_CHANNELS_PER_CORE + j];
+            for (unsigned j=0; j<SSRC_CHANNELS_PER_INSTANCE; j++) {
+                tmp = out_buff[uj*SSRC_CHANNELS_PER_INSTANCE + j];
                 c_dsp <: tmp;
             }
         }
@@ -82,7 +84,7 @@ void dsp_slave(chanend c_dsp)
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
             unsafe{
-                ssrc_init(InFs, OutFs, &sSSRCCtrl);
+                ssrc_init(InFs, OutFs, &sSSRCCtrl, SSRC_CHANNELS_PER_INSTANCE);
             }
             sr_in_out = sr_in_out_new;
             printf("SSRC sample rate in=%d, out=%d\n", sample_rates[InFs], sample_rates[OutFs]);
@@ -123,16 +125,16 @@ void dsp_mgr(chanend c_dsp[]){
 
     while(!iEndOfFile)
     {
-        for (unsigned j=0; j<SSRC_N_CORES; j++) 
+        for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
         {
             c_dsp[j] <: sr_in_out;  //Send in/out sample rate
         }
 
-        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_CORE; i++) 
+        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_INSTANCE; i++) 
         {
             int samp;
-            for (unsigned j=0; j<SSRC_N_CORES; j++) {
-                unsigned file_index = (i * SSRC_N_CORES + j) % SSRC_N_CHANNELS;
+            for (unsigned j=0; j<SSRC_N_INSTANCES; j++) {
+                unsigned file_index = (i * SSRC_N_INSTANCES + j) % SSRC_N_CHANNELS;
                 if ((fscanf(InFileDat[file_index], "%i\n", &samp) == EOF) || (count_in >= uiNTotalInSamples))  \
                 {
                     iEndOfFile = 1;     //We are at the end of the file
@@ -145,17 +147,17 @@ void dsp_mgr(chanend c_dsp[]){
 
 
         unsigned n_samps;
-        for (unsigned j=0; j<SSRC_N_CORES; j++) 
+        for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
         {
             c_dsp[j] :> n_samps;  //Get number of samps to receive
         }
 
-        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_CORE; i++) 
+        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_INSTANCE; i++) 
         {
             int samp;
-            for (unsigned j=0; j<SSRC_N_CORES; j++) 
+            for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
             {
-                unsigned file_index = (i * SSRC_N_CORES + j) % SSRC_N_CHANNELS;
+                unsigned file_index = (i * SSRC_N_INSTANCES + j) % SSRC_N_CHANNELS;
                 c_dsp[j] :> samp; //Get samples
                 if(fprintf(OutFileDat[file_index], "%i\n", samp) < 0)
                     printf("Error while writing to output file\n");
@@ -340,10 +342,10 @@ int main(int argc, char * unsafe argv[])
         exit(1);
     }
 
-    chan c_dsp[SSRC_N_CORES];
+    chan c_dsp[SSRC_N_INSTANCES];
     par
     {
-        par (unsigned i=0; i<SSRC_N_CORES; i++) dsp_slave(c_dsp[i]);
+        par (unsigned i=0; i<SSRC_N_INSTANCES; i++) dsp_slave(c_dsp[i]);
         dsp_mgr(c_dsp);
 
     }
