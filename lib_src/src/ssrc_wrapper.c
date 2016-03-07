@@ -17,7 +17,7 @@ static void ssrc_error(int code)
 }
 
 
-void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t *sSSRCCtrl)
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl)
 {
     SSRCReturnCodes_t ret_code;
 
@@ -29,8 +29,8 @@ void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t *sSSRCCtrl)
     sSSRCCtrl->uiRndSeedInit             = 1234567;
 
 
-    sSSRCCtrl->eInFs                     = sr_in;
-    sSSRCCtrl->eOutFs                    = sr_out;
+    sSSRCCtrl->eInFs                     = (int)sr_in;
+    sSSRCCtrl->eOutFs                    = (int)sr_out;
 
     // Init SSRC instances
     ret_code = SSRC_init(sSSRCCtrl) ;

@@ -5,16 +5,27 @@
 #include <ssrc.h>
 #include <asrc.h>
 
+#if defined(__cplusplus) || defined(__XC__)
+extern "C" {
+#endif
+
+    /** List of sample rate codes allowing the core SRC algorithms to use an index value */
+typedef enum fs_code_t {
+    FS_CODE_44100 = 0,
+    FS_CODE_48000,
+    FS_CODE_88200,
+    FS_CODE_96000,
+    FS_CODE_176400,
+    FS_CODE_192000
+} fs_code_t;
+
    /** Initialises synchronous sample rate conversion instance.
    *  \param   sr_in           Nominal sample rate of input stream in Hz
    *  \param   sr_out          Nominal sample rate of output stream in Hz
    *  \param   sSSRCCtrl       Pointer to SSRC control stucture
    */
-#ifdef __XC__
-void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t * unsafe sSSRCCtrl);
-#else
-void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t *sSSRCCtrl);
-#endif
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl);
+
    /** Perform synchronous sample rate conversion processing on block of input samples.
    * 
    *  \param   in_buff          Reference to input sample buffer array
@@ -22,11 +33,7 @@ void ssrc_init(unsigned sr_in, unsigned sr_out, SSRCCtrl_t *sSSRCCtrl);
    *  \param   sSSRCCtrl        Pointer to SSRC control stucture
    *  \returns The number of output samples produced by the SRC operation
    */
-#ifdef __XC__
-unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t * unsafe sSSRCCtrl);
-#else
 unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl);
-#endif
 
    /** Initialises asynchronous sample rate conversion instance.
    * 
@@ -35,7 +42,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl);
    *  \param   sASRCCtrl       Reference to array of ASRC control structures
    *  \returns The nominal sample rate ratio of in to out in Q4.28 format
    */
-unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]);
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]);
 
    /** Perform asynchronous sample rate conversion processing on block of input samples.
    * 
@@ -47,4 +54,7 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CH
    */
 unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE]);
 
+#if defined(__cplusplus) || defined(__XC__)
+}
+#endif
 #endif // __src_h__

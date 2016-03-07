@@ -21,7 +21,7 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE])
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_CORE])
 {
     int ui;
 
@@ -33,8 +33,8 @@ unsigned asrc_init(unsigned sr_in, unsigned sr_out, ASRCCtrl_t sASRCCtrl[ASRC_CH
     for(ui = 0; ui < ASRC_CHANNELS_PER_CORE; ui++)
     {
         // Set input/output sampling rate codes
-        sASRCCtrl[ui].eInFs                     = sr_in;
-        sASRCCtrl[ui].eOutFs                    = sr_out;
+        sASRCCtrl[ui].eInFs                     = (int)sr_in;
+        sASRCCtrl[ui].eOutFs                    = (int)sr_out;
 
         // Set number of samples
         sASRCCtrl[ui].uiNInSamples              = SRC_N_IN_SAMPLES;
