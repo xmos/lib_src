@@ -246,26 +246,26 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
 }
 
 //Helper function for converting sample to fs index value
-static unsigned samp_rate_to_code(unsigned samp_rate){
+static fs_code_t samp_rate_to_code(unsigned samp_rate){
     unsigned samp_code = 0xdead;
     switch (samp_rate){
     case 44100:
-        samp_code = 0;
+        samp_code = FS_CODE_44100;
         break;
     case 48000:
-        samp_code = 1;
+        samp_code = FS_CODE_48000;
         break;
     case 88200:
-        samp_code = 2;
+        samp_code = FS_CODE_88200;
         break;
     case 96000:
-        samp_code = 3;
+        samp_code = FS_CODE_96000;
         break;
     case 176400:
-        samp_code = 4;
+        samp_code = FS_CODE_176400;
         break;
     case 192000:
-        samp_code = 5;
+        samp_code = FS_CODE_192000;
         break;
     }
     return samp_code;
@@ -285,8 +285,8 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
     ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
     iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
-    unsigned in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
-    unsigned out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
+    fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
+    fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
 
     set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
@@ -300,7 +300,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
         sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
     }
 
-    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl);     //Initialise ASRC
+    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, 1, 16, 0);     //Initialise ASRC
 
     unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
     while(1){
@@ -317,7 +317,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                 in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
                 out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
                 debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
-                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl);//Initialise ASRC
+                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, 1, 16, 0);//Initialise ASRC
             break;
 
             default:
