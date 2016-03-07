@@ -106,7 +106,7 @@ void dsp_slave(chanend c_dsp)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE);
+            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
             
             sr_in_out = sr_in_out_new;
             printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);

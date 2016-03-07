@@ -21,7 +21,8 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance)
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance,
+        const unsigned n_in_samples, const unsigned dither_on_off)
 {
     int ui;
 
@@ -40,10 +41,10 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
         sASRCCtrl[ui].eOutFs                    = (int)sr_out;
 
         // Set number of samples
-        sASRCCtrl[ui].uiNInSamples              = SRC_N_IN_SAMPLES;
+        sASRCCtrl[ui].uiNInSamples              = n_in_samples;
 
         // Set dither flag and random seeds
-        sASRCCtrl[ui].uiDitherOnOff             = ASRC_DITHER_SETTING;
+        sASRCCtrl[ui].uiDitherOnOff             = dither_on_off;
         sASRCCtrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers
 
         // Init ASRC instances
@@ -62,13 +63,13 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
     return (sASRCCtrl[0].uiFsRatio);
 }
 
-unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE]){
+unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[]){
 
     int ui, uj; //General counters
     int             uiSplCntr;  //Spline counter
 
     // Get the number of channels per instance from first channel
-    unsigned n_channels_per_instance = sASRCCtrl[0].uiNchannels;
+    const unsigned n_channels_per_instance = sASRCCtrl[0].uiNchannels;
 
 
     for(ui = 0; ui < n_channels_per_instance; ui++)

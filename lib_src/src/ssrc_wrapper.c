@@ -17,7 +17,8 @@ static void ssrc_error(int code)
 }
 
 
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl, const unsigned n_channels_per_instance)
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl,
+        const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off)
 {
     SSRCReturnCodes_t ret_code;
 
@@ -25,10 +26,10 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl, const u
     sSSRCCtrl->uiNchannels               = n_channels_per_instance;
 
     // Set number of samples
-    sSSRCCtrl->uiNInSamples              = SSRC_N_IN_SAMPLES;
+    sSSRCCtrl->uiNInSamples              = n_in_samples;
 
     // Set dither flag and random seeds
-    sSSRCCtrl->uiDitherOnOff             = SSRC_DITHER_OFF;
+    sSSRCCtrl->uiDitherOnOff             = dither_on_off;
     sSSRCCtrl->uiRndSeedInit             = 1234567;
 
     // Set the sample rate codes

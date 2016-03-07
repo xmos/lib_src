@@ -84,7 +84,7 @@ void dsp_slave(chanend c_dsp)
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
             unsafe{
-                ssrc_init(InFs, OutFs, &sSSRCCtrl, SSRC_CHANNELS_PER_INSTANCE);
+                ssrc_init(InFs, OutFs, &sSSRCCtrl, SSRC_CHANNELS_PER_INSTANCE, SSRC_N_IN_SAMPLES, SSRC_DITHER_SETTING);
             }
             sr_in_out = sr_in_out_new;
             printf("SSRC sample rate in=%d, out=%d\n", sample_rates[InFs], sample_rates[OutFs]);
