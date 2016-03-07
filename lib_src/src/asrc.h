@@ -35,12 +35,13 @@
 	// ---------------
 	#define		ASRC_STACK_LENGTH_MULT				(ASRC_N_CHANNELS * 4)				// Multiplier for stack length (stack length = this value x the number of input samples to process)
 	#define		ASRC_ADFIR_COEFS_LENGTH				FILTER_DEFS_ADFIR_PHASE_N_TAPS		// Length of AD FIR coefficients buffer
+    #define     ASRC_NOMINAL_FS_SCALE           (268435456)      //Nominal Fs Ratio scale value in 4.28 format
 
 
 	// Parameter values
 	// ----------------
-	#define		ASRC_DITHER_OFF					SRC_DITHER_OFF
-	#define		ASRC_DITHER_ON					SRC_DITHER_ON
+	#define		ASRC_DITHER_OFF					0
+	#define		ASRC_DITHER_ON					1
 	#define		ASRC_DITHER_ON_OFF_MIN				ASRC_DITHER_OFF
 	#define		ASRC_DITHER_ON_OFF_MAX				ASRC_DITHER_ON
 

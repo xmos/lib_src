@@ -1,7 +1,6 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef __src_h__
 #define __src_h__
-#include <src_config.h>
 #include <ssrc.h>
 #include <asrc.h>
 
@@ -60,7 +59,7 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
    *  \param   sASRCCtrl        Reference to array of ASRC control structures
    *  \returns The number of output samples produced by the SRC operation.
    */
-unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE]);
+unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[]);
 
 #if defined(__cplusplus) || defined(__XC__)
 }

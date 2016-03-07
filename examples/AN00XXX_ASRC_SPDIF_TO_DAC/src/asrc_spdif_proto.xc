@@ -15,6 +15,16 @@
 #include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
 
+#define     ASRC_N_CHANNELS                  2  //Total number of audio channels to be processed by SRC (minimum 1)
+
+#define     ASRC_N_INSTANCES                 2  //Number of instances (each usually run a logical core) used to process audio (minimum 1)
+#define     ASRC_CHANNELS_PER_INSTANCE       (ASRC_N_CHANNELS/ASRC_N_INSTANCES)
+                                                //Calcualted number of audio channels processed by each core
+#define     ASRC_N_IN_SAMPLES                16 //Number of samples per channel in each block passed into SRC each call
+                                                //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
+#define     ASRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
+#define     ASRC_DITHER_SETTING              0
+
 #define OUT_FIFO_SIZE               (ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial output FIFO
 
 #define DEFAULT_FREQ_HZ_SPDIF       48000

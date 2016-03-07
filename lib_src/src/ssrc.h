@@ -36,8 +36,8 @@
 
 	// Parameter values
 	// ----------------
-	#define		SSRC_DITHER_OFF					SRC_DITHER_OFF
-	#define		SSRC_DITHER_ON					SRC_DITHER_ON
+	#define		SSRC_DITHER_OFF					0
+	#define		SSRC_DITHER_ON					1
 	#define		SSRC_DITHER_ON_OFF_MIN				SSRC_DITHER_OFF
 	#define		SSRC_DITHER_ON_OFF_MAX				SSRC_DITHER_ON
 

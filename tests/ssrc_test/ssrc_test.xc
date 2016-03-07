@@ -6,9 +6,20 @@
 
 
 // SSRC includes
-
 #include "src.h"
 
+//General SSRC configuration defines
+#define     SSRC_N_CHANNELS                  2  //Total number of audio channels to be processed by SRC (minimum 1)
+
+#define     SSRC_N_INSTANCES                 1  //Number of instances (each usuall run a logical core) used to process audio (minimum 1)
+#define     SSRC_CHANNELS_PER_INSTANCE       (SSRC_N_CHANNELS/SSRC_N_INSTANCES)
+                                                //Calcualted number of audio channels processed by each core
+#define     SSRC_N_IN_SAMPLES                4  //Number of samples per channel in each block passed into SRC each call
+                                                //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
+#define     SSRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
+#define     SSRC_DITHER_SETTING              0  //Enables or disables quantisation of output with dithering to 24b
+
+#include "ssrc_checks.h"                        //Do some checking on the defines above
 
 //Input and output files
 char * unsafe pzInFileName[SSRC_N_CHANNELS] = {null};
