@@ -1,4 +1,7 @@
 #include <xs1.h>
+#include <string.h>
+#include <debug_print.h>
+#include "block_serial.h"
 
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation

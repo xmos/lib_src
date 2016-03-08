@@ -6,41 +6,25 @@
 #include <string.h>
 
 #include <src.h>
-#include <audio_codec.h>
+#include <cs4384_5368.h>
 #include <spdif.h>
 #include <i2s.h>
 #include <i2c.h>
 #include <gpio.h>
+
+#include "main.h"
 #include "block_serial.h"
+#include "app_config.h"     //General settings
 
 #include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
-
-#define     ASRC_N_CHANNELS                 2  //Total number of audio channels to be processed by SRC (minimum 1)
-
-#define     ASRC_N_INSTANCES                2  //Number of instances (each usually run a logical core) used to process audio (minimum 1)
-#define     ASRC_CHANNELS_PER_INSTANCE     (ASRC_N_CHANNELS/ASRC_N_INSTANCES)
-                                               //Calcualted number of audio channels processed by each core
-#define     ASRC_N_IN_SAMPLES               16 //Number of samples per channel in each block passed into SRC each call
-                                               //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
-#define     ASRC_N_OUT_IN_RATIO_MAX         5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
-#define     ASRC_DITHER_SETTING             0
-
-#define OUT_FIFO_SIZE                       (ASRC_N_OUT_IN_RATIO_MAX * ASRC_N_IN_SAMPLES * 2)  //Size per channel of block2serial output FIFO
-
-#define DEFAULT_FREQ_HZ_SPDIF               48000
-#define DEFAULT_FREQ_HZ_I2S                 48000
-#define MCLK_FREQUENCY_48                   24576000
-#define MCLK_FREQUENCY_44                   22579200
 
 
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
    The port assignments can be changed for a different port map.
 */
-
 #define AUDIO_TILE                  0
 #define SPDIF_TILE                  1
-
 in buffered port:32  ports_i2s_adc[4]   = on tile[AUDIO_TILE]: {XS1_PORT_1I,
                                                      XS1_PORT_1J,
                                                      XS1_PORT_1K,
@@ -78,38 +62,11 @@ out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
 
 port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
 
-static const unsigned CODEC_I2C_DEVICE_ADDR = 0x18;
-static const unsigned PLL_I2C_DEVICE_ADDR   = 0x4E;
-
-static const enum codec_mode_t codec_mode = CODEC_IS_I2S_SLAVE;
-
-
-typedef interface sample_rate_enquiry_if {
-    unsigned get_sample_count(int &elapsed_time_in_ticks);
-    unsigned get_buffer_level(void);
-} sample_rate_enquiry_if;
-
-typedef interface fs_ratio_enquiry_if {
-    unsigned get(unsigned nominal_fs_ratio);
-    [[notification]] slave void new_sr_notify(void);
-    [[clears_notification]] unsigned get_in_fs(void);
-    [[clears_notification]] unsigned get_out_fs(void);
-} fs_ratio_enquiry_if;
-
-//Sets or clears pixel. Origin is bottom left scanning right
-typedef interface led_matrix_if {
-    void set(unsigned col, unsigned row, unsigned val);
-} led_matrix_if;
-
-
-typedef unsigned fs_ratio_t;
-
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
-
 
 int main(void){
     serial_transfer_push_if i_serial_in;
@@ -132,7 +89,7 @@ int main(void){
         on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) src(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
         on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_i2s);}
 
-        on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], codec_mode, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
+        on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
         on tile[AUDIO_TILE]: output_gpio(i_gpio, 8, port_audio_config, null);
         on tile[AUDIO_TILE]: {

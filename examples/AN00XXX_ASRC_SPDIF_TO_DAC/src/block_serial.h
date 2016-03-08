@@ -1,6 +1,10 @@
 #ifndef BLOCK_SERIAL_H_
 #define BLOCK_SERIAL_H_
 
+#include <stddef.h>
+#include "app_config.h"
+#include "main.h"
+
 typedef interface block_transfer_if {
     void push(int * movable &p_buffer, const unsigned n_samps);
 } block_transfer_if;
