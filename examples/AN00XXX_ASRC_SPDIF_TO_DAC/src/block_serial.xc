@@ -1,10 +1,11 @@
 #include <xs1.h>
 #include <string.h>
 #include <debug_print.h>
+#include <xscope.h>
 #include "block_serial.h"
 
 [[distributable]]
-#pragma unsafe arrays   //Performance optimisation
+#pragma unsafe arrays   //Performance optimisation. Removes bounds check
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 {
     int buffer[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
@@ -165,7 +166,7 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCE
                 for (int i=0; i<ASRC_N_CHANNELS; i++) {
                     success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
                 }
-                //xscope_int(1, samp[0]);
+                //xscope_int(0, samp[0]);
                 i_serial_out.do_pull(samp, ASRC_N_CHANNELS);
                 if (!success) {
                     for (int i=0; i<ASRC_N_CHANNELS; i++) {   //Init all FIFOs if any of them have under/overflowed

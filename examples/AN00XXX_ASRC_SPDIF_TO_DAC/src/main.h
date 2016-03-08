@@ -18,7 +18,13 @@ typedef interface led_matrix_if {
     void set(unsigned col, unsigned row, unsigned val);
 } led_matrix_if;
 
+//Type which tells us the current status of the detected sample rate - is it supported?
+typedef enum sample_rate_status_t{
+    INVALID,
+    VALID }
+    sample_rate_status_t;
 
+//Q4.28 fixed point frequency ratio type
 typedef unsigned fs_ratio_t;
 
 #endif /* MAIN_H_ */

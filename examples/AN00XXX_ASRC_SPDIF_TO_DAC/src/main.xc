@@ -39,7 +39,7 @@ out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
                                                      XS1_PORT_1O,
                                                      XS1_PORT_1P};
 port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
-/*
+/* Bit map for XS1_PORT_8C
  * 0 DSD_MODE
  * 1 DAC_RST_N
  * 2 USB_SEL0
@@ -54,7 +54,7 @@ out buffered port:32 port_pll_ref        = on tile[AUDIO_TILE]: XS1_PORT_1A;
 clock clk_mclk                           = on tile[AUDIO_TILE]: XS1_CLKBLK_2;
 port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
 clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
-port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;    //MIDI OUT
+port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 
 
 out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
@@ -119,7 +119,6 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
     int samples[2] = {0,0};                     //Array of input samples for SPDIF (L/R)
     size_t index = 0;                           //Index for above
     signed long sample;                         //Sample received from SPDIF
-
 
     while (1) {
         select {
@@ -189,7 +188,8 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
         sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
     }
 
-    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, 1, 16, 0);     //Initialise ASRC
+    //Initialise ASRC
+    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
     unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
     while(1){
@@ -206,7 +206,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                 in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
                 out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
                 debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
-                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, 1, 16, 0);//Initialise ASRC
+                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
             break;
 
             default:
@@ -214,23 +214,13 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
                     //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
                     fs_ratio_t fs_ratio = i_fs_ratio.get(nominal_fs_ratio); //Find out how many samples to produce
-                    //debug_printf("Using fs_ratio=0x%x\n",fs_ratio);
                     //xscope_int(LEFT, p_to_i2s[0]);
 
-#if !SIMPLE_PASS_THROUGH_DECIMATE_BY_TWO
+                    //Run the ASRC
                     n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
-
-#else
-                    for(int i = 0;i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE; i++){
-                        p_to_i2s[i/2] = p_from_spdif[i];
-                    }
-                    n_samps_out = SRC_N_IN_SAMPLES / 2;
-#endif
                     i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
-                    //xscope_int(LEFT, p_to_i2s[0]);
                     do_dsp_flag = 0;                        //Clear flag and wait for next input block
                     //port_debug <: 0;                     //debug
-                    //debug_printf("n_samps_out=%d\n",n_samps_out);
                 }
             break;
         }
@@ -283,13 +273,8 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
     }
 }
 
-//Type which tells us the current status of the detected sample rate - is it supported?
-typedef enum sample_rate_status_t{
-    INVALID,
-    VALID }
-    sample_rate_status_t;
 
-#define SR_TOLERANCE_PPM    1000    //How far the detect_frequency function will allow before declaring invalid
+#define SR_TOLERANCE_PPM    1000    //How far the detect_frequency function will allow before declaring invalid in p.p.m.
 #define LOWER_LIMIT(freq) (freq - (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
 #define UPPER_LIMIT(freq) (freq + (((long long) freq * SR_TOLERANCE_PPM) / 1000000))
 
@@ -508,8 +493,6 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                         (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2), fs_ratio, fs_ratio_nominal);
 #endif
             break;
-
-
         }
     }
 }
@@ -517,7 +500,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
 //Task that drives the multiplexed 4x4 display on the xCORE-200 MC AUDIO board. Very low performance requirements so can be combined
 
-#define LED_SCAN_TIME   200000   //2ms - How long each column is displayed. ANy less than this and you start to see flicker
+#define LED_SCAN_TIME   200100   //2ms - How long each column is displayed. Any less than this and you start to see flicker
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_col, out port p_leds_row){
     unsigned col_frame_buffer[4] = {0xf, 0xf, 0xf, 0xf};  //4 x 4 bitmap frame buffer scanning from left to right
                                                           //Active low drive hence initialise to 0b1111
