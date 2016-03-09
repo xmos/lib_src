@@ -21,14 +21,14 @@ Features
  * Optimised for xCORE-200 instruction set
  * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
  * No external memory required
- * Block based processing. Minimum 4 samples input, must be power of 2.
+ * Block based processing. Minimum 4 samples input per call, must be power of 2
  * Up to 10000 ppm sample rate ratio deviation (ASRC only)
  * Very high quality. SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
 
 Typical Resource Usage
 ......................
 
-SSRC implementations typically consume the following amount of RAM:
+SSRC implementations typically consume the following amount of device resources:
 
 .. resusage::
 
@@ -39,9 +39,9 @@ SSRC implementations typically consume the following amount of RAM:
     - locals:
     - flags:
     - pins: 0
-    - fn: unsafe{ssrc_process(in_buff, out_buff, &sSSRCCtrl);}
+    - fn: unsafe{ssrc_init(0, 0, &sSSRCCtrl);ssrc_process(in_buff, out_buff, &sSSRCCtrl);}
 
-.. list-table:: SSRC Processor Usage (MHz)
+.. list-table:: SSRC Processor Usage per channel (MHz)
      :header-rows: 2
 
      * - 
@@ -101,7 +101,8 @@ SSRC implementations typically consume the following amount of RAM:
        - 80MHz
        - 4MHz
 
-ASRC implementations typically take XXKB of code, coefficient, and buffer memory and around XBytes of stack. Specific examples are shown below.
+ASRC implementations typically consume the following amount of device resources:
+
 
 .. resusage::
 
@@ -114,16 +115,129 @@ ASRC implementations typically take XXKB of code, coefficient, and buffer memory
     - pins: 0
     - fn: unsafe{asrc_process(in_buff, out_buff, 0, sASRCCtrl);}
 
-.. list-table:: ASRC Processor Usage (MHz)
-     :header-rows: 1
+The ASRC algorithm runs a series of FIR filters to perform the rate conversion. The final filter uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample, but can be shared amongst all channels. The ASRC algorithm calculates the coefficients for the first channel in each instance only. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channels and adapative coefficients calculation and the second table specifies the MHz required for each additional channel processed by the ASRC instance.
 
-     * - configuration 
-       - Processor usage
-     * - ASRC 176.4KHz to 192KHz.  
-       - 95MHz per channel
-     * - ASRC 48KHz to 48KHz.   
-       - 25MHz per channel
+.. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
+     :header-rows: 2
 
+     * - 
+       - Output sample rate
+       -
+       -
+       -
+       -
+       -
+     * - Input sample rate
+       - 44.1KHz
+       - 48KHz
+       - 88.2KHz
+       - 96KHz
+       - 176.4KHz
+       - 192KHz
+     * - 44.1KHz
+       - 29MHz
+       - 30MHz
+       - 40MHz
+       - 42MHz
+       - 62MHz
+       - 66MHz
+     * - 48KHz
+       - 33MHz
+       - 32MHz
+       - 42MHz
+       - 43MHz
+       - 63MHz
+       - 66MHz
+     * - 88.2KHz
+       - 47MHz
+       - 50MHz
+       - 58MHz
+       - 61MHz
+       - 80MHz
+       - 85MHz
+     * - 96KHz
+       - 55MHz
+       - 51MHz
+       - 67MHz
+       - 64MHz
+       - 84MHz
+       - 87MHz
+     * - 176.4KHz
+       - 60MHz
+       - 66MHz
+       - 76MHz
+       - 81MHz
+       - 105MHz*
+       - 106MHz*
+     * - 192KHz
+       - 69MHz
+       - 66MHz
+       - 82MHz
+       - 82MHz
+       - 109MHz*
+       - 115MHz*
+
+Note that entries marked with a * cannot currently be run in real time on a single core. Further optimisation of the library including assembler optimisation and pipelining is possible to achieve operation within the constraints of a 100MHz logical core.
+
+.. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
+     :header-rows: 2
+
+     * - 
+       - Output sample rate
+       -
+       -
+       -
+       -
+       -
+     * - Input sample rate
+       - 44.1KHz
+       - 48KHz
+       - 88.2KHz
+       - 96KHz
+       - 176.4KHz
+       - 192KHz
+     * - 44.1KHz
+       - 1MHz
+       - 23MHz
+       - 16MHz
+       - 26MHz
+       - 26MHz
+       - 46MHz
+     * - 48KHz
+       - 26MHz
+       - 1MHz
+       - 28MHz
+       - 17MHz
+       - 48MHz
+       - 29MHz
+     * - 88.2KHz
+       - 18MHz
+       - 43MHz
+       - 1MHz
+       - 46MHz
+       - 32MHz
+       - 53MHz
+     * - 96KHz
+       - 48MHz
+       - 20MHz
+       - 52MHz
+       - 2MHz
+       - 56MHz
+       - 35MHz
+     * - 176.4KHz
+       - 33MHz
+       - 61MHz
+       - 37MHz
+       - 67MHz
+       - 3MHz
+       - 76MHz
+     * - 192KHz
+       - 66MHz
+       - 36MHz
+       - 70MHz
+       - 40MHz
+       - 80MHz
+       - 4MHz
 
 Software version and dependencies
 .................................

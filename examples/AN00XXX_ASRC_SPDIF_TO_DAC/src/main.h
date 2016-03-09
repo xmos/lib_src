@@ -18,7 +18,8 @@ typedef interface led_matrix_if {
     void set(unsigned col, unsigned row, unsigned val);
 } led_matrix_if;
 
-//Type which tells us the current status of the detected sample rate - is it supported?
+//Type which tells us the current status of the detected sample rate
+//Is it with range of a supported rate?
 typedef enum sample_rate_status_t{
     INVALID,
     VALID }
