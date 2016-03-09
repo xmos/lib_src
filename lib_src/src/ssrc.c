@@ -386,7 +386,7 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 	if(psSSRCCtrl->sFIRF1Ctrl.eEnable == FIR_OFF)
 	{
 		// F1 is not enabled, which means that we are in 1:1 rate, so just copy input to output
-		for(ui = 0; ui < psSSRCCtrl->uiNInSamples; ui+= psSSRCCtrl->uiNchannels)
+		for(ui = 0; ui < psSSRCCtrl->uiNInSamples * psSSRCCtrl->uiNchannels; ui+= psSSRCCtrl->uiNchannels)
 			piOut[ui]		= piIn[ui];
 
 		return SSRC_NO_ERROR;

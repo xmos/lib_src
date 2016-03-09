@@ -38,12 +38,12 @@ void dsp_slave(chanend c_dsp)
     int             iSSRCStack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];  //Buffers between processing stages
     SSRCCtrl_t      sSSRCCtrl[SSRC_CHANNELS_PER_INSTANCE];                   //SSRC Control structure
 
-    // Set state, stack and coefs into ctrl structure
+    // Set state, stack and coefs into ctrl structures
     for(int ui = 0; ui < SSRC_CHANNELS_PER_INSTANCE; ui++)
     {
         unsafe{
-          sSSRCCtrl[ui].psState                   = &sSSRCState[ui];
-          sSSRCCtrl[ui].piStack                   = iSSRCStack[ui];
+            sSSRCCtrl[ui].psState                   = &sSSRCState[ui];
+            sSSRCCtrl[ui].piStack                   = iSSRCStack[ui];
         }
     }
 
@@ -107,9 +107,6 @@ void dsp_slave(chanend c_dsp)
         unsafe {
             n_samps_out = ssrc_process(in_buff, out_buff, sSSRCCtrl);
         }
-        printf("n_samps=%d\n", n_samps_out);
-        for(int i=0;i<n_samps_out*SSRC_CHANNELS_PER_INSTANCE; i++) printf("%d, ", out_buff[i]);
-        printf("\n");
     }
 }
 

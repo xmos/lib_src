@@ -27,7 +27,7 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl,
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
         // Set number of channels per instance
-        sSSRCCtrl[ui].uiNchannels               = 1;
+        sSSRCCtrl[ui].uiNchannels               = n_channels_per_instance;
 
         // Set number of samples
         sSSRCCtrl[ui].uiNInSamples              = n_in_samples;
@@ -48,9 +48,11 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl,
 
 unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl){
 
-    const unsigned n_channels_per_instance = sSSRCCtrl[0].uiNchannels;
     int ui;
     unsigned n_samps_out;
+
+    // Get the number of channels per instance from first channel
+    const unsigned n_channels_per_instance = sSSRCCtrl[0].uiNchannels;
 
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
