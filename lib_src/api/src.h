@@ -21,22 +21,22 @@ typedef enum fs_code_t {
    /** Initialises synchronous sample rate conversion instance.
    *  \param   sr_in                    Nominal sample rate of input stream in Hz
    *  \param   sr_out                   Nominal sample rate of output stream in Hz
-   *  \param   sSSRCCtrl                Pointer to SSRC control stucture
+   *  \param   sSSRCCtrl                Reference to array of SSRC control stuctures
    *  \param   n_channels_per_instance  Number of channels handled by this instance of SSRC
    *  \param   n_in_samples             Number of input samples per SSRC call
    *  \param   dither_on_off            Dither to 24b on/off
    */
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl, const unsigned n_channels_per_instance,
+void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t sSSRCCtrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const unsigned dither_on_off);
 
    /** Perform synchronous sample rate conversion processing on block of input samples.
    * 
    *  \param   in_buff          Reference to input sample buffer array
    *  \param   out_buff         Reference to output sample buffer array
-   *  \param   sSSRCCtrl        Pointer to SSRC control stucture
+   *  \param   sSSRCCtrl        Reference to array of SSRC control stuctures
    *  \returns The number of output samples produced by the SRC operation
    */
-unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl);
+unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t sSSRCCtrl[]);
 
    /** Initialises asynchronous sample rate conversion instance.
    * 

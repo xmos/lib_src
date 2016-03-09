@@ -45,7 +45,7 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
 
         // Set dither flag and random seeds
         sASRCCtrl[ui].uiDitherOnOff             = dither_on_off;
-        sASRCCtrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers
+        sASRCCtrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers. Value not critical
 
         // Init ASRC instances
         ret_code = ASRC_init(&sASRCCtrl[ui]);

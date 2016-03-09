@@ -21,30 +21,43 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl,
         const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off)
 {
     SSRCReturnCodes_t ret_code;
+    int ui;
+    printf("n_channels_per_instance=%d, n_in_samples=%d\n", n_channels_per_instance, n_in_samples);
 
-    // Set number of channels per instance
-    sSSRCCtrl->uiNchannels               = n_channels_per_instance;
+    for(ui = 0; ui < n_channels_per_instance; ui++)
+    {
+        // Set number of channels per instance
+        sSSRCCtrl[ui].uiNchannels               = 1;
 
-    // Set number of samples
-    sSSRCCtrl->uiNInSamples              = n_in_samples;
+        // Set number of samples
+        sSSRCCtrl[ui].uiNInSamples              = n_in_samples;
 
-    // Set dither flag and random seeds
-    sSSRCCtrl->uiDitherOnOff             = dither_on_off;
-    sSSRCCtrl->uiRndSeedInit             = 1234567;
+        // Set dither flag and random seeds
+        sSSRCCtrl[ui].uiDitherOnOff             = dither_on_off;
+        sSSRCCtrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers. Value not critical
 
-    // Set the sample rate codes
-    sSSRCCtrl->eInFs                     = (int)sr_in;
-    sSSRCCtrl->eOutFs                    = (int)sr_out;
+        // Set the sample rate codes
+        sSSRCCtrl[ui].eInFs                     = (int)sr_in;
+        sSSRCCtrl[ui].eOutFs                    = (int)sr_out;
 
-    // Init SSRC instances
-    ret_code = SSRC_init(sSSRCCtrl) ;
-    if(ret_code != SSRC_NO_ERROR) ssrc_error(ret_code);
+        // Init SSRC instances
+        ret_code = SSRC_init(&sSSRCCtrl[ui]) ;
+        if(ret_code != SSRC_NO_ERROR) ssrc_error(ret_code);
+    }
 }
 
 unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t *sSSRCCtrl){
-    sSSRCCtrl->piIn = in_buff;
-    sSSRCCtrl->piOut = out_buff;
-    if(SSRC_proc(sSSRCCtrl) != SSRC_NO_ERROR) ssrc_error(0);
-    unsigned n_samps_out = (*sSSRCCtrl->puiNOutSamples);
+
+    const unsigned n_channels_per_instance = sSSRCCtrl[0].uiNchannels;
+    int ui;
+    unsigned n_samps_out;
+
+    for(ui = 0; ui < n_channels_per_instance; ui++)
+    {
+        sSSRCCtrl[ui].piIn = in_buff + ui;
+        sSSRCCtrl[ui].piOut = out_buff + ui;
+        if(SSRC_proc(&sSSRCCtrl[ui]) != SSRC_NO_ERROR) ssrc_error(0);
+        n_samps_out = (*sSSRCCtrl[ui].puiNOutSamples);
+    }
     return n_samps_out;
 }
