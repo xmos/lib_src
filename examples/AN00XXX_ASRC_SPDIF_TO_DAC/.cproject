@@ -244,6 +244,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc/pdf}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/doc/pdf}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.xc.compiler.input.1407299781" name="XC" superClass="com.xmos.cdt.xc.compiler.input"/>
 							</tool>
@@ -614,6 +616,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc/pdf}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/doc/pdf}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.c.compiler.input.c.553369924" name="C" superClass="com.xmos.cdt.c.compiler.input.c"/>
 							</tool>
@@ -989,6 +993,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/lib_src/doc/pdf}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_src/doc/pdf}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.cxx.compiler.input.cpp.903116064" name="C++" superClass="com.xmos.cdt.cxx.compiler.input.cpp"/>
 							</tool>

@@ -187,6 +187,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test/expected}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.xc.compiler.input.128426161" name="XC" superClass="com.xmos.cdt.xc.compiler.input"/>
 							</tool>
@@ -500,6 +502,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test/expected}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.c.compiler.input.c.1235660429" name="C" superClass="com.xmos.cdt.c.compiler.input.c"/>
 							</tool>
@@ -818,6 +822,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_logging/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ssrc_test/expected}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.cxx.compiler.input.cpp.1200430472" name="C++" superClass="com.xmos.cdt.cxx.compiler.input.cpp"/>
 							</tool>
@@ -838,4 +844,5 @@
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="refreshScope"/>
 </cproject>

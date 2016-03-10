@@ -11,7 +11,9 @@ Following initialisation, the procesing API is call for each block of input samp
 
 The processing function call always returns the whole number of output samples produced by the sample rate conversion. This number may be between zero and ``(SRC_N_IN_SAMPLES * SRC_N_OUT_IN_RATIO_MAX)``, depending on the sample ratios selected. The fractional number of samples to carry to the next operation is stored internally inside the control structure.
 
-The format of the buffers sent and received from each SRC instance depends on the number of channels is shown below.
+The SSRC is synchronous in nature and assumes that the long term average ratio between input and output rates can be expressed as a rational number. For example, to convert from 44.1KHz to 48KHz, it is assumed that the word clocks of the input and output stream are derviced from the same master clock and have an exact ration of 147:160. If the word clocks are derived from seperate oscillators, or are not synchrnonous (for example are derived from each other using a fractional PLL), the the ASRC must be used to avoid buffer over/under-runs.
+
+The format of the sample buffers sent and received from each SRC instance depends on the number of channels is shown below.
 
 Buffer Format
 .............
@@ -77,5 +79,12 @@ Known Issues
 ------------
 
 The logic that decides on the correct FIR functions to call is implemented using function pointers. The current version of tools at the time of authoring (14.1.2) has limited support for function pointers and is unable to correctly resolve memory usage. A workaround is included using the ``#pragma stackfunction`` pragma which allows memory usage to be reconciled, but results in a "Maybe" status result in the resource usage report. Improved support for function pointers is planned in future versions of the tools and will address the memory usage reporting issue. This issue does not affect the robustness or performance of the library, only the reported resource usage.
+
+Certain ASRC configurations require greater than 100MHz so cannot be run in real time on a single core, mainly conversions between 176.4/192KHz to 176.4/192KHz. The performance limit for a single core on a 500MHz xCORE-200 device is 100MHz (500/5), due to a 5 stage pipeline. A number of potential optimisations have been identified to permit these rates:
+
+* Assembler inner loop optimisation
+* Increase in scope of assembler sections removing additional function calls
+* Pipelining of the FIR filter stages
+* Calulation of adaptive filter coefficients in a seperate task 
 
 .. include:: ../../../CHANGELOG.rst
