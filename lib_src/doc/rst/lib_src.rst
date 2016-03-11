@@ -145,6 +145,76 @@ SRC Implementation
 
 The SSRC and ASRC implementations are closely related to each other and share the majority of the system building blocks. The key difference between them is that SSRC uses fixed polyphase 160:147 and 147:160 final rate change filters whereas the ASRC uses an adaptive polyphase filter. The ASRC adaptive polyphase coefficients are computed for every sample using the second order spline based interpolation.
 
+SRC Nominal Rate Changes
+........................
+
+The nominal rate change ratios between 44.1KHz and 192KHz are supported are shown in the below table.
+
+.. list-table:: Rate Changes for Sample Rate Conversion
+     :header-rows: 2
+
+     * - 
+       - Output sample rate
+       -
+       -
+       -
+       -
+       -
+     * - Input sample rate
+       - 44.1KHz
+       - 48KHz
+       - 88.2KHz
+       - 96KHz
+       - 176.4KHz
+       - 192KHz
+     * - 44.1KHz
+       - 1
+       - 160/147
+       - 2
+       - 2 x 160/147
+       - 4
+       - 4 x 160/147
+     * - 48KHz
+       - 147/160
+       - 1
+       - 2 x 147/160
+       - 2
+       - 4 x 147/160
+       - 4
+     * - 88.2KHz
+       - 1/2
+       - 1/2 x 160/147
+       - 1
+       - 160/147
+       - 2
+       - 2 x 160/147
+     * - 96KHz
+       - 1/2 x 147/160
+       - 1/2
+       - 147/160
+       - 1
+       - 2 x 147/160
+       - 2
+     * - 176.4KHz
+       - 1/4
+       - 1/4 x 160/147
+       - 1/2
+       - 1/2 x 160/147
+       - 1
+       - 160/147
+     * - 192KHz
+       - 1/4 x 147/160
+       - 1/4
+       - 1/2 x 147/160
+       - 1/2
+       - 147/160
+       - 1
+
+
+.. tip::
+  The table shows the case for SSRC where the ratios are exactly related. In the case of ASRC, where the ratios cannot be expressed rationally, these are the nominal ratios from which there will usually be a rate deviaton. 
+
+
 SSRC Structure
 ..............
 
