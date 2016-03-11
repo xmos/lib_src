@@ -3,45 +3,65 @@ XMOS Sample Rate Conversion Library
 
 .. rheader::
 
-   Sample Rate Convertor |version|
+   Sample Rate Converter |version|
 
 Overview
 --------
 
-The XMOS Sample Rate Conversion (SRC) library provides both synchronous and asynchronous audio sample rate conversion functions for use on xCORE-200 multicore microcontrollers.
+The XMOS Sample Rate Conversion (SRC) library provides both synchronous and asynchronous audio sample rate conversion functions for use on xCORE-200 multicore micro-controllers.
 
-In systems where there is a rational ratio between the input and output sample rates, synchronous sample rate conversion (SSRC) provides efficient and audiophile quality rate conversion. Where the input and output rates are not locked by a common clock or clocks with exact rational frequency ratios, the asynchronous sample converter (ASRC) provides a way of streaming high quality audio between the two clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
-
+In systems where there is a rational ratio between the input and output sample rates, synchronous sample rate conversion (SSRC) provides efficient and audiophile quality rate conversion. Where the input and output rates are not locked by a common clock or clocks by an exact rational frequency ratio, the asynchronous sample converter (ASRC) provides a way of streaming high quality audio between the two clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
 
 Features
 ........
 
  * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192KHz input and output sample rates
- * 32 bit PCM data in 1.31 format
- * Optimised for xCORE-200 instruction set with dual-issue
+ * 32 bit PCM input and output data in Q1.31 signed format
+ * Optimized for xCORE-200 instruction set with dual-issue
  * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
- * No external memory required
  * Block based processing. Minimum 4 samples input per call, must be power of 2
- * Up to 10000 ppm sample rate ratio deviation (ASRC only)
+ * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
  * Very high quality. SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
+ * No external memory or PLL required
+
+Components
+..........
+
+ * Synchronous Sample Rate Converter function 
+ * Asynchronous Sample Rate Converter function 
+
+
+Software version and dependencies
+.................................
+
+.. libdeps::
+
+
+Related application notes
+.........................
+The following application notes use this library:
+
+    * AN00230 - [Adding Synchronous Sample Rate Conversion to the USB Audio reference design]
+    * AN00231 - [SPDIF receive to I2S output using Asynchronous Sample Rate Conversion]
+
+
+|newpage|
 
 Typical Resource Usage
 ......................
-
-SSRC implementations typically consume the following amount of device resources:
 
 .. resusage::
 
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; SSRCCtrl_t sSSRCCtrl; 
+    - globals: int in_buff[4]; int out_buff[20]; SSRCCtrl_t sSSRCCtrl[2]; SSRCState_t sSSRCState[2]; int iSSRCStack[2][32]; SSRCCtrl_t sSSRCCtrl[2]; 
     - ports: 0
     - locals:
     - flags:
     - pins: 0
-    - fn: unsafe{ssrc_init(0, 0, &sSSRCCtrl);ssrc_process(in_buff, out_buff, &sSSRCCtrl);}
+    - fn: unsafe{ssrc_init(0, 0, sSSRCCtrl, 2, 4, 0);ssrc_process(in_buff, out_buff, sSSRCCtrl);}
 
-The ASRC algorithm runs a series of FIR filters to perform the rate conversion. This includes interpolation, decimation and bandwidth limiting filters with a final polhyphase FIR filter to support the rational rate change of 147:160 allowing conversion between 44.1KHz family of sample rates to the 48KHz family of sample rates.
+The SSRC algorithm runs cascaded FIR filters to perform the rate conversion. This includes interpolation, decimation and bandwidth limiting filters with a final polyphase FIR filter to support the rational rate change of 147:160 or 160:147 allowing conversion between 44.1KHz family of sample rates to the 48KHz family of sample rates.
 
 .. tip::
   The below table shows the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
@@ -106,24 +126,25 @@ The ASRC algorithm runs a series of FIR filters to perform the rate conversion. 
        - 80MHz
        - 4MHz
 
-ASRC implementations typically consume the following amount of device resources:
-
 
 .. resusage::
 
   * - configuration: ASRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs;
+    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs; ASRCState_t sASRCState[2]; int iASRCStack[2][32]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs;;
     - locals:
     - ports: 0
     - flags:
     - pins: 0
-    - fn: unsafe{asrc_process(in_buff, out_buff, 0, sASRCCtrl);}
+    - fn: unsafe{asrc_init(0, 0, sASRCCtrl, 2, 4, 0); asrc_process(in_buff, out_buff, 0, sASRCCtrl);}
 
-The ASRC algorithm runs a series of FIR filters to perform the rate conversion. The final filter uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample, but can be shared amongst all channels. The ASRC algorithm calculates the coefficients for the first channel in each instance only. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channels and adapative coefficients calculation and the second table specifies the MHz required for each additional channel processed by the ASRC instance.
+The ASRC algorithm runs cascaded FIR filters to perform the rate conversion. The final filter uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample, but can be shared amongst all channels. The ASRC algorithm calculates the coefficients for the first channel in each instance only. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channel with adaptive coefficients calculation and the second table specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
 .. tip::
   The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
+
+.. tip::
+  Typically you will need to allow for headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
      :header-rows: 2
@@ -185,7 +206,7 @@ The ASRC algorithm runs a series of FIR filters to perform the rate conversion. 
        - 109MHz
        - 115MHz
 
-.. caution:: Configurations requiring more than 100MHz cannot currently be run in real time on a single core. The performance limit for a single core on a 500MHz xCORE-200 device is 100MHz (500/5). Further optimisation of the library including assembler optimisation and pipelining of the adaptive filter generation and FIR filter stages is feasbile to achieve higher sample rare operation within the constraints of a 100MHz logical core.
+.. caution:: Configurations requiring more than 100MHz cannot currently be run in real time on a single core. The performance limit for a single core on a 500MHz xCORE-200 device is 100MHz (500/5). Further optimization of the library including assembler optimization and pipelining of the adaptive filter generation and FIR filter stages is feasible to achieve higher sample rate operation within the constraints of a 100MHz logical core.
 
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
      :header-rows: 2
@@ -246,14 +267,3 @@ The ASRC algorithm runs a series of FIR filters to perform the rate conversion. 
        - 82MHz
        - 90MHz
        - 100MHz
-
-Software version and dependencies
-.................................
-
-.. libdeps::
-
-Related application notes
-.........................
-The following application notes use this library:
-    * AN00230 - [Adding Synchronous Sample Rate Conversion to the USB Audio reference design]
-    * AN00231 - [SPDIF receive to I2S output using Asynchronous Sample Rate Conversion]
