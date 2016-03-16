@@ -10,7 +10,7 @@ Overview
 
 The XMOS Sample Rate Conversion (SRC) library provides both synchronous and asynchronous audio sample rate conversion functions for use on xCORE-200 multicore micro-controllers.
 
-In systems where there is a rational ratio between the input and output sample rates, synchronous sample rate conversion (SSRC) provides efficient and audiophile quality rate conversion. Where the input and output rates are not locked by a common clock or clocks by an exact rational frequency ratio, the asynchronous sample converter (ASRC) provides a way of streaming high quality audio between the two clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
+In systems where there is a rational ratio between the input and output sample rates, synchronous sample rate conversion (SSRC) provides efficient and high performance rate conversion. Where the input and output rates are not locked by a common clock or clocks by an exact rational frequency ratio, the Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
 
 Features
 ........
@@ -19,9 +19,11 @@ Features
  * 32 bit PCM input and output data in Q1.31 signed format
  * Optimized for xCORE-200 instruction set with dual-issue
  * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
- * Block based processing. Minimum 4 samples input per call, must be power of 2
+ * Block based processing - Minimum 4 samples input per call, must be power of 2
  * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
- * Very high quality. SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
+ * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
+ * Configurable number of audio channels per SRC instance
+ * Reentrant library permitting multiple instances allowing differing configurations and channel count
  * No external memory or PLL required
 
 Components

@@ -1,21 +1,22 @@
+//Standard includes
 #include <xs1.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <platform.h>
 #include <string.h>
 
+//Supporting libraries
 #include <src.h>
-#include <cs4384_5368.h>
 #include <spdif.h>
 #include <i2s.h>
 #include <i2c.h>
 #include <gpio.h>
 
+//Application specific includes
 #include "main.h"
 #include "block_serial.h"
+#include "cs4384_5368.h"
 #include "app_config.h"     //General settings
 
+//Debug includes
 #include <debug_print.h> //Enabled by -DDEBUG_PRINT_ENABLE=1 in Makefile
 #include <xscope.h>
 
@@ -23,21 +24,31 @@
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
    The port assignments can be changed for a different port map.
 */
-#define AUDIO_TILE                  0
-#define SPDIF_TILE                  1
-in buffered port:32  ports_i2s_adc[4]   = on tile[AUDIO_TILE]: {XS1_PORT_1I,
+#define AUDIO_TILE                      0
+in buffered port:32  ports_i2s_adc[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1I,
                                                      XS1_PORT_1J,
                                                      XS1_PORT_1K,
                                                      XS1_PORT_1L};
 port port_i2s_mclk                       = on tile[AUDIO_TILE]: XS1_PORT_1F;
+clock clk_mclk                           = on tile[AUDIO_TILE]: XS1_CLKBLK_2;
 out buffered port:32 port_i2s_bclk       = on tile[AUDIO_TILE]: XS1_PORT_1H;
 out buffered port:32 port_i2s_wclk       = on tile[AUDIO_TILE]: XS1_PORT_1G;
 clock clk_i2s                            = on tile[AUDIO_TILE]: XS1_CLKBLK_1;
-
 out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
                                                      XS1_PORT_1N,
                                                      XS1_PORT_1O,
                                                      XS1_PORT_1P};
+
+
+#define SPDIF_TILE                      1
+port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
+clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
+
+out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
+out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
+
+port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;     //I2C for CODEC configuration
+
 port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
 /* Bit map for XS1_PORT_8C
  * 0 DSD_MODE
@@ -50,44 +61,37 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  * 7 MCLK_FSEL
  */
 
-out buffered port:32 port_pll_ref        = on tile[AUDIO_TILE]: XS1_PORT_1A;
-clock clk_mclk                           = on tile[AUDIO_TILE]: XS1_CLKBLK_2;
-port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
-clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
+port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4B;     //Buttons and switch
+
 port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 
 
-out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
-out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
-
-port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;
-
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
-void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
+void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
+[[combinable]]void buttons(server buttons_if i_buttons);
 
 int main(void){
     serial_transfer_push_if i_serial_in;
     block_transfer_if i_serial2block[ASRC_N_INSTANCES], i_block2serial[ASRC_N_INSTANCES];
     serial_transfer_pull_if i_serial_out;
-    sample_rate_enquiry_if i_sr_input, i_sr_i2s;
+    sample_rate_enquiry_if i_sr_input, i_sr_output;
     fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES];
     interface audio_codec_config_if i_codec;
     interface i2c_master_if i_i2c[1];
     interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
     interface i2s_callback_if i_i2s;
     led_matrix_if i_leds;
-
     streaming chan c_spdif_rx;
 
     par{
         on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ_SPDIF);
         on tile[SPDIF_TILE]: spdif_handler(c_spdif_rx, i_serial_in);
         on tile[SPDIF_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
-        on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) src(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
-        on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_i2s);}
+        on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
+        on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_output);}
 
         on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
@@ -103,7 +107,7 @@ int main(void){
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
         on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec);
-        on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_i2s, i_fs_ratio, i_leds);
+        on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
         on tile[SPDIF_TILE]: led_driver(i_leds, p_leds_row, p_leds_col);
     }
     return 0;
@@ -160,7 +164,7 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
 }
 
 
-void src(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
+void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
 {
     int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
     int to_i2s[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
@@ -230,7 +234,7 @@ void src(server block_transfer_if i_serial2block, client block_transfer_if i_blo
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[distributable]]
-#pragma unsafe arrays   //Performance optimisation
+#pragma unsafe arrays   //Performance optimisation for this task
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
     int samples[ASRC_N_CHANNELS] = {0,0};
@@ -300,19 +304,15 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
     return result;
 }
 
-//Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
-//to produce to keep the output FIFO in block2serial rougly centered. Uses the timestamped sample counts
-//requested from serial2block and block2serial and FIFO level as P and I terms
 
 #define SR_CALC_PERIOD  10000000    //100ms The period over which we count samples to find the rate
                                     //Because we timestamp at 10ns resolution, we get 10000000/10 = 20bits of precision
-#define REPORT_PERIOD   100100000   //1001ms How often we print the rates to the screen for debug. CHosen to not clash with above
+#define REPORT_PERIOD   100100000   //1001ms How often we print the rates to the screen for debug. Chosen to not clash with above
 #define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
                                     //Using 12 gives us 20 bits of integer - up to 1.048MHz SR before overflow
 //Below is the multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
 //to support a measurement period of 1s at 192KHz with over 2 order of magnitude margin against overflow
 #define SR_MULTIPLIER   ((1<<SR_FRAC_BITS) * (unsigned long long) XS1_TIMER_HZ)
-
 #define SETTLE_CYCLES   1           //Number of measurement periods to skip after SR change (SR change blocks spdif momentarily so corrupts SR calc)
 
 typedef struct rate_info_t{
@@ -323,7 +323,9 @@ typedef struct rate_info_t{
     unsigned nominal_rate;  //Snapped-to nominal rate as unsigned integer
 } rate_info_t;
 
-
+//Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
+//to produce to keep the output FIFO in block2serial rougly centered. Uses the timestamped sample counts
+//requested from serial2block and block2serial and FIFO level as P and I terms
 [[combinable]]
 #pragma unsafe arrays   //Performance optimisation
 void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_i2s_rate,
@@ -368,7 +370,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     while(1){
         select{
             //Serve up latest sample count value when required. Note selects over array of interfaces
-            case i_fs_ratio[int if_index].get(unsigned nominal_fs_ratio) -> fs_ratio_t fs_ratio_ret:
+            case i_fs_ratio[int if_index].get_ratio(unsigned nominal_fs_ratio) -> fs_ratio_t fs_ratio_ret:
                 fs_ratio_nominal =  nominal_fs_ratio;   //Allow use outside of this case
                 if (spdif_info.status == VALID && i2s_info.status == VALID){
                     fs_ratio_ret = fs_ratio;    //Pass back calculated value
@@ -435,7 +437,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 #define OLD_VAL_WEIGHTING   10      //Simple low pass filter. Set proportion of old value to carry over
 
 
-                //Calculate fs_ratio to tell src how many samples to produce in 4.28 fixed point format
+                //Calculate fs_ratio to tell asrc how many samples to produce in 4.28 fixed point format
                 int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
                 if (spdif_info.status == VALID && i2s_info.status == VALID) {
                     fs_ratio_old = fs_ratio;        //Save old value
@@ -499,8 +501,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
 
 //Task that drives the multiplexed 4x4 display on the xCORE-200 MC AUDIO board. Very low performance requirements so can be combined
-
-#define LED_SCAN_TIME   200100   //2ms - How long each column is displayed. Any less than this and you start to see flicker
+#define LED_SCAN_TIME   200100   //2ms - How long each column is displayed. Any more than this and you start to see flicker
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_col, out port p_leds_row){
     unsigned col_frame_buffer[4] = {0xf, 0xf, 0xf, 0xf};  //4 x 4 bitmap frame buffer scanning from left to right
                                                           //Active low drive hence initialise to 0b1111
@@ -537,4 +538,11 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     }
 }
 
+[[combinable]]void buttons(server buttons_if i_buttons){
+    while(1){
+        select{
+
+        }
+    }
+}
 
