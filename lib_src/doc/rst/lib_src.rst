@@ -19,8 +19,28 @@ There is an initialization call which sets up the variables associated with the 
  * The number of input samples to expect. Minimum 4 samples input per call, must be power of 2
  * The dither setting. Dithers the output from 32bit to 24bit
 
-The input block size must be a power of 2 and is set by ``SRC_N_IN_SAMPLES``. In the case where n channels are to be processed per SRC instance, the total number of input samples expected for each processing call is ``SRC_N_IN_SAMPLES * SRC_CHANNELS_PER_INSTANCE``. The processing call includes references to the input and output arrays, which contain 32bit signed Q1.31 audio samples.
+The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``. The processing call includes references to the input and output arrays, which contain the signed Q1.31 audio samples.
 
+There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each stricture declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
+
+For the case of SSRC, the following state sttructures are required::
+    //State of SSRC module
+    SSRCState_t     sSSRCState[SSRC_CHANNELS_PER_INSTANCE];                                              
+    //Buffers between processing stages
+    int             iSSRCStack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
+    //SSRC Control structure  
+    SSRCCtrl_t      sSSRCCtrl[SSRC_CHANNELS_PER_INSTANCE];                                               
+
+For the ASRC, the state structures must be declared. Note that only one instace of the filter coefficients need be declared because these are shared amongst channels within the instance::
+
+    //ASRC state
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE];         
+    //Buffers between filter stages                                    
+    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
+    //Control structure
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];
+    //Adaptive filter coefficients  
+    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                                                                  
 
 Processing
 ..........
@@ -32,11 +52,11 @@ Following initialization, the processing API is call for each block of input sam
 
    SRC Operation  
 
-The processing function call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(SRC_N_IN_SAMPLES  * SRC_CHANNELS_PER_INSTANCE * SRC_N_OUT_IN_RATIO_MAX)``.
+The processing function call is passed the input and output buffers, reference to the control structure and, in the case of ASRC, a fractional frequency ratio. The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1KHz and the output rate is 192KHz then a sample rate conversion of one sample input may contain up to 5 output samples.
 
 The fractional number of samples produced to be carried to the next operation are stored internally inside the control structure, and additional whole samples are added or subtracted from subsequent calls to the sample rate converter.
 
-For example, a sample rate conversion from 44.1KHz to 48KHz with a input block size of 4 will produce a 4 sample result with a 5 sample result approximately every third call.
+For example, a sample rate conversion from 44.1KHz to 48KHz with a input block size of 4 will produce a 4 sample result with a 5 sample result approximately every third call. 
 
 Each SRC processing call returns the integer number of samples produced during the sample rate conversion.
 
@@ -47,7 +67,7 @@ If the word clocks are derived from separate oscillators, or are not synchronous
 Buffer Formats
 ..............
 
-The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``SRC_N_IN_SAMPLES = 1``.
+The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``.
 
 In the case where two channels are handled by a single SRC instance, you can see that the samples are interleaved into a single big buffer.
 

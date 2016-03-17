@@ -163,7 +163,7 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
     return samp_code;
 }
 
-
+//The ASRC processing task - has it's own logical core to reserve processing MHz
 void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
 {
     int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
@@ -172,17 +172,15 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
     int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
     int * movable p_to_i2s = to_i2s;
 
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+    set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
     fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
     fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
 
-    set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
-
-    debug_printf("ASRC_CHANNELS_PER_INSTANCE=%d\n", ASRC_CHANNELS_PER_INSTANCE);
+    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
+    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
     for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
     unsafe {
@@ -234,7 +232,7 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[distributable]]
-#pragma unsafe arrays   //Performance optimisation for this task
+#pragma unsafe arrays   //Performance optimisation of i2s_handler task
 void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
     {
     int samples[ASRC_N_CHANNELS] = {0,0};
@@ -538,6 +536,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     }
 }
 
+//Button listener task
 [[combinable]]void buttons(server buttons_if i_buttons){
     while(1){
         select{

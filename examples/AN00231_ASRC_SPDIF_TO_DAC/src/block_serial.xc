@@ -5,7 +5,7 @@
 #include "block_serial.h"
 
 [[distributable]]
-#pragma unsafe arrays   //Performance optimisation. Removes bounds check
+#pragma unsafe arrays   //Performance optimisation for serial2block. Removes bounds check
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 {
     int buffer[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
@@ -125,7 +125,7 @@ static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, 
 //Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
 //This task is marked as unsafe keep pointers in scope throughout function
 [[distributable]]
-#pragma unsafe arrays   //Performance optimisation
+#pragma unsafe arrays   //Performance optimisation for block2serial. Removes bounds check
 unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
     int samps_to_i2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //Circular buffers and pointers for output from block2serial
