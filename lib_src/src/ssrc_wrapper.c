@@ -22,7 +22,10 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t *sSSRCCtrl,
 {
     SSRCReturnCodes_t ret_code;
     int ui;
-    printf("n_channels_per_instance=%d, n_in_samples=%d\n", n_channels_per_instance, n_in_samples);
+
+    //Check to see if n_channels_per_instance, n_in_samples are reasonable
+    if ((n_in_samples & 0x1) || (n_in_samples < 4)) ssrc_error(100);
+    if (n_channels_per_instance < 1) ssrc_error(101);
 
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {

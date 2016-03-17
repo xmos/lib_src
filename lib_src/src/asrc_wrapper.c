@@ -31,6 +31,11 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
     ret_code = ASRC_prepare_coefs();
     if (ret_code != ASRC_NO_ERROR) asrc_error(10);
 
+    //Check to see if n_channels_per_instance, n_in_samples are reasonable
+    if ((n_in_samples & 0x1) || (n_in_samples < 4)) asrc_error(100);
+    if (n_channels_per_instance < 1) asrc_error(101);
+
+
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
         // Set number of channels per instance
