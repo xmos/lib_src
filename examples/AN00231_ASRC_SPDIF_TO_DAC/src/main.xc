@@ -169,8 +169,10 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
     int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
     int to_i2s[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
 
-    int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
-    int * movable p_to_i2s = to_i2s;
+    int * movable p_from_spdif = from_spdif;    //Movable pointer for swapping ownership
+    int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
+
+    p_out_fifo = i_block.push(p_out_fifo, 0);   //Get pointer to initial write buffer
 
     set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
@@ -220,7 +222,7 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
 
                     //Run the ASRC
                     n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
-                    i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
+                    p_out_fifo = i_block.push(p_out_fifo, n_samps_out);   //Get pointer to next write buffer
                     do_dsp_flag = 0;                        //Clear flag and wait for next input block
                     //port_debug <: 0;                     //debug
                 }
