@@ -215,7 +215,7 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
                 if (do_dsp_flag){                        //Do the sample rate conversion
                     //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
-                    fs_ratio_t fs_ratio = i_fs_ratio.get(nominal_fs_ratio); //Find out how many samples to produce
+                    fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
                     //xscope_int(LEFT, p_to_i2s[0]);
 
                     //Run the ASRC
