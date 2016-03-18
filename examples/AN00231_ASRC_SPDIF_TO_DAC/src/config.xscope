@@ -1,6 +1,6 @@
 <xSCOPEconfig enabled="true" ioMode="basic">
 	<Probe name="ch_0" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/> 
-	<Probe name="ch_1" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+	<Probe name="ch_1" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
 	<Probe name="ch_2" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
         <Probe name="src_proc_fn" type="STARTSTOP" datatype="UINT" units="Value" enabled="false"/>        
 </xSCOPEconfig>
