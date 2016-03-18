@@ -566,30 +566,40 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 #define DEBOUNCE_PERIOD        2000000  //20ms
 #define DEBOUNCE_SAMPLES       5        //Sample 5 times in this period to ensure we have a true value
 #define BUTTON_PRESSED_VAL     0
+#define BUTTON_NOT_PRESSED_VAL 1
 //Button listener task. Applies a debounce function by checking several times for the same value
 [[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port){
     timer t_debounce;
     int t_debounce_time;
-    unsigned debounce_counter = 0;
-    unsigned button_pressed_flag = 0;
+    unsigned debounce_counter = 0;  //Counts debounce sequence has started
+    unsigned button_release = 0;    //Flag showing we hav just had a press and aree waiting to start again
 
     i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //setup button event
 
     while(1){
         select{
-            case i_button_port.event():
-                button_pressed_flag = 1;
+            case i_button_port.event(): //The button has reached the expected value
+                if (button_release){    //If being released
+                    i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //Setup event for being pressed
+                    button_release = 0;
+                    break;
+                }
+                debounce_counter = DEBOUNCE_SAMPLES;    //Kick off debounce sequence
+                t_debounce :> t_debounce_time;  //Get current time
             break;
 
-            case t_debounce when timerafter(t_debounce_time) :> void:
+            case debounce_counter => t_debounce when timerafter(t_debounce_time + (DEBOUNCE_PERIOD/DEBOUNCE_SAMPLES)) :> t_debounce_time:
                 unsigned port_val = i_button_port.input();
-                if (port_val != BUTTON_PRESSED_VAL) {
-                    button_pressed_flag = 0;
+                if (port_val != BUTTON_PRESSED_VAL) {       //Read port n times. If not what we want, start over
+                    debounce_counter = 0;
+                    i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL);
+                    break;
                 }
                 debounce_counter--;
-                if (debounce_counter == 0){
-                    i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //setup event again
-                    i_buttons.pressed();                                  //Send button pressed message
+                if (debounce_counter == 0){                 //We have seen n samples the same, so button is pressed
+                    button_release = 1;
+                    i_button_port.event_when_pins_eq(BUTTON_NOT_PRESSED_VAL);   //setup event for button released
+                    i_buttons.pressed();                                        //Send button pressed message
                 }
             break;
         }
