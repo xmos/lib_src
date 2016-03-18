@@ -61,17 +61,19 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  * 7 MCLK_FSEL
  */
 
-port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4B;     //Buttons and switch
+port p_buttons                           = on tile[SPDIF_TILE]: XS1_PORT_4B;     //Buttons and switch
+char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task
+
 
 port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
-[[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
+[[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
-[[combinable]]void buttons(server buttons_if i_buttons);
+[[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port);
 
 int main(void){
     serial_transfer_push_if i_serial_in;
@@ -84,6 +86,8 @@ int main(void){
     interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
     interface i2s_callback_if i_i2s;
     led_matrix_if i_leds;
+    buttons_if i_buttons;
+    input_gpio_if i_button_gpio[1];
     streaming chan c_spdif_rx;
 
     par{
@@ -106,9 +110,11 @@ int main(void){
             debug_printf("Starting I2S\n");
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
-        on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec);
+        on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec, i_buttons);
         on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
-        on tile[SPDIF_TILE]: led_driver(i_leds, p_leds_row, p_leds_col);
+        on tile[SPDIF_TILE].core[0]: led_driver(i_leds, p_leds_row, p_leds_col);
+        on tile[SPDIF_TILE].core[0]: button_listener(i_buttons, i_button_gpio[0]);
+        on tile[SPDIF_TILE].core[0]: input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map);
     }
     return 0;
 }
@@ -215,7 +221,7 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
                 if (do_dsp_flag){                        //Do the sample rate conversion
                     //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
-                    fs_ratio_t fs_ratio = i_fs_ratio.get(nominal_fs_ratio); //Find out how many samples to produce
+                    fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
                     //xscope_int(LEFT, p_to_i2s[0]);
 
                     //Run the ASRC
@@ -233,11 +239,12 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation of i2s_handler task
-void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec)
+void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons)
     {
     int samples[ASRC_N_CHANNELS] = {0,0};
     unsigned sample_rate = DEFAULT_FREQ_HZ_I2S;
     unsigned mclk_rate;
+    unsigned restart_status = I2S_NO_RESTART;
 
 
     while (1) {
@@ -249,11 +256,12 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
             i2s_config.mode = I2S_MODE_I2S;
             i_codec.reset(sample_rate, mclk_rate);
             debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
+            restart_status = I2S_NO_RESTART;
             break;
 
             //Start of I2S frame
             case i2s.restart_check() -> i2s_restart_t ret:
-            ret = I2S_NO_RESTART;
+            ret = restart_status;
             break;
 
             //Get samples from ADC
@@ -270,6 +278,25 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
 
             case i_serial_out.do_pull(int new_samples[], const size_t n_samps):
             memcpy(samples, new_samples, n_samps * sizeof(int));
+            break;
+
+            //Cycle through sample rates of I2S on button press
+            case i_buttons.pressed():
+                switch (sample_rate) {
+                case 44100:
+                    sample_rate = 48000;
+                    break;
+                case 48000:
+                    sample_rate = 88200;
+                    break;
+                case 88200:
+                    sample_rate = 96000;
+                    break;
+                case 96000:
+                    sample_rate = 44100;
+                    break;
+                }
+                restart_status = I2S_RESTART;
             break;
         }
     }
@@ -536,11 +563,35 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     }
 }
 
-//Button listener task
-[[combinable]]void buttons(server buttons_if i_buttons){
+#define DEBOUNCE_PERIOD        2000000  //20ms
+#define DEBOUNCE_SAMPLES       5        //Sample 5 times in this period to ensure we have a true value
+#define BUTTON_PRESSED_VAL     0
+//Button listener task. Applies a debounce function by checking several times for the same value
+[[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port){
+    timer t_debounce;
+    int t_debounce_time;
+    unsigned debounce_counter = 0;
+    unsigned button_pressed_flag = 0;
+
+    i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //setup button event
+
     while(1){
         select{
+            case i_button_port.event():
+                button_pressed_flag = 1;
+            break;
 
+            case t_debounce when timerafter(t_debounce_time) :> void:
+                unsigned port_val = i_button_port.input();
+                if (port_val != BUTTON_PRESSED_VAL) {
+                    button_pressed_flag = 0;
+                }
+                debounce_counter--;
+                if (debounce_counter == 0){
+                    i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //setup event again
+                    i_buttons.pressed();                                  //Send button pressed message
+                }
+            break;
         }
     }
 }

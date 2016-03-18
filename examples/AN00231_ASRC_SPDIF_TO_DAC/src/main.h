@@ -20,9 +20,9 @@ typedef interface led_matrix_if {
     void set(unsigned col, unsigned row, unsigned val);
 } led_matrix_if;
 
-//Notifies and sends a button value when a button is pressed
+//Notifies when the button is pressed
 typedef interface buttons_if {
-    void pressed(unsigned button_idx);
+    void pressed(void);
 } buttons_if;
 
 //Type which tells us the current status of the detected sample rate
