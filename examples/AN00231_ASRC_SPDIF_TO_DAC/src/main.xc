@@ -200,6 +200,8 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
     unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
     unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
+    timer t_do_dsp;                             //Used to trigger do_dsp event
+
     while(1){
         select{
             case i_serial2block.push(int * movable &p_buffer_other, const unsigned n_samps):
@@ -217,19 +219,17 @@ void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_bl
                 nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
             break;
 
-            default:
-                if (do_dsp_flag){                        //Do the sample rate conversion
-                    //port_debug <: 1;                     //debug
-                    unsigned n_samps_out;
-                    fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
-                    //xscope_int(LEFT, p_to_i2s[0]);
+            case do_dsp_flag => t_do_dsp :> void:      //Do the sample rate conversion
+                //port_debug <: 1;                     //debug
+                unsigned n_samps_out;
+                fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
+                //xscope_int(LEFT, p_to_i2s[0]);
 
-                    //Run the ASRC
-                    n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
-                    i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
-                    do_dsp_flag = 0;                        //Clear flag and wait for next input block
-                    //port_debug <: 0;                     //debug
-                }
+                //Run the ASRC
+                n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
+                i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
+                do_dsp_flag = 0;                        //Clear flag and wait for next input block
+                //port_debug <: 0;                     //debug
             break;
         }
     }
