@@ -63,7 +63,7 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  */
 
 port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4D;     //Buttons and switch
-char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task
+char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task. We are just interested in bit 0
 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;     //SPDIF COAX TX. A good test point to probe..
@@ -119,7 +119,7 @@ int main(void){
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
         on tile[AUDIO_TILE]: [[distribute]] i2s_handler(i_i2s, i_serial_out, i_codec, i_buttons);
-        on tile[SPDIF_TILE].core[0]: led_driver(i_leds, p_leds_row, p_leds_col);
+        on tile[SPDIF_TILE]: led_driver(i_leds, p_leds_row, p_leds_col);
 
     }
     return 0;
@@ -127,14 +127,13 @@ int main(void){
 
 
 //Shim task to handle setup and streaming of SPDIF samples from the streaming channel to the interface of serial2block
-[[combinable]]
+[[combinable]] //Run on same core as other tasks if possible
 void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 {
     unsigned index;                             //Channel index
     signed long sample;                         //Sample received from SPDIF
 
     delay_microseconds(1000);                   //Bug 17263 workaround (race condition in distributable task init)
-
     while (1) {
         select {
             case spdif_receive_sample(c_spdif_rx, sample, index):
