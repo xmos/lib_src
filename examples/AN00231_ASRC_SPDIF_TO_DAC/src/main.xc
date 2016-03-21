@@ -62,7 +62,7 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  * 7 MCLK_FSEL
  */
 
-port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4B;     //Buttons and switch
+port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4D;     //Buttons and switch
 char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task
 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
