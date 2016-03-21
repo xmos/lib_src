@@ -4,47 +4,48 @@
 #include <xscope.h>
 #include "block_serial.h"
 
+extern out port port_debug_tile_0;
+
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation for serial2block. Removes bounds check
 void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 {
-    int buffer[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
-    memset(buffer, 0, sizeof(buffer));
 
-#if (ASRC_N_INSTANCES == 2)
-    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0], buffer[1]};    //One half of the double buffer
-#else
-    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0]};
-#endif
-
+    int * unsafe buff_ptr[ASRC_N_INSTANCES];//Array of buffer pointers. These point to the input double buffers of ASRC instances
 
     unsigned samp_count = 0;            //Keeps track of samples processed since last query
-    unsigned buff_idx = 0;
+    unsigned buff_idx = 0;              //Index keeping track of input samples per block
 
     timer t_tick;                       //100MHz timer for keeping track of sample time
     int t_last_count, t_this_count;     //Keeps track of time when querying sample count
     t_tick :> t_last_count;             //Get time for zero samples counted
 
+    for (int i=0; i<ASRC_N_INSTANCES; i++) {
+        buff_ptr[i] = i_block_transfer[i].push(0);  //Get initial buffers to write to
+    }
+
     int t0, t1; //debug
 
     while(1){
         select{
-            //Request to receive all channels of one sample period into double buffer
-            case i_serial_in.push(int sample[], const unsigned n_chan):
-                t_tick :> t_this_count;     //Grab timestamp of this sample group
-                for(int i=0; i < n_chan / ASRC_N_INSTANCES; i++){
-                    for(int j=0; j < ASRC_N_INSTANCES; j++){
-                        p_buffer[j][buff_idx + i] = sample[i * ASRC_N_INSTANCES + j];
-                    }
+            //Request to receive one channels of one sample period into double buffer
+            case i_serial_in.push(int sample, const unsigned chan_idx):
+                if (chan_idx == 0 ) {
+                    t_tick :> t_this_count;     //Grab timestamp of this sample group
+                    samp_count++;                       //Keep track of samples received
                 }
-                buff_idx += n_chan / ASRC_N_INSTANCES;  //Move index on by number of samples received
-                samp_count++;                       //Keep track of samples received
 
-                if(buff_idx == (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)){  //When full..
+                unsafe{
+                    *(buff_ptr[chan_idx % ASRC_N_INSTANCES] + buff_idx) = sample;
+                }
+                if (chan_idx == ASRC_CHANNELS_PER_INSTANCE - 1) buff_idx++;  //Move index when all channels received
+
+                if(buff_idx == ASRC_N_IN_SAMPLES){  //When full..
                     buff_idx = 0;
                     t_tick :> t0;
-                    for(int i=0; i < ASRC_N_INSTANCES; i++){
-                        i_block_transfer[i].push(p_buffer[i], (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)); //Exchange with src task
+                    //xscope_int(0, p_buffer[0][0]);
+                    for(int i=0; i < ASRC_N_INSTANCES; i++) unsafe{//Get new buffer pointers
+                        buff_ptr[i] = i_block_transfer[i].push(0);
                     }
                     t_tick :> t1;
                     //debug_printf("interface call time = %d\n", t1 - t0);
@@ -61,8 +62,9 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
 
             //Request to report buffer level. Note this is always zero because we do not have a FIFO here
             //This method is more useful for block2serial, which does have a FIFO. This should never be called.
-            case i_input_rate.get_buffer_level() -> unsigned level:
-                level = 0;
+            case i_input_rate.get_buffer_level() -> {unsigned curr_size, unsigned fill_level}:
+                curr_size = 0;
+                fill_level = 0;
             break;
         }
     }
@@ -70,78 +72,103 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
 
 
 
-//block2serial helper - sets FIFOs pointers to half and clears contents
-static inline void init_fifos( int * unsafe * unsafe wr_ptr, int * unsafe * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries)
-{
-    unsafe{
-        *wr_ptr = fifo_base;
-        *rd_ptr = fifo_base + (fifo_size_entries / 2);
-        memset(fifo_base, 0, fifo_size_entries * sizeof(int));
+
+unsafe{
+    //block2serial helper - sets FIFOs pointers to half and clears contents
+    static inline void init_fifo(b2s_fifo_t *fifo, int * fifo_base, int size){
+
+        fifo->ptr_base      = fifo_base;
+        fifo->ptr_top_max   = fifo_base + size;
+        fifo->ptr_top_curr  = fifo_base + size;
+        fifo->ptr_rd        = fifo_base + (size >> 1);
+        fifo->ptr_wr        = fifo_base;
+
+        memset(fifo_base, 0, size * sizeof(int));
     }
-    //debug_printf("Init FIFO\n");
-}
 
-//Used by block2serial to push samples from ASRC output into FIFO
-static inline unsigned push_sample_into_fifo(int samp, int * unsafe * unsafe wr_ptr, int * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries){
-    unsigned success = 1;
-    unsafe{
-        **wr_ptr = samp;    //write value into fifo
+    //block2serial helper - returns size and fill level
+    {int, int} static get_fill_level(b2s_fifo_t *fifo){
 
-        (*wr_ptr)++; //increment write pointer (by reference)
-        if (*wr_ptr >= fifo_base + fifo_size_entries) *wr_ptr = fifo_base; //wrap pointer
-        if (*wr_ptr == rd_ptr) {
-            success = 0;
+        int size, fill_level;
+        size = fifo->ptr_top_curr - fifo->ptr_base;                             //Total current size if FIFO
+        if (fifo->ptr_wr >= fifo->ptr_rd){
+            fill_level = fifo->ptr_wr - fifo->ptr_rd;                           //Fill level if write pointer ahead of read pointer
         }
-    }
-    return success;
-}
-
-//Used by block2serial of samples to pull from output FIFO filled by ASRC
-static inline unsigned pull_sample_from_fifo(int &samp, int * unsafe wr_ptr, int * unsafe * unsafe rd_ptr, int * unsafe fifo_base, static const unsigned fifo_size_entries){
-    unsigned success = 1;
-    unsafe{
-        samp = **rd_ptr;    //read value from fifo
-        (*rd_ptr)++; //increment write pointer (by reference)
-        if (*rd_ptr >= fifo_base + fifo_size_entries) *rd_ptr = fifo_base; //wrap pointer
-        if (*rd_ptr == wr_ptr){
-            success = 0;
+        else {                                                                  //Fill level if read pointer ahead of write pointer
+            fill_level = (fifo->ptr_top_curr - fifo->ptr_rd) + (fifo->ptr_wr - fifo->ptr_base);
         }
+        return {size, fill_level};
     }
-    return success;
-}
 
-//Used by block2serial to find out how many samples we have in FIFO
-static inline unsigned get_fill_level(int * unsafe wr_ptr, int * unsafe rd_ptr, int * const unsafe fifo_base, const unsigned fifo_size_entries){
-    unsigned fill_level;
-    if (wr_ptr >= rd_ptr){
-        fill_level = wr_ptr - rd_ptr;
+    //block2serial helper - checks supplied wr_ptr and modifies if necessary
+    static inline unsigned confirm_wr_block_address(b2s_fifo_t *fifo){
+
+        if (fifo->ptr_wr >= fifo->ptr_rd){                                      //rd_ptr behind, need to check for hitting top
+            //printf("Fill above\n");
+
+            if ((fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE) >= fifo->ptr_top_max) {    //cannot fit next block in top, need to wrap
+                //printf("Write wrap\n");
+                if((fifo->ptr_base + ASRC_MAX_BLOCK_SIZE) > fifo->ptr_rd) {     //No space at bottom either
+                    return FAIL;                                                //Overflow. We expect to init FIFOs so leave vals as is
+                }
+                                                                                //Space available at bottom
+                fifo->ptr_top_curr = fifo->ptr_wr;                              //Set new top of FIFO at last write pointer location
+                fifo->size_curr = fifo->ptr_top_curr - fifo->ptr_base;          //Shrink size to current top - base
+                fifo->ptr_wr = fifo->ptr_base;                                  //Start writing at base
+
+            }
+            else {                                                              //write space can fit at top
+            }
+        }
+
+        else {                                                                  //rd_ptr ahead, need to check for hitting rd_ptr
+            //printf("Fill below\n");
+            //printf("wr + ASRC_MAX_BLOCK_SIZE=%p, rd=%p\n", fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE, fifo->ptr_rd);
+            if((fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE) >= fifo->ptr_rd) {          //We hit rd_ptr
+                return FAIL;
+
+            }                                                                   //We have room
+        }
+        return PASS;
     }
-    else{
-        fill_level = fifo_size_entries + wr_ptr - rd_ptr;
+
+
+    //block2serial helper - pulls a single sample from the FIFO
+    static unsigned pull_sample_from_fifo(b2s_fifo_t *fifo, int &samp) {
+
+        samp = *fifo->ptr_rd;                                                   //read value from fifo
+        (fifo->ptr_rd)++;                                                       //increment write pointer
+        if (fifo->ptr_rd >= fifo->ptr_top_curr) {
+            fifo->ptr_rd = fifo->ptr_base;                                      //wrap pointer
+            //printf("Read wrap\n");
+        }
+        if (fifo->ptr_rd == fifo->ptr_wr){                                      //We have hit write pointer
+            return FAIL;                                                        //Underflow - assume will init after this so leave as is
+        }
+        return PASS;
     }
-    return fill_level;
-}
+} //unsafe region
+
+/*
+static void print_fifo(b2s_fifo_t fifo){
+    int curr_size, fill_level;
+    {curr_size, fill_level} = get_fill_level(&fifo);
+
+    printf("ptr_base=%p, ptr_top_max=%p, ptr_top_curr=%p, ptr_rd=%p. ptr_wr=%p, size_curr=0x%x, fill_level=0x%x\n",
+            fifo.ptr_base, fifo.ptr_top_max, fifo.ptr_top_curr, fifo.ptr_rd, fifo.ptr_wr, curr_size, fill_level);
+}*/
 
 //Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
 //This task is marked as unsafe keep pointers in scope throughout function
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation for block2serial. Removes bounds check
-unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCES], client serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
+unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCES], server serial_transfer_pull_if i_serial_out, server sample_rate_enquiry_if i_output_rate)
 {
-    int samps_to_i2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //Circular buffers and pointers for output from block2serial
-    int * unsafe ptr_base_samps_to_i2s[ASRC_N_CHANNELS];
-    int * unsafe ptr_rd_samps_to_i2s[ASRC_N_CHANNELS];
-    int * unsafe ptr_wr_samps_to_i2s[ASRC_N_CHANNELS];
 
-    //Double buffer from output from SRC
-    int to_i2s[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
-    memset(to_i2s, 0, sizeof(to_i2s));
+    int samps_b2s[ASRC_N_CHANNELS][OUT_FIFO_SIZE];   //FIFO buffer storage
 
-#if (ASRC_N_INSTANCES == 2)
-    int * movable p_to_i2s[ASRC_N_INSTANCES] = {to_i2s[0], to_i2s[1]}; //Movable pointer for swapping with SRC
-#else
-    int * movable p_to_i2s[ASRC_N_INSTANCES] = {to_i2s[0]};            //Movable pointer for swapping with SRC
-#endif
+    b2s_fifo_t b2s_fifo[ASRC_N_CHANNELS];            //Declare FIFO control stucts
+
 
     unsigned samp_count = 0;                    //Keeps track of number of samples passed through
 
@@ -149,61 +176,56 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCE
     int t_last_count, t_this_count;             //Keeps track of time when querying sample count
     t_tick :> t_last_count;                     //Get time for zero samples counted
 
+
+    //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) print_fifo(b2s_fifo[i]);
+
     for (unsigned i=0; i<ASRC_N_CHANNELS; i++)  //Initialise FIFOs
     {
-        ptr_base_samps_to_i2s[i] = samps_to_i2s[i];
-        init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+        init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
     }
+    //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) print_fifo(b2s_fifo[i]);
 
     while(1){
         select{
-            //Request for pair of samples from I2S
-            case i_serial_out.pull_ready():
-                t_tick :> t_this_count;         //Grab timestamp of request from I2S
-
-                unsigned success = 1;
-                int samp[ASRC_N_CHANNELS];
-                for (int i=0; i<ASRC_N_CHANNELS; i++) {
-                    success &= pull_sample_from_fifo(samp[i], ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+            //Request to pull one channel of a sample over serial
+            case i_serial_out.pull(const unsigned chan_idx) -> int samp:
+                if(chan_idx == 0){
+                    t_tick :> t_this_count;         //Grab timestamp of request for channel 0 only
+                    samp_count ++;                  //Keep track of number of samples served
                 }
-                //xscope_int(0, samp[0]);
-                i_serial_out.do_pull(samp, ASRC_N_CHANNELS);
+
+                unsigned success = pull_sample_from_fifo(&b2s_fifo[chan_idx], samp);
+
                 if (!success) {
-                    for (int i=0; i<ASRC_N_CHANNELS; i++) {   //Init all FIFOs if any of them have under/overflowed
-                        debug_printf("-");                    //FIFO empty
-                        init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                    debug_printf("-");                    //FIFO empty
+                    for (int i=0; i<ASRC_N_CHANNELS; i++){
+                        init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
                     }
                 }
-                samp_count ++;                  //Keep track of number of samples served to I2S
+                //debug_printf("%d\n", chan_idx);
+                //xscope_int(0, samp);
+                //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) {printf("pull "); print_fifo(b2s_fifo[i]);}
+
             break;
 
             //Request to push block of samples from SRC
             //selects over the entire array of interfaces
-            case i_block2serial[int if_index].push(int * movable &p_buffer_other, const unsigned n_samps):
-                if (if_index == 0) t_tick :> t_this_count;  //Grab time of sample
-                int * movable tmp;
-                tmp = move(p_buffer_other);         //First swap buffer pointers
-                p_buffer_other = move(p_to_i2s[if_index]);
-                p_to_i2s[if_index] = move(tmp);
-                for(int i=0; i < n_samps; i++) {   //Get entire buffer
-                    unsigned success = 1;                                   //Keep track of status of FIFO operations
-                    for (int j=0; j < ASRC_CHANNELS_PER_INSTANCE; j++) {        //Push samples into FIFO
-                        int samp = p_to_i2s[if_index][ASRC_CHANNELS_PER_INSTANCE * i + j];
-                        int channel_num = if_index + j;
-                        success &= push_sample_into_fifo(samp, &ptr_wr_samps_to_i2s[channel_num], ptr_rd_samps_to_i2s[channel_num],
-                                ptr_base_samps_to_i2s[channel_num], OUT_FIFO_SIZE);
-                    }
-
-                    //xscope_int(LEFT, p_to_i2s[0]);
-
-                    if (!success) {                 //One of the FIFOs has overflowed
+            case i_block2serial[int if_index].push(const unsigned n_samps) -> int * unsafe p_buffer_wr:
+                //debug_printf("%d\n", n_samps);
+                //printf("wr=%p\n", b2s_fifo[if_index].ptr_wr);
+                b2s_fifo[if_index].ptr_wr += n_samps;                             //Move on write pointer. We alreaady know we have space
+                //printf("wr=%p\n", b2s_fifo[if_index].ptr_wr);
+                unsigned result = confirm_wr_block_address(&b2s_fifo[if_index]); //Get next available block for write pointer
+                    if (result == FAIL) {
+                        debug_printf("+");                    //FIFO full
                         for (int i=0; i<ASRC_N_CHANNELS; i++){
-                            debug_printf("+");  //FIFO full
-                            //debug_printf("push fail - buffer fill=%d, ", get_fill_level(ptr_wr_samps_to_i2s[i], ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE));
-                            init_fifos(&ptr_wr_samps_to_i2s[i], &ptr_rd_samps_to_i2s[i], ptr_base_samps_to_i2s[i], OUT_FIFO_SIZE);
+                            init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
                         }
                     }
-                }
+                //if (if_index == 0) debug_printf("wr=0x%x\n", b2s_fifo[if_index].ptr_wr);
+
+                //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) {printf("push "); print_fifo(b2s_fifo[i]);}
+                p_buffer_wr = b2s_fifo[if_index].ptr_wr;
             break;
 
             //Request to report number of samples processed since last request
@@ -215,9 +237,9 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCE
             break;
 
             //Request to report on the current buffer level
-            case i_output_rate.get_buffer_level() -> unsigned fill_level:
+            case i_output_rate.get_buffer_level() -> {unsigned curr_size, unsigned fill_level}:
                 //Currently just reports the level of first FIFO. Each FIFO should be the same
-                fill_level = get_fill_level(ptr_wr_samps_to_i2s[0], ptr_rd_samps_to_i2s[0], ptr_base_samps_to_i2s[0], OUT_FIFO_SIZE);
+                {curr_size, fill_level} = get_fill_level(&b2s_fifo[0]);
             break;
         }
     }

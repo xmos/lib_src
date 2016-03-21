@@ -64,20 +64,21 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
 port p_buttons                           = on tile[SPDIF_TILE]: XS1_PORT_4B;     //Buttons and switch
 char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task
 
-
-port port_debug                          = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
+out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
+out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;     //SPDIF COAX TX. A good test point to probe..
 
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
-[[distributable]] void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
+[[combinable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
 [[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port);
 
 int main(void){
     serial_transfer_push_if i_serial_in;
-    block_transfer_if i_serial2block[ASRC_N_INSTANCES], i_block2serial[ASRC_N_INSTANCES];
+    block_transfer_if i_serial2block[ASRC_N_INSTANCES];
+    block_transfer_if i_block2serial[ASRC_N_INSTANCES];
     serial_transfer_pull_if i_serial_out;
     sample_rate_enquiry_if i_sr_input, i_sr_output;
     fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES];
@@ -92,10 +93,10 @@ int main(void){
 
     par{
         on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ_SPDIF);
-        on tile[SPDIF_TILE]: spdif_handler(c_spdif_rx, i_serial_in);
-        on tile[SPDIF_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
-        on tile[SPDIF_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
-        on tile[SPDIF_TILE]: unsafe {block2serial(i_block2serial, i_serial_out, i_sr_output);}
+        on tile[AUDIO_TILE].core[0]: spdif_handler(c_spdif_rx, i_serial_in);
+        on tile[AUDIO_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
+        on tile[AUDIO_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
+        on tile[AUDIO_TILE]: unsafe { par{[[distribute]] block2serial(i_block2serial, i_serial_out, i_sr_output);}}
 
         on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
@@ -125,19 +126,16 @@ int main(void){
 #pragma unsafe arrays   //Performance optimisation
 void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 {
-
-    int samples[2] = {0,0};                     //Array of input samples for SPDIF (L/R)
-    size_t index = 0;                           //Index for above
+    unsigned index;                             //Channel index
     signed long sample;                         //Sample received from SPDIF
+
+    delay_microseconds(1000);                   //Bug 17263 workaround (race condition in distributable task init)
 
     while (1) {
         select {
             case spdif_receive_sample(c_spdif_rx, sample, index):
-                samples[index] = sample;
-                if (index == 1){                    //We have completed a L/R pair
-                    i_serial_in.push(samples, 2);   //Push them into serial to block
-                }
-             break;
+                i_serial_in.push(sample, index);   //Push them into serial to block
+            break;
         }
     }
 }
@@ -170,82 +168,89 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
 }
 
 //The ASRC processing task - has it's own logical core to reserve processing MHz
-void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
-{
-    int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
-    int to_i2s[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX];
+unsafe{
+    void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
+    {
+        int input_dbl_buf[2][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES];  //Double buffers for to block/serial tasks
+        unsigned buff_idx = 0;
+        int * unsafe asrc_input = input_dbl_buf[0];    //pointer for ASRC input buffer
+        int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
 
-    int * movable p_from_spdif = from_spdif;    //Movable pointers for swapping ownership
-    int * movable p_to_i2s = to_i2s;
+        p_out_fifo = i_block2serial.push(0);        //Get pointer to initial write buffer
 
-    set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
+        set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
-    fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
-    fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
+        fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
+        fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
 
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+        ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+        int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+        ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
+        iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 
-    for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
-    unsafe {
-        // Set state, stack and coefs into ctrl structure
-        sASRCCtrl[ui].psState                   = &sASRCState[ui];
-        sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-        sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
-    }
-
-    //Initialise ASRC
-    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
-
-    unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
-    timer t_do_dsp;                             //Used to trigger do_dsp event
-
-    while(1){
-        select{
-            case i_serial2block.push(int * movable &p_buffer_other, const unsigned n_samps):
-                int * movable tmp;
-                tmp = move(p_buffer_other);
-                p_buffer_other = move(p_from_spdif);    //Swap buffer ownership between tasks
-                p_from_spdif = move(tmp);
-                do_dsp_flag = 1;                        //We have a fresh buffer to process
-            break;
-
-            case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
-                in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
-                out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
-                debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
-                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
-            break;
-
-            case do_dsp_flag => t_do_dsp :> void:      //Do the sample rate conversion
-                //port_debug <: 1;                     //debug
-                unsigned n_samps_out;
-                fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
-                //xscope_int(LEFT, p_to_i2s[0]);
-
-                //Run the ASRC
-                n_samps_out = asrc_process(p_from_spdif, p_to_i2s, fs_ratio, sASRCCtrl);
-                i_block2serial.push(p_to_i2s, n_samps_out); //Push result to serialiser output
-                do_dsp_flag = 0;                        //Clear flag and wait for next input block
-                //port_debug <: 0;                     //debug
-            break;
+        for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
+        unsafe {
+            // Set state, stack and coefs into ctrl structure
+            sASRCCtrl[ui].psState                   = &sASRCState[ui];
+            sASRCCtrl[ui].piStack                   = iASRCStack[ui];
+            sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
         }
+
+        //Initialise ASRC
+        unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+
+        unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
+        timer t_do_dsp;                             //Used to trigger do_dsp event
+
+        while(1){
+            select{
+                case i_serial2block.push(const unsigned n_samps) -> int * unsafe new_buff_ptr:
+                    asrc_input = input_dbl_buf[buff_idx];   //Grab address of freshly filled buffer
+                    do_dsp_flag = 1;                        //We have a fresh buffer to process
+                    buff_idx ^= 1;                          //Flip double buffer for filling
+                    new_buff_ptr = input_dbl_buf[buff_idx]; //Return pointer for serial2block to fill
+                break;
+
+                case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
+                    in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
+                    out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
+                    debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
+                    nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+                break;
+
+                case do_dsp_flag => t_do_dsp :> void:      //Do the sample rate conversion
+                    //port_debug <: 1;                     //debug
+                    unsigned n_samps_out;
+                    fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
+                    //xscope_int(LEFT, p_to_i2s[0]);
+
+                    //Run the ASRC and pass pointer of output to block2serial
+                    n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
+                    p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
+
+
+                    do_dsp_flag = 0;                        //Clear flag and wait for next input block
+                    //port_debug <: 0;                     //debug
+                    break;
+            }
+        }//While 1
     }
-}
+} //unsafe
 
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
-[[distributable]]
+[[combinable]]
 #pragma unsafe arrays   //Performance optimisation of i2s_handler task
-void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons)
+void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons)
     {
-    int samples[ASRC_N_CHANNELS] = {0,0};
     unsigned sample_rate = DEFAULT_FREQ_HZ_I2S;
     unsigned mclk_rate;
     unsigned restart_status = I2S_NO_RESTART;
 
+    int samples_valid = 0;  //Flag to indicate when to trigger case to fetch new samples
+    int samples_buffered[ASRC_N_CHANNELS] = {0};
+
+    timer t_read;
 
     while (1) {
         select {
@@ -270,14 +275,18 @@ void i2s_handler(server i2s_callback_if i2s, server serial_transfer_pull_if i_se
 
             //Send samples to DAC
             case i2s.send(size_t index) -> int32_t sample:
-            sample = samples[index];
-            if (index == ASRC_N_CHANNELS - 1){
-                i_serial_out.pull_ready();
+            sample = samples_buffered[index];                    //Grab from previously buffered samps
+            if (index == ASRC_N_CHANNELS - 1) {
+                samples_valid = 0; //Trigger fetching new samples
             }
             break;
 
-            case i_serial_out.do_pull(int new_samples[], const size_t n_samps):
-            memcpy(samples, new_samples, n_samps * sizeof(int));
+            //Get new samples. This will be triggered immediately by the DAC reading the last channel (above)
+            case !samples_valid => t_read :> void:
+            for(int i = 0; i< ASRC_N_CHANNELS; i++){
+                samples_buffered[i] = i_serial_out.pull(i);
+            }
+            samples_valid = 1;
             break;
 
             //Cycle through sample rates of I2S on button press
@@ -371,6 +380,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             DEFAULT_FREQ_HZ_I2S};
 
     unsigned i2s_buff_level = 0;                //Buffer fill level. Initialise to empty.
+    unsigned i2s_buff_size = OUT_FIFO_SIZE;
     unsigned skip_validity = 0;                 //Do SR validity check - need this to allow SR to settle after SR change
 
     timer t_print;                              //Debug print timers
@@ -397,7 +407,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
             //Serve up latest sample count value when required. Note selects over array of interfaces
             case i_fs_ratio[int if_index].get_ratio(unsigned nominal_fs_ratio) -> fs_ratio_t fs_ratio_ret:
                 fs_ratio_nominal =  nominal_fs_ratio;   //Allow use outside of this case
-                if (spdif_info.status == VALID && i2s_info.status == VALID){
+                if ((spdif_info.status == VALID) && (i2s_info.status == VALID)){
                     fs_ratio_ret = fs_ratio;    //Pass back calculated value
                 }
                 else {
@@ -422,7 +432,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
                 unsigned samp_count_spdif = i_spdif_rate.get_sample_count(sample_time_spdif); //get spdif sample count;
                 unsigned samp_count_i2s   = i_i2s_rate.get_sample_count(sample_time_i2s);     //And I2S
-                i2s_buff_level = i_i2s_rate.get_buffer_level();
+                {i2s_buff_size, i2s_buff_level} = i_i2s_rate.get_buffer_level();
 
                 if (sample_time_spdif){ //If time is non-zero - avoids divide by zero if no input
                     spdif_info.current_rate = (((unsigned long long)samp_count_spdif * SR_MULTIPLIER) / sample_time_spdif);
@@ -463,7 +473,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
 
                 //Calculate fs_ratio to tell asrc how many samples to produce in 4.28 fixed point format
-                int i2s_buffer_level_from_half = (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2);    //Level w.r.t. half full
+                int i2s_buffer_level_from_half = (signed)i2s_buff_level - (i2s_buff_size / 2);    //Level w.r.t. half full
                 if (spdif_info.status == VALID && i2s_info.status == VALID) {
                     fs_ratio_old = fs_ratio;        //Save old value
                     fs_ratio = (unsigned) ((spdif_info.current_rate * 0x10000000ULL) / i2s_info.current_rate);

@@ -188,8 +188,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/images}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex/.doctrees}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/images}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/src}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.xc.compiler.input.128426161" name="XC" superClass="com.xmos.cdt.xc.compiler.input"/>
 							</tool>
@@ -504,8 +512,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/images}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex/.doctrees}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/images}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/src}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.c.compiler.input.c.1235660429" name="C" superClass="com.xmos.cdt.c.compiler.input.c"/>
 							</tool>
@@ -825,8 +841,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/pdf}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/api}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/images}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/variable_buffer_size/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/.sources/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/_build/xlatex/.doctrees}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/doc/rst/images}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AN00231_ASRC_SPDIF_TO_DAC/src}&quot;"/>
 								</option>
 								<inputType id="com.xmos.cdt.cxx.compiler.input.cpp.1200430472" name="C++" superClass="com.xmos.cdt.cxx.compiler.input.cpp"/>
 							</tool>

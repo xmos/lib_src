@@ -4,7 +4,7 @@
 //Interface for obtaining timing information about the serial stream
 typedef interface sample_rate_enquiry_if {
     unsigned get_sample_count(int &elapsed_time_in_ticks); //Returns sample count and elapsed time in 10ns ticks since last query
-    unsigned get_buffer_level(void); //Returns the buffer level. Note this will return zero for the serial2block function which uses a double-buffer
+    {unsigned, unsigned } get_buffer_level(void);          //Returns the buffer level. Note this will return zero for the serial2block function which uses a double-buffer
 } sample_rate_enquiry_if;
 
 //Interface for serveing up the last calculated fs_ratio between input and output
