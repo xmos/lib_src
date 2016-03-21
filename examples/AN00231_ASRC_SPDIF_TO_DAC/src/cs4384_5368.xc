@@ -59,7 +59,7 @@ void audio_codec_cs4384_cs5368(server audio_codec_config_if i_codec,
             i_dac_rst_n.output(0);//Assert DAC reset
             i_adc_rst_n.output(0);//Assert ADC reset
 
-            delay_microseconds(1000);
+            delay_milliseconds(50);
 
             if ((sample_frequency % 48000) != 0) i_mclk_fsel.output(0);
             else                                 i_mclk_fsel.output(1);
