@@ -8,24 +8,21 @@ extern out port port_debug_tile_0;
 
 [[distributable]]
 #pragma unsafe arrays   //Performance optimisation for serial2block. Removes bounds check
-void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if_mv i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
+void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 {
-    int buffer[ASRC_N_INSTANCES][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES]; //Half of the double buffer used for transferring blocks to src
-    memset(buffer, 0, sizeof(buffer));
 
-#if (ASRC_N_INSTANCES == 2)
-    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0], buffer[1]};    //One half of the double buffer
-#else
-    int * movable p_buffer[ASRC_N_INSTANCES] = {buffer[0]};
-#endif
-
+    int * unsafe buff_ptr[ASRC_N_INSTANCES];//Array of buffer pointers. These point to the input double buffers of ASRC instances
 
     unsigned samp_count = 0;            //Keeps track of samples processed since last query
-    unsigned buff_idx = 0;
+    unsigned buff_idx = 0;              //Index keeping track of input samples per block
 
     timer t_tick;                       //100MHz timer for keeping track of sample time
     int t_last_count, t_this_count;     //Keeps track of time when querying sample count
     t_tick :> t_last_count;             //Get time for zero samples counted
+
+    for (int i=0; i<ASRC_N_INSTANCES; i++) {
+        buff_ptr[i] = i_block_transfer[i].push(0);  //Get initial buffers to write to
+    }
 
     int t0, t1; //debug
 
@@ -37,18 +34,18 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
                     t_tick :> t_this_count;     //Grab timestamp of this sample group
                     samp_count++;                       //Keep track of samples received
                 }
-                //debug_printf("%d, %d\n", chan_idx % ASRC_N_INSTANCES, buff_idx);
-                p_buffer[chan_idx % ASRC_N_INSTANCES][buff_idx] = sample;
 
+                unsafe{
+                    *(buff_ptr[chan_idx % ASRC_N_INSTANCES] + buff_idx) = sample;
+                }
                 if (chan_idx == ASRC_CHANNELS_PER_INSTANCE - 1) buff_idx++;  //Move index when all channels received
-
 
                 if(buff_idx == ASRC_N_IN_SAMPLES){  //When full..
                     buff_idx = 0;
                     t_tick :> t0;
                     //xscope_int(0, p_buffer[0][0]);
-                    for(int i=0; i < ASRC_N_INSTANCES; i++) unsafe{
-                        i_block_transfer[i].push(p_buffer[i], (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)); //Exchange with src task
+                    for(int i=0; i < ASRC_N_INSTANCES; i++) unsafe{//Get new buffer pointers
+                        buff_ptr[i] = i_block_transfer[i].push(0);
                     }
                     t_tick :> t1;
                     //debug_printf("interface call time = %d\n", t1 - t0);

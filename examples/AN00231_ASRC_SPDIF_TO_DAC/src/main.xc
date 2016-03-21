@@ -69,7 +69,7 @@ out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;    
 
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
-void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
+void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[combinable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
@@ -77,7 +77,7 @@ void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i
 
 int main(void){
     serial_transfer_push_if i_serial_in;
-    block_transfer_if_mv i_serial2block[ASRC_N_INSTANCES];
+    block_transfer_if i_serial2block[ASRC_N_INSTANCES];
     block_transfer_if i_block2serial[ASRC_N_INSTANCES];
     serial_transfer_pull_if i_serial_out;
     sample_rate_enquiry_if i_sr_input, i_sr_output;
@@ -125,6 +125,8 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
     unsigned index;                             //Channel index
     signed long sample;                         //Sample received from SPDIF
 
+    delay_microseconds(1000);                   //Bug 17263 workaround (race condition in distributable task init)
+
     while (1) {
         select {
             case spdif_receive_sample(c_spdif_rx, sample, index):
@@ -162,11 +164,12 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
 }
 
 //The ASRC processing task - has it's own logical core to reserve processing MHz
-void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
+unsafe{
+void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
 {
-    int from_spdif[ASRC_N_CHANNELS * ASRC_N_IN_SAMPLES];                  //Double buffers for to block/serial tasks on each side
-
-    int * movable p_from_spdif = from_spdif;    //Movable pointer for swapping ownership
+    int input_dbl_buf[2][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES];  //Double buffers for to block/serial tasks
+    unsigned buff_idx = 0;
+    int * unsafe asrc_input = input_dbl_buf[0];    //pointer for ASRC input buffer
     int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
 
     p_out_fifo = i_block2serial.push(0);        //Get pointer to initial write buffer
@@ -195,12 +198,11 @@ void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i
     unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
     while(1){
         select{
-            case i_serial2block.push(int * movable &p_buffer_other, const unsigned n_samps):
-                int * movable tmp;
-                tmp = move(p_buffer_other);
-                p_buffer_other = move(p_from_spdif);    //Swap buffer ownership between tasks
-                p_from_spdif = move(tmp);
+            case i_serial2block.push(const unsigned n_samps) -> int * unsafe new_buff_ptr:
+                asrc_input = input_dbl_buf[buff_idx];   //Grab address of freshly filled buffer
                 do_dsp_flag = 1;                        //We have a fresh buffer to process
+                buff_idx ^= 1;                          //Flip double buffer for filling
+                new_buff_ptr = input_dbl_buf[buff_idx]; //Return pointer for serial2block to fill
             break;
 
             case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
@@ -218,18 +220,7 @@ void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i
 
                     //Run the ASRC and pass pointer of output to block2serial
                     unsafe{
-                        int tmp[8];
-                        n_samps_out = asrc_process(p_from_spdif, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
-                        //n_samps_out = asrc_process(p_from_spdif, tmp, fs_ratio, sASRCCtrl);
-                        //printintln(p_from_spdif[0]);
-                        //printintln(p_from_spdif[1]);
-                        //printintln(p_from_spdif[2]);
-                        //printintln(p_from_spdif[3]);
-                        //xscope_int(0, p_from_spdif[0]);
-                        //xscope_int(0, p_from_spdif[1]);
-                        //xscope_int(0, p_from_spdif[2]);
-                        //xscope_int(0, p_from_spdif[3]);
-                        //xscope_int(1, tmp[0]);
+                        n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
                         p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
                     }
 
@@ -240,6 +231,7 @@ void asrc(server block_transfer_if_mv i_serial2block, client block_transfer_if i
         }
     }
 }
+} //unsafe
 
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
