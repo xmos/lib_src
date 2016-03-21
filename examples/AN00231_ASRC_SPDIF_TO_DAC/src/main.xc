@@ -2,6 +2,7 @@
 #include <xs1.h>
 #include <platform.h>
 #include <string.h>
+#include <hwtimer.h>
 
 //Supporting libraries
 #include <src.h>
@@ -173,7 +174,7 @@ unsafe{
     {
         int input_dbl_buf[2][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES];  //Double buffers for to block/serial tasks
         unsigned buff_idx = 0;
-        int * unsafe asrc_input = input_dbl_buf[0];    //pointer for ASRC input buffer
+        int * unsafe asrc_input = input_dbl_buf[0]; //pointer for ASRC input buffer
         int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
 
         p_out_fifo = i_block2serial.push(0);        //Get pointer to initial write buffer
@@ -186,11 +187,11 @@ unsafe{
         ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
         int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
         ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-        iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+        iASRCADFIRCoefs_t SiASRCADFIRCoefs;                     //Adaptive filter coefficients
 
         for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
         unsafe {
-            // Set state, stack and coefs into ctrl structure
+            //Set state, stack and coefs into ctrl structure
             sASRCCtrl[ui].psState                   = &sASRCState[ui];
             sASRCCtrl[ui].piStack                   = iASRCStack[ui];
             sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
@@ -222,7 +223,6 @@ unsafe{
                     //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
                     fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
-                    //xscope_int(LEFT, p_to_i2s[0]);
 
                     //Run the ASRC and pass pointer of output to block2serial
                     n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
@@ -234,9 +234,10 @@ unsafe{
                     break;
             }
         }//While 1
-    }
+    }//asrc
 } //unsafe
 
+#define MUTE_TIME_AFTER_SR_CHANGE   25000000    //250ms. Avoids incorrect rate playing momentarily
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[combinable]]
@@ -246,27 +247,33 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
     unsigned sample_rate = DEFAULT_FREQ_HZ_I2S;
     unsigned mclk_rate;
     unsigned restart_status = I2S_NO_RESTART;
+    unsigned mute_time;
+    unsigned mute_flag = 1; //Used to mute on SR change
 
     int samples_valid = 0;  //Flag to indicate when to trigger case to fetch new samples
     int samples_buffered[ASRC_N_CHANNELS] = {0};
 
-    timer t_read;
+    hwtimer_t t_read;       //Timer used as dummy to trigger event after case. Note HW timer use - see Bug 17264
+    timer t_mute;           //Mute timer
+
+    t_mute :> mute_time;
+    mute_time += 100000000; //Setup trigger to disable mute 1 second in future
 
     while (1) {
         select {
             case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
-            if (!(sample_rate % 48000)) mclk_rate = MCLK_FREQUENCY_48;  //Initialise MCLK to appropriate multiple of sample_rate
-            else mclk_rate  = MCLK_FREQUENCY_44;
-            i2s_config.mclk_bclk_ratio = mclk_rate / (sample_rate << 6);
-            i2s_config.mode = I2S_MODE_I2S;
-            i_codec.reset(sample_rate, mclk_rate);
-            debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
-            restart_status = I2S_NO_RESTART;
+                if (!(sample_rate % 48000)) mclk_rate = MCLK_FREQUENCY_48;  //Initialise MCLK to appropriate multiple of sample_rate
+                else mclk_rate  = MCLK_FREQUENCY_44;
+                i2s_config.mclk_bclk_ratio = mclk_rate / (sample_rate << 6);
+                i2s_config.mode = I2S_MODE_I2S;
+                i_codec.reset(sample_rate, mclk_rate);
+                debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
+                restart_status = I2S_NO_RESTART;
             break;
 
             //Start of I2S frame
             case i2s.restart_check() -> i2s_restart_t ret:
-            ret = restart_status;
+                ret = restart_status;
             break;
 
             //Get samples from ADC
@@ -275,18 +282,19 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
 
             //Send samples to DAC
             case i2s.send(size_t index) -> int32_t sample:
-            sample = samples_buffered[index];                    //Grab from previously buffered samps
-            if (index == ASRC_N_CHANNELS - 1) {
-                samples_valid = 0; //Trigger fetching new samples
-            }
+                if (mute_flag) sample = 0;
+                else sample = samples_buffered[index];              //Grab from previously buffered samps
+                if (index == ASRC_N_CHANNELS - 1) {
+                    samples_valid = 0;                              //Trigger fetching new samples
+                }
             break;
 
             //Get new samples. This will be triggered immediately by the DAC reading the last channel (above)
             case !samples_valid => t_read :> void:
-            for(int i = 0; i< ASRC_N_CHANNELS; i++){
-                samples_buffered[i] = i_serial_out.pull(i);
-            }
-            samples_valid = 1;
+                for(int i = 0; i< ASRC_N_CHANNELS; i++){
+                    samples_buffered[i] = i_serial_out.pull(i);
+                }
+                samples_valid = 1;
             break;
 
             //Cycle through sample rates of I2S on button press
@@ -306,7 +314,16 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
                     break;
                 }
                 restart_status = I2S_RESTART;
+                mute_flag = 1;
+                t_mute :> mute_time;
+                mute_time += MUTE_TIME_AFTER_SR_CHANGE; //Setup trigger to disable mute in future
             break;
+
+            //Mute timer case
+            case mute_flag => t_mute when timerafter(mute_time):> mute_time:
+                mute_flag = 0;
+            break;
+
         }
     }
 }
@@ -350,11 +367,11 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 #define SETTLE_CYCLES   1           //Number of measurement periods to skip after SR change (SR change blocks spdif momentarily so corrupts SR calc)
 
 typedef struct rate_info_t{
-    unsigned samp_count;    //Sample count over last period
-    unsigned time_ticks;    //Time in ticks for last count
-    unsigned current_rate;  //Current average rate in 20.12 fixed point format
+    unsigned samp_count;            //Sample count over last period
+    unsigned time_ticks;            //Time in ticks for last count
+    unsigned current_rate;          //Current average rate in 20.12 fixed point format
     sample_rate_status_t status;    //Lock status
-    unsigned nominal_rate;  //Snapped-to nominal rate as unsigned integer
+    unsigned nominal_rate;          //Snapped-to nominal rate as unsigned integer
 } rate_info_t;
 
 //Task that queires the de/serialisers periodically and calculates the number of samples for the SRC
@@ -443,33 +460,27 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 }
                 else i2s_info.current_rate = 0;
 
-                //debug_printf("spdif_info.current_rate=%d, i2s_info.current_rate=%d\n", spdif_info.current_rate, i2s_info.current_rate);
-
                 //Find lock status of input/output sample rates
                 sample_rate_status_t spdif_status_new = detect_frequency(spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.nominal_rate);
                 sample_rate_status_t i2s_status_new  = detect_frequency(i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.nominal_rate);
-
-                //debug_printf("spdif rate nom=%d, valid=%d, i2s rate nom=%d, valid=%d\n", spdif_info.nominal_rate, spdif_status_new, i2s_info.nominal_rate, i2s_status_new);
-
 
                 //If either has changed from invalid to valid, send message to SRC to initialise
                 if ((spdif_status_new == VALID && i2s_status_new == VALID) && ((spdif_info.status == INVALID || i2s_info.status == INVALID)) && !skip_validity){
                     for(int i = 0; i < ASRC_N_INSTANCES; i++){
                         i_fs_ratio[i].new_sr_notify();
                     }
-                    skip_validity = 3;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init
+                    skip_validity =  2;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init
                     fs_ratio = (unsigned) ((spdif_info.nominal_rate * 0x10000000ULL) / i2s_info.nominal_rate); //Initialise rate to nominal
                 }
 
-                //debug_printf("skip=%d\n", skip_validity);
                 if (skip_validity) skip_validity--;
 
                 //Update current sample rate status flags for input and output
                 spdif_info.status = spdif_status_new;
                 i2s_info.status   = i2s_status_new;
 
-#define BUFFER_LEVEL_TERM   100000   //How much apply the buffer level feedback term
-#define OLD_VAL_WEIGHTING   10      //Simple low pass filter. Set proportion of old value to carry over
+#define BUFFER_LEVEL_TERM   20000   //How much to apply the buffer level feedback term (effectively 1/I term)
+#define OLD_VAL_WEIGHTING   5      //Simple low pass filter. Set proportion of old value to carry over
 
 
                 //Calculate fs_ratio to tell asrc how many samples to produce in 4.28 fixed point format
@@ -577,6 +588,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 #define DEBOUNCE_SAMPLES       5        //Sample 5 times in this period to ensure we have a true value
 #define BUTTON_PRESSED_VAL     0
 #define BUTTON_NOT_PRESSED_VAL 1
+
 //Button listener task. Applies a debounce function by checking several times for the same value
 [[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port){
     timer t_debounce;
@@ -595,7 +607,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     break;
                 }
                 debounce_counter = DEBOUNCE_SAMPLES;    //Kick off debounce sequence
-                t_debounce :> t_debounce_time;  //Get current time
+                t_debounce :> t_debounce_time;          //Get current time
             break;
 
             case debounce_counter => t_debounce when timerafter(t_debounce_time + (DEBOUNCE_PERIOD/DEBOUNCE_SAMPLES)) :> t_debounce_time:

@@ -89,7 +89,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         {
             //debug_printf("Passed = %x, Nominal = 0x%x\n", FsRatio, sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio);
             FsRatio = sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
-            debug_printf("!");
+            //debug_printf("!");
         }
 #endif
         // Apply shift to time ratio to build integer and fractional parts of time step

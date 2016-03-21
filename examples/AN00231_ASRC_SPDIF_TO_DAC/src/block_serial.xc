@@ -43,12 +43,10 @@ void serial2block(server serial_transfer_push_if i_serial_in, client block_trans
                 if(buff_idx == ASRC_N_IN_SAMPLES){  //When full..
                     buff_idx = 0;
                     t_tick :> t0;
-                    //xscope_int(0, p_buffer[0][0]);
                     for(int i=0; i < ASRC_N_INSTANCES; i++) unsafe{//Get new buffer pointers
                         buff_ptr[i] = i_block_transfer[i].push(0);
                     }
                     t_tick :> t1;
-                    //debug_printf("interface call time = %d\n", t1 - t0);
                 }
             break;
 
@@ -104,10 +102,7 @@ unsafe{
     static inline unsigned confirm_wr_block_address(b2s_fifo_t *fifo){
 
         if (fifo->ptr_wr >= fifo->ptr_rd){                                      //rd_ptr behind, need to check for hitting top
-            //printf("Fill above\n");
-
             if ((fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE) >= fifo->ptr_top_max) {    //cannot fit next block in top, need to wrap
-                //printf("Write wrap\n");
                 if((fifo->ptr_base + ASRC_MAX_BLOCK_SIZE) > fifo->ptr_rd) {     //No space at bottom either
                     return FAIL;                                                //Overflow. We expect to init FIFOs so leave vals as is
                 }
@@ -122,8 +117,6 @@ unsafe{
         }
 
         else {                                                                  //rd_ptr ahead, need to check for hitting rd_ptr
-            //printf("Fill below\n");
-            //printf("wr + ASRC_MAX_BLOCK_SIZE=%p, rd=%p\n", fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE, fifo->ptr_rd);
             if((fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE) >= fifo->ptr_rd) {          //We hit rd_ptr
                 return FAIL;
 
@@ -140,8 +133,8 @@ unsafe{
         (fifo->ptr_rd)++;                                                       //increment write pointer
         if (fifo->ptr_rd >= fifo->ptr_top_curr) {
             fifo->ptr_rd = fifo->ptr_base;                                      //wrap pointer
-            //printf("Read wrap\n");
         }
+
         if (fifo->ptr_rd == fifo->ptr_wr){                                      //We have hit write pointer
             return FAIL;                                                        //Underflow - assume will init after this so leave as is
         }
@@ -149,14 +142,6 @@ unsafe{
     }
 } //unsafe region
 
-/*
-static void print_fifo(b2s_fifo_t fifo){
-    int curr_size, fill_level;
-    {curr_size, fill_level} = get_fill_level(&fifo);
-
-    printf("ptr_base=%p, ptr_top_max=%p, ptr_top_curr=%p, ptr_rd=%p. ptr_wr=%p, size_curr=0x%x, fill_level=0x%x\n",
-            fifo.ptr_base, fifo.ptr_top_max, fifo.ptr_top_curr, fifo.ptr_rd, fifo.ptr_wr, curr_size, fill_level);
-}*/
 
 //Task that takes blocks of samples from SRC, buffers them in a FIFO and serves them up as a stream
 //This task is marked as unsafe keep pointers in scope throughout function
@@ -176,14 +161,9 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCE
     int t_last_count, t_this_count;             //Keeps track of time when querying sample count
     t_tick :> t_last_count;                     //Get time for zero samples counted
 
-
-    //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) print_fifo(b2s_fifo[i]);
-
-    for (unsigned i=0; i<ASRC_N_CHANNELS; i++)  //Initialise FIFOs
-    {
+    for (unsigned i=0; i<ASRC_N_CHANNELS; i++) { //Initialise FIFOs
         init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
     }
-    //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) print_fifo(b2s_fifo[i]);
 
     while(1){
         select{
@@ -195,36 +175,25 @@ unsafe void block2serial(server block_transfer_if i_block2serial[ASRC_N_INSTANCE
                 }
 
                 unsigned success = pull_sample_from_fifo(&b2s_fifo[chan_idx], samp);
-
-                if (!success) {
-                    debug_printf("-");                    //FIFO empty
+                if (success == FAIL) {  //FIFO empty
+                    //debug_printf("-");
                     for (int i=0; i<ASRC_N_CHANNELS; i++){
                         init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
                     }
                 }
-                //debug_printf("%d\n", chan_idx);
-                //xscope_int(0, samp);
-                //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) {printf("pull "); print_fifo(b2s_fifo[i]);}
-
             break;
 
             //Request to push block of samples from SRC
             //selects over the entire array of interfaces
             case i_block2serial[int if_index].push(const unsigned n_samps) -> int * unsafe p_buffer_wr:
-                //debug_printf("%d\n", n_samps);
-                //printf("wr=%p\n", b2s_fifo[if_index].ptr_wr);
-                b2s_fifo[if_index].ptr_wr += n_samps;                             //Move on write pointer. We alreaady know we have space
-                //printf("wr=%p\n", b2s_fifo[if_index].ptr_wr);
-                unsigned result = confirm_wr_block_address(&b2s_fifo[if_index]); //Get next available block for write pointer
-                    if (result == FAIL) {
-                        debug_printf("+");                    //FIFO full
+                b2s_fifo[if_index].ptr_wr += n_samps;                               //Move on write pointer. We alreaady know we have space
+                unsigned result = confirm_wr_block_address(&b2s_fifo[if_index]);    //Get next available block for write pointer
+                    if (result == FAIL) {                                           //FIFO full
+                        //debug_printf("+");
                         for (int i=0; i<ASRC_N_CHANNELS; i++){
                             init_fifo(&b2s_fifo[i], samps_b2s[i], OUT_FIFO_SIZE);
                         }
                     }
-                //if (if_index == 0) debug_printf("wr=0x%x\n", b2s_fifo[if_index].ptr_wr);
-
-                //for (unsigned i=0; i<ASRC_N_CHANNELS; i++) {printf("push "); print_fifo(b2s_fifo[i]);}
                 p_buffer_wr = b2s_fifo[if_index].ptr_wr;
             break;
 
