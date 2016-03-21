@@ -62,7 +62,7 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  * 7 MCLK_FSEL
  */
 
-port p_buttons                           = on tile[SPDIF_TILE]: XS1_PORT_4B;     //Buttons and switch
+port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4B;     //Buttons and switch
 char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task
 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
@@ -71,7 +71,7 @@ out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;    
 
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
-[[combinable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
+[[distributable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
 [[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
 [[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port);
@@ -94,7 +94,13 @@ int main(void){
 
     par{
         on tile[SPDIF_TILE]: spdif_rx(c_spdif_rx, port_spdif_rx, clk_spdif_rx, DEFAULT_FREQ_HZ_SPDIF);
-        on tile[AUDIO_TILE].core[0]: spdif_handler(c_spdif_rx, i_serial_in);
+        on tile[AUDIO_TILE]: [[combine, ordered]] par{
+            rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
+            spdif_handler(c_spdif_rx, i_serial_in);
+            button_listener(i_buttons, i_button_gpio[0]);
+            input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map);
+        }
+
         on tile[AUDIO_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
         on tile[AUDIO_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
         on tile[AUDIO_TILE]: unsafe { par{[[distribute]] block2serial(i_block2serial, i_serial_out, i_sr_output);}}
@@ -112,11 +118,9 @@ int main(void){
             debug_printf("Starting I2S\n");
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
-        on tile[AUDIO_TILE]: i2s_handler(i_i2s, i_serial_out, i_codec, i_buttons);
-        on tile[AUDIO_TILE]: rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
+        on tile[AUDIO_TILE]: [[distribute]] i2s_handler(i_i2s, i_serial_out, i_codec, i_buttons);
         on tile[SPDIF_TILE].core[0]: led_driver(i_leds, p_leds_row, p_leds_col);
-        on tile[SPDIF_TILE].core[0]: button_listener(i_buttons, i_button_gpio[0]);
-        on tile[SPDIF_TILE].core[0]: input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map);
+
     }
     return 0;
 }
@@ -124,7 +128,6 @@ int main(void){
 
 //Shim task to handle setup and streaming of SPDIF samples from the streaming channel to the interface of serial2block
 [[combinable]]
-#pragma unsafe arrays   //Performance optimisation
 void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 {
     unsigned index;                             //Channel index
@@ -240,7 +243,7 @@ unsafe{
 #define MUTE_TIME_AFTER_SR_CHANGE   25000000    //250ms. Avoids incorrect rate playing momentarily
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
-[[combinable]]
+[[distributable]]
 #pragma unsafe arrays   //Performance optimisation of i2s_handler task
 void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons)
     {
@@ -282,20 +285,9 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
 
             //Send samples to DAC
             case i2s.send(size_t index) -> int32_t sample:
-                if (mute_flag) sample = 0;
-                else sample = samples_buffered[index];              //Grab from previously buffered samps
-                if (index == ASRC_N_CHANNELS - 1) {
-                    samples_valid = 0;                              //Trigger fetching new samples
-                }
+                sample = i_serial_out.pull(index);
             break;
 
-            //Get new samples. This will be triggered immediately by the DAC reading the last channel (above)
-            case !samples_valid => t_read :> void:
-                for(int i = 0; i< ASRC_N_CHANNELS; i++){
-                    samples_buffered[i] = i_serial_out.pull(i);
-                }
-                samples_valid = 1;
-            break;
 
             //Cycle through sample rates of I2S on button press
             case i_buttons.pressed():
@@ -317,11 +309,6 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
                 mute_flag = 1;
                 t_mute :> mute_time;
                 mute_time += MUTE_TIME_AFTER_SR_CHANGE; //Setup trigger to disable mute in future
-            break;
-
-            //Mute timer case
-            case mute_flag => t_mute when timerafter(mute_time):> mute_time:
-                mute_flag = 0;
             break;
 
         }
@@ -364,7 +351,7 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 //Below is the multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
 //to support a measurement period of 1s at 192KHz with over 2 order of magnitude margin against overflow
 #define SR_MULTIPLIER   ((1<<SR_FRAC_BITS) * (unsigned long long) XS1_TIMER_HZ)
-#define SETTLE_CYCLES   1           //Number of measurement periods to skip after SR change (SR change blocks spdif momentarily so corrupts SR calc)
+#define SETTLE_CYCLES   3           //Number of measurement periods to skip after SR change (SR change blocks spdif momentarily so corrupts SR calc)
 
 typedef struct rate_info_t{
     unsigned samp_count;            //Sample count over last period
@@ -469,7 +456,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     for(int i = 0; i < ASRC_N_INSTANCES; i++){
                         i_fs_ratio[i].new_sr_notify();
                     }
-                    skip_validity =  2;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init
+                    skip_validity =  SETTLE_CYCLES;  //Don't check on validity for a few cycles as will be corrupted by SR change and SRC init
                     fs_ratio = (unsigned) ((spdif_info.nominal_rate * 0x10000000ULL) / i2s_info.nominal_rate); //Initialise rate to nominal
                 }
 

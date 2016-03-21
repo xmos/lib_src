@@ -119,7 +119,6 @@ unsafe{
         else {                                                                  //rd_ptr ahead, need to check for hitting rd_ptr
             if((fifo->ptr_wr + ASRC_MAX_BLOCK_SIZE) >= fifo->ptr_rd) {          //We hit rd_ptr
                 return FAIL;
-
             }                                                                   //We have room
         }
         return PASS;
