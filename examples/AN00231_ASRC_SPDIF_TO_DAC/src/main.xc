@@ -259,7 +259,6 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
                 debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
                 restart_status = I2S_NO_RESTART;
                 mute_counter = (sample_rate * MUTE_MS_AFTER_SR_CHANGE) / 1000; //Initialise to a number of milliseconds
-                debug_printf("%d\n",mute_counter);
             break;
 
             //Start of I2S frame
@@ -330,9 +329,9 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 }
 
 
-#define SR_CALC_PERIOD  10000000    //100ms The period over which we count samples to find the rate
-                                    //Because we timestamp at 10ns resolution, we get 10000000/10 = 20bits of precision
-#define REPORT_PERIOD   100100000   //1001ms How often we print the rates to the screen for debug. Chosen to not clash with above
+#define SR_CALC_PERIOD  2000000     //20ms The period over which we count samples to find the rate
+                                    //Because we timestamp at 10ns resolution, we get 2000000/10 = 21bits of precision
+#define REPORT_PERIOD   500100000   //1001ms How often we print the rates to the screen for debug. Chosen to not clash with above
 #define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
                                     //Using 12 gives us 20 bits of integer - up to 1.048MHz SR before overflow
 //Below is the multiplier is used to work out SR in 20.12 representation. There is enough headroom in a long long calc
