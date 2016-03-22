@@ -50,6 +50,7 @@ out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
 port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;     //I2C for CODEC configuration
 
 port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
+char pin_map_audio_cfg[5]                = {0, 1, 5, 6, 7};
 /* Bit map for XS1_PORT_8C
  * 0 DSD_MODE
  * 1 DAC_RST_N
@@ -62,7 +63,7 @@ port port_audio_config                   = on tile[AUDIO_TILE]: XS1_PORT_8C;
  */
 
 port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4D;     //Buttons and switch
-char pin_map[1]                          = {0};                                  //Port map for buttons GPIO task. We are just interested in bit 0
+char pin_map_buttons[1]                  = {0};                                  //Port map for buttons GPIO task. We are just interested in bit 0
 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;     //SPDIF COAX TX. A good test point to probe..
@@ -84,7 +85,7 @@ int main(void){
     fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES];
     interface audio_codec_config_if i_codec;
     interface i2c_master_if i_i2c[1];
-    interface output_gpio_if i_gpio[8];    //See mapping of bits 0..7 above in port_audio_config
+    interface output_gpio_if i_gpio[5];    //See mapping of bits 0..7 above in port_audio_config
     interface i2s_callback_if i_i2s;
     led_matrix_if i_leds;
     buttons_if i_buttons;
@@ -97,21 +98,18 @@ int main(void){
             rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
             spdif_handler(c_spdif_rx, i_serial_in);
             button_listener(i_buttons, i_button_gpio[0]);
-            input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map);
+            input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map_buttons);
         }
 
         on tile[AUDIO_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
         on tile[AUDIO_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
         on tile[AUDIO_TILE]: unsafe { par{[[distribute]] block2serial(i_block2serial, i_serial_out, i_sr_output);}}
 
-        on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[6], i_gpio[7]);
+        on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[3], i_gpio[4]);
         on tile[AUDIO_TILE]: i2c_master_single_port(i_i2c, 1, port_i2c, 10, 0 /*SCL*/, 1 /*SDA*/, 0);
-        on tile[AUDIO_TILE]: output_gpio(i_gpio, 8, port_audio_config, null);
+        on tile[AUDIO_TILE]: output_gpio(i_gpio, sizeof(pin_map_audio_cfg), port_audio_config, pin_map_audio_cfg);
         on tile[AUDIO_TILE]: {
-            i_gpio[5].output(0); //Select fixed local clock on MCLK mux
-            i_gpio[2].output(0); //Output something to this interface (value is don't care) to avoid compiler warning of unused end
-            i_gpio[3].output(0); //As above
-            i_gpio[4].output(0); //As above
+            i_gpio[2].output(0);                          //Select fixed local clock on MCLK mux
             configure_clock_src(clk_mclk, port_i2s_mclk); //Connect MCLK clock block to input pin
             start_clock(clk_mclk);
             debug_printf("Starting I2S\n");
