@@ -202,7 +202,6 @@ unsafe{
         unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
         unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
-        timer t_do_dsp;                             //Used to trigger do_dsp event
 
         while(1){
             select{
@@ -220,7 +219,7 @@ unsafe{
                     nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
                 break;
 
-                case do_dsp_flag => t_do_dsp :> void:      //Do the sample rate conversion
+                do_dsp_flag => default:      //Do the sample rate conversion
                     //port_debug <: 1;                     //debug
                     unsigned n_samps_out;
                     fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
@@ -228,7 +227,6 @@ unsafe{
                     //Run the ASRC and pass pointer of output to block2serial
                     n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
                     p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
-
 
                     do_dsp_flag = 0;                        //Clear flag and wait for next input block
                     //port_debug <: 0;                     //debug
@@ -238,7 +236,7 @@ unsafe{
     }//asrc
 } //unsafe
 
-#define MUTE_MS_AFTER_SR_CHANGE   250    //250ms. Avoids incorrect rate playing momentarily while new rate is detected
+#define MUTE_MS_AFTER_SR_CHANGE   350    //350ms. Avoids incorrect rate playing momentarily while new rate is detected
 
 //Shim task to handle setup and streaming of I2S samples from block2serial to the I2S module
 [[distributable]]
@@ -261,6 +259,7 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
                 debug_printf("Initializing I2S to %dHz and MCLK to %dHz\n", sample_rate, mclk_rate);
                 restart_status = I2S_NO_RESTART;
                 mute_counter = (sample_rate * MUTE_MS_AFTER_SR_CHANGE) / 1000; //Initialise to a number of milliseconds
+                debug_printf("%d\n",mute_counter);
             break;
 
             //Start of I2S frame
@@ -274,15 +273,12 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
 
             //Send samples to DAC
             case i2s.send(size_t index) -> int32_t sample:
+                sample = i_serial_out.pull(index);
                 if (mute_counter){
                     sample = 0;
                     mute_counter --;
                 }
-                else{
-                    sample = i_serial_out.pull(index);
-                }
             break;
-
 
             //Cycle through sample rates of I2S on button press
             case i_buttons.pressed():
@@ -302,7 +298,6 @@ void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_se
                 }
                 restart_status = I2S_RESTART;
             break;
-
         }
     }
 }
