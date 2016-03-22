@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef BLOCK_SERIAL_H_
 #define BLOCK_SERIAL_H_
 

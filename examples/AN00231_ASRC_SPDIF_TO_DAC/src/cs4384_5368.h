@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef AUDIO_CODEC_H_
 #define AUDIO_CODEC_H_
 #include <xs1.h>

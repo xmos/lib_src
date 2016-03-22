@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include <xassert.h>
 #include <timer.h>
 #include <debug_print.h>

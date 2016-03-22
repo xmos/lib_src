@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef APP_CONFIG_H_
 #define APP_CONFIG_H_
 
