@@ -440,8 +440,6 @@ ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl)
 //					ASRC_ERROR on failure								//
 // Description:		Processes F1 and F2 for a channel					//
 // ==================================================================== //
-#pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
-
 ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
 {
 
