@@ -105,7 +105,7 @@ Firstly, the ``interfaces`` and ``channels`` are declared. In xC interfaces and 
    :start-on: serial_transfer_push_if i_serial_in;
    :end-on: streaming chan c_spdif_rx;
 
-A single channel is used which is required by the lib_spdif component which uses a streaming channel for performance reasons as it provides a short FIFO allowing outputs within that component to be decoupled. 
+A single channel is used which is required by the ``lib_spdif`` component. This component uses a streaming channel for performance reasons as it provides a short FIFO allowing outputs within that component to be decoupled. 
 
 A version of the task diagram, annotated with the communication roles (Client or Server) is shown below.
 
@@ -129,7 +129,7 @@ This code starts all of the tasks in parallel. Note that each task has an ``on t
 
 
 .. tip::
-   The ``rate_server()``, ``spdif_handler()``, ``button_listener()`` and ``input_gpio_with_events()`` tasks are instantiated from their own ``par{}`` statement. This allows them to be started with the common attributes ``combine`` and ``ordered``. ``Combine`` instructs the compiler to flatten the tasks into a single large task and ``ordered`` allows the select cases in the combined task to be have priority. In this case, we need to prioritize ``spdif_handler()`` and preserve the client -> server communication flow within the signal chain.
+   The ``rate_server()``, ``spdif_handler()``, ``button_listener()`` and ``input_gpio_with_events()`` tasks are instantiated from their own ``par{}`` statement. This allows them to be started with the common attributes ``combine`` and ``ordered``. ``Combine`` instructs the compiler to flatten the tasks into a single large task and ``ordered`` allows the select cases in the combined task to fire in a given order. In this case, we need to prioritize ``spdif_handler()`` to preserve the client -> server communication flow within the signal chain and avoid deadlock.
 
 .. tip::
    The ``asrc()`` task is preceded by a for-loop like construct ``par(int i=0; i<ASRC_N_INSTANCES; i++)``. This construct is called a parallel replicator and instantiates ``ASRC_N_INSTANCES`` instances of the ``asrc()`` task. The index within the replicator allows the interface array passed to the task to be indexed appropriately.
@@ -189,7 +189,7 @@ Serial to Block
 The ASRC processing receives blocks of samples whereas the SPDIF receive component provides left/right samples one at a time. This means we need a task that fills a block buffer up with samples until it is full, whereupon it passes the entire block to the ASRC tasks. The ``serial2block()`` task receives streaming samples on the server side of the ``i_serial_in`` interface and pushes out block of samples on the ``i_block_transfer`` client side interface. Because there are multiple ASRC tasks, ``i_block_transfer`` is an array of interfaces, where the left and right samples are separated out into individual paths.
 
 .. literalinclude:: block_serial.xc
-   :start-after: pragma unsafe arrays   //Performance optimization for serial2block. Removes bounds check
+   :start-after: pragma unsafe arrays   //Performance optimisation for serial2block. Removes bounds check
    :end-on: void serial2block(server serial_transfer_push_if i_serial_in, client block_transfer_if i_block_transfer[ASRC_N_INSTANCES], server sample_rate_enquiry_if i_input_rate)
 
 
@@ -201,7 +201,7 @@ Because the input block size to the ASRC is fixed on initialization and the rate
    Use of Buffers within the Application
 
 
-The Serial to Block task has one additional function which is to timestamp the samples it receives on the serial input interface. When queried over the ``i_sr_input`` server side interface, it returns the number of samples and elapsed time. Using a 10ns timer and a query rate of 100ms, it allows a theoretical rate measurement accuracy of 0.1PPM.
+The Serial to Block task has one additional function which is to timestamp the samples it receives on the serial input interface. When queried over the ``i_sr_input`` server side interface, it returns the number of samples and elapsed time. Using a 10ns timer and a query rate of 20ms, for example, it allows a theoretical rate measurement accuracy of 0.5PPM.
 
 The Serial to Block function is designed to be generic so that it can be used with a range of audio sources. Only the ``SPDIF Handler`` task need be customized when adapting this demonstration for use with other audio sources.
 
@@ -225,7 +225,7 @@ The FIFO also helps buffer any small errors in rate difference when either the s
 
 To enable the use of C-style pointers (without bounds checking to improve performance and to enable compatibility with C-code), unsafe pointers have been used. This requires that the entire scope of this block is declared unsafe to indicate to the reader that memory safety is maintained by the code's functionality rather than the compiler.
 
-.. tip::
+.. caution::
    The ``serial2block()``, ``asrc()`` and ``block2serial()`` tasks must reside on the same tile because they use a shared memory interface to provide the highest performance.
 
 Rate Server
@@ -267,7 +267,7 @@ These tasks handle calling the core ASRC algorithm functions. There is one task 
 
 There are three interface connections to each of the tasks. Indication of samples is provided by a push method call into the ASRC task over the ``i_serial2block`` interface, which also returns a pointer to the producer for the next buffer to write to. This triggers calling of the asrc_process() function which, on completion, writes the output sample block to the FIFO and notifies downstream using the client side ``i_block2serial`` interface. Included within each of these interface calls is a parameter indicating the number of samples within the block, although this is only used on the output side of the ASRC where this is a variable.
 
-The ASRC processing call is not actually made within the input sample push select case. The reason for this is that the task on the client side of the interface would block until completion of the case (i.e. break; is reached). To allow the ``serial2block`` client to continue unblocked after the sample block push, a flag is set which acts as a guard indicating that the ASRC processing event can be fired.
+The ASRC processing call is not actually made within the input sample push select case. The reason for this is that the task on the client side of the interface would block until completion of the case (i.e. break; is reached). To allow the ``serial2block`` client to continue unblocked after the sample block push, a flag is set which acts as a guard indicating that the ASRC processing event can be fired on the default case.
 
 An additional ``select`` ``case`` is included within the main select loop which is used to notify the ASRC task of a change in either the input or output sample rates. When this occurs a call to ``asrc_init()`` is made which initializes the ASRC and sets up the cascaded FIR filters to support the new required rate change.
 
@@ -299,6 +299,8 @@ A simple task that periodically reads and de-bounces the button inputs is includ
 
 The button listener task is a low performance task that is ideal to be combined with other tasks onto a single logical core.
 
+|newpage|
+
 Optimization
 ............
 
@@ -311,8 +313,6 @@ The below diagram shows the mapping to physical processing elements (logical cor
 
    Mapping of Tasks to Logical Cores in xCORE Processor
 
-
-|newpage|
 
 |appendix|
 
@@ -350,7 +350,7 @@ If you wish to view the reported values from the Rate Server task in the console
 
 Alternatively, the command line tools can be used to build and run the application.
 
-Building is done by changing to the folder containing the ``src`` sub-folder and doing a call to ``xmake``. Running the application is then done using ``xrun --xscope bin/AN00231_ASRC_SPDIF_TO_DAC.xe``.
+Building is done by changing to the folder containing the ``src`` sub-folder and doing a call to ``xmake``. Running the application is then done using the command: ``xrun --xscope bin/AN00231_ASRC_SPDIF_TO_DAC.xe``.
 
 The audio from the SPDIF input should now be playing on channels 1/2 of the DAC output.
 
