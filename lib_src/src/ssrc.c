@@ -341,8 +341,6 @@ SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl)
 //					SSRC_ERROR on failure								//
 // Description:		Processes the SSRC passed as argument				//
 // ==================================================================== //
-#pragma stackfunction 128  //Very large stack allocation (probably needs just a handful through F1_F2, ASM etc).
-
 SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl)		
 {
 	// Setup input / output buffers

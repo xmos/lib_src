@@ -196,7 +196,8 @@
 			unsigned int							uiNOutSamples;	// Number of output samples produced
 			unsigned int							uiOutStep;		// Step between output data samples
 
-			FIRReturnCodes_t 						(*pvProc)(int *);			// Processing function address
+__attribute__((fptrgroup("G1")))
+			FIRReturnCodes_t 						(*pvProc)(int *);// Processing function address
 
 			int*									piDelayB;		// Pointer to delay line base
 			unsigned int							uiDelayL;		// Total length of delay line
@@ -208,7 +209,6 @@
 			unsigned int							uiNCoefs;		// Number of coefficients
 			int*									piCoefs;		// Pointer to coefficients
 		} FIRCtrl_t;
-
 
 		// ADFIR Descriptor
 		// ----------------
