@@ -1,9 +1,9 @@
-XMOS Sample Rate Conversion Library
-===================================
+Sample Rate Conversion Library
+==============================
 
 .. rheader::
 
-   Sample Rate Converter |version|
+   Sample Rate Conversion Library |version|
 
 Overview
 --------
