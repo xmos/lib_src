@@ -341,7 +341,7 @@ SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl)
 //					SSRC_ERROR on failure								//
 // Description:		Processes the SSRC passed as argument				//
 // ==================================================================== //
-#if (XCC_VERSION_MAJOR < 1400 && XCC_VERSION_MINOR < 2) //Beyond 14.2.0 we have proper function pointer support for C
+#if (XCC_VERSION_MAJOR <= 1400 && XCC_VERSION_MINOR < 2) //Beyond 14.2.0 we have proper function pointer support for C
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
 SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl)		
