@@ -13,14 +13,15 @@ The XMOS Asynchronous Sample Rate Conversion (ASRC) library allows audio to be s
 - Allowing systems to receive and mix multiple digital audio streams
 - Removing the cost and hardware complexity of audio clock recovery using a PLL
 - Allowing systems to use the highest possible sample rate rather than the lowest common denominator
+- Addition of interfaces and processing to existing audio architctures
 
 In addition, the ASRC can perform major rate changes between the standard audio sample rates of 44.1, 48, 88.2, 96, 176.4 and 192KHz. 
 
-This application note demonstrates the use of the XMOS Sample Rate Conversion library in system that receives samples from an S/PDIF and outputs them to a DAC over I2S. The I2S subsystem uses a fixed frequency local master clock oscillator and the S/PDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces. 
+This application note demonstrates the use of the XMOS Sample Rate Conversion library in a system that receives samples from an S/PDIF and outputs them to a DAC over I2S. The I2S subsystem uses a fixed frequency local master clock oscillator and the S/PDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces. 
 
-The sample rates supported for this demonstration are 44.1, 48, 88.2 and 96KHz. This restriction is applied by the SPDIF receiver which is only rated up to 96KHz for optical sources and the ASRC library which can currently only handle rates of 176.4/192KHz on one side.
+The sample rates supported for this demonstration are 44.1, 48, 88.2 and 96KHz. This restriction is applied by the SPDIF receiver which is only rated up to 96KHz for optical sources and the ASRC library which can currently only handle rates of 176.4/192KHz on one side. The lower sample rates also allow significant resource optimization which is discussed later within this application note.
 
-Using the XMOS I2S and S/PDIF libraries this application note demonstrates practical usage of the ASRC library. This includes additional software functions to handle the serial to block conversion of the samples and a precise rate monitoring servo task required to calculate the fractional frequency ratio passed in the call to the ASRC processing function.
+Using the XMOS I2S and S/PDIF libraries this application note demonstrates practical usage of the ASRC library. The software includes additional functions to handle the serial to block conversion of the audio samples and a precise rate monitoring servo task which is required to calculate the fractional frequency ratios for the ASRC processing function.
 
 Required tools and libraries
 ............................
@@ -34,13 +35,14 @@ Required tools and libraries
  * XMOS Assertion library - Version 2.0.0
 
 
-
 Required hardware
 .................
+
 The example code provided with the application has been implemented and tested on the xCORE-200 Multichannel Audio Platform.
 
 Prerequisites
 ..............
+
  * This document assumes familiarity with I2S and SPDIF interfaces, the principals of ASRC and a basic understanding of the XMOS xCORE architecture, the XMOS tool chain and the xC language. Documentation related to these aspects which are not specific to this application note are linked to in the references appendix.
 
  * For a description of XMOS related terms found in this document please see the XMOS Glossary [#]_.

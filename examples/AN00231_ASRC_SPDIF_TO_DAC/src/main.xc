@@ -2,7 +2,6 @@
 #include <xs1.h>
 #include <platform.h>
 #include <string.h>
-#include <hwtimer.h>
 
 //Supporting libraries
 #include <src.h>
@@ -124,7 +123,7 @@ int main(void){
 
 //Shim task to handle setup and streaming of SPDIF samples from the streaming channel to the interface of serial2block
 [[combinable]]
-#pragma unsafe arrays   //Performance optimisation
+#pragma unsafe arrays   //Performance optimisation for SPDIF
 void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 {
     unsigned index;                             //Channel index
