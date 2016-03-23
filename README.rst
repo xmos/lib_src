@@ -69,7 +69,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
   The below table shows the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
 
 .. list-table:: SSRC Processor Usage per channel (MHz)
-     :header-rows: 2
+     :header-rows: 1
 
      * - 
        - Output sample rate
@@ -149,7 +149,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
   Typically you will need to allow for headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
-     :header-rows: 2
+     :header-rows: 1
 
      * - 
        - Output sample rate
@@ -211,7 +211,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. caution:: Configurations requiring more than 100MHz cannot currently be run in real time on a single core. The performance limit for a single core on a 500MHz xCORE-200 device is 100MHz (500/5). Further optimization of the library, including assembler optimization and pipelining of the adaptive filter generation and FIR filter stages, is feasible to achieve higher sample rate operation within the constraints of a 100MHz logical core.
 
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
-     :header-rows: 2
+     :header-rows: 1
 
      * - 
        - Output sample rate
