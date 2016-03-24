@@ -21,19 +21,19 @@ def do_ssrc_test_iteration(input_sr, output_sr, testlevel):
     file_name = file_name_builder()
     
     #print ('Running SSRC test iteration SR input = %d, output = %d' % (input_sr, output_sr))
-    test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine"), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation"))
-    golden_files = ("ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine"), "ssrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation"))
+    test_files = (os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "pure_sine")), os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "inter_modulation")))
+    golden_files = (os.path.join("ssrc_test","expected", file_name.golden_signal(input_sr, output_sr, "pure_sine")), os.path.join("ssrc_test", "expected", file_name.golden_signal(input_sr, output_sr, "inter_modulation")))
     tester = FileComparisonTester(test_files, golden_files, "lib_src", "ssrc_test", str(input_sr) + "->" + str(output_sr), {}, regexp = False, ignore=[])
     tester.set_min_testlevel(testlevel)
 
-    args = ["-i", "src_input/" + file_name.test_signal(input_sr, "pure_sine"), "src_input/" + file_name.test_signal(input_sr, "inter_modulation"), "-o", test_files[0], test_files[1]]
+    args = ["-i", os.path.join("src_input", file_name.test_signal(input_sr, "pure_sine")), os.path.join("src_input", file_name.test_signal(input_sr, "inter_modulation")), "-o", test_files[0], test_files[1]]
     args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
     
 
     appargs_ssrc = args
     #print("xsim cmd line = %s" % " ".join(appargs_ssrc))
     xmostest.run_on_simulator(resources["xsim"],
-                              "ssrc_test/bin/ssrc_test.xe",
+                              os.path.join("ssrc_test", "bin", "ssrc_test.xe"),
                               appargs=appargs_ssrc,
                               simargs=simargs_ssrc,
                               tester=tester)
