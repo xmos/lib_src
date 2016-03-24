@@ -9,17 +9,17 @@ def runtest():
 
     """Smoke test single loop"""
     do_ssrc_test_iteration(192000, 44100, "smoke")
-    
+
     """Nightly test nested for loop 6 x 6 = 36 tests"""
     for input_sr in supported_sr:
         for output_sr in supported_sr:
             do_ssrc_test_iteration(input_sr, output_sr, "nightly")
-                
+
 def do_ssrc_test_iteration(input_sr, output_sr, testlevel):
     simargs_ssrc = ""
     resources = xmostest.request_resource("xsim")
     file_name = file_name_builder()
-    
+
     #print ('Running SSRC test iteration SR input = %d, output = %d' % (input_sr, output_sr))
     test_files = (os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "pure_sine")), os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "inter_modulation")))
     golden_files = (os.path.join("ssrc_test","expected", file_name.golden_signal(input_sr, output_sr, "pure_sine")), os.path.join("ssrc_test", "expected", file_name.golden_signal(input_sr, output_sr, "inter_modulation")))
@@ -28,7 +28,7 @@ def do_ssrc_test_iteration(input_sr, output_sr, testlevel):
 
     args = ["-i", os.path.join("src_input", file_name.test_signal(input_sr, "pure_sine")), os.path.join("src_input", file_name.test_signal(input_sr, "inter_modulation")), "-o", test_files[0], test_files[1]]
     args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
-    
+
 
     appargs_ssrc = args
     #print("xsim cmd line = %s" % " ".join(appargs_ssrc))
@@ -44,7 +44,7 @@ def do_ssrc_test_iteration(input_sr, output_sr, testlevel):
 def check_file_count(test_files, golden_files):
     len_test_files = len(test_files)
     len_golden_files = len(golden_files)
-    
+
     if isinstance(test_files, str):
         len_test_files = 1
     if isinstance(golden_files, str):
@@ -58,7 +58,7 @@ def check_file_count(test_files, golden_files):
 class file_name_builder:
     """Helper to build the input/output/golden filenames from various input output sample rares"""
 
-    signal_types = {"pure_sine": "s1k_0db", "inter_modulation": "im10k11k_m6dB"}
+    signal_types = {"pure_sine": "s1k_0dB", "inter_modulation": "im10k11k_m6dB"}
     file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
 
     def test_signal(self, input_sr, signal_type):
@@ -79,7 +79,7 @@ class FileComparisonTester(xmostest.Tester):
         This tester will compare two files and pass a test if
         the output matches
         """
-    
+
     def __init__(self, input, golden, product, group, test, config = {}, env = {},
                  regexp = False, ignore=[]):
         super(FileComparisonTester, self).__init__()
@@ -89,7 +89,7 @@ class FileComparisonTester(xmostest.Tester):
         self._test = (product, group, test, config, env)
         self._regexp = regexp
         self._ignore = ignore
-    
+
     def record_failure(self, failure_reason):
         # Append a newline if there isn't one already
         if not failure_reason.endswith('\n'):
@@ -97,7 +97,7 @@ class FileComparisonTester(xmostest.Tester):
         self.failures.append(failure_reason)
         print ("ERROR: %s" % failure_reason), # Print without newline
         self.result = False
-    
+
     def run(self, output):
         input_files = self._input
         index = 0
@@ -105,7 +105,7 @@ class FileComparisonTester(xmostest.Tester):
             print("Tester opening input file %s" % input_file_name)
             input_file = open(input_file_name, "r")
             test_result = [x.strip() for x in input_file.readlines()]
-            
+
             (product, group, test, config, env) = self._test
             regexp = self._regexp
 
@@ -113,12 +113,12 @@ class FileComparisonTester(xmostest.Tester):
             print("Tester opening golden file %s" % golden_file_name)
             golden = open(golden_file_name, "r")
             expected = [x.strip() for x in golden.readlines()]
-            
+
             if expected[0].strip()=='':
                 expected = expected[1:]
             if expected[-1].strip()=='':
                 expected = expected[:-1]
-            
+
             self.result = True
             self.failures = []
             line_num = -1
@@ -131,17 +131,17 @@ class FileComparisonTester(xmostest.Tester):
                 if ignore:
                     continue
                 line_num += 1
-                
+
                 #print("line_num=%d, result=%s, line=%s" % (line_num, self.result, test_result[i].strip()))
                 if line_num >= len(expected):
                     self.record_failure("Length of expected test result less than expected file")
                     break
-                
+
                 if regexp:
                     match = re.match(expected[line_num]+"$", test_result[i].strip())
                 else:
                     match = expected[line_num] == test_result[i].strip()
-                
+
                 if not match:
                     self.record_failure(("Line %d of test result does not match expected file\n"+
                                          "  Expected     : %s\n"+
@@ -149,7 +149,7 @@ class FileComparisonTester(xmostest.Tester):
                                         % (line_num,
                                            expected[line_num].strip(),
                                            test_result[i].strip()))
-        
+
             if (len(expected) > line_num + 1):
                 self.record_failure("Length of expected file greater than test result")
                 test_result = {'test_result':''.join(test_result)}
