@@ -58,7 +58,7 @@ def check_file_count(test_files, golden_files):
 class file_name_builder:
     """Helper to build the input/output/golden filenames from various input output sample rares"""
 
-    signal_types = {"pure_sine": "s1k_0db", "inter_modulation": "im10k11k_m6dB"}
+    signal_types = {"pure_sine": "s1k_0dB", "inter_modulation": "im10k11k_m6dB"}
     file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
 
     def test_signal(self, input_sr, signal_type):
