@@ -30,14 +30,14 @@ def do_asrc_test_iteration(frequency_deviation, input_sr, output_sr, testlevel):
     test_files = (os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "pure_sine", frequency_deviation)), os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "inter_modulation", frequency_deviation)))
 
     golden_files = (os.path.join("asrc_test", "expected", file_name.golden_signal(input_sr, output_sr, "pure_sine", frequency_deviation)), os.path.join("asrc_test", "expected", file_name.golden_signal(input_sr, output_sr, "inter_modulation", frequency_deviation)))
-                
+
     tester = FileComparisonTester(test_files, golden_files, "lib_src", "asrc_test", str(input_sr) + "->" + str(output_sr) + "->" + frequency_deviation, {}, regexp = False, ignore=[])
     tester.set_min_testlevel(testlevel)
-            
+
     args = ["-i", os.path.join("src_input",file_name.test_signal(input_sr, "pure_sine")), os.path.join("src_input", file_name.test_signal(input_sr, "inter_modulation")), "-o", test_files[0], test_files[1]]
     args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
     args += ["-e", frequency_deviation]
-                    
+
     appargs_asrc = args
     #print("xsim cmd line = %s" % " ".join(appargs_asrc))
     xmostest.run_on_simulator(resources["xsim"],
@@ -52,7 +52,7 @@ def do_asrc_test_iteration(frequency_deviation, input_sr, output_sr, testlevel):
 def check_file_count(test_files, golden_files):
     len_test_files = len(test_files)
     len_golden_files = len(golden_files)
-    
+
     if isinstance(test_files, str):
         len_test_files = 1
     if isinstance(golden_files, str):
@@ -87,7 +87,7 @@ class FileComparisonTester(xmostest.Tester):
         This tester will compare two files and pass a test if
         the output matches
         """
-    
+
     def __init__(self, input, golden, product, group, test, config = {}, env = {},
                  regexp = False, ignore=[]):
         super(FileComparisonTester, self).__init__()
@@ -97,7 +97,7 @@ class FileComparisonTester(xmostest.Tester):
         self._test = (product, group, test, config, env)
         self._regexp = regexp
         self._ignore = ignore
-    
+
     def record_failure(self, failure_reason):
         # Append a newline if there isn't one already
         if not failure_reason.endswith('\n'):
@@ -105,7 +105,7 @@ class FileComparisonTester(xmostest.Tester):
         self.failures.append(failure_reason)
         print ("ERROR: %s" % failure_reason), # Print without newline
         self.result = False
-    
+
     def run(self, output):
         input_files = self._input
         index = 0
@@ -113,7 +113,7 @@ class FileComparisonTester(xmostest.Tester):
             print("Tester opening input file %s" % input_file_name)
             input_file = open(input_file_name, "r")
             test_result = [x.strip() for x in input_file.readlines()]
-            
+
             (product, group, test, config, env) = self._test
             regexp = self._regexp
 
@@ -121,12 +121,12 @@ class FileComparisonTester(xmostest.Tester):
             print("Tester opening golden file %s" % golden_file_name)
             golden = open(golden_file_name, "r")
             expected = [x.strip() for x in golden.readlines()]
-            
+
             if expected[0].strip()=='':
                 expected = expected[1:]
             if expected[-1].strip()=='':
                 expected = expected[:-1]
-            
+
             self.result = True
             self.failures = []
             line_num = -1
@@ -139,17 +139,17 @@ class FileComparisonTester(xmostest.Tester):
                 if ignore:
                     continue
                 line_num += 1
-                
+
                 #print("line_num=%d, result=%s, line=%s" % (line_num, self.result, test_result[i].strip()))
                 if line_num >= len(expected):
                     self.record_failure("Length of expected test result less than expected file")
                     break
-                
+
                 if regexp:
                     match = re.match(expected[line_num]+"$", test_result[i].strip())
                 else:
                     match = expected[line_num] == test_result[i].strip()
-                
+
                 if not match:
                     self.record_failure(("Line %d of test result does not match expected file\n"+
                                          "  Expected     : %s\n"+
@@ -157,7 +157,7 @@ class FileComparisonTester(xmostest.Tester):
                                         % (line_num,
                                            expected[line_num].strip(),
                                            test_result[i].strip()))
-        
+
             if (len(expected) > line_num + 1):
                 self.record_failure("Length of expected file greater than test result")
                 test_result = {'test_result':''.join(test_result)}
