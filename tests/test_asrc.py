@@ -8,6 +8,9 @@ def runtest():
     if not os.path.exists("src_output"):
         os.makedirs("src_output")
 
+    curr_dir = os.path.dirname(os.path.realpath(__file__))
+    print ("Current directory = %s" % curr_dir)
+
     """Smoke test single loop"""
     do_asrc_test_iteration(FsRatio_deviations[0], 192000, 44100, "smoke")
 
@@ -24,21 +27,21 @@ def do_asrc_test_iteration(frequency_deviation, input_sr, output_sr, testlevel):
     simargs_asrc = ""
 
     #print ('Running ASRC test iteration Deviation = %f SR input = %d, output = %d' % (float(frequency_deviation), input_sr, output_sr))
-    test_files = ("./src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine", frequency_deviation), "./src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation", frequency_deviation))
+    test_files = ("src_output/" + file_name.output_signal(input_sr, output_sr, "pure_sine", frequency_deviation), "src_output/" + file_name.output_signal(input_sr, output_sr, "inter_modulation", frequency_deviation))
             
-    golden_files = ("./asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine", frequency_deviation), "./asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation", frequency_deviation))
+    golden_files = ("asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "pure_sine", frequency_deviation), "asrc_test/expected/" + file_name.golden_signal(input_sr, output_sr, "inter_modulation", frequency_deviation))
                 
     tester = FileComparisonTester(test_files, golden_files, "lib_src", "asrc_test", str(input_sr) + "->" + str(output_sr) + "_" + frequency_deviation, {}, regexp = False, ignore=[])
     tester.set_min_testlevel(testlevel)
             
-    args = ["-i", "./src_input/" + file_name.test_signal(input_sr, "pure_sine"), "./src_input/" + file_name.test_signal(input_sr, "inter_modulation"), "-o", test_files[0], test_files[1]]
+    args = ["-i", "src_input/" + file_name.test_signal(input_sr, "pure_sine"), "src_input/" + file_name.test_signal(input_sr, "inter_modulation"), "-o", test_files[0], test_files[1]]
     args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
     args += ["-e", frequency_deviation]
                     
     appargs_asrc = args
     #print("xsim cmd line = %s" % " ".join(appargs_asrc))
     xmostest.run_on_simulator(resources["xsim"],
-                                              "./asrc_test/bin/asrc_test.xe",
+                                              "asrc_test/bin/asrc_test.xe",
                                               appargs=appargs_asrc,
                                               simargs=simargs_asrc,
                                               tester=tester)
