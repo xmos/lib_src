@@ -69,7 +69,7 @@ char pin_map_buttons[1]                  = {0};                                 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;     //SPDIF COAX TX. A good test point to probe..
 
-
+//Application helper prototypes. For purpose, see comments in implementations below
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
