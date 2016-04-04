@@ -329,7 +329,7 @@ static sample_rate_status_t detect_frequency(unsigned sample_rate, unsigned &nom
 
 
 #define SR_CALC_PERIOD  2000000     //20ms The period over which we count samples to find the rate
-                                    //Because we timestamp at 10ns resolution, we get 2000000/10 = 21bits of precision
+                                    //Because we timestamp at 10ns resolution, we get 20000000/10 = 21bits of precision
 #define REPORT_PERIOD   500100000   //5.001s. How often we print the rates to the screen for debug. Chosen to not clash with above
 #define SR_FRAC_BITS    12          //Number of fractional bits used to store sample rate
                                     //Using 12 gives us 20 bits of integer - up to 1.048MHz SR before overflow
