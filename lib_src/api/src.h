@@ -29,7 +29,7 @@ typedef enum fs_code_t {
 void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t sSSRCCtrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const unsigned dither_on_off);
 
-   /** Perform synchronous sample rate conversion processing on block of input samples.
+   /** Perform synchronous sample rate conversion processing on block of input samples using previously initialized settings.
    * 
    *  \param   in_buff          Reference to input sample buffer array
    *  \param   out_buff         Reference to output sample buffer array
@@ -51,7 +51,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t sSSRCCtrl[]);
 unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const unsigned dither_on_off);
 
-   /** Perform asynchronous sample rate conversion processing on block of input samples.
+   /** Perform asynchronous sample rate conversion processing on block of input samples using previously initialized settings.
    * 
    *  \param   in_buff          Reference to input sample buffer array
    *  \param   out_buff         Reference to output sample buffer array

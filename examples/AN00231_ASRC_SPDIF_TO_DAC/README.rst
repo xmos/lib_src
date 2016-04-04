@@ -8,7 +8,7 @@ SPDIF Receive to I2S output using Asynchronous Sample Rate Conversion
 Summary
 -------
 
-The XMOS Asynchronous Sample Rate Conversion (ASRC) library allows audio to be streamed between systems running from with asynchronous while maintaining "Hi-Res" audio quality. Practical examples where ASRC can provide significant benefits include:
+The XMOS Asynchronous Sample Rate Conversion (ASRC) library allows audio to be streamed between systems running with asynchronous sample rates while maintaining "Hi-Res" audio quality. Practical examples where ASRC can provide significant benefits include:
 
 - Allowing systems to receive and mix multiple digital audio streams
 - Removing the cost and hardware complexity of audio clock recovery using a PLL
@@ -17,7 +17,7 @@ The XMOS Asynchronous Sample Rate Conversion (ASRC) library allows audio to be s
 
 In addition, the ASRC can perform major rate changes between the standard audio sample rates of 44.1, 48, 88.2, 96, 176.4 and 192KHz. 
 
-This application note demonstrates the use of the XMOS Sample Rate Conversion library in a system that receives samples from an S/PDIF and outputs them to a DAC over I2S. The I2S subsystem uses a fixed frequency local master clock oscillator and the S/PDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces. 
+This application note demonstrates the use of the XMOS Sample Rate Conversion library in a system that receives samples from an S/PDIF input and outputs them to a DAC over I2S. The I2S subsystem uses a fixed frequency local master clock oscillator and the S/PDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces. 
 
 The sample rates supported for this demonstration are 44.1, 48, 88.2 and 96KHz. This restriction is applied by the SPDIF receiver which is only rated up to 96KHz for optical sources and the ASRC library which can currently only handle rates of 176.4/192KHz on one side. The restricted sample rates also allow significant chip resource usage optimization which is discussed later within this application note.
 
@@ -43,7 +43,7 @@ The example code provided with the application has been implemented and tested o
 Prerequisites
 ..............
 
- * This document assumes familiarity with I2S and SPDIF interfaces, the principals of ASRC and a basic understanding of the XMOS xCORE architecture, the XMOS tool chain and the xC language. Documentation related to these aspects which are not specific to this application note are linked to in the references appendix.
+ * This document assumes familiarity with I2S and SPDIF interfaces, the principles of ASRC and a basic understanding of the XMOS xCORE architecture, the XMOS tool chain and the xC language. Documentation related to these aspects which are not specific to this application note are linked to in the references appendix.
 
  * For a description of XMOS related terms found in this document please see the XMOS Glossary [#]_.
 

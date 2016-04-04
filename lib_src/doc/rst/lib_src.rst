@@ -3,7 +3,7 @@
 Usage
 -----
 
-Both SSRC and ASRC functions are accessed via a standard function call, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By using mulitple cores it is possible to support multi-core operation, where multiple channels can be processed by more than one logical core concurrently.
+Both SSRC and ASRC functions are accessed via a standard function calls, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By using mulitple cores it is possible to support multi-core operation, where multiple channels can be processed by more than one logical core concurrently.
 
 The API is designed to be as simple and intuitive with just two public functions per sample rate converter type.
 
@@ -54,7 +54,7 @@ For the ASRC, the state structures must be declared. Note that only one instance
 Processing
 ..........
 
-Following initialization, the processing API is call for each block of input samples. The logic is designed so that the final filtering stage always receives a sample to process. The sample rate converters have been designed to handle a maximum decimation of factor from the first two stages of four. This architecture requires a minimum input block size of 4 to operate.
+Following initialization, the processing API is called for each block of input samples. The logic is designed so that the final filtering stage always receives a sample to process. The sample rate converters have been designed to handle a maximum decimation of factor four from the first two stages. This architecture requires a minimum input block size of 4 to operate.
 
 .. figure:: images/src_proc.pdf
    :width: 100%
@@ -77,14 +77,14 @@ For example, a sample rate conversion from 44.1KHz to 48KHz with a input block s
 
 Each SRC processing call returns the integer number of samples produced during the sample rate conversion.
 
-The SSRC is synchronous in nature and assumes that the long term average ratio between input and output rates can be expressed as a rational number. For example, to convert from 44.1KHz to 48KHz, it is assumed that the word clocks of the input and output stream are derived from the same master clock and have an exact ratio of 147:160.
+The SSRC is synchronous in nature and assumes that the ratio is equal to the nominal sample rate ratio. For example, to convert from 44.1KHz to 48KHz, it is assumed that the word clocks of the input and output stream are derived from the same master clock and have an exact ratio of 147:160.
 
 If the word clocks are derived from separate oscillators, or are not synchronous (for example are derived from each other using a fractional PLL), the the ASRC must be used.
 
 Buffer Formats
 ..............
 
-The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``.
+The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``. The ordering of sample indicies is 0 representing the oldest number and ``n - 1``, where n is the buffer size, representing the newest sample.
 
 In the case where two channels are handled by a single SRC instance, you can see that the samples are interleaved into a single buffer of size 8.
 
@@ -124,7 +124,7 @@ SSRC Performance
 
 The performance of the SSRC library is as follows:
 
- * THD+N (1kHz, 0dBFs): less than 0.0001% (better than -130dB)
+ * THD+N (1kHz, 0dBFs): better than -130dB, depending on the accuracy of the ratio estimation
  * SNR:   140dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
 The performance was analyzed by converting output test files to 32 bits integer .wav files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
@@ -152,7 +152,7 @@ ASRC Performance
 
 The performance of the SSRC library is as follows:
 
- * THD+N: (1kHz, 0dBFs): less than 0.0001% (actually better than -130dB)
+ * THD+N: (1kHz, 0dBFs): better than -130dB 
  * SNR:   135dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
 The performance was analyzed by converting output test files to 32 bits integer .wav files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
@@ -180,12 +180,12 @@ Below are a series FFT plots showing the most demanding rate conversion case. Th
 SRC Implementation
 ------------------
 
-The SSRC and ASRC implementations are closely related to each other and share the majority of the system building blocks. The key difference between them is that SSRC uses fixed polyphase 160:147 and 147:160 final rate change filters whereas the ASRC uses an adaptive polyphase filter. The ASRC adaptive polyphase coefficients are computed for every sample using the second order spline based interpolation.
+The SSRC and ASRC implementations are closely related to each other and share the majority of the system building blocks. The key difference between them is that SSRC uses fixed polyphase 160:147 and 147:160 final rate change filters whereas the ASRC uses an adaptive polyphase filter. The ASRC adaptive polyphase coefficients are computed for every sample using second order spline based interpolation.
 
 SRC Nominal Rate Changes
 ........................
 
-The nominal rate change ratios between 44.1KHz and 192KHz are supported are shown in the below table.
+The nominal rate change ratios between 44.1KHz and 192KHz are shown in the below table.
 
 .. list-table:: Rate Changes for Sample Rate Conversion
      :header-rows: 2
@@ -249,7 +249,7 @@ The nominal rate change ratios between 44.1KHz and 192KHz are supported are show
 
 
 .. tip::
-  The table shows the case for SSRC where the ratios are exactly related. In the case of ASRC, where the ratios cannot be expressed rationally, these are the nominal ratios from which there will usually be a rate deviaton. 
+  The table shows the case for SSRC where the ratios are equal to the nominal sample rate ratio. In the case of ASRC, where the ratios cannot be expressed rationally, these are the nominal ratios from which there will usually be a rate deviaton. 
 
 
 SSRC Structure
@@ -262,7 +262,7 @@ The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3).
 
    SSRC Algorithm Structure
 
-The SSRC algorithm for the is implemented as a two stage structure:
+The SSRC algorithm is implemented as a two stage structure:
 
  * The Bandwidth control stage which includes filters F1 and F2 is responsible for limiting the bandwidth of the input signal and for providing integer rate Sample Rate Conversion. It is also used for signal conditioning in the case of rational, non-integer, Sample Rate Conversion.
  * The polyphase filter stage which effectively converts between the 44.1kHz and the 48kHz families of sample rates.
@@ -279,7 +279,7 @@ Similar to the SSRC, the ASRC algorithm is based three cascaded FIR filters (F1,
 
    ASRC Algorithm Structure
 
-The ASRC algorithm for is implemented as a two stage structure:
+The ASRC algorithm is implemented as a two stage structure:
 
  * The Bandwidth control stage includes filters F1 and F2 which are responsible for limiting the bandwidth of the input signal (to min(Fsin/2,Fsout/2) and for providing integer rate sample rate conversion to condition the input signal for the adaptive polyphase stage (F3). 
  * The polyphase filter stage consists of the adaptive polyphase filter F3, which effectively provides the asynchronous connection between the input and output clock domains.
