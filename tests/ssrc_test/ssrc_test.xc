@@ -18,7 +18,7 @@
 #define     SSRC_N_IN_SAMPLES                4  //Number of samples per channel in each block passed into SRC each call
                                                 //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
 #define     SSRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
-#define     SSRC_DITHER_SETTING              0  //Enables or disables quantisation of output with dithering to 24b
+#define     SSRC_DITHER_SETTING              OFF//Enables or disables quantisation of output with dithering to 24b
 
 #include "ssrc_checks.h"                        //Do some checking on the defines above
 
@@ -35,16 +35,16 @@ int uiOutFs = -1;
 
 void dsp_slave(chanend c_dsp)
 {
-    SSRCState_t     sSSRCState[SSRC_CHANNELS_PER_INSTANCE];                  //State of SSRC module
-    int             iSSRCStack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];  //Buffers between processing stages
-    SSRCCtrl_t      sSSRCCtrl[SSRC_CHANNELS_PER_INSTANCE];                   //SSRC Control structure
+    ssrc_state_t     ssrc_state[SSRC_CHANNELS_PER_INSTANCE];                  //State of SSRC module
+    int              ssrc_stack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];  //Buffers between processing stages
+    ssrc_ctrl_t      ssrc_ctrl[SSRC_CHANNELS_PER_INSTANCE];                   //SSRC Control structure
 
     // Set state, stack and coefs into ctrl structures
     for(int ui = 0; ui < SSRC_CHANNELS_PER_INSTANCE; ui++)
     {
         unsafe{
-            sSSRCCtrl[ui].psState                   = &sSSRCState[ui];
-            sSSRCCtrl[ui].piStack                   = iSSRCStack[ui];
+            ssrc_ctrl[ui].psState                   = &ssrc_state[ui];
+            ssrc_ctrl[ui].piStack                   = ssrc_stack[ui];
         }
     }
 
@@ -99,14 +99,14 @@ void dsp_slave(chanend c_dsp)
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
             unsafe{
-                ssrc_init(InFs, OutFs, sSSRCCtrl, SSRC_CHANNELS_PER_INSTANCE, SSRC_N_IN_SAMPLES, SSRC_DITHER_SETTING);
+                ssrc_init(InFs, OutFs, ssrc_ctrl, SSRC_CHANNELS_PER_INSTANCE, SSRC_N_IN_SAMPLES, SSRC_DITHER_SETTING);
             }
             sr_in_out = sr_in_out_new;
             printf("SSRC sample rate in=%d, out=%d\n", sample_rates[InFs], sample_rates[OutFs]);
         }
         t:> t1; //Grab time at start of processing
         unsafe {
-            n_samps_out = ssrc_process(in_buff, out_buff, sSSRCCtrl);
+            n_samps_out = ssrc_process(in_buff, out_buff, ssrc_ctrl);
         }
     }
 }

@@ -184,21 +184,21 @@ unsafe{
         fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
         fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
 
-        ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-        int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
-        ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
+        asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+        int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+        asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
         iASRCADFIRCoefs_t SiASRCADFIRCoefs;                     //Adaptive filter coefficients
 
         for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
         unsafe {
             //Set state, stack and coefs into ctrl structure
-            sASRCCtrl[ui].psState                   = &sASRCState[ui];
-            sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-            sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
+            asrc_ctrl[ui].psState                   = &asrc_state[ui];
+            asrc_ctrl[ui].piStack                   = asrc_stack[ui];
+            asrc_ctrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
         }
 
         //Initialise ASRC
-        unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+        unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
         unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
 
@@ -215,7 +215,7 @@ unsafe{
                     in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
                     out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
                     debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
-                    nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+                    nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
                 break;
 
                 do_dsp_flag => default:      //Do the sample rate conversion
@@ -224,7 +224,7 @@ unsafe{
                     fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
 
                     //Run the ASRC and pass pointer of output to block2serial
-                    n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, sASRCCtrl);
+                    n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, asrc_ctrl);
                     p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
 
                     do_dsp_flag = 0;                        //Clear flag and wait for next input block

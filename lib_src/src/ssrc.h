@@ -110,7 +110,7 @@
 			int										iDelayPPFIR[2 * FILTER_DEFS_PPFIR_PHASE_MAX_TAPS];		// Doubled length for circular buffer simulation
             unsigned int                            uiRndSeed;                                              // Dither random seeds current values
 
-		} SSRCState_t;
+		} ssrc_state_t;
 	
 
 		// SSRC Control structure
@@ -135,7 +135,7 @@
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
-			SSRCState_t* unsafe						psState;							// Pointer to state structure
+			ssrc_state_t* unsafe						psState;							// Pointer to state structure
 			int* unsafe								piStack;							// Pointer to stack buffer
 #else
             unsigned int                            uiNchannels;                        // Number of channels in this instance
@@ -156,10 +156,10 @@
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
-			SSRCState_t*  						    psState;							// Pointer to state structure
+			ssrc_state_t*  						    psState;							// Pointer to state structure
 			int*    								piStack;							// Pointer to stack buffer
 #endif
-		} SSRCCtrl_t;
+		} ssrc_ctrl_t;
 
 
 		// ===========================================================================
@@ -170,30 +170,30 @@
 
 		// ==================================================================== //
 		// Function:		SSRC_init											//
-		// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+		// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 		// Return values:	SSRC_NO_ERROR on success							//
 		//					SSRC_ERROR on failure								//
 		// Description:		Inits the SSRC passed as argument					//
 		// ==================================================================== //
-		SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl);	
+		SSRCReturnCodes_t				SSRC_init(ssrc_ctrl_t* pssrc_ctrl);	
 
 		// ==================================================================== //
 		// Function:		SSRC_sync											//
-		// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+		// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 		// Return values:	SSRC_NO_ERROR on success							//
 		//					SSRC_ERROR on failure								//
 		// Description:		Syncs the SSRC passed as argument					//
 		// ==================================================================== //
-		SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl);
+		SSRCReturnCodes_t				SSRC_sync(ssrc_ctrl_t* pssrc_ctrl);
 
 		// ==================================================================== //
 		// Function:		SSRC_proc											//
-		// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+		// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 		// Return values:	SSRC_NO_ERROR on success							//
 		//					SSRC_ERROR on failure								//
 		// Description:		Processes the SSRC passed as argument				//
 		// ==================================================================== //
-		SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl);							
+		SSRCReturnCodes_t				SSRC_proc(ssrc_ctrl_t* pssrc_ctrl);							
 		
 	#endif // nINCLUDE_FROM_ASM
 

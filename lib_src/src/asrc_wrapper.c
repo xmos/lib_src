@@ -22,8 +22,8 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance,
-        const unsigned n_in_samples, const unsigned dither_on_off)
+unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
+        const unsigned n_in_samples, const dither_flag_t dither_on_off)
 {
     int ui;
 
@@ -40,21 +40,21 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
         // Set number of channels per instance
-        sASRCCtrl[ui].uiNchannels               = n_channels_per_instance;
+        asrc_ctrl[ui].uiNchannels               = n_channels_per_instance;
 
         // Set input/output sampling rate codes
-        sASRCCtrl[ui].eInFs                     = (int)sr_in;
-        sASRCCtrl[ui].eOutFs                    = (int)sr_out;
+        asrc_ctrl[ui].eInFs                     = (int)sr_in;
+        asrc_ctrl[ui].eOutFs                    = (int)sr_out;
 
         // Set number of samples
-        sASRCCtrl[ui].uiNInSamples              = n_in_samples;
+        asrc_ctrl[ui].uiNInSamples              = n_in_samples;
 
         // Set dither flag and random seeds
-        sASRCCtrl[ui].uiDitherOnOff             = dither_on_off;
-        sASRCCtrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers. Value not critical
+        asrc_ctrl[ui].uiDitherOnOff             = dither_on_off;
+        asrc_ctrl[ui].uiRndSeedInit             = 12345 * ui;   //Some randomish numbers. Value not critical
 
         // Init ASRC instances
-        ret_code = ASRC_init(&sASRCCtrl[ui]);
+        ret_code = ASRC_init(&asrc_ctrl[ui]);
         if (ret_code != ASRC_NO_ERROR) asrc_error(11);
     }
 
@@ -62,55 +62,55 @@ unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], co
     // ----
     // Sync ASRC. This is just to show that the function works and returns success
     for(ui = 0; ui < n_channels_per_instance; ui++)    {
-        ret_code = ASRC_sync(&sASRCCtrl[ui]);
+        ret_code = ASRC_sync(&asrc_ctrl[ui]);
         if (ret_code != ASRC_NO_ERROR) asrc_error(12);
     }
 
-    return (sASRCCtrl[0].uiFsRatio);
+    return (asrc_ctrl[0].uiFsRatio);
 }
 
-unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t sASRCCtrl[]){
+unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[]){
 
     int ui, uj; //General counters
     int             uiSplCntr;  //Spline counter
 
     // Get the number of channels per instance from first channel
-    const unsigned n_channels_per_instance = sASRCCtrl[0].uiNchannels;
+    const unsigned n_channels_per_instance = asrc_ctrl[0].uiNchannels;
 
 
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
     // Update Fs Ratio
-        sASRCCtrl[ui].uiFsRatio     = FsRatio;
+        asrc_ctrl[ui].uiFsRatio     = fs_ratio;
 
 #if DO_FS_BOUNDS_CHECK
         // Check for bounds of new Fs ratio
-        if( (FsRatio < sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMinFsRatio) ||
-            (FsRatio > sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiMaxFsRatio) )
+        if( (fs_ratio < sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMinFsRatio) ||
+            (fs_ratio > sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMaxFsRatio) )
         {
-            //debug_printf("Passed = %x, Nominal = 0x%x\n", FsRatio, sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio);
-            FsRatio = sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
+            //debug_printf("Passed = %x, Nominal = 0x%x\n", fs_ratio, sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio);
+            fs_ratio = sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
             //debug_printf("!");
         }
 #endif
         // Apply shift to time ratio to build integer and fractional parts of time step
-        sASRCCtrl[ui].iTimeStepInt     = FsRatio >> (sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].iFsRatioShift);
-        sASRCCtrl[ui].uiTimeStepFract  = FsRatio << (32 - sFsRatioConfigs[sASRCCtrl[ui].eInFs][sASRCCtrl[ui].eOutFs].iFsRatioShift);
+        asrc_ctrl[ui].iTimeStepInt     = fs_ratio >> (sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
+        asrc_ctrl[ui].uiTimeStepFract  = fs_ratio << (32 - sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
 
 
 
 
         // Set input and output data pointers
-        sASRCCtrl[ui].piIn          = in_buff + ui;
-        sASRCCtrl[ui].piOut         = out_buff + ui;
+        asrc_ctrl[ui].piIn          = in_buff + ui;
+        asrc_ctrl[ui].piOut         = out_buff + ui;
 
 
     // Process synchronous part (F1 + F2)
     // ==================================
 
         // Note: this is block based similar to SSRC, output will be on stack
-        // and there will be sASRCCtrl[chan_start].uiNSyncSamples samples per channel produced
-        if(ASRC_proc_F1_F2(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
+        // and there will be asrc_ctrl[chan_start].uiNSyncSamples samples per channel produced
+        if(ASRC_proc_F1_F2(&asrc_ctrl[ui]) != ASRC_NO_ERROR)
         {
             asrc_error(12);
         }
@@ -121,32 +121,32 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
     // ==============================
     // Clear number of output samples (note that this sample counter would actually not be needed if all was sample by sampe)
 
-        sASRCCtrl[ui].uiNASRCOutSamples = 0;
+        asrc_ctrl[ui].uiNASRCOutSamples = 0;
     }
 
     uiSplCntr = 0; // This is actually only used because of the bizarre mix of block and sample based processing
 
     // Driven by samples produced during the synchronous phase
-    for(ui = 0; ui < sASRCCtrl[0].uiNSyncSamples; ui++)
+    for(ui = 0; ui < asrc_ctrl[0].uiNSyncSamples; ui++)
     {
         // Push new samples into F3 delay line (input from stack) for each new "synchronous" sample (i.e. output of F1, respectively F2)
         for(uj = 0; uj < n_channels_per_instance; uj++)
         {
 
             //The following is replicated/inlined code from ASRC_proc_F3_in_spl in ASRC.c
-            sASRCCtrl[uj].sADFIRF3Ctrl.iIn        = sASRCCtrl[uj].piStack[ui];
+            asrc_ctrl[uj].sADFIRF3Ctrl.iIn        = asrc_ctrl[uj].piStack[ui];
 
             //The following is replicated/inlined code from ADFIR_proc_in_spl in FIR.c
             // Double write to simulate circular buffer
-            *sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI                                  = sASRCCtrl[uj].sADFIRF3Ctrl.iIn;
-            *(sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI + sASRCCtrl[uj].sADFIRF3Ctrl.uiDelayO)        = sASRCCtrl[uj].sADFIRF3Ctrl.iIn;
+            *asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI                                  = asrc_ctrl[uj].sADFIRF3Ctrl.iIn;
+            *(asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI + asrc_ctrl[uj].sADFIRF3Ctrl.uiDelayO)        = asrc_ctrl[uj].sADFIRF3Ctrl.iIn;
             // Step delay (with circular simulation)
-            sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI++;
-            if(sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI >= sASRCCtrl[uj].sADFIRF3Ctrl.piDelayW)
-                sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI               =sASRCCtrl[uj].sADFIRF3Ctrl.piDelayB;
+            asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI++;
+            if(asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI >= asrc_ctrl[uj].sADFIRF3Ctrl.piDelayW)
+                asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI               =asrc_ctrl[uj].sADFIRF3Ctrl.piDelayB;
 
             // Decrease next output time (this is an integer value, so no influence on fractional part)
-            sASRCCtrl[uj].iTimeInt    -= FILTER_DEFS_ADFIR_N_PHASES;
+            asrc_ctrl[uj].iTimeInt    -= FILTER_DEFS_ADFIR_N_PHASES;
 
 
         }
@@ -154,7 +154,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
         // Check if a new output sample needs to be produced
         // Note that this will also update the adaptive filter coefficients
         // These must be computed for one channel only and reused in the macc loop of other channels
-        while(sASRCCtrl[0].iTimeInt < FILTER_DEFS_ADFIR_N_PHASES)
+        while(asrc_ctrl[0].iTimeInt < FILTER_DEFS_ADFIR_N_PHASES)
         {
             unsigned int    uiTemp;
             int             iAlpha;
@@ -166,7 +166,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
 
             // Compute adative coefficients spline factors
             // The fractional part of time gives alpha
-            iAlpha      = sASRCCtrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
+            iAlpha      = asrc_ctrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
             i64Acc0 = (long long)iAlpha * (long long)iAlpha;
             
             iH[0]           = (int)(i64Acc0>>32);
@@ -178,10 +178,10 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
             iH[2]           = iH[2] + iH[0];                        // H2 = 0.5 - alpha + 0.5 * alpha * alpha
 
             // The integer part of time gives the phase
-            piPhase0        = iADFirCoefs[sASRCCtrl[0].iTimeInt];
+            piPhase0        = iADFirCoefs[asrc_ctrl[0].iTimeInt];
             // These are calculated by the asm funcion  piPhase1        = piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
             //                                          piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
-            piADCoefs       = sASRCCtrl[0].piADCoefs;       // Given limited number of registers, this could be DP
+            piADCoefs       = asrc_ctrl[0].piADCoefs;       // Given limited number of registers, this could be DP
 
             // Apply spline coefficients to filter coefficients
             spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
@@ -190,39 +190,39 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
             // Step time for next output sample
             // --------------------------------
             // Step to next output time (add integer and fractional parts)
-            sASRCCtrl[0].iTimeInt       += sASRCCtrl[0].iTimeStepInt;
+            asrc_ctrl[0].iTimeInt       += asrc_ctrl[0].iTimeStepInt;
             // For fractional part, this can be optimized using the add with carry instruction of XS2
-            uiTemp      = sASRCCtrl[0].uiTimeFract;
-            sASRCCtrl[0].uiTimeFract        += sASRCCtrl[0].uiTimeStepFract;
-            if(sASRCCtrl[0].uiTimeFract < uiTemp)
-                sASRCCtrl[0].iTimeInt++;
+            uiTemp      = asrc_ctrl[0].uiTimeFract;
+            asrc_ctrl[0].uiTimeFract        += asrc_ctrl[0].uiTimeStepFract;
+            if(asrc_ctrl[0].uiTimeFract < uiTemp)
+                asrc_ctrl[0].iTimeInt++;
 
 
             // Not really needed, just for the beauty of it...
-            //sASRCCtrl[0+1].iTimeInt     = sASRCCtrl[0].iTimeInt;
-            //sASRCCtrl[0+1].uiTimeFract  = sASRCCtrl[0].uiTimeFract;
+            //asrc_ctrl[0+1].iTimeInt     = asrc_ctrl[0].iTimeInt;
+            //asrc_ctrl[0+1].uiTimeFract  = asrc_ctrl[0].uiTimeFract;
 
             // Apply filter F3 with just computed adaptive coefficients
             for(uj = 0; uj < n_channels_per_instance; uj++)    {
 
                 //The following is replicated/inlined code from ADFIR_F3_proc_macc in ASRC.c
-                sASRCCtrl[uj].sADFIRF3Ctrl.piOut      = (sASRCCtrl[uj].piOut + n_channels_per_instance * uiSplCntr);
+                asrc_ctrl[uj].sADFIRF3Ctrl.piOut      = (asrc_ctrl[uj].piOut + n_channels_per_instance * uiSplCntr);
 
                 //The following is replicated/inlined code from ADFIR_proc_macc in FIR.c
                 int*            piData;
                 int*            piCoefs;
                 int             iData;
                 // Clear accumulator and set access pointers
-                piData                  = sASRCCtrl[uj].sADFIRF3Ctrl.piDelayI;
-                piCoefs                 = sASRCCtrl[uj].sADFIRF3Ctrl.piADCoefs;
+                piData                  = asrc_ctrl[uj].sADFIRF3Ctrl.piDelayI;
+                piCoefs                 = asrc_ctrl[uj].sADFIRF3Ctrl.piADCoefs;
 
                 // Do FIR
-                if ((unsigned)piData & 0b0100) adfir_inner_loop_asm_odd(piData, piCoefs, &iData, sASRCCtrl[uj].sADFIRF3Ctrl.uiNLoops);
-                else                               adfir_inner_loop_asm(piData, piCoefs, &iData, sASRCCtrl[uj].sADFIRF3Ctrl.uiNLoops);
+                if ((unsigned)piData & 0b0100) adfir_inner_loop_asm_odd(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
+                else                               adfir_inner_loop_asm(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
 
                 // Write output
-                *(sASRCCtrl[uj].sADFIRF3Ctrl.piOut)       = iData;
-                sASRCCtrl[uj].uiNASRCOutSamples++;
+                *(asrc_ctrl[uj].sADFIRF3Ctrl.piOut)       = iData;
+                asrc_ctrl[uj].uiNASRCOutSamples++;
             }
             uiSplCntr++; // This is actually only used because of the bizarre mix of block and sample based processing
         }
@@ -236,13 +236,13 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned FsRatio, ASRCCtrl_t 
     // (would not be used if sample by sample based (on output samples))
     for(ui = 0; ui < n_channels_per_instance; ui++)
         // Note: this is block based similar to SSRC
-        if(ASRC_proc_dither(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
+        if(ASRC_proc_dither(&asrc_ctrl[ui]) != ASRC_NO_ERROR)
         {
             asrc_error(4);
         }
     }
 #endif
 
-    unsigned n_samps_out = sASRCCtrl[0].uiNASRCOutSamples;
+    unsigned n_samps_out = asrc_ctrl[0].uiNASRCOutSamples;
     return n_samps_out;
 }
