@@ -147,22 +147,22 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
     unsigned samp_code = 0xdead;
     switch (samp_rate){
     case 44100:
-        samp_code = FS_CODE_44100;
+        samp_code = FS_CODE_44;
         break;
     case 48000:
-        samp_code = FS_CODE_48000;
+        samp_code = FS_CODE_48;
         break;
     case 88200:
-        samp_code = FS_CODE_88200;
+        samp_code = FS_CODE_88;
         break;
     case 96000:
-        samp_code = FS_CODE_96000;
+        samp_code = FS_CODE_96;
         break;
     case 176400:
-        samp_code = FS_CODE_176400;
+        samp_code = FS_CODE_176;
         break;
     case 192000:
-        samp_code = FS_CODE_192000;
+        samp_code = FS_CODE_192;
         break;
     }
     return samp_code;

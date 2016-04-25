@@ -42,7 +42,7 @@ void dsp_slave(chanend c_dsp)
 // ------------------------
 // State, Stack, Coefs and Control structures (one for each channel)
     asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-    int             asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+    int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
     asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
     iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
 

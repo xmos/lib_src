@@ -10,12 +10,12 @@ extern "C" {
 
     /** List of sample rate codes allowing the core SRC algorithms to use an index value */
 typedef enum fs_code_t {
-    FS_CODE_44100 = 0,
-    FS_CODE_48000,
-    FS_CODE_88200,
-    FS_CODE_96000,
-    FS_CODE_176400,
-    FS_CODE_192000
+    FS_CODE_44 = 0,
+    FS_CODE_48 = 1,
+    FS_CODE_88 = 2,
+    FS_CODE_96 = 3,
+    FS_CODE_176 = 4,
+    FS_CODE_192 = 5
 } fs_code_t;
 
     /** Flag to switch dither processing to 24b (from 32b) on or off */
@@ -32,7 +32,7 @@ typedef enum dither_flag_t {
    *  \param   n_in_samples             Number of input samples per SSRC call
    *  \param   dither_on_off            Dither to 24b on/off
    */
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, ssrc_ctrl_t ssrc_ctrl[], const unsigned n_channels_per_instance,
+void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t ssrc_ctrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
    /** Perform synchronous sample rate conversion processing on block of input samples using previously initialized settings.
@@ -54,7 +54,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
    *  \param   dither_on_off            Dither to 24b on/off
    *  \returns The nominal sample rate ratio of in to out in Q4.28 format
    */
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
+unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
    /** Perform asynchronous sample rate conversion processing on block of input samples using previously initialized settings.

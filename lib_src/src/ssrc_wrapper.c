@@ -18,11 +18,11 @@ static void ssrc_error(int code)
 }
 
 
-void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, ssrc_ctrl_t *ssrc_ctrl,
+void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t *ssrc_ctrl,
         const unsigned n_channels_per_instance, const unsigned n_in_samples, const dither_flag_t dither_on_off)
 {
     SSRCReturnCodes_t ret_code;
-    int ui;
+    unsigned ui;
 
     //Check to see if n_channels_per_instance, n_in_samples are reasonable
     if ((n_in_samples & 0x1) || (n_in_samples < 4)) ssrc_error(100);
@@ -52,7 +52,7 @@ void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, ssrc_ctrl_t *ssrc_ctrl,
 
 unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t *ssrc_ctrl){
 
-    int ui;
+    unsigned ui;
     unsigned n_samps_out;
 
     // Get the number of channels per instance from first channel

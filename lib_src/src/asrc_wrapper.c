@@ -22,10 +22,10 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
+unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const dither_flag_t dither_on_off)
 {
-    int ui;
+    unsigned ui;
 
     ASRCReturnCodes_t ret_code;
 
@@ -235,6 +235,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_
     // We are back to block based processing. This is where the number of ASRC output samples is required again
     // (would not be used if sample by sample based (on output samples))
     for(ui = 0; ui < n_channels_per_instance; ui++)
+    {
         // Note: this is block based similar to SSRC
         if(ASRC_proc_dither(&asrc_ctrl[ui]) != ASRC_NO_ERROR)
         {
