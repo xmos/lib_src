@@ -13,7 +13,7 @@
 static void ssrc_error(int code)
 {
     debug_printf("SSRC_proc Error code %d\n", code);
-    delay_milliseconds(1);
+    delay_milliseconds(1); //Allow xscope to display message before quit
 	_Exit(code);
 }
 

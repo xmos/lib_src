@@ -1,4 +1,5 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
+
 #define		FILTER_DEFS_ADFIR_PHASE_N_TAPS		((1920 / 128) + 1)		// Number of taps per phase
 	.section	.dp.data,"awd",@progbits
 	.text

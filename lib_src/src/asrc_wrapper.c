@@ -17,7 +17,7 @@ extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 static void asrc_error(int code)
 {
     debug_printf("ASRC_proc Error code %d\n", code);
-    delay_milliseconds(1);
+    delay_milliseconds(1); //Allow xscope to display message before quit
     _Exit(code);
 }
 
