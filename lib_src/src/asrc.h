@@ -187,11 +187,11 @@
 		// Adaptive filter coefficients. Note this is a workaround to force the compiler to align the array to 64b boundary (required by inner loop assembler that uses load/store double)
 		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-                typedef struct _iASRCADFIRCoefs_t 
+                typedef struct _asrc_adfir_coefs_t 
                 {
                     long long       padding_to_64b;                           //Force 64b alignment
                     int             iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH]; //Adaptive FIR coefficients (one per instance)
-                } iASRCADFIRCoefs_t;
+                } asrc_adfir_coefs_t;
 
 
 

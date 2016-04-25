@@ -13,11 +13,11 @@ Initialization
 
 There is an initialization call which sets up the variables within the structures associated with the SRC instance and clears the inter-stage buffers. Initialization must be called to ensure the correct selection and ordering and configuration of the filtering stages, be they decimators, interpolators or pass through blocks. This initialization call contains arguments defining selected input and output nominal sample rates as well as settings for the sample rate converter::
 
-   void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t sSSRCCtrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off);
+   void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t *ssrc_ctrl, const unsigned n_channels_per_instance, const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
 The initialization call is the same for ASRC::
 
-   unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off);
+   unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
 The settings include:
 
@@ -34,22 +34,21 @@ There are a number of arrays of structures that must be declared from the applic
 For the case of SSRC, the following state structures are required::
 
     //State of SSRC module
-    SSRCState_t     sSSRCState[SSRC_CHANNELS_PER_INSTANCE];                                              
+    ssrc_state_t     ssrc_state[SSRC_CHANNELS_PER_INSTANCE];
     //Buffers between processing stages
-    int             iSSRCStack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
+    int              ssrc_stack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
     //SSRC Control structure  
-    SSRCCtrl_t      sSSRCCtrl[SSRC_CHANNELS_PER_INSTANCE];                                               
+    ssrc_ctrl_t      ssrc_ctrl[SSRC_CHANNELS_PER_INSTANCE];
 
 For the ASRC, the state structures must be declared. Note that only one instance of the filter coefficients need be declared because these are shared amongst channels within the instance::
 
     //ASRC state
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE];         
-    //Buffers between filter stages                                    
-    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
+    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];     //Buffers between filter stages                                    
+    int                asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
     //Control structure
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];
+    asrc_ctrl_t        asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];
     //Adaptive filter coefficients  
-    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                                                                  
+    asrc_adfir_coefs_t asrc_adfir_coefs;                                                                 
 
 Processing
 ..........
@@ -63,11 +62,11 @@ Following initialization, the processing API is called for each block of input s
 
 The processing function call is passed the input and output buffers and a reference to the control structure:: 
 
-    unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t sSSRCCtrl[]);
+    unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t *ssrc_ctrl)
 
 In the case of ASRC, additionally a fractional frequency ratio is supplied::
 
-    unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[]);
+    unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[])
 
 The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1KHz and the output rate is 192KHz then a sample rate conversion of one sample input may contain up to 5 output samples.
 

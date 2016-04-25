@@ -133,7 +133,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 
   * - configuration: ASRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; asrc_ctrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs; asrc_state_t sASRCState[2]; int asrc_stack[2][32];
+    - globals: int in_buff[4]; int out_buff[20]; asrc_ctrl_t sASRCCtrl[2]; asrc_adfir_coefs_t SiASRCADFIRCoefs; asrc_state_t sASRCState[2]; int asrc_stack[2][32];
     - locals:
     - ports: 0
     - flags:

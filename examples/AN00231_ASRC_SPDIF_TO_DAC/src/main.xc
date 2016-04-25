@@ -187,14 +187,14 @@ unsafe{
         asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
         int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
         asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-        iASRCADFIRCoefs_t SiASRCADFIRCoefs;                     //Adaptive filter coefficients
+        asrc_adfir_coefs_t asrc_adfir_coefs;                     //Adaptive filter coefficients
 
         for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
         unsafe {
             //Set state, stack and coefs into ctrl structure
             asrc_ctrl[ui].psState                   = &asrc_state[ui];
             asrc_ctrl[ui].piStack                   = asrc_stack[ui];
-            asrc_ctrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
+            asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
         }
 
         //Initialise ASRC
