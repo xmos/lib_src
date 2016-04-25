@@ -208,41 +208,41 @@ The nominal rate change ratios between 44.1KHz and 192KHz are shown in the below
        - 1
        - 160/147
        - 2
-       - 2 x 160/147
+       - 2x160/147
        - 4
-       - 4 x 160/147
+       - 4x160/147
      * - 48KHz
        - 147/160
        - 1
-       - 2 x 147/160
+       - 2x147/160
        - 2
-       - 4 x 147/160
+       - 4x147/160
        - 4
      * - 88.2KHz
        - 1/2
-       - 1/2 x 160/147
+       - 1/2x160/147
        - 1
        - 160/147
        - 2
-       - 2 x 160/147
+       - 2x160/147
      * - 96KHz
-       - 1/2 x 147/160
+       - 1/2x147/160
        - 1/2
        - 147/160
        - 1
-       - 2 x 147/160
+       - 2x147/160
        - 2
      * - 176.4KHz
        - 1/4
-       - 1/4 x 160/147
+       - 1/4x160/147
        - 1/2
-       - 1/2 x 160/147
+       - 1/2x160/147
        - 1
        - 160/147
      * - 192KHz
-       - 1/4 x 147/160
+       - 1/4x147/160
        - 1/4
-       - 1/2 x 147/160
+       - 1/2x147/160
        - 1/2
        - 147/160
        - 1
@@ -265,7 +265,7 @@ The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3).
 The SSRC algorithm is implemented as a two stage structure:
 
  * The Bandwidth control stage which includes filters F1 and F2 is responsible for limiting the bandwidth of the input signal and for providing integer rate Sample Rate Conversion. It is also used for signal conditioning in the case of rational, non-integer, Sample Rate Conversion.
- * The polyphase filter stage which effectively converts between the 44.1kHz and the 48kHz families of sample rates.
+ * The Polyphase filter stage which effectively converts between the 44.1kHz and the 48kHz families of sample rates.
 
 |newpage|
 

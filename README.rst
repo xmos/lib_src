@@ -69,7 +69,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
   The below table shows the worst case MHz consumption at a given sample rate using the minimum block size of 4 input samples with dithering disabled. The MHz requirement can be reduced by around 8-12%, depending on sample rate, by increasing the input block size to 16. It is not usefully reduced by increasing block size beyond 16.
 
 .. list-table:: SSRC Processor Usage per Channel (MHz)
-     :header-rows: 2
+     :header-rows: 1
 
      * - 
        - Output sample rate
@@ -150,7 +150,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
-     :header-rows: 2
+     :header-rows: 1
 
      * - 
        - Output sample rate
