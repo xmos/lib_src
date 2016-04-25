@@ -56,7 +56,7 @@ Typical Resource Usage
 
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; SSRCCtrl_t sSSRCCtrl[2]; SSRCState_t sSSRCState[2]; int iSSRCStack[2][32]; SSRCCtrl_t sSSRCCtrl[2]; 
+    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2]; 
     - ports: 0
     - locals:
     - flags:
@@ -133,7 +133,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 
   * - configuration: ASRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs; ASRCState_t sASRCState[2]; int iASRCStack[2][32]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs;;
+    - globals: int in_buff[4]; int out_buff[20]; asrc_ctrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs; asrc_state_t sASRCState[2]; int asrc_stack[2][32];
     - locals:
     - ports: 0
     - flags:
