@@ -20,8 +20,8 @@ typedef enum fs_code_t {
 
     /** Flag to switch dither processing to 24b (from 32b) on or off */
 typedef enum dither_flag_t {
-    ON,
-    OFF
+    OFF = 0,
+    ON = 1
 } dither_flag_t;
 
    /** Initialises synchronous sample rate conversion instance.
