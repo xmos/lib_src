@@ -3,7 +3,7 @@
 Usage
 -----
 
-Both SSRC and ASRC functions are accessed via a standard function calls, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By using mulitple cores it is possible to support multi-core operation, where multiple channels can be processed by more than one logical core concurrently.
+Both SSRC and ASRC functions are accessed via a standard function calls, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By placing the calls to SRC functions on sepearte logical cores, multiple instances can be processed concurrently.
 
 The API is designed to be as simple and intuitive with just two public functions per sample rate converter type.
 
@@ -29,7 +29,7 @@ The settings include:
 
 The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``. 
 
-There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each stricture declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
+There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each structure declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
 
 For the case of SSRC, the following state structures are required::
 
