@@ -26,7 +26,7 @@
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
    The port assignments can be changed for a different port map.
 */
-#define AUDIO_TILE                         0
+#define AUDIO_TILE                       0
 in buffered port:32  ports_i2s_adc[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1I,
                                                      XS1_PORT_1J,
                                                      XS1_PORT_1K,
@@ -42,7 +42,7 @@ out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
                                                      XS1_PORT_1P};
 
 
-#define SPDIF_TILE                         1
+#define SPDIF_TILE                       1
 port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
 clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
 
@@ -70,7 +70,7 @@ char pin_map_buttons[1]                  = {0};                                 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
 out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;     //SPDIF COAX TX. A good test point to probe..
 
-//Application helper prototypes. For purpose, see comments in implementations below
+//Application task prototypes. For functionality of these tasks, see comments in implementations below
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
 unsafe void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
@@ -221,7 +221,7 @@ unsafe void asrc(server block_transfer_if i_serial2block, client block_transfer_
                 nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
             break;
 
-            do_dsp_flag => default:      //Do the sample rate conversion
+            do_dsp_flag => default:                    //Do the sample rate conversion
                 //port_debug <: 1;                     //debug
                 unsigned n_samps_out;
                 fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
@@ -230,7 +230,7 @@ unsafe void asrc(server block_transfer_if i_serial2block, client block_transfer_
                 n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, asrc_ctrl);
                 p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
 
-                do_dsp_flag = 0;                        //Clear flag and wait for next input block
+                do_dsp_flag = 0;                       //Clear flag and wait for next input block
                 //port_debug <: 0;                     //debug
                 break;
         }
