@@ -250,7 +250,7 @@ ASRCFsRatioConfigs_t		sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS] =				// Fs ratio con
 
 // ==================================================================== //
 // Function:		ASRC_prepare_coefs									//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Prepares the ASRC coefficients from the prototype	//
@@ -286,12 +286,12 @@ ASRCReturnCodes_t				ASRC_prepare_coefs(void)
 
 // ==================================================================== //
 // Function:		ASRC_init											//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Inits the ASRC passed as argument					//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)	
+ASRCReturnCodes_t				ASRC_init(asrc_ctrl_t* pasrc_ctrl)	
 {
 	ASRCFiltersIDs_t*			psFiltersID;
 	FIRDescriptor_t*			psFIRDescriptor;
@@ -299,30 +299,30 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 
 
 	// Check if state is allocated
-	if(psASRCCtrl->psState == 0)
+	if(pasrc_ctrl->psState == 0)
 		return ASRC_ERROR;
 
 	// Check if stack is allocated
-	if(psASRCCtrl->piStack == 0)
+	if(pasrc_ctrl->piStack == 0)
 		return ASRC_ERROR;
 
 	// Check if valid Fsin and Fsout have been provided
-	if( (psASRCCtrl->eInFs < ASRC_FS_MIN) || (psASRCCtrl->eInFs > ASRC_FS_MAX))
+	if( (pasrc_ctrl->eInFs < ASRC_FS_MIN) || (pasrc_ctrl->eInFs > ASRC_FS_MAX))
 		return ASRC_ERROR;
-	if( (psASRCCtrl->eOutFs < ASRC_FS_MIN) || (psASRCCtrl->eOutFs > ASRC_FS_MAX))
+	if( (pasrc_ctrl->eOutFs < ASRC_FS_MIN) || (pasrc_ctrl->eOutFs > ASRC_FS_MAX))
 		return ASRC_ERROR;
 
 	// Set nominal fs ratio
-	psASRCCtrl->uiFsRatio	= sFsRatioConfigs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs].uiNominalFsRatio;
+	pasrc_ctrl->uiFsRatio	= sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiNominalFsRatio;
 
 	// Check that number of input samples is allocated and is a multiple of 4
-	if(psASRCCtrl->uiNInSamples == 0)
+	if(pasrc_ctrl->uiNInSamples == 0)
 		return ASRC_ERROR;
-	if((psASRCCtrl->uiNInSamples & 0x3) != 0x0)
+	if((pasrc_ctrl->uiNInSamples & 0x3) != 0x0)
 		return ASRC_ERROR;
 
 	// Load filters ID and number of samples
-	psFiltersID		= &sASRCFiltersIDs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs];
+	psFiltersID		= &sASRCFiltersIDs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs];
 	
 
 	// Configure filters F1 and F2 from filters ID and number of samples
@@ -331,52 +331,52 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	// ---------
 	psFIRDescriptor							= &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
 	// Set number of input samples and input samples step
-	psASRCCtrl->sFIRF1Ctrl.uiNInSamples		= psASRCCtrl->uiNInSamples;
-	psASRCCtrl->sFIRF1Ctrl.uiInStep			= psASRCCtrl->uiNchannels;
+	pasrc_ctrl->sFIRF1Ctrl.uiNInSamples		= pasrc_ctrl->uiNInSamples;
+	pasrc_ctrl->sFIRF1Ctrl.uiInStep			= pasrc_ctrl->uiNchannels;
 	// Set delay line base pointer
 	if( psFiltersID->uiFID[ASRC_F1_INDEX] == FILTER_DEFS_ASRC_FIR_DS_ID )
-		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRShort;
+		pasrc_ctrl->sFIRF1Ctrl.piDelayB			= pasrc_ctrl->psState->iDelayFIRShort;
 	else
-		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRLong;
+		pasrc_ctrl->sFIRF1Ctrl.piDelayB			= pasrc_ctrl->psState->iDelayFIRLong;
 	// Set output buffer step
-	psASRCCtrl->sFIRF1Ctrl.uiOutStep		= 1;//ASRC_N_CHANNELS; //TODO confirm this
+	pasrc_ctrl->sFIRF1Ctrl.uiOutStep		= 1;//ASRC_N_CHANNELS; //TODO confirm this
 
 	// Call init for FIR F1
-	if(FIR_init_from_desc(&psASRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
+	if(FIR_init_from_desc(&pasrc_ctrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
 	// Update synchronous number of samples
 	if( psFiltersID->uiFID[ASRC_F1_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
-		psASRCCtrl->uiNSyncSamples				= psASRCCtrl->sFIRF1Ctrl.uiNOutSamples;
+		pasrc_ctrl->uiNSyncSamples				= pasrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
 	
 
 	// Filter F2
 	// ---------
 	psFIRDescriptor							= &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F2_INDEX]];
 	// Set number of input samples and input samples step
-	psASRCCtrl->sFIRF2Ctrl.uiNInSamples		= psASRCCtrl->sFIRF1Ctrl.uiNOutSamples;
-	psASRCCtrl->sFIRF2Ctrl.uiInStep			= psASRCCtrl->sFIRF1Ctrl.uiOutStep;
+	pasrc_ctrl->sFIRF2Ctrl.uiNInSamples		= pasrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
+	pasrc_ctrl->sFIRF2Ctrl.uiInStep			= pasrc_ctrl->sFIRF1Ctrl.uiOutStep;
 	// Set delay line base pointer (second filter is always long with ASRC)
-	psASRCCtrl->sFIRF2Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRLong;
+	pasrc_ctrl->sFIRF2Ctrl.piDelayB			= pasrc_ctrl->psState->iDelayFIRLong;
 	// Set output buffer step
-	psASRCCtrl->sFIRF2Ctrl.uiOutStep		= 1;//ASRC_N_CHANNELS; //TODO confirm this. Looks like 1 = channel per instance
+	pasrc_ctrl->sFIRF2Ctrl.uiOutStep		= 1;//ASRC_N_CHANNELS; //TODO confirm this. Looks like 1 = channel per instance
 	
 	// Call init for FIR F2
-	if(FIR_init_from_desc(&psASRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
+	if(FIR_init_from_desc(&pasrc_ctrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
 	// Update synchronous number of samples
 	if( psFiltersID->uiFID[ASRC_F2_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
-		psASRCCtrl->uiNSyncSamples				= psASRCCtrl->sFIRF2Ctrl.uiNOutSamples;
+		pasrc_ctrl->uiNSyncSamples				= pasrc_ctrl->sFIRF2Ctrl.uiNOutSamples;
 	
 
 	// Setup fixed input/output buffers for F1 and F2
 	// ----------------------------------------------
 	// We set all fixed items (to stack base)
 	// F1 input is never from stack, so don't set it
-	psASRCCtrl->sFIRF2Ctrl.piIn				= psASRCCtrl->piStack;
-	psASRCCtrl->sFIRF1Ctrl.piOut			= psASRCCtrl->piStack;
-	psASRCCtrl->sFIRF2Ctrl.piOut			= psASRCCtrl->piStack;
+	pasrc_ctrl->sFIRF2Ctrl.piIn				= pasrc_ctrl->piStack;
+	pasrc_ctrl->sFIRF1Ctrl.piOut			= pasrc_ctrl->piStack;
+	pasrc_ctrl->sFIRF2Ctrl.piOut			= pasrc_ctrl->piStack;
 
 
 
@@ -385,16 +385,16 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	psADFIRDescriptor						= &sADFirDescriptor;
 		
 	// Set delay line base pointer
-	psASRCCtrl->sADFIRF3Ctrl.piDelayB		= psASRCCtrl->psState->iDelayADFIR;
+	pasrc_ctrl->sADFIRF3Ctrl.piDelayB		= pasrc_ctrl->psState->iDelayADFIR;
 	// Set AD coefficients pointer 
-	psASRCCtrl->sADFIRF3Ctrl.piADCoefs		= psASRCCtrl->piADCoefs;
+	pasrc_ctrl->sADFIRF3Ctrl.piADCoefs		= pasrc_ctrl->piADCoefs;
 	
 	// Call init for ADFIR F3
-	if(ADFIR_init_from_desc(&psASRCCtrl->sADFIRF3Ctrl, psADFIRDescriptor) != FIR_NO_ERROR)
+	if(ADFIR_init_from_desc(&pasrc_ctrl->sADFIRF3Ctrl, psADFIRDescriptor) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
 	// Call sync function
-	if(ASRC_sync(psASRCCtrl) != ASRC_NO_ERROR)
+	if(ASRC_sync(pasrc_ctrl) != ASRC_NO_ERROR)
 		return ASRC_ERROR;
 
 	return ASRC_NO_ERROR;
@@ -403,31 +403,31 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 
 // ==================================================================== //
 // Function:		ASRC_sync											//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Syncs the ASRC passed as argument					//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl)
+ASRCReturnCodes_t				ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
 {	
 	// Sync the FIR and ADFIR
-	if(FIR_sync(&psASRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+	if(FIR_sync(&pasrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR;
-	if(FIR_sync(&psASRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+	if(FIR_sync(&pasrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
-	if(ADFIR_sync(&psASRCCtrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
+	if(ADFIR_sync(&pasrc_ctrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
 	// Reset time
-	psASRCCtrl->iTimeInt		= FILTER_DEFS_ADFIR_N_PHASES + ASRC_ADFIR_INITIAL_PHASE;
-	psASRCCtrl->uiTimeFract		= 0;
+	pasrc_ctrl->iTimeInt		= FILTER_DEFS_ADFIR_N_PHASES + ASRC_ADFIR_INITIAL_PHASE;
+	pasrc_ctrl->uiTimeFract		= 0;
 
 	// Reset random seeds to initial values
-	psASRCCtrl->psState->uiRndSeed	= psASRCCtrl->uiRndSeedInit;
+	pasrc_ctrl->psState->uiRndSeed	= pasrc_ctrl->uiRndSeedInit;
 
 	// Update time step based on Fs ratio
-	if(ASRC_update_fs_ratio(psASRCCtrl) != ASRC_NO_ERROR)
+	if(ASRC_update_fs_ratio(pasrc_ctrl) != ASRC_NO_ERROR)
 		return ASRC_ERROR;
 
 	return ASRC_NO_ERROR;
@@ -436,7 +436,7 @@ ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl)
 
 // ==================================================================== //
 // Function:		ASRC_proc_F1_F2										//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Processes F1 and F2 for a channel					//
@@ -444,21 +444,21 @@ ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl)
 #if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
-ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
+ASRCReturnCodes_t				ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
 {
 
 	// Setup variable input / output buffers
-	psASRCCtrl->sFIRF1Ctrl.piIn			= psASRCCtrl->piIn;
+	pasrc_ctrl->sFIRF1Ctrl.piIn			= pasrc_ctrl->piIn;
 
 	// F1 is always enabled, so call F1
-	if(psASRCCtrl->sFIRF1Ctrl.pvProc((int *)&psASRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+	if(pasrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR; //Notice blatant cast to int * - works around no FP support in XC
 		
 	// Check if F2 is enabled
-	if(psASRCCtrl->sFIRF2Ctrl.eEnable == FIR_ON)
+	if(pasrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
 	{
 		// F2 is enabled, so call F2
-		if(psASRCCtrl->sFIRF2Ctrl.pvProc((int *)&psASRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+		if(pasrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
 			return ASRC_ERROR;  //Notice blatant cast to int * - works around no FP support in XC
 
 	}
@@ -469,23 +469,23 @@ ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
 
 // ==================================================================== //
 // Function:		ASRC_update_fs_ratio								//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Updates the ASRC with the new Fs ratio				//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_update_fs_ratio(ASRCCtrl_t* psASRCCtrl)
+ASRCReturnCodes_t				ASRC_update_fs_ratio(asrc_ctrl_t* pasrc_ctrl)
 {
-	unsigned int	uiFsRatio		= psASRCCtrl->uiFsRatio;
+	unsigned int	uiFsRatio		= pasrc_ctrl->uiFsRatio;
 
 	// Check for bounds of new Fs ratio
-	if( (uiFsRatio < sFsRatioConfigs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs].uiMinFsRatio) ||
-		(uiFsRatio > sFsRatioConfigs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs].uiMaxFsRatio) )
+	if( (uiFsRatio < sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiMinFsRatio) ||
+		(uiFsRatio > sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiMaxFsRatio) )
 		return ASRC_ERROR;
 
 	// Apply shift to time ratio to build integer and fractional parts of time step
-	psASRCCtrl->iTimeStepInt	 = uiFsRatio >> (sFsRatioConfigs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs].iFsRatioShift);	
-	psASRCCtrl->uiTimeStepFract  = uiFsRatio << (32 - sFsRatioConfigs[psASRCCtrl->eInFs][psASRCCtrl->eOutFs].iFsRatioShift);
+	pasrc_ctrl->iTimeStepInt	 = uiFsRatio >> (sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].iFsRatioShift);	
+	pasrc_ctrl->uiTimeStepFract  = uiFsRatio << (32 - sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].iFsRatioShift);
 
 	return ASRC_NO_ERROR;
 }
@@ -493,20 +493,20 @@ ASRCReturnCodes_t				ASRC_update_fs_ratio(ASRCCtrl_t* psASRCCtrl)
 
 // ==================================================================== //
 // Function:		ASRC_proc_F3_in_spl									//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 //					int iInSample: new input sample						//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Writes new input sample to F3 delay line			//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_proc_F3_in_spl(ASRCCtrl_t* psASRCCtrl, int iInSample)
+ASRCReturnCodes_t				ASRC_proc_F3_in_spl(asrc_ctrl_t* pasrc_ctrl, int iInSample)
 {
-	psASRCCtrl->sADFIRF3Ctrl.iIn		= iInSample;
-	if(ADFIR_proc_in_spl(&psASRCCtrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
+	pasrc_ctrl->sADFIRF3Ctrl.iIn		= iInSample;
+	if(ADFIR_proc_in_spl(&pasrc_ctrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
 	// Decrease next output time (this is an integer value, so no influence on fractional part)
-	psASRCCtrl->iTimeInt	-= FILTER_DEFS_ADFIR_N_PHASES;
+	pasrc_ctrl->iTimeInt	-= FILTER_DEFS_ADFIR_N_PHASES;
 
 	return ASRC_NO_ERROR;
 }
@@ -514,12 +514,12 @@ ASRCReturnCodes_t				ASRC_proc_F3_in_spl(ASRCCtrl_t* psASRCCtrl, int iInSample)
 
 // ==================================================================== //
 // Function:		ASRC_proc_F3_time									//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR if an output sample must be produced	//
 //					ASRC_ERROR if no output sample needs to be produced	//
 // Description:		Processes F3 time									//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
+ASRCReturnCodes_t				ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
 {
 	unsigned int	uiTemp;
 	int				iAlpha;
@@ -535,7 +535,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	// -----------------------------------------------------------------
 	// if not return value showing that no output sample needs to be produced
 	// Update cycle count
-	if(psASRCCtrl->iTimeInt >= FILTER_DEFS_ADFIR_N_PHASES)
+	if(pasrc_ctrl->iTimeInt >= FILTER_DEFS_ADFIR_N_PHASES)
 		return ASRC_ERROR;
 
 
@@ -550,7 +550,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	
 	// Compute adative coefficients spline factors
 	// The fractional part of time gives alpha
-	iAlpha		= psASRCCtrl->uiTimeFract>>1;		// Now alpha can be seen as a signed number
+	iAlpha		= pasrc_ctrl->uiTimeFract>>1;		// Now alpha can be seen as a signed number
 	i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
 	iH[0]			= (int)(i64Acc0>>32);
@@ -562,24 +562,24 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	iH[2]			= iH[2] + iH[0];						// H2 = 0.5 - alpha + 0.5 * alpha * alpha
 	
 	// The integer part of time gives the phase
-	piPhase0		= iADFirCoefs[psASRCCtrl->iTimeInt];
+	piPhase0		= iADFirCoefs[pasrc_ctrl->iTimeInt];
 	piPhase1		= piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
 	piPhase2		= piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
-	piADCoefs		= psASRCCtrl->piADCoefs;		// Given limited number of registers, this should be DP
+	piADCoefs		= pasrc_ctrl->piADCoefs;		// Given limited number of registers, this should be DP
 
 	spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
 	// Step time for next output sample
 	// --------------------------------
 	// Step to next output time (add integer and fractional parts)
-	psASRCCtrl->iTimeInt		+= psASRCCtrl->iTimeStepInt;	
+	pasrc_ctrl->iTimeInt		+= pasrc_ctrl->iTimeStepInt;	
 	// For fractional part, this can be optimized using the add with carry instruction of XS2
-	uiTemp		= psASRCCtrl->uiTimeFract;
-	psASRCCtrl->uiTimeFract		+= psASRCCtrl->uiTimeStepFract;
-	if(psASRCCtrl->uiTimeFract < uiTemp)
-		psASRCCtrl->iTimeInt++;
+	uiTemp		= pasrc_ctrl->uiTimeFract;
+	pasrc_ctrl->uiTimeFract		+= pasrc_ctrl->uiTimeStepFract;
+	if(pasrc_ctrl->uiTimeFract < uiTemp)
+		pasrc_ctrl->iTimeInt++;
 
-	//printf("TimeInt = %x  TimeFract = %x", psASRCCtrl->iTimeInt, psASRCCtrl->uiTimeFract);
+	//printf("TimeInt = %x  TimeFract = %x", pasrc_ctrl->iTimeInt, pasrc_ctrl->uiTimeFract);
 
 	//int result=0; for (int i=0; i<16; i++)result += piADCoefs[i];printf("ASRC_proc_F3_time checksum=0x%x\n", result);
 
@@ -591,20 +591,20 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 
 // ==================================================================== //
 // Function:		ASRC_proc_F3_macc									//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 //					int* piOutSample: Address of output sample			//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Processes F3 for a channel							//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_proc_F3_macc(ASRCCtrl_t* psASRCCtrl, int* piOutSample)
+ASRCReturnCodes_t				ASRC_proc_F3_macc(asrc_ctrl_t* pasrc_ctrl, int* piOutSample)
 {
-	psASRCCtrl->sADFIRF3Ctrl.piOut		= piOutSample;
+	pasrc_ctrl->sADFIRF3Ctrl.piOut		= piOutSample;
 	// Call processing function
-	if(ADFIR_proc_macc(&psASRCCtrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
+	if(ADFIR_proc_macc(&pasrc_ctrl->sADFIRF3Ctrl) != FIR_NO_ERROR)
 		return ASRC_ERROR;
 
-	psASRCCtrl->uiNASRCOutSamples++;
+	pasrc_ctrl->uiNASRCOutSamples++;
 
 	return ASRC_NO_ERROR;
 }
@@ -612,12 +612,12 @@ ASRCReturnCodes_t				ASRC_proc_F3_macc(ASRCCtrl_t* psASRCCtrl, int* piOutSample)
 
 // ==================================================================== //
 // Function:		ASRC_proc_dither									//
-// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 // Return values:	ASRC_NO_ERROR on success							//
 //					ASRC_ERROR on failure								//
 // Description:		Processes dither for a channel						//
 // ==================================================================== //
-ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
+ASRCReturnCodes_t				ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl)
 {
 	int*			piData;
 	unsigned int	uiR;
@@ -627,15 +627,15 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 
 
 	// Apply dither if required
-	if(psASRCCtrl->uiDitherOnOff == ASRC_DITHER_ON)
+	if(pasrc_ctrl->uiDitherOnOff == ASRC_DITHER_ON)
 	{
 		// Get data buffer
-		piData	= psASRCCtrl->piOut;
+		piData	= pasrc_ctrl->piOut;
 		// Get random seed
-		uiR		= psASRCCtrl->psState->uiRndSeed;
+		uiR		= pasrc_ctrl->psState->uiRndSeed;
 
 		// Loop through samples
-		for(ui = 0; ui < psASRCCtrl->uiNASRCOutSamples * psASRCCtrl->uiNchannels; ui += psASRCCtrl->uiNchannels)
+		for(ui = 0; ui < pasrc_ctrl->uiNASRCOutSamples * pasrc_ctrl->uiNchannels; ui += pasrc_ctrl->uiNchannels)
 		{
 			// Compute dither sample (TPDF)
 			iDither		= ASRC_DITHER_BIAS;
@@ -665,7 +665,7 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 		}
 
 		// Write random seed back
-		psASRCCtrl->psState->uiRndSeed	= uiR;
+		pasrc_ctrl->psState->uiRndSeed	= uiR;
 	}
 
 	return ASRC_NO_ERROR;

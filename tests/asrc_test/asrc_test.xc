@@ -15,7 +15,7 @@
 #define     ASRC_N_IN_SAMPLES                4  //Number of samples per channel in each block passed into SRC each call
                                                 //Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
 #define     ASRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
-#define     ASRC_DITHER_SETTING              0
+#define     ASRC_DITHER_SETTING              OFF
 
 #include "asrc_checks.h"                        //Do some checking on the defines above
 
@@ -41,10 +41,10 @@ void dsp_slave(chanend c_dsp)
 // ASRC instances variables
 // ------------------------
 // State, Stack, Coefs and Control structures (one for each channel)
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                 //Adaptive filter coefficients
+    asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+    int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+    asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
+    asrc_adfir_coefs_t asrc_adfir_coefs;                 //Adaptive filter coefficients
 
     unsigned int    sr_in_out = 99999; //Invalid SR code to force initialisation on first run
     unsigned int    sr_in_out_new;
@@ -62,9 +62,9 @@ void dsp_slave(chanend c_dsp)
     for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
     unsafe {
         // Set state, stack and coefs into ctrl structure
-        sASRCCtrl[ui].psState                   = &sASRCState[ui];
-        sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-        sASRCCtrl[ui].piADCoefs                 = SiASRCADFIRCoefs.iASRCADFIRCoefs;
+        asrc_ctrl[ui].psState                   = &asrc_state[ui];
+        asrc_ctrl[ui].piStack                   = asrc_stack[ui];
+        asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
     }
     
 /*
@@ -72,8 +72,8 @@ void dsp_slave(chanend c_dsp)
     for(int i = 0; i < ASRC_N_CHANNELS; i++)
     {
 	// Make Fs Ratio deviate
-	sASRCCtrl[i].uiFsRatio		= (unsigned int)(sASRCCtrl[i].uiFsRatio * fFsRatioDeviation);
-        if(ASRC_update_fs_ratio(&sASRCCtrl[i]) != ASRC_NO_ERROR)
+	asrc_ctrl[i].uiFsRatio		= (unsigned int)(asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
+        if(ASRC_update_fs_ratio(&asrc_ctrl[i]) != ASRC_NO_ERROR)
         {
       	    printf("Error updating ASRC fs ratio\n");
         }
@@ -119,13 +119,13 @@ void dsp_slave(chanend c_dsp)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, sASRCCtrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
             
             sr_in_out = sr_in_out_new;
             printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
         }
         t:> t1;
-        n_samps_out = asrc_process(in_buff, out_buff, FsRatio, sASRCCtrl);
+        n_samps_out = asrc_process(in_buff, out_buff, FsRatio, asrc_ctrl);
     }
 }
 

@@ -3,7 +3,7 @@
 Usage
 -----
 
-Both SSRC and ASRC functions are accessed via a standard function calls, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By using mulitple cores it is possible to support multi-core operation, where multiple channels can be processed by more than one logical core concurrently.
+Both SSRC and ASRC functions are accessed via a standard function calls, making them accessible from C or XC. Both SSRC and ASRC functions are passed an external state structure which provides re-entrancy. The functions may be called in-line with your processing or placed on a logical core within it's own task to provide guaranteed performance. By placing the calls to SRC functions on sepearte logical cores, multiple instances can be processed concurrently.
 
 The API is designed to be as simple and intuitive with just two public functions per sample rate converter type.
 
@@ -13,11 +13,11 @@ Initialization
 
 There is an initialization call which sets up the variables within the structures associated with the SRC instance and clears the inter-stage buffers. Initialization must be called to ensure the correct selection and ordering and configuration of the filtering stages, be they decimators, interpolators or pass through blocks. This initialization call contains arguments defining selected input and output nominal sample rates as well as settings for the sample rate converter::
 
-   void ssrc_init(fs_code_t sr_in, fs_code_t sr_out, SSRCCtrl_t sSSRCCtrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off);
+   void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t *ssrc_ctrl, const unsigned n_channels_per_instance, const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
 The initialization call is the same for ASRC::
 
-   unsigned asrc_init(fs_code_t sr_in, fs_code_t sr_out, ASRCCtrl_t sASRCCtrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const unsigned dither_on_off);
+   unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance, const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
 The settings include:
 
@@ -29,27 +29,27 @@ The settings include:
 
 The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``. 
 
-There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each stricture declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
+There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each structure declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
 
 For the case of SSRC, the following state structures are required::
 
     //State of SSRC module
-    SSRCState_t     sSSRCState[SSRC_CHANNELS_PER_INSTANCE];                                              
+    ssrc_state_t     ssrc_state[SSRC_CHANNELS_PER_INSTANCE];
     //Buffers between processing stages
-    int             iSSRCStack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
+    int              ssrc_stack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
     //SSRC Control structure
-    SSRCCtrl_t      sSSRCCtrl[SSRC_CHANNELS_PER_INSTANCE];                                               
+    ssrc_ctrl_t      ssrc_ctrl[SSRC_CHANNELS_PER_INSTANCE];
+
 
 For the ASRC, the state structures must be declared. Note that only one instance of the filter coefficients need be declared because these are shared amongst channels within the instance::
 
     //ASRC state
-    ASRCState_t     sASRCState[ASRC_CHANNELS_PER_INSTANCE];         
-    //Buffers between filter stages
-    int             iASRCStack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
+    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];                                  
+    int                asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
     //Control structure
-    ASRCCtrl_t      sASRCCtrl[ASRC_CHANNELS_PER_INSTANCE];
+    asrc_ctrl_t        asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];
     //Adaptive filter coefficients
-    iASRCADFIRCoefs_t SiASRCADFIRCoefs;                                                                  
+    asrc_adfir_coefs_t asrc_adfir_coefs;                                                                 
 
 Processing
 ..........
@@ -63,11 +63,11 @@ Following initialization, the processing API is called for each block of input s
 
 The processing function call is passed the input and output buffers and a reference to the control structure:: 
 
-    unsigned ssrc_process(int in_buff[], int out_buff[], SSRCCtrl_t sSSRCCtrl[]);
+    unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t *ssrc_ctrl)
 
 In the case of ASRC, additionally a fractional frequency ratio is supplied::
 
-    unsigned asrc_process(int in_buff[], int out_buff[], unsigned FsRatio, ASRCCtrl_t sASRCCtrl[]);
+    unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[])
 
 The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1KHz and the output rate is 192KHz then a sample rate conversion of one sample input may produce up to 5 output samples.
 
@@ -208,41 +208,41 @@ The nominal rate change ratios between 44.1KHz and 192KHz are shown in the below
        - 1
        - 160/147
        - 2
-       - 2 x 160/147
+       - 2x160/147
        - 4
-       - 4 x 160/147
+       - 4x160/147
      * - 48KHz
        - 147/160
        - 1
-       - 2 x 147/160
+       - 2x147/160
        - 2
-       - 4 x 147/160
+       - 4x147/160
        - 4
      * - 88.2KHz
        - 1/2
-       - 1/2 x 160/147
+       - 1/2x160/147
        - 1
        - 160/147
        - 2
-       - 2 x 160/147
+       - 2x160/147
      * - 96KHz
-       - 1/2 x 147/160
+       - 1/2x147/160
        - 1/2
        - 147/160
        - 1
-       - 2 x 147/160
+       - 2x147/160
        - 2
      * - 176.4KHz
        - 1/4
-       - 1/4 x 160/147
+       - 1/4x160/147
        - 1/2
-       - 1/2 x 160/147
+       - 1/2x160/147
        - 1
        - 160/147
      * - 192KHz
-       - 1/4 x 147/160
+       - 1/4x147/160
        - 1/4
-       - 1/2 x 147/160
+       - 1/2x147/160
        - 1/2
        - 147/160
        - 1
@@ -265,7 +265,7 @@ The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3).
 The SSRC algorithm is implemented as a two stage structure:
 
  * The Bandwidth control stage which includes filters F1 and F2 is responsible for limiting the bandwidth of the input signal and for providing integer rate Sample Rate Conversion. It is also used for signal conditioning in the case of rational, non-integer, Sample Rate Conversion.
- * The polyphase filter stage which effectively converts between the 44.1kHz and the 48kHz families of sample rates.
+ * The Polyphase filter stage which effectively converts between the 44.1kHz and the 48kHz families of sample rates.
 
 |newpage|
 

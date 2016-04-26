@@ -119,7 +119,7 @@
 			int										iDelayFIRLong[2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];		// Doubled length for circular buffer simulation
 			int										iDelayFIRShort[2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];		// Doubled length for circular buffer simulation
 			int										iDelayADFIR[2 * FILTER_DEFS_ADFIR_PHASE_N_TAPS];		// Doubled length for circular buffer simulation
-		} ASRCState_t;
+		} asrc_state_t;
 	
 
 		// ASRC Control structure
@@ -150,7 +150,7 @@
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
-			ASRCState_t* unsafe						psState;							// Pointer to state structure
+			asrc_state_t* unsafe						psState;							// Pointer to state structure
 			int* unsafe								piStack;							// Pointer to stack buffer
 			int* unsafe								piADCoefs;							// Pointer to AD coefficients
 #else
@@ -177,21 +177,21 @@
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
-			ASRCState_t*							psState;							// Pointer to state structure
+			asrc_state_t*							psState;							// Pointer to state structure
 			int*									piStack;							// Pointer to stack buffer
 			int*									piADCoefs;							// Pointer to AD coefficients
 #endif
-		} ASRCCtrl_t;
+		} asrc_ctrl_t;
 
 
 		// Adaptive filter coefficients. Note this is a workaround to force the compiler to align the array to 64b boundary (required by inner loop assembler that uses load/store double)
 		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-                typedef struct _iASRCADFIRCoefs_t 
+                typedef struct _asrc_adfir_coefs_t 
                 {
                     long long       padding_to_64b;                           //Force 64b alignment
                     int             iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH]; //Adaptive FIR coefficients (one per instance)
-                } iASRCADFIRCoefs_t;
+                } asrc_adfir_coefs_t;
 
 
 
@@ -205,7 +205,7 @@
 
 		// ==================================================================== //
 		// Function:        ASRC_prepare_coefs                                  //
-		// Arguments:       ASRCCtrl_t  *psASRCCtrl: Ctrl strct.                //
+		// Arguments:       asrc_ctrl_t  *pasrc_ctrl: Ctrl strct.                //
 		// Return values:   ASRC_NO_ERROR on success                            //
 		//                  ASRC_ERROR on failure                               //
 		// Description:     Prepares the ASRC coefficients from the prototype   //
@@ -215,77 +215,77 @@
 
 		// ==================================================================== //
 		// Function:		ASRC_init											//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Inits the ASRC passed as argument					//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl);	
+		ASRCReturnCodes_t				ASRC_init(asrc_ctrl_t* pasrc_ctrl);	
 
 		// ==================================================================== //
 		// Function:		ASRC_sync											//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Syncs the ASRC passed as argument					//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl);
+		ASRCReturnCodes_t				ASRC_sync(asrc_ctrl_t* pasrc_ctrl);
 
 		// ==================================================================== //
 		// Function:		ASRC_proc_F1_F2										//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Processes F1 and F2 for a channel					//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl);
+		ASRCReturnCodes_t				ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl);
 
 		// ==================================================================== //
 		// Function:		ASRC_update_fs_ratio								//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Updates the ASRC with the new Fs ratio				//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_update_fs_ratio(ASRCCtrl_t* psASRCCtrl);
+		ASRCReturnCodes_t				ASRC_update_fs_ratio(asrc_ctrl_t* pasrc_ctrl);
 
 		// ==================================================================== //
 		// Function:		ASRC_proc_F3_in_spl									//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		//					int iInSample: new input sample						//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Writes new input sample to F3 delay line			//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_proc_F3_in_spl(ASRCCtrl_t* psASRCCtrl, int iInSample);
+		ASRCReturnCodes_t				ASRC_proc_F3_in_spl(asrc_ctrl_t* pasrc_ctrl, int iInSample);
 
 		// ==================================================================== //
 		// Function:		ASRC_proc_F3_time									//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR if an output sample must be produced	//
 		//					ASRC_ERROR if no output sample needs to be produced	//
 		// Description:		Processes F3 time									//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl);
+		ASRCReturnCodes_t				ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl);
 
 		// ==================================================================== //
 		// Function:		ASRC_proc_F3_macc									//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		//					int* piOutSample: Address of output sample			//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Processes F3 for a channel							//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_proc_F3_macc(ASRCCtrl_t* psASRCCtrl, int* piOutSample);
+		ASRCReturnCodes_t				ASRC_proc_F3_macc(asrc_ctrl_t* pasrc_ctrl, int* piOutSample);
 
 		// ==================================================================== //
 		// Function:		ASRC_proc_dither									//
-		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
+		// Arguments:		asrc_ctrl_t 	*pasrc_ctrl: Ctrl strct.				//
 		// Return values:	ASRC_NO_ERROR on success							//
 		//					ASRC_ERROR on failure								//
 		// Description:		Processes dither for a channel						//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl);
+		ASRCReturnCodes_t				ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl);
 		
 	#endif // nINCLUDE_FROM_ASM
 

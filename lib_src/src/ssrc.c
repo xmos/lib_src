@@ -134,9 +134,9 @@ SSRCFiltersIDs_t		sFiltersIDs[SSRC_N_FS][SSRC_N_FS] =				// Filter configuration
 // ===========================================================================
 
 
-SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl);
-SSRCReturnCodes_t				SSRC_proc_F3(SSRCCtrl_t* psSSRCCtrl);
-SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl);
+SSRCReturnCodes_t				SSRC_proc_F1_F2(ssrc_ctrl_t* pssrc_ctrl);
+SSRCReturnCodes_t				SSRC_proc_F3(ssrc_ctrl_t* pssrc_ctrl);
+SSRCReturnCodes_t				SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl);
 
 
 // ===========================================================================
@@ -149,12 +149,12 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl);
 
 // ==================================================================== //
 // Function:		SSRC_init											//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Inits the SSRC passed as argument					//
 // ==================================================================== //
-SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)	
+SSRCReturnCodes_t				SSRC_init(ssrc_ctrl_t* pssrc_ctrl)	
 {
 	SSRCFiltersIDs_t*			psFiltersID;
 	FIRDescriptor_t*			psFIRDescriptor;
@@ -162,27 +162,27 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 
 
 	// Check if state is allocated
-	if(psSSRCCtrl->psState == 0)
+	if(pssrc_ctrl->psState == 0)
 		return SSRC_ERROR;
 
 	// Check if stack is allocated
-	if(psSSRCCtrl->piStack == 0)
+	if(pssrc_ctrl->piStack == 0)
 		return SSRC_ERROR;
 
 	// Check if valid Fsin and Fsout have been provided
-	if( (psSSRCCtrl->eInFs < SSRC_FS_MIN) || (psSSRCCtrl->eInFs > SSRC_FS_MAX))
+	if( (pssrc_ctrl->eInFs < SSRC_FS_MIN) || (pssrc_ctrl->eInFs > SSRC_FS_MAX))
 		return SSRC_ERROR;
-	if( (psSSRCCtrl->eOutFs < SSRC_FS_MIN) || (psSSRCCtrl->eOutFs > SSRC_FS_MAX))
+	if( (pssrc_ctrl->eOutFs < SSRC_FS_MIN) || (pssrc_ctrl->eOutFs > SSRC_FS_MAX))
 		return SSRC_ERROR;
 
 	// Check that number of input samples is allocated and is a multiple of 4
-	if(psSSRCCtrl->uiNInSamples == 0)
+	if(pssrc_ctrl->uiNInSamples == 0)
 		return SSRC_ERROR;
-	if((psSSRCCtrl->uiNInSamples & 0x3) != 0x0)
+	if((pssrc_ctrl->uiNInSamples & 0x3) != 0x0)
 		return SSRC_ERROR;
 
 	// Load filters ID and number of samples
-	psFiltersID		= &sFiltersIDs[psSSRCCtrl->eInFs][psSSRCCtrl->eOutFs];
+	psFiltersID		= &sFiltersIDs[pssrc_ctrl->eInFs][pssrc_ctrl->eOutFs];
 	
 	// Configure filters from filters ID and number of samples
 	
@@ -190,24 +190,24 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	// ---------
 	psFIRDescriptor								= &sSSRCFirDescriptor[psFiltersID->uiFID[SSRC_F1_INDEX]];
 	// Set number of input samples and input samples step
-	psSSRCCtrl->sFIRF1Ctrl.uiNInSamples		= psSSRCCtrl->uiNInSamples;
-	psSSRCCtrl->sFIRF1Ctrl.uiInStep			= psSSRCCtrl->uiNchannels;
+	pssrc_ctrl->sFIRF1Ctrl.uiNInSamples		= pssrc_ctrl->uiNInSamples;
+	pssrc_ctrl->sFIRF1Ctrl.uiInStep			= pssrc_ctrl->uiNchannels;
 	
 	// Set delay line base pointer
 	if( (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_DS_ID) || (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID) )
-		psSSRCCtrl->sFIRF1Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayFIRShort;
+		pssrc_ctrl->sFIRF1Ctrl.piDelayB		= pssrc_ctrl->psState->iDelayFIRShort;
 	else
-		psSSRCCtrl->sFIRF1Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayFIRLong;
+		pssrc_ctrl->sFIRF1Ctrl.piDelayB		= pssrc_ctrl->psState->iDelayFIRLong;
 
 	// Set output buffer step
 	if(psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID)
 		// F2 in use in over-sampling by 2 mode
-		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= 2 * psSSRCCtrl->uiNchannels;
+		pssrc_ctrl->sFIRF1Ctrl.uiOutStep	= 2 * pssrc_ctrl->uiNchannels;
 	else
-		psSSRCCtrl->sFIRF1Ctrl.uiOutStep	= psSSRCCtrl->uiNchannels;
+		pssrc_ctrl->sFIRF1Ctrl.uiOutStep	= pssrc_ctrl->uiNchannels;
 
 	// Call init for FIR F1
-	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
+	if(FIR_init_from_desc(&pssrc_ctrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
 		return SSRC_ERROR;
 	
 
@@ -216,20 +216,20 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	psFIRDescriptor							= &sSSRCFirDescriptor[psFiltersID->uiFID[SSRC_F2_INDEX]];
 	
 	// Set number of input samples and input samples step
-	psSSRCCtrl->sFIRF2Ctrl.uiNInSamples		= psSSRCCtrl->sFIRF1Ctrl.uiNOutSamples;
-	psSSRCCtrl->sFIRF2Ctrl.uiInStep			= psSSRCCtrl->sFIRF1Ctrl.uiOutStep;
+	pssrc_ctrl->sFIRF2Ctrl.uiNInSamples		= pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
+	pssrc_ctrl->sFIRF2Ctrl.uiInStep			= pssrc_ctrl->sFIRF1Ctrl.uiOutStep;
 		
 	// Set delay line base pointer
 	if( (psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_DS_ID) || (psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID) )
-		psSSRCCtrl->sFIRF2Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayFIRShort;
+		pssrc_ctrl->sFIRF2Ctrl.piDelayB		= pssrc_ctrl->psState->iDelayFIRShort;
 	else
-		psSSRCCtrl->sFIRF2Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayFIRLong;
+		pssrc_ctrl->sFIRF2Ctrl.piDelayB		= pssrc_ctrl->psState->iDelayFIRLong;
 
 	// Set output buffer step
-	psSSRCCtrl->sFIRF2Ctrl.uiOutStep	= psSSRCCtrl->uiNchannels;
+	pssrc_ctrl->sFIRF2Ctrl.uiOutStep	= pssrc_ctrl->uiNchannels;
 	
 	// Call init for FIR F1
-	if(FIR_init_from_desc(&psSSRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
+	if(FIR_init_from_desc(&pssrc_ctrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
 		return SSRC_ERROR;
 
 
@@ -239,22 +239,22 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	
 	// Set number of input samples and input samples step
 	if(psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_NONE_ID)
-		psSSRCCtrl->sPPFIRF3Ctrl.uiNInSamples	= psSSRCCtrl->sFIRF1Ctrl.uiNOutSamples;
+		pssrc_ctrl->sPPFIRF3Ctrl.uiNInSamples	= pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
 	else
-		psSSRCCtrl->sPPFIRF3Ctrl.uiNInSamples	= psSSRCCtrl->sFIRF2Ctrl.uiNOutSamples;	
-	psSSRCCtrl->sPPFIRF3Ctrl.uiInStep		= psSSRCCtrl->sFIRF2Ctrl.uiOutStep;
+		pssrc_ctrl->sPPFIRF3Ctrl.uiNInSamples	= pssrc_ctrl->sFIRF2Ctrl.uiNOutSamples;	
+	pssrc_ctrl->sPPFIRF3Ctrl.uiInStep		= pssrc_ctrl->sFIRF2Ctrl.uiOutStep;
 		
 	// Set delay line base pointer
-	psSSRCCtrl->sPPFIRF3Ctrl.piDelayB		= psSSRCCtrl->psState->iDelayPPFIR;
+	pssrc_ctrl->sPPFIRF3Ctrl.piDelayB		= pssrc_ctrl->psState->iDelayPPFIR;
 		
 	// Set output buffer step
-	psSSRCCtrl->sPPFIRF3Ctrl.uiOutStep		= psSSRCCtrl->uiNchannels;
+	pssrc_ctrl->sPPFIRF3Ctrl.uiOutStep		= pssrc_ctrl->uiNchannels;
 
 	// Set phase step 
-	psSSRCCtrl->sPPFIRF3Ctrl.uiPhaseStep	= psFiltersID->uiPPFIRPhaseStep;
+	pssrc_ctrl->sPPFIRF3Ctrl.uiPhaseStep	= psFiltersID->uiPPFIRPhaseStep;
 		
 	// Call init for PPFIR F3
-	if(PPFIR_init_from_desc(&psSSRCCtrl->sPPFIRF3Ctrl, psPPFIRDescriptor) != FIR_NO_ERROR)
+	if(PPFIR_init_from_desc(&pssrc_ctrl->sPPFIRF3Ctrl, psPPFIRDescriptor) != FIR_NO_ERROR)
 		return SSRC_ERROR;
 
 
@@ -263,11 +263,11 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	// We first set them all to stack base (some will be overwritten depending on configuration)
 
 	// F1 input is never from stack, so don't set it
-	psSSRCCtrl->sFIRF2Ctrl.piIn				= psSSRCCtrl->piStack;
-	psSSRCCtrl->sPPFIRF3Ctrl.piIn			= psSSRCCtrl->piStack;
+	pssrc_ctrl->sFIRF2Ctrl.piIn				= pssrc_ctrl->piStack;
+	pssrc_ctrl->sPPFIRF3Ctrl.piIn			= pssrc_ctrl->piStack;
 
-	psSSRCCtrl->sFIRF1Ctrl.piOut			= psSSRCCtrl->piStack;
-	psSSRCCtrl->sFIRF2Ctrl.piOut			= psSSRCCtrl->piStack;
+	pssrc_ctrl->sFIRF1Ctrl.piOut			= pssrc_ctrl->piStack;
+	pssrc_ctrl->sFIRF2Ctrl.piOut			= pssrc_ctrl->piStack;
 	// F3 output is never to stack, so don't set it
 	
 
@@ -276,34 +276,34 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 	if(psFiltersID->uiFID[SSRC_F3_INDEX] != FILTER_DEFS_PPFIR_NONE_ID)
 	{
 		// F3 is in use so take output from F3 output
-		psSSRCCtrl->ppiOut			= &psSSRCCtrl->sPPFIRF3Ctrl.piOut;
-		psSSRCCtrl->puiNOutSamples	= &psSSRCCtrl->sPPFIRF3Ctrl.uiNOutSamples;
+		pssrc_ctrl->ppiOut			= &pssrc_ctrl->sPPFIRF3Ctrl.piOut;
+		pssrc_ctrl->puiNOutSamples	= &pssrc_ctrl->sPPFIRF3Ctrl.uiNOutSamples;
 	}
 	else
 	{
 		if(psFiltersID->uiFID[SSRC_F2_INDEX] != FILTER_DEFS_SSRC_FIR_NONE_ID)
 		{
 			// F3 not in use but F2 in use, take output from F2 output
-			psSSRCCtrl->ppiOut			= &psSSRCCtrl->sFIRF2Ctrl.piOut;
-			psSSRCCtrl->puiNOutSamples	= &psSSRCCtrl->sFIRF2Ctrl.uiNOutSamples;
+			pssrc_ctrl->ppiOut			= &pssrc_ctrl->sFIRF2Ctrl.piOut;
+			pssrc_ctrl->puiNOutSamples	= &pssrc_ctrl->sFIRF2Ctrl.uiNOutSamples;
 		}
 		else
 		{
 			// F3 and F2 not in use but F1 in use or not. Set output from F1 output
 			// Note that we also set it to F1 output, even if F1 is not in use (Fsin = Fsout case, this won't cause any problem)
-			psSSRCCtrl->ppiOut		= &psSSRCCtrl->sFIRF1Ctrl.piOut;
+			pssrc_ctrl->ppiOut		= &pssrc_ctrl->sFIRF1Ctrl.piOut;
 			
 			if(psFiltersID->uiFID[SSRC_F1_INDEX] != FILTER_DEFS_SSRC_FIR_NONE_ID)
 				// F1 in use so set number of output sample pointer to number of output sample field of F1
-				psSSRCCtrl->puiNOutSamples	= &psSSRCCtrl->sFIRF1Ctrl.uiNOutSamples;
+				pssrc_ctrl->puiNOutSamples	= &pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
 			else
 				// F1 not in use so set number of output sample pointer to number of input sample field
-				psSSRCCtrl->puiNOutSamples	= &psSSRCCtrl->uiNInSamples;
+				pssrc_ctrl->puiNOutSamples	= &pssrc_ctrl->uiNInSamples;
 		}
 	}
 
 	// Call sync function
-	if(SSRC_sync(psSSRCCtrl) != SSRC_NO_ERROR)
+	if(SSRC_sync(pssrc_ctrl) != SSRC_NO_ERROR)
 		return SSRC_ERROR;
 
 	return SSRC_NO_ERROR;
@@ -312,23 +312,23 @@ SSRCReturnCodes_t				SSRC_init(SSRCCtrl_t* psSSRCCtrl)
 
 // ==================================================================== //
 // Function:		SSRC_sync											//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Syncs the SSRC passed as argument					//
 // ==================================================================== //
-SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl)
+SSRCReturnCodes_t				SSRC_sync(ssrc_ctrl_t* pssrc_ctrl)
 {	
 	// Sync the FIR and PPFIR
-	if(FIR_sync(&psSSRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+	if(FIR_sync(&pssrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
 		return SSRC_ERROR;
-	if(FIR_sync(&psSSRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+	if(FIR_sync(&pssrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
 		return SSRC_ERROR;
-	if(PPFIR_sync(&psSSRCCtrl->sPPFIRF3Ctrl) != FIR_NO_ERROR)
+	if(PPFIR_sync(&pssrc_ctrl->sPPFIRF3Ctrl) != FIR_NO_ERROR)
 		return SSRC_ERROR;
 
 	// Reset random seeds to initial values
-	psSSRCCtrl->psState->uiRndSeed	= psSSRCCtrl->uiRndSeedInit;
+	pssrc_ctrl->psState->uiRndSeed	= pssrc_ctrl->uiRndSeedInit;
 
 	return SSRC_NO_ERROR;
 }
@@ -336,7 +336,7 @@ SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl)
 
 // ==================================================================== //
 // Function:		SSRC_proc											//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Processes the SSRC passed as argument				//
@@ -344,26 +344,26 @@ SSRCReturnCodes_t				SSRC_sync(SSRCCtrl_t* psSSRCCtrl)
 #if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
-SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl)		
+SSRCReturnCodes_t				SSRC_proc(ssrc_ctrl_t* pssrc_ctrl)		
 {
 	// Setup input / output buffers
 	// ----------------------------
-	psSSRCCtrl->sFIRF1Ctrl.piIn			= psSSRCCtrl->piIn;
-	*(psSSRCCtrl->ppiOut)				= psSSRCCtrl->piOut;
+	pssrc_ctrl->sFIRF1Ctrl.piIn			= pssrc_ctrl->piIn;
+	*(pssrc_ctrl->ppiOut)				= pssrc_ctrl->piOut;
 	
 	// F1 and F2 process
 	// -----------------
-	if( SSRC_proc_F1_F2(psSSRCCtrl) != SSRC_NO_ERROR)
+	if( SSRC_proc_F1_F2(pssrc_ctrl) != SSRC_NO_ERROR)
 		return SSRC_ERROR;
 
 	// F3 process
 	// ----------
-	if( SSRC_proc_F3(psSSRCCtrl)	!= SSRC_NO_ERROR)
+	if( SSRC_proc_F3(pssrc_ctrl)	!= SSRC_NO_ERROR)
 		return SSRC_ERROR;	
 
 	// Dither process
 	// --------------
-	if( SSRC_proc_dither(psSSRCCtrl) != SSRC_NO_ERROR)
+	if( SSRC_proc_dither(pssrc_ctrl) != SSRC_NO_ERROR)
 		return SSRC_ERROR;
 
 	return SSRC_NO_ERROR;
@@ -372,38 +372,38 @@ SSRCReturnCodes_t				SSRC_proc(SSRCCtrl_t* psSSRCCtrl)
 
 // ==================================================================== //
 // Function:		SSRC_proc_F1_F2										//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Processes F1 and F2 for a channel					//
 // ==================================================================== //
-SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
+SSRCReturnCodes_t				SSRC_proc_F1_F2(ssrc_ctrl_t* pssrc_ctrl)
 {
-	int*			piIn		= psSSRCCtrl->piIn;
-	int*			piOut		= psSSRCCtrl->piOut;
+	int*			piIn		= pssrc_ctrl->piIn;
+	int*			piOut		= pssrc_ctrl->piOut;
 	unsigned int	ui;
 
 
 	// Check if F1 is disabled, in which case we just copy input to output as all filters are disabled
-	if(psSSRCCtrl->sFIRF1Ctrl.eEnable == FIR_OFF)
+	if(pssrc_ctrl->sFIRF1Ctrl.eEnable == FIR_OFF)
 	{
 		// F1 is not enabled, which means that we are in 1:1 rate, so just copy input to output
-		for(ui = 0; ui < psSSRCCtrl->uiNInSamples * psSSRCCtrl->uiNchannels; ui+= psSSRCCtrl->uiNchannels)
+		for(ui = 0; ui < pssrc_ctrl->uiNInSamples * pssrc_ctrl->uiNchannels; ui+= pssrc_ctrl->uiNchannels)
 			piOut[ui]		= piIn[ui];
 
 		return SSRC_NO_ERROR;
 	}
 
 	// F1 is enabled, so call F1
-	if(psSSRCCtrl->sFIRF1Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF1Ctrl) != FIR_NO_ERROR)
+	if(pssrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
 		return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
 
 
 	// Check if F2 is enabled
-	if(psSSRCCtrl->sFIRF2Ctrl.eEnable == FIR_ON)
+	if(pssrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
 	{
 		// F2 is enabled, so call F2
-		if(psSSRCCtrl->sFIRF2Ctrl.pvProc((int *)&psSSRCCtrl->sFIRF2Ctrl) != FIR_NO_ERROR)
+		if(pssrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
 			return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
 	}
 
@@ -413,19 +413,19 @@ SSRCReturnCodes_t				SSRC_proc_F1_F2(SSRCCtrl_t* psSSRCCtrl)
 
 // ==================================================================== //
 // Function:		SSRC_proc_F3										//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Processes F3 for a channel							//
 // ==================================================================== //
-SSRCReturnCodes_t				SSRC_proc_F3(SSRCCtrl_t* psSSRCCtrl)
+SSRCReturnCodes_t				SSRC_proc_F3(ssrc_ctrl_t* pssrc_ctrl)
 {
 
 	// Check if F3 is enabled
-	if(psSSRCCtrl->sPPFIRF3Ctrl.eEnable == FIR_ON)
+	if(pssrc_ctrl->sPPFIRF3Ctrl.eEnable == FIR_ON)
 	{
 		// F3 is enabled, so call F3
-		if(PPFIR_proc(&psSSRCCtrl->sPPFIRF3Ctrl) != FIR_NO_ERROR)
+		if(PPFIR_proc(&pssrc_ctrl->sPPFIRF3Ctrl) != FIR_NO_ERROR)
 			return SSRC_ERROR;
 	}
 
@@ -435,12 +435,12 @@ SSRCReturnCodes_t				SSRC_proc_F3(SSRCCtrl_t* psSSRCCtrl)
 
 // ==================================================================== //
 // Function:		SSRC_proc_dither									//
-// Arguments:		SSRCCtrl_t 	*psSSRCCtrl: Ctrl strct.				//
+// Arguments:		ssrc_ctrl_t 	*pssrc_ctrl: Ctrl strct.				//
 // Return values:	SSRC_NO_ERROR on success							//
 //					SSRC_ERROR on failure								//
 // Description:		Processes dither for a channel						//
 // ==================================================================== //
-SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
+SSRCReturnCodes_t				SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl)
 {
 	int*			piData;
 	unsigned int	uiR;
@@ -450,15 +450,15 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 
 
 	// Apply dither if required
-	if(psSSRCCtrl->uiDitherOnOff == SSRC_DITHER_ON)
+	if(pssrc_ctrl->uiDitherOnOff == SSRC_DITHER_ON)
 	{
 		// Get data buffer
-		piData	= psSSRCCtrl->piOut;
+		piData	= pssrc_ctrl->piOut;
 		// Get random seed
-		uiR		= psSSRCCtrl->psState->uiRndSeed;
+		uiR		= pssrc_ctrl->psState->uiRndSeed;
 
 		// Loop through samples
-		for(ui = 0; ui < *(psSSRCCtrl->puiNOutSamples) * psSSRCCtrl->uiNchannels; ui += psSSRCCtrl->uiNchannels)
+		for(ui = 0; ui < *(pssrc_ctrl->puiNOutSamples) * pssrc_ctrl->uiNchannels; ui += pssrc_ctrl->uiNchannels)
 		{
 			// Compute dither sample (TPDF)
 			iDither		= SSRC_DITHER_BIAS;
@@ -488,7 +488,7 @@ SSRCReturnCodes_t				SSRC_proc_dither(SSRCCtrl_t* psSSRCCtrl)
 		}
 
 		// Write random seed back
-		psSSRCCtrl->psState->uiRndSeed	= uiR;
+		pssrc_ctrl->psState->uiRndSeed	= uiR;
 	}
 
 	return SSRC_NO_ERROR;

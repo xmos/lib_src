@@ -56,7 +56,7 @@ Typical Resource Usage
 
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; SSRCCtrl_t sSSRCCtrl[2]; SSRCState_t sSSRCState[2]; int iSSRCStack[2][32]; SSRCCtrl_t sSSRCCtrl[2]; 
+    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2]; 
     - ports: 0
     - locals:
     - flags:
@@ -66,9 +66,9 @@ Typical Resource Usage
 The SSRC algorithm runs a series of cascaded FIR filters to perform the rate conversion. This includes interpolation, decimation and bandwidth limiting filters with a final polyphase FIR filter. The last stage supports the rational rate change of 147:160 or 160:147 allowing conversion between 44.1KHz family of sample rates to the 48KHz family of sample rates.
 
 .. tip::
-  The below table shows the worst case MHz consumption per sample, using the minimum block size of 4 input samples with dithering disabled. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
+  The below table shows the worst case MHz consumption at a given sample rate using the minimum block size of 4 input samples with dithering disabled. The MHz requirement can be reduced by around 8-12%, depending on sample rate, by increasing the input block size to 16. It is not usefully reduced by increasing block size beyond 16.
 
-.. list-table:: SSRC Processor Usage per channel (MHz)
+.. list-table:: SSRC Processor Usage per Channel (MHz)
      :header-rows: 1
 
      * - 
@@ -133,7 +133,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 
   * - configuration: ASRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs; ASRCState_t sASRCState[2]; int iASRCStack[2][32]; ASRCCtrl_t sASRCCtrl[2]; iASRCADFIRCoefs_t SiASRCADFIRCoefs;;
+    - globals: int in_buff[4]; int out_buff[20]; asrc_ctrl_t sASRCCtrl[2]; asrc_adfir_coefs_t SiASRCADFIRCoefs; asrc_state_t sASRCState[2]; int asrc_stack[2][32];
     - locals:
     - ports: 0
     - flags:
@@ -147,6 +147,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 
 .. tip::
   Typically you will need to allow for performance headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
+
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
      :header-rows: 1
