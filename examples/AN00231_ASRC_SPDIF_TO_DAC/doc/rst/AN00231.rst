@@ -25,7 +25,7 @@ The arrows between tasks show the direction of data-flow between tasks, be it ov
 
 
 SPDIF Receive to |i2s| using ASRC Demo
-------------------------------------
+--------------------------------------
 
 The Makefile
 ............
@@ -172,7 +172,7 @@ The SPDIF library uses a channel interface to receive samples from the SPDIF rec
    :end-on: void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 
 |i2s| Handler
-...........
+.............
 
 The purpose of the |i2s| handler is to provide samples to |i2s| immediately when required and pull samples from the generic block2serial interface as needed. The interface to the upstream ``block2serial()`` task is a client interface meaning that samples are actively requested. It is a thin task that abstracts the |i2s| interface away from block2serial and can easily be modified for different audio sinks.
 
@@ -399,7 +399,7 @@ The column of four LEDs closest to the analog outputs indicates the sample rate 
 If the buffer level is exactly half, then no LEDs are illuminated in either columns 2 or 3.
 
 Change the |i2s| rate
-...................
+.....................
 
 The rate of the |i2s| interface is initialized to 48000 but can be changed at run-time by pressing button 1. Each press of the button cycles through 44.1KHz -> 48KHz -> 88.2KHz -> 96KHz and wraps back to the beginning.
 
