@@ -1,12 +1,12 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//	
+//    
 // File: IntArithmetic.c
 //
 // Integer arithmetic implementation file for the ASRC
 //
-// Target:	MS Windows
+// Target:    MS Windows
 // Version: 1.0
 //
 // ===========================================================================
@@ -59,69 +59,69 @@
 // ===========================================================================
 
 // ==================================================================== //
-// Function:		MACC												//
-// Description:		32i x 32i -> 64i Multiply-Accumulate				//
+// Function:        MACC                                                //
+// Description:        32i x 32i -> 64i Multiply-Accumulate                //
 // ==================================================================== //
-void	MACC(__int64* plAcc, int ix, int iy)
+void    MACC(__int64* plAcc, int ix, int iy)
 {
-	*plAcc += (__int64)ix * (__int64)iy;
+    *plAcc += (__int64)ix * (__int64)iy;
 }
 
 // ==================================================================== //
-// Function:		LMUL												//
-// Description:		32i x 32i +32i + 32i -> 64i Multiply (and add)		//
+// Function:        LMUL                                                //
+// Description:        32i x 32i +32i + 32i -> 64i Multiply (and add)        //
 // ==================================================================== //
-void	LMUL(__int64* plAcc, int ix, int iy, int ic, int id)
+void    LMUL(__int64* plAcc, int ix, int iy, int ic, int id)
 {
-	*plAcc = (__int64)ix * (__int64)iy;
-	*plAcc += (__int64)ic; 
-	*plAcc += (__int64)id;
-}
-
-
-// ==================================================================== //
-// Function:		LATS30												//
-// Description:		Saturate 64i to 2^62-1, -2^62						//
-// ==================================================================== //
-void	LSAT30(__int64 *plx)
-{
-	if(*plx > MAX_VAL64_30)
-		*plx = MAX_VAL64_30;
-	if(*plx < MIN_VAL64_30)
-		*plx = MIN_VAL64_30;
+    *plAcc = (__int64)ix * (__int64)iy;
+    *plAcc += (__int64)ic; 
+    *plAcc += (__int64)id;
 }
 
 
 // ==================================================================== //
-// Function:		EXT30												//
-// Description:		Extracts bits [62-31] into 32i						//
+// Function:        LATS30                                                //
+// Description:        Saturate 64i to 2^62-1, -2^62                        //
 // ==================================================================== //
-void	EXT30(int *pr, __int64 lx)
+void    LSAT30(__int64 *plx)
 {
-	*pr		= (int)(lx>>31);
+    if(*plx > MAX_VAL64_30)
+        *plx = MAX_VAL64_30;
+    if(*plx < MIN_VAL64_30)
+        *plx = MIN_VAL64_30;
 }
 
 
 // ==================================================================== //
-// Function:		LATS29												//
-// Description:		Saturate 64i to 2^61-1, -2^61						//
+// Function:        EXT30                                                //
+// Description:        Extracts bits [62-31] into 32i                        //
 // ==================================================================== //
-void	LSAT29(__int64 *plx)
+void    EXT30(int *pr, __int64 lx)
 {
-	if(*plx > MAX_VAL64_29)
-		*plx = MAX_VAL64_29;
-	if(*plx < MIN_VAL64_29)
-		*plx = MIN_VAL64_29;
+    *pr        = (int)(lx>>31);
 }
 
 
 // ==================================================================== //
-// Function:		EXT29												//
-// Description:		Extracts bits [61-30] into 32i						//
+// Function:        LATS29                                                //
+// Description:        Saturate 64i to 2^61-1, -2^61                        //
 // ==================================================================== //
-void	EXT29(int *pr, __int64 lx)
+void    LSAT29(__int64 *plx)
 {
-	*pr		= (int)(lx>>30);
+    if(*plx > MAX_VAL64_29)
+        *plx = MAX_VAL64_29;
+    if(*plx < MIN_VAL64_29)
+        *plx = MIN_VAL64_29;
+}
+
+
+// ==================================================================== //
+// Function:        EXT29                                                //
+// Description:        Extracts bits [61-30] into 32i                        //
+// ==================================================================== //
+void    EXT29(int *pr, __int64 lx)
+{
+    *pr        = (int)(lx>>30);
 }
 
 
