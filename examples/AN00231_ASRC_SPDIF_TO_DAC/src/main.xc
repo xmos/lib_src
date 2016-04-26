@@ -5,16 +5,17 @@
 #include <string.h>
 
 //Supporting libraries
-#include <src.h>
-#include <spdif.h>
-#include <i2s.h>
-#include <i2c.h>
-#include <gpio.h>
+#include "src.h"
+#include "spdif.h"
+#include "i2s.h"
+#include "i2c.h"
+#include "gpio.h"
+#include "assert.h"
 
 //Application specific includes
 #include "main.h"
 #include "block_serial.h"
-#include "cs4384_5368.h"
+#include "cs4384_5368.h"    //CODEC setup
 #include "app_config.h"     //General settings
 
 //Debug includes
@@ -25,7 +26,7 @@
 /* These port assignments all correspond to XU216 multichannel audio board 2V0
    The port assignments can be changed for a different port map.
 */
-#define AUDIO_TILE                      0
+#define AUDIO_TILE                         0
 in buffered port:32  ports_i2s_adc[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1I,
                                                      XS1_PORT_1J,
                                                      XS1_PORT_1K,
@@ -41,12 +42,12 @@ out buffered port:32 ports_i2s_dac[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1M,
                                                      XS1_PORT_1P};
 
 
-#define SPDIF_TILE                      1
+#define SPDIF_TILE                         1
 port port_spdif_rx                       = on tile[SPDIF_TILE]: XS1_PORT_1O;
 clock clk_spdif_rx                       = on tile[SPDIF_TILE]: XS1_CLKBLK_1;
 
-out port p_leds_col                      = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
-out port p_leds_row                      = on tile[SPDIF_TILE]: XS1_PORT_4D;
+out port port_leds_col                   = on tile[SPDIF_TILE]: XS1_PORT_4C;     //4x4 LED matrix
+out port port_leds_row                   = on tile[SPDIF_TILE]: XS1_PORT_4D;
 
 port port_i2c                            = on tile[AUDIO_TILE]: XS1_PORT_4A;     //I2C for CODEC configuration
 
@@ -63,7 +64,7 @@ char pin_map_audio_cfg[5]                = {0, 1, 5, 6, 7};
  * 7 MCLK_FSEL
  */
 
-port p_buttons                           = on tile[AUDIO_TILE]: XS1_PORT_4D;     //Buttons and switch
+port port_buttons                        = on tile[AUDIO_TILE]: XS1_PORT_4D;     //Buttons and switch
 char pin_map_buttons[1]                  = {0};                                  //Port map for buttons GPIO task. We are just interested in bit 0
 
 out port port_debug_tile_1               = on tile[SPDIF_TILE]: XS1_PORT_1N;     //MIDI OUT. A good test point to probe..
@@ -71,10 +72,10 @@ out port port_debug_tile_0               = on tile[AUDIO_TILE]: XS1_PORT_1D;    
 
 //Application helper prototypes. For purpose, see comments in implementations below
 [[combinable]] void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in);
-void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
+unsafe void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio);
 [[distributable]] void i2s_handler(server i2s_callback_if i2s, client serial_transfer_pull_if i_serial_out, client audio_codec_config_if i_codec, server buttons_if i_buttons);
 [[combinable]]void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_enquiry_if i_output_rate, server fs_ratio_enquiry_if i_fs_ratio[ASRC_N_INSTANCES], client led_matrix_if i_leds);
-[[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_row, out port p_leds_col);
+[[combinable]]void led_driver(server led_matrix_if i_leds, out port port_leds_row, out port port_leds_col);
 [[combinable]]void button_listener(client buttons_if i_buttons, client input_gpio_if i_button_port);
 
 int main(void){
@@ -99,11 +100,11 @@ int main(void){
             rate_server(i_sr_input, i_sr_output, i_fs_ratio, i_leds);
             spdif_handler(c_spdif_rx, i_serial_in);
             button_listener(i_buttons, i_button_gpio[0]);
-            input_gpio_with_events(i_button_gpio, 1, p_buttons, pin_map_buttons);
+            input_gpio_with_events(i_button_gpio, 1, port_buttons, pin_map_buttons);
         }
 
         on tile[AUDIO_TILE]: serial2block(i_serial_in, i_serial2block, i_sr_input);
-        on tile[AUDIO_TILE]: par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);
+        on tile[AUDIO_TILE]: unsafe{ par (int i=0; i<ASRC_N_INSTANCES; i++) asrc(i_serial2block[i], i_block2serial[i], i_fs_ratio[i]);}
         on tile[AUDIO_TILE]: unsafe { par{[[distribute]] block2serial(i_block2serial, i_serial_out, i_sr_output);}}
 
         on tile[AUDIO_TILE]: audio_codec_cs4384_cs5368(i_codec, i_i2c[0], CODEC_IS_I2S_SLAVE, i_gpio[0], i_gpio[1], i_gpio[3], i_gpio[4]);
@@ -117,7 +118,7 @@ int main(void){
             i2s_master(i_i2s, ports_i2s_dac, 1, ports_i2s_adc, 1, port_i2s_bclk, port_i2s_wclk, clk_i2s, clk_mclk);
         }
         on tile[AUDIO_TILE]: [[distribute]] i2s_handler(i_i2s, i_serial_out, i_codec, i_buttons);
-        on tile[SPDIF_TILE]: led_driver(i_leds, p_leds_row, p_leds_col);
+        on tile[SPDIF_TILE]: led_driver(i_leds, port_leds_row, port_leds_col);
 
     }
     return 0;
@@ -164,76 +165,77 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
     case 192000:
         samp_code = FS_CODE_192;
         break;
+    default:
+        assert(0 && "Invalid sample rate");
+        break;
     }
     return samp_code;
 }
 
 //The ASRC processing task - has it's own logical core to reserve processing MHz
-unsafe{
-    void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
-    {
-        int input_dbl_buf[2][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES];  //Double buffers for to block/serial tasks
-        unsigned buff_idx = 0;
-        int * unsafe asrc_input = input_dbl_buf[0]; //pointer for ASRC input buffer
-        int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
+unsafe void asrc(server block_transfer_if i_serial2block, client block_transfer_if i_block2serial, client fs_ratio_enquiry_if i_fs_ratio)
+{
+    int input_dbl_buf[2][ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES];  //Double buffers for to block/serial tasks
+    unsigned buff_idx = 0;
+    int * unsafe asrc_input = input_dbl_buf[0]; //pointer for ASRC input buffer
+    int * unsafe p_out_fifo;                    //C-style pointer for output FIFO
 
-        p_out_fifo = i_block2serial.push(0);        //Get pointer to initial write buffer
+    p_out_fifo = i_block2serial.push(0);        //Get pointer to initial write buffer
 
-        set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
+    set_core_high_priority_on();                //Give me guarranteed 1/5 of the processor clock i.e. 100MHz
 
-        fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
-        fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
+    fs_code_t in_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_SPDIF);  //Sample rate code 0..5
+    fs_code_t out_fs_code = samp_rate_to_code(DEFAULT_FREQ_HZ_I2S);
 
-        asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
-        int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
-        asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
-        asrc_adfir_coefs_t asrc_adfir_coefs;                     //Adaptive filter coefficients
+    asrc_state_t     asrc_state[ASRC_CHANNELS_PER_INSTANCE]; //ASRC state machine state
+    int              asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES]; //Buffer between filter stages
+    asrc_ctrl_t      asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];  //Control structure
+    asrc_adfir_coefs_t asrc_adfir_coefs;                     //Adaptive filter coefficients
 
-        for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
-        unsafe {
-            //Set state, stack and coefs into ctrl structure
-            asrc_ctrl[ui].psState                   = &asrc_state[ui];
-            asrc_ctrl[ui].piStack                   = asrc_stack[ui];
-            asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
+    for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
+    unsafe {
+        //Set state, stack and coefs into ctrl structure
+        asrc_ctrl[ui].psState                   = &asrc_state[ui];
+        asrc_ctrl[ui].piStack                   = asrc_stack[ui];
+        asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
+    }
+
+    //Initialise ASRC
+    unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+
+    int do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
+
+    while(1){
+        select{
+            case i_serial2block.push(const unsigned n_samps) -> int * unsafe new_buff_ptr:
+                asrc_input = input_dbl_buf[buff_idx];   //Grab address of freshly filled buffer
+                do_dsp_flag = 1;                        //We have a fresh buffer to process
+                buff_idx ^= 1;                          //Flip double buffer for filling
+                new_buff_ptr = input_dbl_buf[buff_idx]; //Return pointer for serial2block to fill
+            break;
+
+            case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
+                in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
+                out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
+                debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
+                nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+            break;
+
+            do_dsp_flag => default:      //Do the sample rate conversion
+                //port_debug <: 1;                     //debug
+                unsigned n_samps_out;
+                fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
+
+                //Run the ASRC and pass pointer of output to block2serial
+                n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, asrc_ctrl);
+                p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
+
+                do_dsp_flag = 0;                        //Clear flag and wait for next input block
+                //port_debug <: 0;                     //debug
+                break;
         }
-
-        //Initialise ASRC
-        unsigned nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
-
-        unsigned do_dsp_flag = 0;                   //Flag to indiciate we are ready to process. Minimises blocking on push case below
-
-        while(1){
-            select{
-                case i_serial2block.push(const unsigned n_samps) -> int * unsafe new_buff_ptr:
-                    asrc_input = input_dbl_buf[buff_idx];   //Grab address of freshly filled buffer
-                    do_dsp_flag = 1;                        //We have a fresh buffer to process
-                    buff_idx ^= 1;                          //Flip double buffer for filling
-                    new_buff_ptr = input_dbl_buf[buff_idx]; //Return pointer for serial2block to fill
-                break;
-
-                case i_fs_ratio.new_sr_notify():            //Notification from SR manager that we need to initialise ASRC
-                    in_fs_code = samp_rate_to_code(i_fs_ratio.get_in_fs());         //Get the new SRs
-                    out_fs_code = samp_rate_to_code(i_fs_ratio.get_out_fs());
-                    debug_printf("New rate in SRC in=%d, out=%d\n", in_fs_code, out_fs_code);
-                    nominal_fs_ratio = asrc_init(in_fs_code, out_fs_code, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
-                break;
-
-                do_dsp_flag => default:      //Do the sample rate conversion
-                    //port_debug <: 1;                     //debug
-                    unsigned n_samps_out;
-                    fs_ratio_t fs_ratio = i_fs_ratio.get_ratio(nominal_fs_ratio); //Find out how many samples to produce
-
-                    //Run the ASRC and pass pointer of output to block2serial
-                    n_samps_out = asrc_process((int *)asrc_input, (int *)p_out_fifo, fs_ratio, asrc_ctrl);
-                    p_out_fifo = i_block2serial.push(n_samps_out);   //Get pointer to next write buffer
-
-                    do_dsp_flag = 0;                        //Clear flag and wait for next input block
-                    //port_debug <: 0;                     //debug
-                    break;
-            }
-        }//While 1
-    }//asrc
-} //unsafe
+    }//While 1
+}//asrc
 
 #define MUTE_MS_AFTER_SR_CHANGE   350    //350ms. Avoids incorrect rate playing momentarily while new rate is detected
 
@@ -520,11 +522,11 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
 
 //Task that drives the multiplexed 4x4 display on the xCORE-200 MC AUDIO board. Very low performance requirements so can be combined
 #define LED_SCAN_TIME   200100   //2ms - How long each column is displayed. Any more than this and you start to see flicker
-[[combinable]]void led_driver(server led_matrix_if i_leds, out port p_leds_col, out port p_leds_row){
+[[combinable]]void led_driver(server led_matrix_if i_leds, out port port_leds_col, out port port_leds_row){
     unsigned col_frame_buffer[4] = {0xf, 0xf, 0xf, 0xf};  //4 x 4 bitmap frame buffer scanning from left to right
                                                           //Active low drive hence initialise to 0b1111
     unsigned col_idx = 0;                                 //Index for above
-    unsigned col_sel = 0x1;                               //Column select 0x8 -> 0x4 -> 0x2 -> 0x1
+    unsigned col_sel = 0x1;                               //Column select 0x1 -> 0x2 -> 0x4 -> 0x8
     timer t_scan;
     int scan_time_trigger;
 
@@ -534,8 +536,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
         select{
             //Scan through 4 columns and output bitmap for each
             case t_scan when timerafter(scan_time_trigger + LED_SCAN_TIME) :> scan_time_trigger:
-                p_leds_col <: col_sel;
-                p_leds_row <: col_frame_buffer[col_idx];
+                port_leds_col <: col_sel;
+                port_leds_row <: col_frame_buffer[col_idx];
                 col_idx = (col_idx + 1) & 0x3;
                 col_sel = col_sel << 1;
                 if(col_sel > 0x8) col_sel = 0x1;
@@ -566,16 +568,16 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
     timer t_debounce;
     int t_debounce_time;
     unsigned debounce_counter = 0;  //Counts debounce sequence has started
-    unsigned button_release = 0;    //Flag showing we hav just had a press and aree waiting to start again
+    int button_released_flag = 0;   //Flag showing we have just had a press and are waiting to start again
 
     i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //setup button event
 
     while(1){
         select{
-            case i_button_port.event(): //The button has reached the expected value
-                if (button_release){    //If being released
+            case i_button_port.event():       //The button has reached the expected value
+                if (button_released_flag){    //If being released
                     i_button_port.event_when_pins_eq(BUTTON_PRESSED_VAL); //Setup event for being pressed
-                    button_release = 0;
+                    button_released_flag = 0;
                     break;
                 }
                 debounce_counter = DEBOUNCE_SAMPLES;    //Kick off debounce sequence
@@ -590,8 +592,8 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                     break;
                 }
                 debounce_counter--;
-                if (debounce_counter == 0){                 //We have seen n samples the same, so button is pressed
-                    button_release = 1;
+                if (debounce_counter == 0){                 //We have seen DEBOUNCE_SAMPLES samples the same, so button is pressed
+                    button_released_flag = 1;
                     i_button_port.event_when_pins_eq(BUTTON_NOT_PRESSED_VAL);   //setup event for button released
                     i_buttons.pressed();                                        //Send button pressed message
                 }
