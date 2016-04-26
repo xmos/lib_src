@@ -8,7 +8,7 @@ Overview
 Introduction
 ............
 
-The XMOS Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two clock domains which are not synchronized. The ASRC library itself is a function call that operates on blocks of samples whereas the SPDIF and I2S peripheral libraries provide streaming audio one sample at a time. To fit the ASRC between two audio streaming components requires a software framework that provides buffering and a precise rate difference calculation.
+The XMOS Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two clock domains which are not synchronized. The ASRC library itself is a function call that operates on blocks of samples whereas the SPDIF and |i2s| peripheral libraries provide streaming audio one sample at a time. To fit the ASRC between two audio streaming components requires a software framework that provides buffering and a precise rate difference calculation.
 
 
 Block Diagram
@@ -19,12 +19,12 @@ Block Diagram
 
    Application Task Diagram
 
-The application uses a number of tasks to send and receive audio samples, convert from serial (streaming) samples to block buffers, time-stamp and monitor the stream rates and of course perform the sample rate conversion. In addition, there are a number of control tasks to complete the application including configuration of the codecs via I2C and GPIO, reading and de-bouncing of the button and displaying information via a matrix of 4 x 4 multiplexed LEDs. 
+The application uses a number of tasks to send and receive audio samples, convert from serial (streaming) samples to block buffers, time-stamp and monitor the stream rates and of course perform the sample rate conversion. In addition, there are a number of control tasks to complete the application including configuration of the codecs via |i2c| and GPIO, reading and de-bouncing of the button and displaying information via a matrix of 4 x 4 multiplexed LEDs. 
 
 The arrows between tasks show the direction of data-flow between tasks, be it over interfaces or channels. Note that this is not always the same as whether a task communication role is client or server. The roles of the task communications are described later in this application note. 
 
 
-SPDIF Receive to I2S using ASRC Demo
+SPDIF Receive to |i2s| using ASRC Demo
 ------------------------------------
 
 The Makefile
@@ -34,7 +34,7 @@ To start using the ASRC, you need to add ``lib_src`` to your Makefile::
 
   USED_MODULES = ... lib_src ...
 
-This demo also uses the I2C library (``lib_i2c``), the GPIO library (``lib_gpio``), I2S and SPDIF libraries (``lib_i2s``, ``lib_spdif``) and the logging library (``lib_logging``) to provide a lightweight version of printf(). The GPIO library abstracts the use of an 8-bit port to drive individual reset and select lines, as well as a 4-bit port for reading the buttons. The SPDIF library provides the source of audio samples, with encoded clock, from the SPDIF receive digital input. The I2S library provides an audio sink using I2S output to drive a DAC.
+This demo also uses the |i2c| library (``lib_i2c``), the GPIO library (``lib_gpio``), |i2s| and SPDIF libraries (``lib_i2s``, ``lib_spdif``) and the logging library (``lib_logging``) to provide a lightweight version of printf(). The GPIO library abstracts the use of an 8-bit port to drive individual reset and select lines, as well as a 4-bit port for reading the buttons. The SPDIF library provides the source of audio samples, with encoded clock, from the SPDIF receive digital input. The |i2s| library provides an audio sink using |i2s| output to drive a DAC.
 
 So the Makefile also includes the following modules::
 
@@ -64,7 +64,7 @@ The are four application includes which have the following purposes. ``block_ser
    :start-on: include "main.h"
    :end-on: include "app_config.h"
 
-The header file ``app_config.h`` contains defines that are used to configure the application settings including the number of channels, ASRC input block size and maximum input to output ratio (used for defining buffer sizes) and number of logical cores used to carry out the ASRC processing. It also includes information about the local MCLK frequencies used for driving the I2S interface. Note that no MCLK information is required for SPDIF receive because the received samples are timestamped which allows the application to recover the precise sample rate directly.
+The header file ``app_config.h`` contains defines that are used to configure the application settings including the number of channels, ASRC input block size and maximum input to output ratio (used for defining buffer sizes) and number of logical cores used to carry out the ASRC processing. It also includes information about the local MCLK frequencies used for driving the |i2s| interface. Note that no MCLK information is required for SPDIF receive because the received samples are timestamped which allows the application to recover the precise sample rate directly.
 
 .. literalinclude:: app_config.h
    :start-on: define     ASRC_N_CHANNELS
@@ -82,13 +82,13 @@ In the case of SPDIF receive, it needs only a single 1-bit port and clock block.
    :end-on: clock clk_spdif_rx
 
 
-I2S requires multiple 1-bit ports for MCLK input, BCLK output, LRCLK output and DATA, as well as two clock blocks for managing MCLK and BCLK. 
+|i2s| requires multiple 1-bit ports for MCLK input, BCLK output, LRCLK output and DATA, as well as two clock blocks for managing MCLK and BCLK. 
 
 .. literalinclude:: main.xc
    :start-on: #define AUDIO_TILE
    :end-on: XS1_PORT_1P};
 
-To support human input and visual output from within the application further I/O ports are declared which map to the buttons and LEDs on the hardware. In addition, there is an 8-bit output port which controls the reset pins configures the clocking modes on the board. Together with configuration via I2C, this allows the DAC and ADC to be setup as required for the application.
+To support human input and visual output from within the application further I/O ports are declared which map to the buttons and LEDs on the hardware. In addition, there is an 8-bit output port which controls the reset pins configures the clocking modes on the board. Together with configuration via |i2c|, this allows the DAC and ADC to be setup as required for the application.
 
 .. literalinclude:: main.xc
    :start-on: out port port_leds_col
@@ -125,7 +125,7 @@ The rest of the ``main`` function starts all the tasks in parallel using the xC 
    :end-on: return 0
 
 
-This code starts all of the tasks in parallel. Note that each task has an ``on tile[]`` placement directive which maps that particular task to a tile. For example, the I2S task must run on the tile to which the DAC is connected on the hardware.
+This code starts all of the tasks in parallel. Note that each task has an ``on tile[]`` placement directive which maps that particular task to a tile. For example, the |i2s| task must run on the tile to which the DAC is connected on the hardware.
 
 
 .. tip::
@@ -142,9 +142,9 @@ This code starts all of the tasks in parallel. Note that each task has an ``on t
 Audio Source and Sink
 .....................
 
-The ASRC allows two audio clock domains to be bridged. In order to effectively demonstrate this, SPDIF receive was chosen as the audio source because it is synchronized to the clock of the SPDIF transmitter, which is external to the hardware used. The I2S audio output has it's own local clock driven by a crystal source on the xCORE-200 Multichannel Audio Platform.
+The ASRC allows two audio clock domains to be bridged. In order to effectively demonstrate this, SPDIF receive was chosen as the audio source because it is synchronized to the clock of the SPDIF transmitter, which is external to the hardware used. The |i2s| audio output has it's own local clock driven by a crystal source on the xCORE-200 Multichannel Audio Platform.
 
-The usage and operation of the SPDIF and I2S functions is described in the associated documentation for those libraries.
+The usage and operation of the SPDIF and |i2s| functions is described in the associated documentation for those libraries.
 
 
 Configuring audio codecs
@@ -159,7 +159,7 @@ Two audio codecs are used on the xCORE-200 Multichannel Audio Platform. A Cirrus
 .. tip::
    If you are porting this application to a different xCORE development board then this is the function that will have to be modified to configure the relevant codecs for that board.
 
-The usage and operation of I2C and GPIO functions is described in the associated documentation for those libraries.
+The usage and operation of |i2c| and GPIO functions is described in the associated documentation for those libraries.
 
 
 SPDIF Handler
@@ -171,16 +171,16 @@ The SPDIF library uses a channel interface to receive samples from the SPDIF rec
    :start-after: [[combinable]] //Run on same core as other tasks if possible
    :end-on: void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if i_serial_in)
 
-I2S Handler
+|i2s| Handler
 ...........
 
-The purpose of the I2S handler is to provide samples to I2S immediately when required and pull samples from the generic block2serial interface as needed. The interface to the upstream ``block2serial()`` task is a client interface meaning that samples are actively requested. It is a thin task that abstracts the I2S interface away from block2serial and can easily be modified for different audio sinks.
+The purpose of the |i2s| handler is to provide samples to |i2s| immediately when required and pull samples from the generic block2serial interface as needed. The interface to the upstream ``block2serial()`` task is a client interface meaning that samples are actively requested. It is a thin task that abstracts the |i2s| interface away from block2serial and can easily be modified for different audio sinks.
 
 .. literalinclude:: main.xc
-   :start-after: pragma unsafe arrays   //Performance optimisation of i2s_handler task
-   :end-on: void i2s_handler(
+   :start-after: pragma unsafe arrays   //Performance optimisation of |i2s|_handler task
+   :end-on: void |i2s|_handler(
 
-In addition, the I2S handler calls a method in the ``i_codec`` client interface to request reconfiguration of the hardware on a sample rate change event. It also listens on the ``i_buttons`` server side interface to see when a change in sample rate is requested via user input, and restarts the I2S component at the new sample rate.
+In addition, the |i2s| handler calls a method in the ``i_codec`` client interface to request reconfiguration of the hardware on a sample rate change event. It also listens on the ``i_buttons`` server side interface to see when a change in sample rate is requested via user input, and restarts the |i2s| component at the new sample rate.
 
 
 Serial to Block
@@ -334,7 +334,7 @@ demo:
    :scale: 100%
    :align: center
 
-   Hardware setup for XMOS SPDIF to I2S using ASRC
+   Hardware setup for XMOS SPDIF to |i2s| using ASRC
 
 |newpage|
 
@@ -359,7 +359,7 @@ The audio from the SPDIF input should now be playing on channels 1/2 of the DAC 
 LED Indicators
 ..............
 
-The column of four LEDs closest to the analog outputs indicates the sample rate of I2S. The column closest the crystal indicates the sample rate of the received SPDIF stream. The two columns in between show the current buffer fill level, where zero indicates exactly half full (the target level). The table below provides further detail of the LED meanings.
+The column of four LEDs closest to the analog outputs indicates the sample rate of |i2s|. The column closest the crystal indicates the sample rate of the received SPDIF stream. The two columns in between show the current buffer fill level, where zero indicates exactly half full (the target level). The table below provides further detail of the LED meanings.
 
 .. list-table:: LED Indicator meaning
      :header-rows: 2
@@ -375,22 +375,22 @@ The column of four LEDs closest to the analog outputs indicates the sample rate 
        - 3
        - 4
      * - 4
-       - I2S >= 96KHz
+       - |i2s| >= 96KHz
        - Buffer > 12 samples
        - Buffer > 6 samples
        - SPDIF >= 96KHz
      * - 3
-       - I2S >= 88.2KHz
+       - |i2s| >= 88.2KHz
        - N/A
        - Buffer > 0 samples
        - SPDIF >= 88.2KHz 
      * - 2
-       - I2S >= 48KHz
+       - |i2s| >= 48KHz
        - N/A
        - Buffer < 0 samples
        - SPDIF >= 44.1KHz
      * - 1
-       - I2S >= 44.1KHz
+       - |i2s| >= 44.1KHz
        - Buffer < -12 samples
        - Buffer < -6 samples
        - SPDIF >= 44.1KHz
@@ -398,12 +398,12 @@ The column of four LEDs closest to the analog outputs indicates the sample rate 
 
 If the buffer level is exactly half, then no LEDs are illuminated in either columns 2 or 3.
 
-Change the I2S rate
+Change the |i2s| rate
 ...................
 
-The rate of the I2S interface is initialized to 48000 but can be changed at run-time by pressing button 1. Each press of the button cycles through 44.1KHz -> 48KHz -> 88.2KHz -> 96KHz and wraps back to the beginning.
+The rate of the |i2s| interface is initialized to 48000 but can be changed at run-time by pressing button 1. Each press of the button cycles through 44.1KHz -> 48KHz -> 88.2KHz -> 96KHz and wraps back to the beginning.
 
-A mute function is included to output zero samples from the point of an I2S rate change for a fixed number of sample cycles. This prevents old samples being outputted during the period when ``rate_server()`` detects a change in frequency and re-configures the ASRC.
+A mute function is included to output zero samples from the point of an |i2s| rate change for a fixed number of sample cycles. This prevents old samples being outputted during the period when ``rate_server()`` detects a change in frequency and re-configures the ASRC.
 
 
 |newpage|
@@ -421,11 +421,11 @@ References
 
    http://www.xmos.com/published/xmos-programming-guide
 
- * XMOS I2S/TDM Library
+ * XMOS |i2s|/TDM Library
 
    http://www.xmos.com/support/libraries/lib_i2s
 
- * XMOS I2C Library
+ * XMOS |i2c| Library
 
    http://www.xmos.com/support/libraries/lib_i2c
 

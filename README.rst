@@ -1,6 +1,10 @@
 Sample Rate Conversion Library
 ==============================
 
+.. |i2s| replace:: I |-| :sup:`2` |-| S
+.. |i2c| replace:: I |-| :sup:`2` |-| C
+
+
 .. rheader::
 
    Sample Rate Conversion Library |version|
@@ -44,7 +48,7 @@ Related application notes
 The following application notes use this library:
 
     * AN00230 - [Adding Synchronous Sample Rate Conversion to the USB Audio reference design]
-    * AN00231 - [SPDIF receive to I2S output using Asynchronous Sample Rate Conversion]
+    * AN00231 - [SPDIF receive to |i2s| output using Asynchronous Sample Rate Conversion]
 
 
 |newpage|
