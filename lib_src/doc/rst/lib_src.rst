@@ -37,17 +37,18 @@ For the case of SSRC, the following state structures are required::
     ssrc_state_t     ssrc_state[SSRC_CHANNELS_PER_INSTANCE];
     //Buffers between processing stages
     int              ssrc_stack[SSRC_CHANNELS_PER_INSTANCE][SSRC_STACK_LENGTH_MULT * SSRC_N_IN_SAMPLES];
-    //SSRC Control structure  
+    //SSRC Control structure
     ssrc_ctrl_t      ssrc_ctrl[SSRC_CHANNELS_PER_INSTANCE];
+
 
 For the ASRC, the state structures must be declared. Note that only one instance of the filter coefficients need be declared because these are shared amongst channels within the instance::
 
     //ASRC state
-    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];     //Buffers between filter stages                                    
+    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];                                  
     int                asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
     //Control structure
     asrc_ctrl_t        asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];
-    //Adaptive filter coefficients  
+    //Adaptive filter coefficients
     asrc_adfir_coefs_t asrc_adfir_coefs;                                                                 
 
 Processing
@@ -68,9 +69,9 @@ In the case of ASRC, additionally a fractional frequency ratio is supplied::
 
     unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[])
 
-The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1KHz and the output rate is 192KHz then a sample rate conversion of one sample input may contain up to 5 output samples.
+The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1KHz and the output rate is 192KHz then a sample rate conversion of one sample input may produce up to 5 output samples.
 
-The fractional number of samples produced to be carried to the next operation are stored internally inside the control structure, and additional whole samples are added during subsequent calls to the sample rate converter.
+The fractional number of samples produced to be carried to the next operation is stored internally inside the control structure, and additional whole samples are added during subsequent calls to the sample rate converter as necessary.
 
 For example, a sample rate conversion from 44.1KHz to 48KHz with a input block size of 4 will produce a 4 sample result with a 5 sample result approximately every third call. 
 
@@ -83,7 +84,7 @@ If the word clocks are derived from separate oscillators, or are not synchronous
 Buffer Formats
 ..............
 
-The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``. The ordering of sample indicies is 0 representing the oldest number and ``n - 1``, where n is the buffer size, representing the newest sample.
+The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``. The ordering of sample indicies is 0 representing the oldest sample and ``n - 1``, where n is the buffer size, representing the newest sample.
 
 In the case where two channels are handled by a single SRC instance, you can see that the samples are interleaved into a single buffer of size 8.
 
@@ -126,7 +127,7 @@ The performance of the SSRC library is as follows:
  * THD+N (1kHz, 0dBFs): better than -130dB, depending on the accuracy of the ratio estimation
  * SNR:   140dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
-The performance was analyzed by converting output test files to 32 bits integer .wav files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
+The performance was analyzed by converting output test files to 32 bits integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
 
 Below are a series FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
 
@@ -154,7 +155,7 @@ The performance of the SSRC library is as follows:
  * THD+N: (1kHz, 0dBFs): better than -130dB 
  * SNR:   135dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
-The performance was analyzed by converting output test files to 32 bits integer .wav files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
+The performance was analyzed by converting output test files to 32 bits integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
 
 Below are a series FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
 
@@ -493,7 +494,7 @@ SSRC API
 
 All public SSRC functions are prototyped within the ``src.h`` header::
 
-  #include <src.h>
+  #include "src.h"
 
 Please ensure that you have reviewed the settings within ``src_config.h`` and they are correct for your application. The default settings allow for any input/output ratio between 44.1KHz and 192KHz.
 

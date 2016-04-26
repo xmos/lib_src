@@ -10,7 +10,7 @@ Overview
 
 The XMOS Sample Rate Conversion (SRC) library provides both synchronous and asynchronous audio sample rate conversion functions for use on xCORE-200 multicore micro-controllers.
 
-In systems where the rate change is exactly equal to the ratio of nominal rates, synchronous sample rate conversion (SSRC) provides efficient and high performance rate conversion. Where the input and output rates are not locked by a common clock or clocks by an exact rational frequency ratio, the Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
+In systems where the rate change is exactly equal to the ratio of nominal rates, synchronous sample rate conversion (SSRC) provides efficient and high performance rate conversion. Where the input and output rates are not locked by a common clock or clocked by an exact rational frequency ratio, the Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two different clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where the are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
 
 Features
 ........
@@ -24,7 +24,7 @@ Features
  * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
  * Configurable number of audio channels per SRC instance
  * Reentrant library permitting multiple instances with differing configurations and channel count
- * No external PLL required
+ * No external components (PLL or memory) required
 
 Components
 ..........
@@ -146,7 +146,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
   The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
 
 .. tip::
-  Typically you will need to allow for headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
+  Typically you will need to allow for performance headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
 
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
