@@ -23,9 +23,9 @@
 #include <xscope.h>
 
 
-/* These port assignments all correspond to XU216 multichannel audio board 2V0
-   The port assignments can be changed for a different port map.
-*/
+//These port assignments all correspond to XU216 multichannel audio board 2V0
+//The port assignments can be changed for a different port map.
+
 #define AUDIO_TILE                       0
 in buffered port:32  ports_i2s_adc[4]    = on tile[AUDIO_TILE]: {XS1_PORT_1I,
                                                      XS1_PORT_1J,
@@ -164,9 +164,6 @@ static fs_code_t samp_rate_to_code(unsigned samp_rate){
         break;
     case 192000:
         samp_code = FS_CODE_192;
-        break;
-    default:
-        assert(0 && "Invalid sample rate");
         break;
     }
     return samp_code;
@@ -454,7 +451,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 i2s_info.status   = i2s_status_new;
 
 #define BUFFER_LEVEL_TERM   20000   //How much to apply the buffer level feedback term (effectively 1/I term)
-#define OLD_VAL_WEIGHTING   5      //Simple low pass filter. Set proportion of old value to carry over
+#define OLD_VAL_WEIGHTING   5       //Simple low pass filter. Set proportion of old value to carry over
 
 
                 //Calculate fs_ratio to tell asrc how many samples to produce in 4.28 fixed point format
@@ -512,7 +509,7 @@ void rate_server(client sample_rate_enquiry_if i_spdif_rate, client sample_rate_
                 debug_printf("spdif rate ave=%d, valid=%d, i2s rate=%d, valid=%d, i2s_buff=%d, fs_ratio=0x%x, nom_fs=0x%x\n",
                         spdif_info.current_rate >> SR_FRAC_BITS, spdif_info.status,
                         i2s_info.current_rate >> SR_FRAC_BITS, i2s_info.status,
-                        (signed)i2s_buff_level - (OUT_FIFO_SIZE / 2), fs_ratio, fs_ratio_nominal);
+                        (signed)i2s_buff_level - (i2s_buff_size / 2), fs_ratio, fs_ratio_nominal);
 #endif
             break;
         }
