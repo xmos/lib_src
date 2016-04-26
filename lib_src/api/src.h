@@ -25,8 +25,8 @@ typedef enum dither_flag_t {
 } dither_flag_t;
 
    /** Initialises synchronous sample rate conversion instance.
-   *  \param   sr_in                    Nominal sample rate of input stream in Hz
-   *  \param   sr_out                   Nominal sample rate of output stream in Hz
+   *  \param   sr_in                    Nominal sample rate code of input stream
+   *  \param   sr_out                   Nominal sample rate code of output stream
    *  \param   ssrc_ctrl                Reference to array of SSRC control stuctures
    *  \param   n_channels_per_instance  Number of channels handled by this instance of SSRC
    *  \param   n_in_samples             Number of input samples per SSRC call
@@ -46,8 +46,8 @@ unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
 
    /** Initialises asynchronous sample rate conversion instance.
    * 
-   *  \param   sr_in           Nominal sample rate of input stream in Hz
-   *  \param   sr_out          Nominal sample rate of output stream in Hz
+   *  \param   sr_in           Nominal sample rate code of input stream
+   *  \param   sr_out          Nominal sample rate code of output stream
    *  \param   asrc_ctrl       Reference to array of ASRC control structures
    *  \param   n_channels_per_instance  Number of channels handled by this instance of SSRC
    *  \param   n_in_samples             Number of input samples per SSRC call

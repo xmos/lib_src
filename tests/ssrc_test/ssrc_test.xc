@@ -200,17 +200,17 @@ void dsp_mgr(chanend c_dsp[]){
 
 void ShowUsage()
 {
-	puts(
-		"Usage: xsim ssrc_simple.xe <args>\n\n"
-		"         -i     Q1.31 line separated format input file names (eg. -i in_l.dat in_r.dat)\n\n"
-		"         -o     Q1.31 line separated format output file names (eg. -o out_l.dat out_r.dat)\n\n"
-		"         -h     Show this usage message and abort\n\n"
-		"         -f     Input sample rate (44100 - 192000)\n\n"
-		"         -g     Output sample rate (44100 - 192000)\n\n"
-		"         -n     Number of input samples (all channels) to process\n\n"
-		);
-	
-	exit(0);
+    puts(
+        "Usage: xsim ssrc_simple.xe <args>\n\n"
+        "         -i     Q1.31 line separated format input file names (eg. -i in_l.dat in_r.dat)\n\n"
+        "         -o     Q1.31 line separated format output file names (eg. -o out_l.dat out_r.dat)\n\n"
+        "         -h     Show this usage message and abort\n\n"
+        "         -f     Input sample rate (44100 - 192000)\n\n"
+        "         -g     Output sample rate (44100 - 192000)\n\n"
+        "         -n     Number of input samples (all channels) to process\n\n"
+        );
+    
+    exit(0);
 }
 
 //Helper function for converting SR to index value

@@ -55,7 +55,7 @@ void dsp_slave(chanend c_dsp)
     timer t;
     unsigned t1=0,t2=0,t_dsp=0;
 
-    unsigned int    n_samps_out = 0;	//number of samples produced by last call to ASRC
+    unsigned int    n_samps_out = 0;    //number of samples produced by last call to ASRC
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through ASRC
     unsigned int    FsRatio = ASRC_NOMINAL_FS_SCALE; //Deviation between in Fs and out Fs
 
@@ -71,11 +71,11 @@ void dsp_slave(chanend c_dsp)
      // Update Fs Ratio
     for(int i = 0; i < ASRC_N_CHANNELS; i++)
     {
-	// Make Fs Ratio deviate
-	asrc_ctrl[i].uiFsRatio		= (unsigned int)(asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
+    // Make Fs Ratio deviate
+    asrc_ctrl[i].uiFsRatio        = (unsigned int)(asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
         if(ASRC_update_fs_ratio(&asrc_ctrl[i]) != ASRC_NO_ERROR)
         {
-      	    printf("Error updating ASRC fs ratio\n");
+              printf("Error updating ASRC fs ratio\n");
         }
     }
 */
@@ -85,7 +85,7 @@ void dsp_slave(chanend c_dsp)
     while(1){
         t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
-	int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
+    int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
         if (n_samps_in_tot) printf("proc time chan=%d, In sample period=%d, Thread util=%d%%, Tot samp in count=%d\n",
            (t_dsp / (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
 
@@ -95,8 +95,8 @@ void dsp_slave(chanend c_dsp)
         for(unsigned i=0; i<ASRC_N_IN_SAMPLES; i++) {
             unsigned tmp;
             for (unsigned j=0; j<ASRC_CHANNELS_PER_INSTANCE; j++) {
-            	c_dsp :> tmp;
-            	in_buff[i*ASRC_CHANNELS_PER_INSTANCE + j] = tmp;
+                c_dsp :> tmp;
+                in_buff[i*ASRC_CHANNELS_PER_INSTANCE + j] = tmp;
                 //printf("n_samp=%d chan=%d, tmp=%d\n", i, j, tmp);
             }
         }
@@ -109,7 +109,7 @@ void dsp_slave(chanend c_dsp)
         {
             unsigned tmp;
             for (unsigned j=0; j<ASRC_CHANNELS_PER_INSTANCE; j++) {
-            	tmp = out_buff[uj*ASRC_CHANNELS_PER_INSTANCE + j];
+                tmp = out_buff[uj*ASRC_CHANNELS_PER_INSTANCE + j];
                 c_dsp <: tmp;
             }
         }
@@ -180,8 +180,8 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
                 }
                 c_dsp[j] <: samp;       //Send the sample
             }            
-	    }
-		count_in += ASRC_N_IN_SAMPLES; 
+        }
+        count_in += ASRC_N_IN_SAMPLES; 
 
 
         unsigned n_samps;
@@ -199,7 +199,7 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
                 c_dsp[j] :> samp; //Get samples
                 if(fprintf(OutFileDat[file_index], "%i\n", samp) < 0)
                     printf("Error while writing to output file\n");
-	        }
+            }
         }
 
         count_out += n_samps;
@@ -222,17 +222,17 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
 
 void ShowUsage()
 {
-	puts(
-		"Usage: xsim --args asrc_simple.xe <args>\n\n"
-		"         -i     Q1.31 line separated format input file names (eg. -i in_l.dat in_r.dat)\n\n"
-		"         -o     Q1.31 line separated format output file names (eg. -o out_l.dat out_r.dat)\n\n"
-		"         -h     Show this usage message and abort\n\n"
-		"         -f     Input sample rate (44100 - 192000)\n\n"
-		"         -g     Output sample rate (44100 - 192000)\n\n"
-		"         -n     Number of input samples (all channels) to process\n\n"
-		);
-	
-	exit(0);
+    puts(
+        "Usage: xsim --args asrc_simple.xe <args>\n\n"
+        "         -i     Q1.31 line separated format input file names (eg. -i in_l.dat in_r.dat)\n\n"
+        "         -o     Q1.31 line separated format output file names (eg. -o out_l.dat out_r.dat)\n\n"
+        "         -h     Show this usage message and abort\n\n"
+        "         -f     Input sample rate (44100 - 192000)\n\n"
+        "         -g     Output sample rate (44100 - 192000)\n\n"
+        "         -n     Number of input samples (all channels) to process\n\n"
+        );
+    
+    exit(0);
 }
 
 //Helper function for converting SR to index value
