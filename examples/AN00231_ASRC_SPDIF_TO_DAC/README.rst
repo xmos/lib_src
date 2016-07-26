@@ -33,7 +33,7 @@ Required tools and libraries
  * XMOS |i2s|/TDM library - Version 2.1.0
  * XMOS GPIO library - Version 1.0.0
  * XMOS |i2c| library - Version 3.1.0
- * XMOS SPDIF library - Version 2.0.0
+ * XMOS SPDIF library - Version 2.0.2
  * XMOS Logging library - Version 2.0.0
  * XMOS Assertion library - Version 2.0.0
 

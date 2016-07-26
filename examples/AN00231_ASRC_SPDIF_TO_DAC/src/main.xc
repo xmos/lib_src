@@ -132,13 +132,15 @@ void spdif_handler(streaming chanend c_spdif_rx, client serial_transfer_push_if 
     unsigned index;                             //Channel index
     signed long sample;                         //Sample received from SPDIF
 
-    delay_microseconds(1000);                   //Bug 17263 workaround (race condition in distributable task init)
+    delay_microseconds(10000);                   //Bug 17263 workaround (race condition in distributable task init)
     while (1) {
         select {
             case spdif_receive_sample(c_spdif_rx, sample, index):
                 i_serial_in.push(sample, index);   //Push them into serial to block
+
             break;
         }
+
     }
 }
 

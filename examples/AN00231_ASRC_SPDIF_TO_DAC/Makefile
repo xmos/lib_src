@@ -9,7 +9,7 @@ TARGET = xk-audio-216-mc
 APP_NAME = 
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = lib_gpio lib_i2c lib_i2s lib_logging lib_spdif lib_src
+USED_MODULES = lib_gpio(>=1.0.0) lib_i2c(>=3.1.0) lib_i2s(>=2.1.0) lib_logging(>=2.0.0) lib_spdif(>=2.0.2) lib_src(>=1.0.0)
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
