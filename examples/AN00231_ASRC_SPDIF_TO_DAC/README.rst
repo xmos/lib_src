@@ -6,7 +6,7 @@ SPDIF Receive to I2S output using Asynchronous Sample Rate Conversion
 
 .. appnote:: AN00231
 
-.. version:: 1.0.0
+.. version:: 1.0.1
 
 Summary
 -------
