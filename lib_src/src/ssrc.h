@@ -118,6 +118,7 @@
         typedef struct _SSRCCtrl                                            
         {
 #ifdef __XC__
+            long long                               pad_to_64b_alignment;               //Force compiler to 64b align
             unsigned int                            uiNchannels;                        // Number of channels in this instance
             int* unsafe                                piIn;                                // Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
             unsigned int                            uiNInSamples;                        // Number of input samples to process in one call to the processing function
@@ -138,6 +139,7 @@
             ssrc_state_t* unsafe                        psState;                            // Pointer to state structure
             int* unsafe                                piStack;                            // Pointer to stack buffer
 #else
+            long long                               pad_to_64b_alignment;               //Force compiler to 64b align
             unsigned int                            uiNchannels;                        // Number of channels in this instance
 
             int*                                      piIn;                                // Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
