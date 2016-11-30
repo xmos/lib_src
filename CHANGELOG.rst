@@ -1,6 +1,12 @@
 lib_src change log
 ==================
 
+1.1.0
+-----
+
+  * ADDED: Fixed factor of 3 conversion functions for downsampling and
+  oversampling
+
 1.0.0
 -----
 
