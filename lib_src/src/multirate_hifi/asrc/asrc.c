@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: asrc.c
 //
 //
@@ -31,7 +31,7 @@
 // Defines
 //
 // ===========================================================================
-    
+
 
 // State init value
 #define        ASRC_STATE_INIT                            0
@@ -102,7 +102,7 @@
 
 // Random number generator / dithering
 #define        ASRC_R_CONS                                32767
-#define        ASRC_R_BASE                                1664525    
+#define        ASRC_R_BASE                                1664525
 #define        ASRC_RPDF_BITS_SHIFT                    16                        // Shift to select bits in pseudo-random number
 #define        ASRC_RPDF_MASK                            0x0000007F                // For dithering at 24bits (in 2.30)
 #define        ASRC_DATA24_MASK                        0xFFFFFF00                // Mask for 24bits data (once rescaled to 1.31)
@@ -118,7 +118,7 @@
 ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                // Filter configuration table [Fsin][Fsout]
 {
     {    // Fsin = 44.1kHz
-        // F1                            F2                                
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
@@ -127,7 +127,7 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
     },
     {    // Fsin = 48kHz
-        // F1                            F2                            
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
@@ -136,7 +136,7 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
     },
     {    // Fsin = 88.2kHz
-        // F1                            F2                        
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_BL8848_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
@@ -145,7 +145,7 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
     },
     {    // Fsin = 96kHz
-        // F1                            F2                                
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_BL9644_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
         {FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
@@ -154,7 +154,7 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
         {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
     },
     {    // Fsin = 176.4kHz
-        // F1                            F2                                
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID},            // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL8848_ID},        // Fsout = 48kHz
         {FITLER_DEFS_ASRC_FIR_BLF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID,},        // Fsout = 88.2kHz
@@ -163,7 +163,7 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
         {FILTER_DEFS_ASRC_FIR_UPF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
     },
     {    // Fsin = 192kHz
-        // F1                            F2                                
+        // F1                            F2
         {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL9644_ID},        // Fsout = 44.1kHz
         {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID},            // Fsout = 48kHz
         {FITLER_DEFS_ASRC_FIR_BL19288_ID,    FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
@@ -270,7 +270,7 @@ ASRCReturnCodes_t                ASRC_prepare_coefs(void)
         // Zero fill last coefficient
         iADFirCoefs[ui][FILTER_DEFS_ADFIR_PHASE_N_TAPS - 1]    = 0;
     }
-    
+
     // Then fill in the two phases which start delayed
     for(ui = 0; ui < 2; ui++)
     {
@@ -291,7 +291,7 @@ ASRCReturnCodes_t                ASRC_prepare_coefs(void)
 //                    ASRC_ERROR on failure                                //
 // Description:        Inits the ASRC passed as argument                    //
 // ==================================================================== //
-ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)    
+ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
 {
     ASRCFiltersIDs_t*            psFiltersID;
     FIRDescriptor_t*            psFIRDescriptor;
@@ -323,10 +323,10 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
 
     // Load filters ID and number of samples
     psFiltersID        = &sASRCFiltersIDs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs];
-    
+
 
     // Configure filters F1 and F2 from filters ID and number of samples
-    
+
     // Filter F1
     // ---------
     psFIRDescriptor                            = &sASRCFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
@@ -348,7 +348,7 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
     // Update synchronous number of samples
     if( psFiltersID->uiFID[ASRC_F1_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
         pasrc_ctrl->uiNSyncSamples                = pasrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
-    
+
 
     // Filter F2
     // ---------
@@ -360,7 +360,7 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
     pasrc_ctrl->sFIRF2Ctrl.piDelayB            = pasrc_ctrl->psState->iDelayFIRLong;
     // Set output buffer step
     pasrc_ctrl->sFIRF2Ctrl.uiOutStep        = 1;//ASRC_N_CHANNELS; //TODO confirm this. Looks like 1 = channel per instance
-    
+
     // Call init for FIR F2
     if(FIR_init_from_desc(&pasrc_ctrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
         return ASRC_ERROR;
@@ -368,7 +368,7 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
     // Update synchronous number of samples
     if( psFiltersID->uiFID[ASRC_F2_INDEX] != FILTER_DEFS_ASRC_FIR_NONE_ID )
         pasrc_ctrl->uiNSyncSamples                = pasrc_ctrl->sFIRF2Ctrl.uiNOutSamples;
-    
+
 
     // Setup fixed input/output buffers for F1 and F2
     // ----------------------------------------------
@@ -383,12 +383,12 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
     // Filter F3
     // ---------
     psADFIRDescriptor                        = &sADFirDescriptor;
-        
+
     // Set delay line base pointer
     pasrc_ctrl->sADFIRF3Ctrl.piDelayB        = pasrc_ctrl->psState->iDelayADFIR;
-    // Set AD coefficients pointer 
+    // Set AD coefficients pointer
     pasrc_ctrl->sADFIRF3Ctrl.piADCoefs        = pasrc_ctrl->piADCoefs;
-    
+
     // Call init for ADFIR F3
     if(ADFIR_init_from_desc(&pasrc_ctrl->sADFIRF3Ctrl, psADFIRDescriptor) != FIR_NO_ERROR)
         return ASRC_ERROR;
@@ -409,7 +409,7 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
 // Description:        Syncs the ASRC passed as argument                    //
 // ==================================================================== //
 ASRCReturnCodes_t                ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
-{    
+{
     // Sync the FIR and ADFIR
     if(FIR_sync(&pasrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
         return ASRC_ERROR;
@@ -432,7 +432,7 @@ ASRCReturnCodes_t                ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
 
     return ASRC_NO_ERROR;
 }
-    
+
 
 // ==================================================================== //
 // Function:        ASRC_proc_F1_F2                                        //
@@ -453,7 +453,7 @@ ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
     // F1 is always enabled, so call F1
     if(pasrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
         return ASRC_ERROR; //Notice blatant cast to int * - works around no FP support in XC
-        
+
     // Check if F2 is enabled
     if(pasrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
     {
@@ -484,7 +484,7 @@ ASRCReturnCodes_t                ASRC_update_fs_ratio(asrc_ctrl_t* pasrc_ctrl)
         return ASRC_ERROR;
 
     // Apply shift to time ratio to build integer and fractional parts of time step
-    pasrc_ctrl->iTimeStepInt     = uiFsRatio >> (sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].iFsRatioShift);    
+    pasrc_ctrl->iTimeStepInt     = uiFsRatio >> (sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].iFsRatioShift);
     pasrc_ctrl->uiTimeStepFract  = uiFsRatio << (32 - sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].iFsRatioShift);
 
     return ASRC_NO_ERROR;
@@ -530,7 +530,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     int*            piPhase1;
     int*            piPhase2;
     int*            piADCoefs;
-    
+
     // Check if the next output time instant is in the current time slot
     // -----------------------------------------------------------------
     // if not return value showing that no output sample needs to be produced
@@ -547,7 +547,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
 
     // Set register to zero
     iZero        = 0;
-    
+
     // Compute adative coefficients spline factors
     // The fractional part of time gives alpha
     iAlpha        = pasrc_ctrl->uiTimeFract>>1;        // Now alpha can be seen as a signed number
@@ -560,7 +560,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     iH[1]            = iH[1] + iAlpha;                        // H1 = 0.5 + alpha - alpha * alpha;
     iH[2]            = iH[2] - iAlpha;                        // H2 = 0.5 - alpha
     iH[2]            = iH[2] + iH[0];                        // H2 = 0.5 - alpha + 0.5 * alpha * alpha
-    
+
     // The integer part of time gives the phase
     piPhase0        = iADFirCoefs[pasrc_ctrl->iTimeInt];
     piPhase1        = piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
@@ -572,7 +572,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     // Step time for next output sample
     // --------------------------------
     // Step to next output time (add integer and fractional parts)
-    pasrc_ctrl->iTimeInt        += pasrc_ctrl->iTimeStepInt;    
+    pasrc_ctrl->iTimeInt        += pasrc_ctrl->iTimeStepInt;
     // For fractional part, this can be optimized using the add with carry instruction of XS2
     uiTemp        = pasrc_ctrl->uiTimeFract;
     pasrc_ctrl->uiTimeFract        += pasrc_ctrl->uiTimeStepFract;

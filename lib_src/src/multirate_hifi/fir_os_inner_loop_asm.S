@@ -225,7 +225,7 @@ main_loop_odd:
 
     ldc step, 0x40
     {add piCoefs_p, piCoefs_p, step; bt counter, main_loop_odd}
-    
+
 
 done_odd:
     //pop return value pointer from stack so we can use it to write back

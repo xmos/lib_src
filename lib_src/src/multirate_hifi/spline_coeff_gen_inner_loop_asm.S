@@ -60,7 +60,7 @@ main_loop:
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[0]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -75,7 +75,7 @@ main_loop:
     ldw tmp, piH[2]
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[1]
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -100,7 +100,7 @@ main_loop:
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[2]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -115,12 +115,12 @@ main_loop:
     ldw tmp, piH[2]
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[3]
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[3]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -135,12 +135,12 @@ main_loop:
     ldw tmp, piH[2]
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[4]
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[4]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -160,7 +160,7 @@ main_loop:
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[5]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -175,7 +175,7 @@ main_loop:
     ldw tmp, piH[2]
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[6]
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
@@ -200,7 +200,7 @@ main_loop:
     {ldw tmp, piH[1]; add piPhase, piPhase, n_taps} //piPhase2 now
     maccs Acc0_h, Acc0_l, tmp, iData0
     maccs Acc1_h, Acc1_l, tmp, iData1
-    
+
     ldd iData0, iData1, piPhase[7]
     {ldw tmp, piH[0]; sub piPhase, piPhase, n_taps} //piPhase1 now
     maccs Acc0_h, Acc0_l, tmp, iData0

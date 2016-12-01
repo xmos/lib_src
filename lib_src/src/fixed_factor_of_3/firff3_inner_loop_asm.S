@@ -273,7 +273,7 @@ done_odd:
 	ldd r6, r7, sp[1]
 	ldd r8, r9, sp[2]
   retsp stack_size
-  
+
 .atmp_odd:
 	.size	firff3_inner_loop_asm_odd, .atmp-firff3_inner_loop_asm_odd
 	.align	8

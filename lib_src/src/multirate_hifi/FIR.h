@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: FIR.h
 //
 // FIR functions definition file for the SRC
@@ -17,14 +17,14 @@
     // Defines
     //
     // ===========================================================================
-    
+
     // General defines
     // ---------------
-    
+
 
     // Parameter values
     // ----------------
-    
+
 
 
 
@@ -33,7 +33,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
 
     // ===========================================================================
     //
@@ -46,7 +46,7 @@
 
         // FIR Return Codes
         // ----------------
-        typedef enum _FIRReturnCodes                                    
+        typedef enum _FIRReturnCodes
         {
             FIR_NO_ERROR                            = 0,
             FIR_ERROR                                = 1
@@ -54,26 +54,26 @@
 
         // FIR On/Off Codes
         // ----------------
-        typedef enum _FIROnOffCodes                                    
+        typedef enum _FIROnOffCodes
         {
             FIR_OFF                                    = 0,
             FIR_ON                                    = 1
         } FIROnOffCodes_t;
-        
+
 
         // FIR Type Codes
         // --------------
-        typedef enum _FIRTypeCodes                                    
+        typedef enum _FIRTypeCodes
         {
             FIR_TYPE_OS2                            = 0,            // Over-sampler by two FIR
             FIR_TYPE_SYNC                            = 1,            // Asynchronous (low-pass) FIR
             FIR_TYPE_DS2                            = 2,            // Down-sampler by two FIR
         } FIRTypeCodes_t;
-    
+
 #ifdef __XC__
         // FIR Descriptor
         // --------------
-        typedef struct _FIRDescriptor                                        
+        typedef struct _FIRDescriptor
         {
             FIRTypeCodes_t                            eType;            // Type of filter
             unsigned int                            uiNCoefs;        // Number of coefficients
@@ -83,7 +83,7 @@
 
         // FIR Ctrl
         // --------
-        typedef struct _FIRCtrl                                        
+        typedef struct _FIRCtrl
         {
             FIROnOffCodes_t                            eEnable;        // FIR on/off
 
@@ -110,7 +110,7 @@
 
         // ADFIR Descriptor
         // ----------------
-        typedef struct _ADFIRDescriptor                                        
+        typedef struct _ADFIRDescriptor
         {
             unsigned int                            uiNCoefsPerPhase;    // Number of coefficients
             unsigned int                            uiNPhases;            // Number of phases
@@ -119,11 +119,11 @@
 
         // ADFIR Ctrl
         // ----------
-        typedef struct _ADFIRCtrl                                        
+        typedef struct _ADFIRCtrl
         {
             int                                        iIn;                // Input sample
             int* unsafe                                piOut;                // Pointer to output sample
-            
+
             int* unsafe                                piDelayB;            // Pointer to delay line base
             unsigned int                            uiDelayL;            // Total length of delay line
             int* unsafe                                piDelayI;            // Pointer to current position in delay line
@@ -137,7 +137,7 @@
 
                         // PPFIR Descriptor
         // --------------
-        typedef struct _PPFIRDescriptor                                        
+        typedef struct _PPFIRDescriptor
         {
             unsigned int                            uiNCoefs;        // Number of coefficients
             unsigned int                            uiNPhases;        // Number of phases
@@ -146,7 +146,7 @@
 
         // PPFIR Ctrl
         // ----------
-        typedef struct _PPFIRCtrl                                        
+        typedef struct _PPFIRCtrl
         {
             FIROnOffCodes_t                            eEnable;        // PPFIR on/off
 
@@ -170,12 +170,12 @@
             unsigned int                            uiPhaseStep;        // Phase step
             unsigned int                            uiCoefsPhaseStep;    // Number of coefficients for a phase step
             unsigned int                            uiCoefsPhase;        // Current phase coefficient offset from base
-            
+
         } PPFIRCtrl_t;
 #else
                         // FIR Descriptor
         // --------------
-        typedef struct _FIRDescriptor                                        
+        typedef struct _FIRDescriptor
         {
             FIRTypeCodes_t                            eType;            // Type of filter
             unsigned int                            uiNCoefs;        // Number of coefficients
@@ -185,7 +185,7 @@
 
         // FIR Ctrl
         // --------
-        typedef struct _FIRCtrl                                        
+        typedef struct _FIRCtrl
         {
             FIROnOffCodes_t                            eEnable;        // FIR on/off
 
@@ -212,7 +212,7 @@ __attribute__((fptrgroup("G1")))
 
         // ADFIR Descriptor
         // ----------------
-        typedef struct _ADFIRDescriptor                                        
+        typedef struct _ADFIRDescriptor
         {
             unsigned int                            uiNCoefsPerPhase;    // Number of coefficients
             unsigned int                            uiNPhases;            // Number of phases
@@ -221,11 +221,11 @@ __attribute__((fptrgroup("G1")))
 
         // ADFIR Ctrl
         // ----------
-        typedef struct _ADFIRCtrl                                        
+        typedef struct _ADFIRCtrl
         {
             int                                        iIn;                // Input sample
             int*                                    piOut;                // Pointer to output sample
-            
+
             int*                                    piDelayB;            // Pointer to delay line base
             unsigned int                            uiDelayL;            // Total length of delay line
             int*                                    piDelayI;            // Pointer to current position in delay line
@@ -239,7 +239,7 @@ __attribute__((fptrgroup("G1")))
 
                         // PPFIR Descriptor
         // --------------
-        typedef struct _PPFIRDescriptor                                        
+        typedef struct _PPFIRDescriptor
         {
             unsigned int                            uiNCoefs;        // Number of coefficients
             unsigned int                            uiNPhases;        // Number of phases
@@ -248,7 +248,7 @@ __attribute__((fptrgroup("G1")))
 
         // PPFIR Ctrl
         // ----------
-        typedef struct _PPFIRCtrl                                        
+        typedef struct _PPFIRCtrl
         {
             FIROnOffCodes_t                            eEnable;        // PPFIR on/off
 
@@ -272,7 +272,7 @@ __attribute__((fptrgroup("G1")))
             unsigned int                            uiPhaseStep;        // Phase step
             unsigned int                            uiCoefsPhaseStep;    // Number of coefficients for a phase step
             unsigned int                            uiCoefsPhase;        // Current phase coefficient offset from base
-            
+
         } PPFIRCtrl_t;
 #endif
 
@@ -290,7 +290,7 @@ __attribute__((fptrgroup("G1")))
         //                    FIR_ERROR on failure                                //
         // Description:        Inits the FIR from the Descriptor                    //
         // ==================================================================== //
-        FIRReturnCodes_t                FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* psFIRDescriptor);    
+        FIRReturnCodes_t                FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* psFIRDescriptor);
 
         // ==================================================================== //
         // Function:        FIR_sync                                            //
@@ -308,7 +308,7 @@ __attribute__((fptrgroup("G1")))
         //                    FIR_ERROR on failure                                //
         // Description:        Processes the FIR in over-sample by 2 mode            //
         // ==================================================================== //
-        FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl);    
+        FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl);
 
         // ==================================================================== //
         // Function:        FIR_proc_sync                                        //
@@ -326,7 +326,7 @@ __attribute__((fptrgroup("G1")))
         //                    FIR_ERROR on failure                                //
         // Description:        Processes the FIR in down-sample by 2 mode            //
         // ==================================================================== //
-        FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl);    
+        FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl);
 
         // ==================================================================== //
         // Function:        ADFIR_init_from_desc                                //

@@ -15,7 +15,7 @@ SET n_samps_proc=-n4
 
 @echo SSRC 44.1 - 44.1
 @echo ----------------
-@..\Project\Debug\SSRC_demo.exe -iIn\s1k_0dB_44.dat -jIn\im10k11k_m6dB_44.dat -k0 -oOut\s1k_0dB_44_44.expect -pOut\im10k11k_m6dB_44_44.expect -q0 %dither% %n_samps_in_tot% %n_samps_proc% 
+@..\Project\Debug\SSRC_demo.exe -iIn\s1k_0dB_44.dat -jIn\im10k11k_m6dB_44.dat -k0 -oOut\s1k_0dB_44_44.expect -pOut\im10k11k_m6dB_44_44.expect -q0 %dither% %n_samps_in_tot% %n_samps_proc%
 
 @echo SSRC 44.1 - 48
 @echo --------------

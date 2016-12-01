@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: IntArithmetic.c
 //
 // Integer arithmetic implementation file for the ASRC
@@ -74,7 +74,7 @@ void    MACC(__int64* plAcc, int ix, int iy)
 void    LMUL(__int64* plAcc, int ix, int iy, int ic, int id)
 {
     *plAcc = (__int64)ix * (__int64)iy;
-    *plAcc += (__int64)ic; 
+    *plAcc += (__int64)ic;
     *plAcc += (__int64)id;
 }
 

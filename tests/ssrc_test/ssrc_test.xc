@@ -68,7 +68,7 @@ void dsp_slave(chanend c_dsp)
         t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
         int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
-        if (n_samps_in_tot) printf("Process time per chan=%d, Input sample period=%d, Thread utilisation=%d%%, Tot samp in count=%d\n", 
+        if (n_samps_in_tot) printf("Process time per chan=%d, Input sample period=%d, Thread utilisation=%d%%, Tot samp in count=%d\n",
     (t_dsp / (SSRC_CHANNELS_PER_INSTANCE * SSRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( SSRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
         c_dsp :> sr_in_out_new;
 
@@ -81,7 +81,7 @@ void dsp_slave(chanend c_dsp)
         }
 
         n_samps_in_tot += SSRC_N_IN_SAMPLES;
-        
+
         c_dsp <: n_samps_out;       //Send number of samples to receive
 
         for(unsigned uj = 0; uj < n_samps_out; uj++)
@@ -140,12 +140,12 @@ void dsp_mgr(chanend c_dsp[]){
 
     while(!iEndOfFile)
     {
-        for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
+        for (unsigned j=0; j<SSRC_N_INSTANCES; j++)
         {
             c_dsp[j] <: sr_in_out;  //Send in/out sample rate
         }
 
-        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_INSTANCE; i++) 
+        for(unsigned i = 0; i < SSRC_N_IN_SAMPLES * SSRC_CHANNELS_PER_INSTANCE; i++)
         {
             int samp;
             for (unsigned j=0; j<SSRC_N_INSTANCES; j++) {
@@ -156,21 +156,21 @@ void dsp_mgr(chanend c_dsp[]){
                     printf("EOF\n");
                 }
                 c_dsp[j] <: samp;       //Send the sample
-            }            
+            }
         }
-        count_in += SSRC_N_IN_SAMPLES; 
+        count_in += SSRC_N_IN_SAMPLES;
 
 
         unsigned n_samps;
-        for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
+        for (unsigned j=0; j<SSRC_N_INSTANCES; j++)
         {
             c_dsp[j] :> n_samps;  //Get number of samps to receive
         }
 
-        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_INSTANCE; i++) 
+        for(unsigned i = 0; i < n_samps * SSRC_CHANNELS_PER_INSTANCE; i++)
         {
             int samp;
-            for (unsigned j=0; j<SSRC_N_INSTANCES; j++) 
+            for (unsigned j=0; j<SSRC_N_INSTANCES; j++)
             {
                 unsigned file_index = (i * SSRC_N_INSTANCES + j) % SSRC_N_CHANNELS;
                 c_dsp[j] :> samp; //Get samples
@@ -209,7 +209,7 @@ void ShowUsage()
         "         -g     Output sample rate (44100 - 192000)\n\n"
         "         -n     Number of input samples (all channels) to process\n\n"
         );
-    
+
     exit(0);
 }
 
@@ -246,13 +246,13 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
 {
   switch (*input)
   {
-  
+
     case 'h':
     case 'H':
       ShowUsage();
       exit(0);
       break;
-    
+
     case 'i':
     case 'I':
       for (int i=0; i<SSRC_N_CHANNELS; i++)
@@ -283,7 +283,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
     case 'g':
     case 'G':
       uiOutFs = (unsigned int)(atoi((char *)argv[ui + 1]));
-      uiOutFs = samp_rate_to_code(uiOutFs);      
+      uiOutFs = samp_rate_to_code(uiOutFs);
       if((uiOutFs < SSRC_FS_MIN) || (uiOutFs > SSRC_FS_MAX))
       {
         printf("ERROR: invalid frequency index %d\n", uiOutFs);
@@ -319,7 +319,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(int argc, char * unsafe argv[]) 
+int main(int argc, char * unsafe argv[])
 {
     int ui;
 
@@ -327,7 +327,7 @@ int main(int argc, char * unsafe argv[])
 
     if (argc == 1) ShowUsage();
 
-    //Parse command line arguments 
+    //Parse command line arguments
     for (ui = 1; ui < (unsigned int)argc; ui++)
     unsafe{
         if (*(argv[ui]) == '-')
@@ -344,7 +344,7 @@ int main(int argc, char * unsafe argv[])
         printf("ERROR: number input samples not set\n");
         exit(1);
     }
-    
+
     if (uiInFs == -1)
     {
         printf("ERROR: input sample rate not set\n");

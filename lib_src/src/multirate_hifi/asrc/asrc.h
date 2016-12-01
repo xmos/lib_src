@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: ASRC.h
 //
 // Top level definition file for the ASRC
@@ -31,7 +31,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
     // General defines
     // ---------------
     #define        ASRC_STACK_LENGTH_MULT                (ASRC_N_CHANNELS * 4)                // Multiplier for stack length (stack length = this value x the number of input samples to process)
@@ -54,7 +54,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
 
     // ===========================================================================
     //
@@ -67,16 +67,16 @@
 
         // ASRC Return Codes
         // -----------------
-        typedef enum _ASRCReturnCodes                                    
+        typedef enum _ASRCReturnCodes
         {
             ASRC_NO_ERROR                            = 0,
             ASRC_ERROR                                = 1
         } ASRCReturnCodes_t;
-        
+
 
         // Sampling rate codes
         // -------------------
-        typedef enum _ASRCFs                                            
+        typedef enum _ASRCFs
         {
             ASRC_FS_44                                = 0,                                // Fs = 44.1kHz code
             ASRC_FS_48                                = 1,                                // Fs = 48kHz code
@@ -89,14 +89,14 @@
         #define        ASRC_FS_MIN                        ASRC_FS_44
         #define        ASRC_FS_MAX                        ASRC_FS_192
 
-        
+
         // ASRC Filters IDs structure
         // --------------------------
         #define        ASRC_F1_INDEX                    0
         #define        ASRC_F2_INDEX                    1
         #define        ASRC_N_F                        (ASRC_F2_INDEX + 1)
 
-        typedef struct _ASRCFiltersIDs                                        
+        typedef struct _ASRCFiltersIDs
         {
             unsigned int        uiFID[ASRC_N_F];
         } ASRCFiltersIDs_t;
@@ -113,7 +113,7 @@
 
         // ASRC State structure
         // --------------------
-        typedef struct _ASRCState                            
+        typedef struct _ASRCState
         {
             long long                               pad_to_64b_alignment;               //Force compiler to 64b align
             unsigned int                            uiRndSeed;                                                // Dither random seeds current values
@@ -121,11 +121,11 @@
             int                                        iDelayFIRShort[2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];        // Doubled length for circular buffer simulation
             int                                        iDelayADFIR[2 * FILTER_DEFS_ADFIR_PHASE_N_TAPS];        // Doubled length for circular buffer simulation
         } asrc_state_t;
-    
+
 
         // ASRC Control structure
         // ----------------------
-        typedef struct _ASRCCtrl                                            
+        typedef struct _ASRCCtrl
         {
 #ifdef __XC__
             long long                               pad_to_64b_alignment;               //Force compiler to 64b align
@@ -134,7 +134,7 @@
             unsigned int                            uiNInSamples;                        // Number of input samples to process in one call to the processing function
             unsigned int                            uiNSyncSamples;                        // Number of synchronous samples produced in one call to the processing function
             ASRCFs_t                                eInFs;                                // Input sampling rate code
-            int* unsafe                                piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)                            
+            int* unsafe                                piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)
             unsigned int                            uiNASRCOutSamples;                    // Number of output samples produced during last call to the asynchronous processing function
             ASRCFs_t                                eOutFs;                                // Output sampling rate code
 
@@ -148,7 +148,7 @@
             unsigned int                            uiTimeFract;                        // Fractional part of time
             int                                        iTimeStepInt;                        // Integer part of time step
             unsigned int                            uiTimeStepFract;                    // Fractional part of time step
-        
+
             unsigned int                            uiDitherOnOff;                        // Dither on/off flag
             unsigned int                            uiRndSeedInit;                        // Dither random seed initial value
 
@@ -162,7 +162,7 @@
             unsigned int                            uiNInSamples;                        // Number of input samples to process in one call to the processing function
             unsigned int                            uiNSyncSamples;                        // Number of synchronous samples produced in one call to the processing function
             ASRCFs_t                                eInFs;                                // Input sampling rate code
-            int*                                    piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)                            
+            int*                                    piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)
             unsigned int                            uiNASRCOutSamples;                    // Number of output samples produced during last call to the asynchronous processing function
             ASRCFs_t                                eOutFs;                                // Output sampling rate code
 
@@ -176,7 +176,7 @@
             unsigned int                            uiTimeFract;                        // Fractional part of time
             int                                        iTimeStepInt;                        // Integer part of time step
             unsigned int                            uiTimeStepFract;                    // Fractional part of time step
-        
+
             unsigned int                            uiDitherOnOff;                        // Dither on/off flag
             unsigned int                            uiRndSeedInit;                        // Dither random seed initial value
 
@@ -190,7 +190,7 @@
         // Adaptive filter coefficients. Note this is a workaround to force the compiler to align the array to 64b boundary (required by inner loop assembler that uses load/store double)
         // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-                typedef struct _asrc_adfir_coefs_t 
+                typedef struct _asrc_adfir_coefs_t
                 {
                     long long       padding_to_64b;                           //Force 64b alignment
                     int             iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH]; //Adaptive FIR coefficients (one per instance)
@@ -223,7 +223,7 @@
         //                    ASRC_ERROR on failure                                //
         // Description:        Inits the ASRC passed as argument                    //
         // ==================================================================== //
-        ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl);    
+        ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl);
 
         // ==================================================================== //
         // Function:        ASRC_sync                                            //
@@ -289,7 +289,7 @@
         // Description:        Processes dither for a channel                        //
         // ==================================================================== //
         ASRCReturnCodes_t                ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl);
-        
+
     #endif // nINCLUDE_FROM_ASM
 
 #endif // _ASRC_H_

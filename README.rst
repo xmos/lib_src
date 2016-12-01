@@ -37,8 +37,8 @@ Features
 Components
 ..........
 
- * Synchronous Sample Rate Converter function 
- * Asynchronous Sample Rate Converter function 
+ * Synchronous Sample Rate Converter function
+ * Asynchronous Sample Rate Converter function
  * Synchronous factor of 3 downsample function
  * Synchronous factor of 3 oversample function
 
@@ -66,7 +66,7 @@ Typical Resource Usage
 
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2]; 
+    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2];
     - ports: 0
     - locals:
     - flags:
@@ -81,7 +81,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 .. list-table:: SSRC Processor Usage per Channel (MHz)
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -
@@ -153,7 +153,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 The ASRC algorithm also runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channel with adaptive coefficients calculation and the second table specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
 .. tip::
-  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
+  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
 
 .. tip::
   Typically you will need to allow for performance headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
@@ -162,7 +162,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -
@@ -224,7 +224,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -

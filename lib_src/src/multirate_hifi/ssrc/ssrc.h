@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: SSRC.h
 //
 // Top level definition file for the SSRC
@@ -29,7 +29,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
     // General defines
     // ---------------
     #define        SSRC_STACK_LENGTH_MULT                (SSRC_N_CHANNELS * SSRC_N_IN_SAMPLES)    // Multiplier for stack length (stack length = this value x the number of input samples to process)
@@ -50,7 +50,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
 
     // ===========================================================================
     //
@@ -63,16 +63,16 @@
 
         // SSRC Return Codes
         // -----------------
-        typedef enum _SSRCReturnCodes                                    
+        typedef enum _SSRCReturnCodes
         {
             SSRC_NO_ERROR                            = 0,
             SSRC_ERROR                                = 1
         } SSRCReturnCodes_t;
-        
+
 
         // Sampling rate codes
         // -------------------
-        typedef enum _SSRCFs                                            
+        typedef enum _SSRCFs
         {
             SSRC_FS_44                                = 0,                                // Fs = 44.1kHz code
             SSRC_FS_48                                = 1,                                // Fs = 48kHz code
@@ -85,7 +85,7 @@
         #define        SSRC_FS_MIN                        SSRC_FS_44
         #define        SSRC_FS_MAX                        SSRC_FS_192
 
-        
+
         // SSRC Filters IDs structure
         // --------------------------
         #define        SSRC_F1_INDEX                    0
@@ -93,7 +93,7 @@
         #define        SSRC_F3_INDEX                    2
         #define        SSRC_N_F                        (SSRC_F3_INDEX + 1)
 
-        typedef struct _SSRCFiltersIDs                                        
+        typedef struct _SSRCFiltersIDs
         {
             unsigned int        uiFID[SSRC_N_F];
             unsigned int        uiPPFIRPhaseStep;
@@ -102,7 +102,7 @@
 
         // SSRC State structure
         // --------------------
-        typedef struct _SSRCState                            
+        typedef struct _SSRCState
         {
             long long                               pad_to_64b_alignment;
             int                                        iDelayFIRLong[2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];        // Doubled length for circular buffer simulation
@@ -111,11 +111,11 @@
             unsigned int                            uiRndSeed;                                              // Dither random seeds current values
 
         } ssrc_state_t;
-    
+
 
         // SSRC Control structure
         // ----------------------
-        typedef struct _SSRCCtrl                                            
+        typedef struct _SSRCCtrl
         {
 #ifdef __XC__
             long long                               pad_to_64b_alignment;               //Force compiler to 64b align
@@ -123,7 +123,7 @@
             int* unsafe                                piIn;                                // Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
             unsigned int                            uiNInSamples;                        // Number of input samples to process in one call to the processing function
             SSRCFs_t                                eInFs;                                // Input sampling rate code
-            int* unsafe                                piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)                            
+            int* unsafe                                piOut;                                // Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)
             unsigned int* unsafe                        puiNOutSamples;                        // Pointer to number of output samples produced during last call to the processing function
             SSRCFs_t                                eOutFs;                                // Output sampling rate code
 
@@ -132,7 +132,7 @@
             FIRCtrl_t                                sFIRF1Ctrl;                            // F1 FIR controller
             FIRCtrl_t                                sFIRF2Ctrl;                            // F2 FIR controller
             PPFIRCtrl_t                                sPPFIRF3Ctrl;                        // F3 PPFIR controller
-        
+
             unsigned int                            uiDitherOnOff;                        // Dither on/off flag
             unsigned int                            uiRndSeedInit;                        // Dither random seed initial value
 
@@ -154,7 +154,7 @@
             FIRCtrl_t                                sFIRF1Ctrl;                            // F1 FIR controller
             FIRCtrl_t                                sFIRF2Ctrl;                            // F2 FIR controller
             PPFIRCtrl_t                                sPPFIRF3Ctrl;                        // F3 PPFIR controller
-        
+
             unsigned int                            uiDitherOnOff;                        // Dither on/off flag
             unsigned int                            uiRndSeedInit;                        // Dither random seed initial value
 
@@ -177,7 +177,7 @@
         //                    SSRC_ERROR on failure                                //
         // Description:        Inits the SSRC passed as argument                    //
         // ==================================================================== //
-        SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl);    
+        SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl);
 
         // ==================================================================== //
         // Function:        SSRC_sync                                            //
@@ -195,8 +195,8 @@
         //                    SSRC_ERROR on failure                                //
         // Description:        Processes the SSRC passed as argument                //
         // ==================================================================== //
-        SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl);                            
-        
+        SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl);
+
     #endif // nINCLUDE_FROM_ASM
 
 #endif // _SSRC_H_

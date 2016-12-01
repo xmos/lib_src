@@ -5,7 +5,7 @@
 
 #include "ssrc.h"
 
-//Compile time checks on SRC configuration defines 
+//Compile time checks on SRC configuration defines
 #if (SSRC_N_CHANNELS % SSRC_N_INSTANCES != 0)
 #error "Each core must process an integer number of channels. Check SSRC_N_CHANNELS & SSRC_N_INSTANCES."
 #endif

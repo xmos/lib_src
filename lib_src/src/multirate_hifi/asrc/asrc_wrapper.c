@@ -168,7 +168,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_
             // The fractional part of time gives alpha
             iAlpha      = asrc_ctrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
             i64Acc0 = (long long)iAlpha * (long long)iAlpha;
-            
+
             iH[0]           = (int)(i64Acc0>>32);
             iH[2]           = 0x40000000;                       // Load H2 with 0.5;
             iH[1]           = iH[2] - iH[0];                        // H1 = 0.5 - 0.5 * alpha * alpha;

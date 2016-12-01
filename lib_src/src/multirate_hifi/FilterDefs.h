@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: FilterDefs.h
 //
 // Filters Definitions definition file for the SRC
@@ -17,7 +17,7 @@
     // Defines
     //
     // ===========================================================================
-    
+
     // General defines
     // ---------------
     // SSRC FIR filters IDs
@@ -65,10 +65,10 @@
     #define        FILTER_DEFS_FIR_UP192176_N_TAPS        96            // Number of taps of UP192176 filter
     #define        FILTER_DEFS_FIR_DS_N_TAPS            32            // Number of taps of DS filter
         #define        FILTER_DEFS_FIR_OS_N_TAPS            32            // Number of taps of OS filter
-    
+
     #define        FILTER_DEFS_FIR_MAX_TAPS_LONG        FILTER_DEFS_FIR_BL9644_N_TAPS        // Maximum number of taps for long FIR filter
-    #define        FILTER_DEFS_FIR_MAX_TAPS_SHORT        FILTER_DEFS_FIR_DS_N_TAPS            // Maximum number of taps for short FIR filter            
-    
+    #define        FILTER_DEFS_FIR_MAX_TAPS_SHORT        FILTER_DEFS_FIR_DS_N_TAPS            // Maximum number of taps for short FIR filter
+
     // FIR filter coefficients files
     #define        FILTER_DEFS_FIR_BL_FILE                "FilterData/BL.dat"            // Coefficients file for BL FIR filter
     #define        FILTER_DEFS_FIR_BL9644_FILE            "FilterData/BL9644.dat"        // Coefficients file for BL9644 FIR filter
@@ -82,7 +82,7 @@
     #define        FILTER_DEFS_FIR_UP192176_FILE        "FilterData/UP192176.dat"    // Coefficients file for UP192176 filter
     #define        FILTER_DEFS_FIR_DS_FILE                "FilterData/DS.dat"            // Coefficients file for DS filter
         #define        FILTER_DEFS_FIR_OS_FILE                "FilterData/OS.dat"            // Coefficients file for OS filter
-    
+
     // ADFIR filter number of taps and phases
     #define        FILTER_DEFS_ADFIR_PROTOTYPE_N_TAPS    1920                                                                        // Number of taps of ADFIR filter prototype
 
@@ -92,7 +92,7 @@
 
     // ADFIR filter coefficients files
     #define        FILTER_DEFS_ADFIR_PROTOTYPE_FILE    "FilterData/ADFir.dat"        // Coefficients file for the ADFIR filter (prototype)
-    
+
     // PPFIR filters IDs
     #define        FILTER_DEFS_PPFIR_HS294_ID            0            // ID of HS294 PPFIR filter
     #define        FILTER_DEFS_PPFIR_HS320_ID            1            // ID of HS320 PPFIR filter
@@ -107,7 +107,7 @@
     #define        FILTER_DEFS_PPFIR_HS320_N_PHASES    160            // Number of phases of HS284 PPFIR filter
 
     #define        FILTER_DEFS_PPFIR_PHASE_MAX_TAPS    (FILTER_DEFS_PPFIR_HS320_N_TAPS / FILTER_DEFS_PPFIR_HS320_N_PHASES)        // Maximum number of taps per phase
-    
+
     #define        FILTER_DEFS_PPFIR_PHASE_STEP_0        0
     #define        FILTER_DEFS_PPFIR_PHASE_STEP_147    147
     #define        FILTER_DEFS_PPFIR_PHASE_STEP_294    294
@@ -117,19 +117,19 @@
     // PPFIR filter coefficients files
     #define        FILTER_DEFS_PPFIR_HS294_FILE        "FilterData/HS294.dat"    // Coefficients file for HS294 PPFIR filter
     #define        FILTER_DEFS_PPFIR_HS320_FILE        "FilterData/HS320.dat"    // Coefficients file for HS320 PPFIR filter
-    
 
-    
+
+
     // ===========================================================================
     //
     // Variables
     //
     // ===========================================================================
-    
+
     // FIR filters descriptors (ordered by ID)
     extern        FIRDescriptor_t                        sSSRCFirDescriptor[FILTER_DEFS_SSRC_N_FIR_ID];
     extern        FIRDescriptor_t                        sASRCFirDescriptor[FILTER_DEFS_ASRC_N_FIR_ID];
-        
+
     // FIR filters coefficients
     extern        int                                    iFirBLCoefs[FILTER_DEFS_FIR_BL_N_TAPS];
     extern        int                                    iFirBL9644Coefs[FILTER_DEFS_FIR_BL9644_N_TAPS];
@@ -142,8 +142,8 @@
     extern        int                                    iFirUPFCoefs[FILTER_DEFS_FIR_UPF_N_TAPS];
     extern        int                                    iFirUP192176Coefs[FILTER_DEFS_FIR_UP192176_N_TAPS];
     extern        int                                    iFirDSCoefs[FILTER_DEFS_FIR_DS_N_TAPS];
-    extern        int                                    iFirOSCoefs[FILTER_DEFS_FIR_OS_N_TAPS];        
-    
+    extern        int                                    iFirOSCoefs[FILTER_DEFS_FIR_OS_N_TAPS];
+
     // ADFIR filter descriptor
     extern        ADFIRDescriptor_t                    sADFirDescriptor;
     // ADFIR filters coefficients
@@ -162,5 +162,5 @@
     //
     // ===========================================================================
 
-    
+
 #endif // _FILTER_DEFS_H_

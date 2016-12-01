@@ -227,7 +227,7 @@ done_odd:
 
     //Write back the return value
     lsats Acc0_h, Acc0_l, r3            //Saturate first
-    lextract iData0, Acc0_h, Acc0_l, counter, 32    //Extract 
+    lextract iData0, Acc0_h, Acc0_l, counter, 32    //Extract
     stw iData0, iDataRet_p[0]
 
     //Pop registers

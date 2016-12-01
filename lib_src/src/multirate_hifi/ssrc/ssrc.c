@@ -1,7 +1,7 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 // ===========================================================================
 // ===========================================================================
-//    
+//
 // File: SSRC.c
 //
 // Top level implementation file for the SSRC
@@ -41,13 +41,13 @@
 
 // Random number generator / dithering
 #define        SSRC_R_CONS                            32767
-#define        SSRC_R_BASE                            1664525    
+#define        SSRC_R_BASE                            1664525
 #define        SSRC_RPDF_BITS_SHIFT                16                        // Shift to select bits in pseudo-random number
 #define        SSRC_RPDF_MASK                        0x0000007F                // For dithering at 24bits (in 2.30)
 #define        SSRC_DATA24_MASK                    0xFFFFFF00                // Mask for 24bits data (once rescaled to 1.31)
 #define        SSRC_DITHER_BIAS                    0xFFFFFFC0                // TPDF dither bias for compensating masking at 24bits but expressed in 2.30
 
-// Cycle counter 
+// Cycle counter
 #define        SSRC_FIR_OS2_OVERHEAD_CYCLE_COUNT    (15.0)
 #define        SSRC_FIR_OS2_TAP_CYCLE_COUNT        (1.875)
 #define        SSRC_FIR_DS2_OVERHEAD_CYCLE_COUNT    (15.0)
@@ -56,7 +56,7 @@
 #define        SSRC_FIR_SYNC_TAP_CYCLE_COUNT        (2.125)
 #define        SSRC_FIR_PP_OVERHEAD_CYCLE_COUNT    (15.0 + SSRC_FIR_SYNC_OVERHEAD_CYCLE_COUNT)
 #define        SSRC_FIR_PP_TAP_CYCLE_COUNT            (2.125)
-#define        SSRC_DITHER_SAMPLE_COUNT            (20.0)                        
+#define        SSRC_DITHER_SAMPLE_COUNT            (20.0)
 
 
 
@@ -118,7 +118,7 @@ SSRCFiltersIDs_t        sFiltersIDs[SSRC_N_FS][SSRC_N_FS] =                // Fi
         {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL9644_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 44.1kHz
         {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
         {FITLER_DEFS_SSRC_FIR_BL19288_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 88.2kHz
-                
+
         {FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
         {FILTER_DEFS_SSRC_FIR_UP192176_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 176.4kHz
         {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0}            // Fsout = 192kHz
@@ -154,7 +154,7 @@ SSRCReturnCodes_t                SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl);
 //                    SSRC_ERROR on failure                                //
 // Description:        Inits the SSRC passed as argument                    //
 // ==================================================================== //
-SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)    
+SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
 {
     SSRCFiltersIDs_t*            psFiltersID;
     FIRDescriptor_t*            psFIRDescriptor;
@@ -183,16 +183,16 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
 
     // Load filters ID and number of samples
     psFiltersID        = &sFiltersIDs[pssrc_ctrl->eInFs][pssrc_ctrl->eOutFs];
-    
+
     // Configure filters from filters ID and number of samples
-    
+
     // Filter F1
     // ---------
     psFIRDescriptor                                = &sSSRCFirDescriptor[psFiltersID->uiFID[SSRC_F1_INDEX]];
     // Set number of input samples and input samples step
     pssrc_ctrl->sFIRF1Ctrl.uiNInSamples        = pssrc_ctrl->uiNInSamples;
     pssrc_ctrl->sFIRF1Ctrl.uiInStep            = pssrc_ctrl->uiNchannels;
-    
+
     // Set delay line base pointer
     if( (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_DS_ID) || (psFiltersID->uiFID[SSRC_F1_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID) )
         pssrc_ctrl->sFIRF1Ctrl.piDelayB        = pssrc_ctrl->psState->iDelayFIRShort;
@@ -209,16 +209,16 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
     // Call init for FIR F1
     if(FIR_init_from_desc(&pssrc_ctrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
         return SSRC_ERROR;
-    
+
 
     // Filter F2
     // ---------
     psFIRDescriptor                            = &sSSRCFirDescriptor[psFiltersID->uiFID[SSRC_F2_INDEX]];
-    
+
     // Set number of input samples and input samples step
     pssrc_ctrl->sFIRF2Ctrl.uiNInSamples        = pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
     pssrc_ctrl->sFIRF2Ctrl.uiInStep            = pssrc_ctrl->sFIRF1Ctrl.uiOutStep;
-        
+
     // Set delay line base pointer
     if( (psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_DS_ID) || (psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_OS_ID) )
         pssrc_ctrl->sFIRF2Ctrl.piDelayB        = pssrc_ctrl->psState->iDelayFIRShort;
@@ -227,7 +227,7 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
 
     // Set output buffer step
     pssrc_ctrl->sFIRF2Ctrl.uiOutStep    = pssrc_ctrl->uiNchannels;
-    
+
     // Call init for FIR F1
     if(FIR_init_from_desc(&pssrc_ctrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
         return SSRC_ERROR;
@@ -236,23 +236,23 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
     // Filter F3
     // ---------
     psPPFIRDescriptor                                = &sPPFirDescriptor[psFiltersID->uiFID[SSRC_F3_INDEX]];
-    
+
     // Set number of input samples and input samples step
     if(psFiltersID->uiFID[SSRC_F2_INDEX] == FILTER_DEFS_SSRC_FIR_NONE_ID)
         pssrc_ctrl->sPPFIRF3Ctrl.uiNInSamples    = pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
     else
-        pssrc_ctrl->sPPFIRF3Ctrl.uiNInSamples    = pssrc_ctrl->sFIRF2Ctrl.uiNOutSamples;    
+        pssrc_ctrl->sPPFIRF3Ctrl.uiNInSamples    = pssrc_ctrl->sFIRF2Ctrl.uiNOutSamples;
     pssrc_ctrl->sPPFIRF3Ctrl.uiInStep        = pssrc_ctrl->sFIRF2Ctrl.uiOutStep;
-        
+
     // Set delay line base pointer
     pssrc_ctrl->sPPFIRF3Ctrl.piDelayB        = pssrc_ctrl->psState->iDelayPPFIR;
-        
+
     // Set output buffer step
     pssrc_ctrl->sPPFIRF3Ctrl.uiOutStep        = pssrc_ctrl->uiNchannels;
 
-    // Set phase step 
+    // Set phase step
     pssrc_ctrl->sPPFIRF3Ctrl.uiPhaseStep    = psFiltersID->uiPPFIRPhaseStep;
-        
+
     // Call init for PPFIR F3
     if(PPFIR_init_from_desc(&pssrc_ctrl->sPPFIRF3Ctrl, psPPFIRDescriptor) != FIR_NO_ERROR)
         return SSRC_ERROR;
@@ -269,7 +269,7 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
     pssrc_ctrl->sFIRF1Ctrl.piOut            = pssrc_ctrl->piStack;
     pssrc_ctrl->sFIRF2Ctrl.piOut            = pssrc_ctrl->piStack;
     // F3 output is never to stack, so don't set it
-    
+
 
     // Finally setup pointer to output buffer that needs to be modified for data output depending on filter configuration
     // Also set pointer to number of output samples
@@ -292,7 +292,7 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
             // F3 and F2 not in use but F1 in use or not. Set output from F1 output
             // Note that we also set it to F1 output, even if F1 is not in use (Fsin = Fsout case, this won't cause any problem)
             pssrc_ctrl->ppiOut        = &pssrc_ctrl->sFIRF1Ctrl.piOut;
-            
+
             if(psFiltersID->uiFID[SSRC_F1_INDEX] != FILTER_DEFS_SSRC_FIR_NONE_ID)
                 // F1 in use so set number of output sample pointer to number of output sample field of F1
                 pssrc_ctrl->puiNOutSamples    = &pssrc_ctrl->sFIRF1Ctrl.uiNOutSamples;
@@ -318,7 +318,7 @@ SSRCReturnCodes_t                SSRC_init(ssrc_ctrl_t* pssrc_ctrl)
 // Description:        Syncs the SSRC passed as argument                    //
 // ==================================================================== //
 SSRCReturnCodes_t                SSRC_sync(ssrc_ctrl_t* pssrc_ctrl)
-{    
+{
     // Sync the FIR and PPFIR
     if(FIR_sync(&pssrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
         return SSRC_ERROR;
@@ -332,7 +332,7 @@ SSRCReturnCodes_t                SSRC_sync(ssrc_ctrl_t* pssrc_ctrl)
 
     return SSRC_NO_ERROR;
 }
-    
+
 
 // ==================================================================== //
 // Function:        SSRC_proc                                            //
@@ -344,13 +344,13 @@ SSRCReturnCodes_t                SSRC_sync(ssrc_ctrl_t* pssrc_ctrl)
 #if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
-SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl)        
+SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl)
 {
     // Setup input / output buffers
     // ----------------------------
     pssrc_ctrl->sFIRF1Ctrl.piIn            = pssrc_ctrl->piIn;
     *(pssrc_ctrl->ppiOut)                = pssrc_ctrl->piOut;
-    
+
     // F1 and F2 process
     // -----------------
     if( SSRC_proc_F1_F2(pssrc_ctrl) != SSRC_NO_ERROR)
@@ -359,7 +359,7 @@ SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl)
     // F3 process
     // ----------
     if( SSRC_proc_F3(pssrc_ctrl)    != SSRC_NO_ERROR)
-        return SSRC_ERROR;    
+        return SSRC_ERROR;
 
     // Dither process
     // --------------
@@ -475,13 +475,13 @@ SSRCReturnCodes_t                SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl)
             // Use MACC instruction to saturate and dither + signal
             i64Acc        = ((__int64_t)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
             MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
-            
+
                         // Saturate to 31 bits
                         LSAT30(&i64Acc);
-            
+
                         // Extract 32bits result
             EXT30(&piData[ui], i64Acc);
-                        
+
             // Mask to 24bits
             piData[ui]    &= SSRC_DATA24_MASK;
 
