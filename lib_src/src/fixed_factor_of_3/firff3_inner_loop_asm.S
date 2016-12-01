@@ -2,12 +2,12 @@
 	.section	.dp.data,"awd",@progbits
 	.text
 
-	.cc_top fir_inner_loop_asm.function
-	.globl	fir_inner_loop_asm
+	.cc_top firff3_inner_loop_asm.function
+	.globl	firff3_inner_loop_asm
 	.align	8
-	.type	fir_inner_loop_asm,@function
+	.type	firff3_inner_loop_asm,@function
 
-fir_inner_loop_asm:
+firff3_inner_loop_asm:
 
 #define piData_p		 	r0
 #define piCoefs_p		 	r1
@@ -127,29 +127,29 @@ done:
   retsp stack_size
 
 .atmp:
-	.size	fir_inner_loop_asm, .atmp-fir_inner_loop_asm
+	.size	firff3_inner_loop_asm, .atmp-firff3_inner_loop_asm
 	.align	8
-	.cc_bottom fir_inner_loop_asm.function
+	.cc_bottom firff3_inner_loop_asm.function
 
-	.set	fir_inner_loop_asm.nstackwords, stack_size
-	.globl	fir_inner_loop_asm.nstackwords
-	.set	fir_inner_loop_asm.maxcores, 1
-	.globl	fir_inner_loop_asm.maxcores
-	.set	fir_inner_loop_asm.maxtimers,0
-	.globl	fir_inner_loop_asm.maxtimers
-	.set	fir_inner_loop_asm.maxchanends,0
+	.set	firff3_inner_loop_asm.nstackwords, stack_size
+	.globl	firff3_inner_loop_asm.nstackwords
+	.set	firff3_inner_loop_asm.maxcores, 1
+	.globl	firff3_inner_loop_asm.maxcores
+	.set	firff3_inner_loop_asm.maxtimers,0
+	.globl	firff3_inner_loop_asm.maxtimers
+	.set	firff3_inner_loop_asm.maxchanends,0
 	.globl	 .maxchanends
 
 
 		.section	.dp.data,"awd",@progbits
 	.text
 
-	.cc_top fir_inner_loop_asm_odd.function
-	.globl	fir_inner_loop_asm_odd
+	.cc_top firff3_inner_loop_asm_odd.function
+	.globl	firff3_inner_loop_asm_odd
 	.align	8
-	.type	fir_inner_loop_asm_odd,@function
+	.type	firff3_inner_loop_asm_odd,@function
 
-fir_inner_loop_asm_odd:
+firff3_inner_loop_asm_odd:
 
 #define piData_p		 	r0
 #define piCoefs_p		 	r1
@@ -275,15 +275,15 @@ done_odd:
   retsp stack_size
   
 .atmp_odd:
-	.size	fir_inner_loop_asm_odd, .atmp-fir_inner_loop_asm_odd
+	.size	firff3_inner_loop_asm_odd, .atmp-firff3_inner_loop_asm_odd
 	.align	8
-	.cc_bottom fir_inner_loop_asm_odd.function
+	.cc_bottom firff3_inner_loop_asm_odd.function
 
-	.set	fir_inner_loop_asm_odd.nstackwords, stack_size
-	.globl	fir_inner_loop_asm_odd.nstackwords
-	.set	fir_inner_loop_asm_odd.maxcores, 1
-	.globl	fir_inner_loop_asm_odd.maxcores
-	.set	fir_inner_loop_asm_odd.maxtimers,0
-	.globl	fir_inner_loop_asm_odd.maxtimers
-	.set	fir_inner_loop_asm_odd.maxchanends,0
+	.set	firff3_inner_loop_asm_odd.nstackwords, stack_size
+	.globl	firff3_inner_loop_asm_odd.nstackwords
+	.set	firff3_inner_loop_asm_odd.maxcores, 1
+	.globl	firff3_inner_loop_asm_odd.maxcores
+	.set	firff3_inner_loop_asm_odd.maxtimers,0
+	.globl	firff3_inner_loop_asm_odd.maxtimers
+	.set	firff3_inner_loop_asm_odd.maxchanends,0
 	.globl	 .maxchanends

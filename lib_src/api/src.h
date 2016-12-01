@@ -3,6 +3,8 @@
 #define __src_h__
 #include <ssrc.h>
 #include <asrc.h>
+#include "ds3.h"
+#include "os3.h"
 
 #if defined(__cplusplus) || defined(__XC__)
 extern "C" {
@@ -66,6 +68,105 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t as
    *  \returns The number of output samples produced by the SRC operation.
    */
 unsigned asrc_process(int in_buff[], int out_buff[], unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[]);
+
+// To avoid C type definitions when including this file from assembler
+#ifndef INCLUDE_FROM_ASM
+
+/** Fixed factor of 3 return codes
+ *
+ * This type describes the possible error status states from calls to the DS3
+ * and OS3 API.
+ */
+typedef enum src_ff3_return_code_t
+{
+    SRC_FF3_NO_ERROR = 0,
+    SRC_FF3_ERROR    = 1
+} src_ff3_return_code_t;
+
+/** Downsample by 3 control structure */
+typedef struct src_ds3_ctrl_t
+{
+    int*         in_data;      //!< Pointer to input data (3 samples)
+    int*         out_data;     //!< Pointer to output data (1 sample)
+    int*         delay_base;   //!< Pointer to delay line base
+    unsigned int delay_len;    //!< Total length of delay line
+    int*         delay_pos;    //!< Pointer to current position in delay line
+    int*         delay_wrap;   //!< Delay buffer wrap around address (for circular buffer simulation)
+    unsigned int delay_offset; //!< Delay line offset for second write (for circular buffer simulation)
+    unsigned int inner_loops;  //!< Number of inner loop iterations
+    unsigned int num_coeffs;   //!< Number of coefficients
+    int*         coeffs;       //!< Pointer to coefficients
+} src_ds3_ctrl_t;
+
+/** This function initialises the decimate by 3 function for a given instance
+ *
+ *  \param      src_ds3_ctrl   DS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_ds3_init(src_ds3_ctrl_t* src_ds3_ctrl);
+
+/** This function clears the decimate by 3 delay line for a given instance
+ *
+ *  \param      src_ds3_ctrl   DS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_ds3_sync(src_ds3_ctrl_t* src_ds3_ctrl);
+
+/** This function performs the decimation on three input samples and outputs on sample
+ *  The input and output buffers are pointed to by members of the src_ds3_ctrl structure
+ *
+ *  \param      src_ds3_ctrl   DS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_ds3_proc(src_ds3_ctrl_t* src_ds3_ctrl);
+
+/** Oversample by 3 control structure */
+typedef struct src_os3_ctrl_t
+{
+    int          in_data;      //!< Input data (to be updated every 3 output samples, i.e. when iPhase == 0)
+    int          out_data;     //!< Output data (1 sample)
+    int          phase;        //!< Current output phase (when reaching '0', a new input sample is required)
+    int*         delay_base;   //!< Pointer to delay line base
+    unsigned int delay_len;    //!< Total length of delay line
+    int*         delay_pos;    //!< Pointer to current position in delay line
+    int*         delay_wrap;   //!< Delay buffer wrap around address (for circular buffer simulation)
+    unsigned int delay_offset; //!< Delay line offset for second write (for circular buffer simulation)
+    unsigned int inner_loops;  //!< Number of inner loop iterations
+    unsigned int num_coeffs;   //!< Number of coefficients
+    int*         coeffs;       //!< Pointer to coefficients
+} src_os3_ctrl_t;
+
+/** This function initialises the oversample by 3 function for a given instance
+ *
+ *  \param      src_os3_ctrl   OS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_os3_init(src_os3_ctrl_t* src_os3_ctrl);
+
+/** This function clears the oversample by 3 delay line for a given instance
+ *
+ *  \param      src_os3_ctrl   OS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_os3_sync(src_os3_ctrl_t* src_os3_ctrl);
+
+/** This function pushes a single input sample into the filter
+ *  It should be called three times for each FIROS3_proc call
+ *
+ *  \param      src_os3_ctrl   OS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_os3_input(src_os3_ctrl_t* src_os3_ctrl);
+
+/** This function performs the oversampling by 3 and outputs one sample
+ *  The input and output buffers are pointed to by members of the src_os3_ctrl structure
+ *
+ *  \param      src_os3_ctrl   OS3 control structure
+ *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
+ */
+src_ff3_return_code_t src_os3_proc(src_os3_ctrl_t* src_os3_ctrl);
+
+#endif // INCLUDE_FROM_ASM
 
 #if defined(__cplusplus) || defined(__XC__)
 }

@@ -1,12 +1,12 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-// XMOS DSP Library - Upsample by factor of 3 example
+// Upsample by factor of 3 example
 // Uses Signed 32b Integer format
 
 // Include files
 #include <stdio.h>
 #include <xs1.h>
-#include <dsp.h>
 #include <stdint.h>
+#include "src.h"
 
 #define NUM_CHANNELS  2
 #define NUM_OUTPUT_SAMPLES  384
@@ -19,7 +19,7 @@ const int32_t im4k5k_m6dB_16[1024] = {0, 1751257718, -1832991325, 348346744, 107
 int main(void)
 {
     unsafe {
-        dsp_os3_return_code_t return_code = DSP_OS3_NO_ERROR;
+        src_ff3_return_code_t return_code = SRC_FF3_NO_ERROR;
 
         // Input data for both channels
         const int32_t * unsafe input_data[NUM_CHANNELS] = {s1k_0db_16, im4k5k_m6dB_16};
@@ -27,8 +27,8 @@ int main(void)
         // OS3 instances variables
         // -----------------------
         // State and Control structures (one per channel)
-        int32_t           dsp_os3_delay[NUM_CHANNELS][(DSP_OS3_N_COEFS/DSP_OS3_N_PHASES)<<1];        // Delay line length is 1/3rd of number of coefs as over-sampler by 3 (and double for circular buffer simulation)
-        dsp_os3_ctrl_t    dsp_os3_ctrl[NUM_CHANNELS];
+        int32_t           src_os3_delay[NUM_CHANNELS][(SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)<<1];        // Delay line length is 1/3rd of number of coefs as over-sampler by 3 (and double for circular buffer simulation)
+        src_os3_ctrl_t    src_os3_ctrl[NUM_CHANNELS];
 
         //Init OS3
         for (int i=0; i<NUM_CHANNELS; i++) {
@@ -37,19 +37,19 @@ int main(void)
             // Process init
             // ------------
             // Set delay line base to ctrl structure
-            dsp_os3_ctrl[i].delay_base        = (int*)dsp_os3_delay[i];
+            src_os3_ctrl[i].delay_base        = (int*)src_os3_delay[i];
 
             // Init instance
-            if (dsp_os3_init(&dsp_os3_ctrl[i]) != DSP_OS3_NO_ERROR) {
+            if (src_os3_init(&src_os3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                 printf("Error on init\n");
-                return_code = DSP_OS3_ERROR;
+                return_code = SRC_FF3_ERROR;
             }
 
             // Sync (i.e. clear data)
             // ----
-            if (dsp_os3_sync(&dsp_os3_ctrl[i]) != DSP_OS3_NO_ERROR) {
+            if (src_os3_sync(&src_os3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                 printf("Error on sync\n");
-                return_code = DSP_OS3_ERROR;
+                return_code = SRC_FF3_ERROR;
             }
 
         }
@@ -62,23 +62,23 @@ int main(void)
                 // Check if a new input sample is needed
                 // If it is needed read it into the control structure and call function to write to delay line
                 // If we have reached end of file, signal it.
-                if (dsp_os3_ctrl[i].phase == 0) {
-                    dsp_os3_ctrl[i].in_data = *input_data[i];
+                if (src_os3_ctrl[i].phase == 0) {
+                    src_os3_ctrl[i].in_data = *input_data[i];
                     //printf("in = %d\n", (int32_t) *input_data[i]);
                     input_data[i]++;
 
-                    if (dsp_os3_input(&dsp_os3_ctrl[i]) != DSP_OS3_NO_ERROR) {
+                    if (src_os3_input(&src_os3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                         printf("Error on os3 input\n");
-                        return_code = DSP_OS3_ERROR;
+                        return_code = SRC_FF3_ERROR;
                     }
                 }
 
                 // Call sample rate conversion. Always output a sample on each loop
-                if (dsp_os3_proc(&dsp_os3_ctrl[i]) != DSP_OS3_NO_ERROR) {
+                if (src_os3_proc(&src_os3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                     printf("Error on os3 process\n");
                     return_code = -4;
                 }
-                printf("%d\n", dsp_os3_ctrl[i].out_data);
+                printf("%d\n", src_os3_ctrl[i].out_data);
             }
         }
         return (int)return_code;

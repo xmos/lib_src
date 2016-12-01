@@ -1,12 +1,12 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-// XMOS DSP Library - Downsample by factor of 3 example
+// Downsample by factor of 3 example
 // Uses Signed 32b Integer format
 
 // Include files
 #include <stdio.h>
 #include <xs1.h>
-#include <dsp.h>
 #include <stdint.h>
+#include "src.h"
 
 #define NUM_CHANNELS  2
 #define NUM_OUTPUT_SAMPLES  128
@@ -19,7 +19,7 @@ const int32_t im4k5k_m6dB_48[1024] = {0, 1190523165, 1967042101, 2065749272, 146
 int main(void)
 {
     unsafe {
-        dsp_ds3_return_code_t return_code = DSP_DS3_NO_ERROR;
+        src_ff3_return_code_t return_code = SRC_FF3_NO_ERROR;
 
         // Input data for both channels
         const int32_t * unsafe input_data[NUM_CHANNELS] = {s1k_0db_48, im4k5k_m6dB_48};
@@ -30,8 +30,8 @@ int main(void)
         // DS3 instances variables
         // -----------------------
         // State and Control structures (one for each channel)
-        int                 dsp_ds3_delay[NUM_CHANNELS][DSP_DS3_N_COEFS<<1];
-        dsp_ds3_ctrl_t      dsp_ds3_ctrl[NUM_CHANNELS];
+        int                 src_ds3_delay[NUM_CHANNELS][SRC_DS3_N_COEFS<<1];
+        src_ds3_ctrl_t      src_ds3_ctrl[NUM_CHANNELS];
 
         //Init DS3
         for (int i=0; i<NUM_CHANNELS; i++) {
@@ -40,19 +40,19 @@ int main(void)
             // Process init
             // ------------
             // Set delay line base to ctrl structure
-            dsp_ds3_ctrl[i].delay_base = dsp_ds3_delay[i];
+            src_ds3_ctrl[i].delay_base = src_ds3_delay[i];
 
             // Init instance
-            if (dsp_ds3_init(&dsp_ds3_ctrl[i]) != DSP_DS3_NO_ERROR) {
+            if (src_ds3_init(&src_ds3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                 printf("Error on init\n");
-                return_code = DSP_DS3_ERROR;
+                return_code = SRC_FF3_ERROR;
             }
 
             // Sync (i.e. clear data)
             // ----
-            if (dsp_ds3_sync(&dsp_ds3_ctrl[i]) != DSP_DS3_NO_ERROR) {
+            if (src_ds3_sync(&src_ds3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                 printf("Error on sync\n");
-                return_code = DSP_DS3_ERROR;
+                return_code = SRC_FF3_ERROR;
             }
 
         }
@@ -60,13 +60,13 @@ int main(void)
         for (int s=0; s<NUM_OUTPUT_SAMPLES; s++) {
             for (int i=0; i<NUM_CHANNELS; i++) {
                 // Set input and output data pointers for the DS3
-                dsp_ds3_ctrl[i].in_data            = (int *)input_data[i];
-                dsp_ds3_ctrl[i].out_data           = (int *)&output_data[i];
+                src_ds3_ctrl[i].in_data            = (int *)input_data[i];
+                src_ds3_ctrl[i].out_data           = (int *)&output_data[i];
 
                 // Do the sample rate conversion on three input samples
-                if (dsp_ds3_proc(&dsp_ds3_ctrl[i]) != DSP_DS3_NO_ERROR) {
+                if (src_ds3_proc(&src_ds3_ctrl[i]) != SRC_FF3_NO_ERROR) {
                     printf("Error on ds3 process\n");
-                    return_code = DSP_DS3_ERROR;
+                    return_code = SRC_FF3_ERROR;
                 }
                 //for(int j=0; j<3; j++) printf("in = %d\n", *(input_data[i] + j));
                 input_data[i] += 3; // Move input pointer on by 3

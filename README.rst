@@ -19,15 +19,19 @@ In systems where the rate change is exactly equal to the ratio of nominal rates,
 Features
 ........
 
- * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192KHz input and output sample rates
- * 32 bit PCM input and output data in Q1.31 signed format
- * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
- * Optimized for xCORE-200 instruction set with dual-issue
- * Block based processing - Minimum 4 samples input per call, must be power of 2
- * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
- * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
- * Configurable number of audio channels per SRC instance
- * Reentrant library permitting multiple instances with differing configurations and channel count
+ * Multi-rate Hi-Fi functionality:
+
+   * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192KHz input and output sample rates
+   * 32 bit PCM input and output data in Q1.31 signed format
+   * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
+   * Optimized for xCORE-200 instruction set with dual-issue
+   * Block based processing - Minimum 4 samples input per call, must be power of 2
+   * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
+   * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% ( reference 1KHz)
+   * Configurable number of audio channels per SRC instance
+   * Reentrant library permitting multiple instances with differing configurations and channel count
+
+ * Synchronous fixed factor of 3 downsample and oversample functions with reduced resource requirements
  * No external components (PLL or memory) required
 
 Components
@@ -35,6 +39,8 @@ Components
 
  * Synchronous Sample Rate Converter function 
  * Asynchronous Sample Rate Converter function 
+ * Synchronous factor of 3 downsample function
+ * Synchronous factor of 3 oversample function
 
 
 Software version and dependencies
