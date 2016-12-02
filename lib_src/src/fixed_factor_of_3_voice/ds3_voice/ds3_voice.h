@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef _SRC_DS3_VOICE_H_
 #define _SRC_DS3_VOICE_H_
 
