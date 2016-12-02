@@ -5,6 +5,8 @@
 #include "asrc.h"
 #include "ds3.h"
 #include "os3.h"
+#include "ds3_voice.h"
+#include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
 extern "C" {
@@ -174,4 +176,27 @@ src_ff3_return_code_t src_os3_proc(src_os3_ctrl_t* src_os3_ctrl);
 #if defined(__cplusplus) || defined(__XC__)
 }
 #endif
+
+/** This function performs the first two iterations of the downsampling process
+ *
+ *  \param      sum      Partially accumulated value returned during previous cycle
+ *  \param      data     Data delay line
+ *  \param      coefs    FIR filter coefficients
+ *  \param      sample   The newest sample
+ *  \returns    Partially accumulated value, passed as ``sum`` parameter next cycle
+ */
+int64_t src_ds3_voice_add_sample(int64_t sum, int32_t data[],
+                                 const int32_t coefs[], int32_t sample);
+
+/** This function performs the final iteration of the downsampling process
+ *
+ *  \param      sum      Partially accumulated value returned during previous cycle
+ *  \param      data     Data delay line
+ *  \param      coefs    FIR filter coefficients
+ *  \param      sample   The newest sample
+ *  \returns    The decimated sample
+ */
+int64_t src_ds3_voice_add_final_sample(int64_t sum, int32_t data[],
+                                       const int32_t coefs[], int32_t sample);
+
 #endif // _src_h_

@@ -41,6 +41,7 @@ Components
  * Asynchronous Sample Rate Converter function
  * Synchronous factor of 3 downsample function
  * Synchronous factor of 3 oversample function
+ * Synchronous factor of 3 downsample function optimised for use with voice
 
 
 Software version and dependencies

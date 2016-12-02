@@ -599,6 +599,20 @@ OS3 API
 
 .. doxygenfunction:: src_os3_proc
 
+Fixed factor of 3 functions optimised for use with voice
+========================================================
+
+Voice DS3 API
+-------------
+
+.. doxygenvariable:: src_ds3_voice_coefs_debug
+
+.. doxygenvariable:: src_ds3_voice_coefs
+
+.. doxygenfunction:: src_ds3_voice_add_sample
+
+.. doxygenfunction:: src_ds3_voice_add_final_sample
+
 
 |newpage|
 

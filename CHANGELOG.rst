@@ -6,6 +6,8 @@ lib_src change log
 
   * ADDED: Fixed factor of 3 conversion functions for downsampling and
     oversampling
+  * ADDED: Fixed factor of 3 downsampling function optimised for use with voice
+    (reduced memory and compute footprint)
 
 1.0.0
 -----
