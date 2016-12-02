@@ -1,8 +1,8 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-#ifndef __src_h__
-#define __src_h__
-#include <ssrc.h>
-#include <asrc.h>
+#ifndef _src_h_
+#define _src_h_
+#include "ssrc.h"
+#include "asrc.h"
 #include "ds3.h"
 #include "os3.h"
 
@@ -174,4 +174,4 @@ src_ff3_return_code_t src_os3_proc(src_os3_ctrl_t* src_os3_ctrl);
 #if defined(__cplusplus) || defined(__XC__)
 }
 #endif
-#endif // __src_h__
+#endif // _src_h_
