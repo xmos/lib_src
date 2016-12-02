@@ -117,7 +117,7 @@ src_ff3_return_code_t src_ds3_init(src_ds3_ctrl_t* src_ds3_ctrl);
  */
 src_ff3_return_code_t src_ds3_sync(src_ds3_ctrl_t* src_ds3_ctrl);
 
-/** This function performs the decimation on three input samples and outputs on sample
+/** This function performs the decimation on three input samples and outputs one sample
  *  The input and output buffers are pointed to by members of the src_ds3_ctrl structure
  *
  *  \param      src_ds3_ctrl   DS3 control structure
