@@ -102,8 +102,20 @@ src_ds3_voice_add_final_sample://(int64_t sum, int32_t data[], int32_t coefs[], 
 	EVEN_STEP(10);
 	ODD_STEP(11);
 
-	{ldc r11, 31; nop}
-	lextract r0, r1, r0, r11, 32
+	{ldc d0, 31; nop}
+	lextract r0, r1, r0, d0, 32
+
+    ldaw s, cp[src_ds3_voice_fir_comp]
+    ldw s, s[0]
+    {ldc c0, 0; ldc c1, 0}
+    maccs c0, c1, r0, s
+
+    ldaw s, cp[src_ds3_voice_fir_comp_q]
+    ldw s, s[0]
+
+    lsats c0, c1, s
+	lextract r0, c0, c1, s, 32
+
 
 	ldd r4, r5, sp[0]
 	ldd r6, r7, sp[1]
