@@ -19,22 +19,29 @@ In systems where the rate change is exactly equal to the ratio of nominal rates,
 Features
 ........
 
- * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192KHz input and output sample rates
- * 32 bit PCM input and output data in Q1.31 signed format
- * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
- * Optimized for xCORE-200 instruction set with dual-issue
- * Block based processing - Minimum 4 samples input per call, must be power of 2
- * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
- * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% (reference 1KHz)
- * Configurable number of audio channels per SRC instance
- * Reentrant library permitting multiple instances with differing configurations and channel count
+ * Multi-rate Hi-Fi functionality:
+
+   * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192KHz input and output sample rates
+   * 32 bit PCM input and output data in Q1.31 signed format
+   * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF)
+   * Optimized for xCORE-200 instruction set with dual-issue
+   * Block based processing - Minimum 4 samples input per call, must be power of 2
+   * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only)
+   * Very high quality - SNR greater than 135db (ASRC) or 140db (SSRC), with THD of less than 0.0001% ( reference 1KHz)
+   * Configurable number of audio channels per SRC instance
+   * Reentrant library permitting multiple instances with differing configurations and channel count
+
+ * Synchronous fixed factor of 3 downsample and oversample functions with reduced resource requirements
  * No external components (PLL or memory) required
 
 Components
 ..........
 
- * Synchronous Sample Rate Converter function 
- * Asynchronous Sample Rate Converter function 
+ * Synchronous Sample Rate Converter function
+ * Asynchronous Sample Rate Converter function
+ * Synchronous factor of 3 downsample function
+ * Synchronous factor of 3 oversample function
+ * Synchronous factor of 3 downsample function optimised for use with voice
 
 
 Software version and dependencies
@@ -60,7 +67,7 @@ Typical Resource Usage
 
   * - configuration: SSRC
     - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2]; 
+    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2];
     - ports: 0
     - locals:
     - flags:
@@ -75,7 +82,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 .. list-table:: SSRC Processor Usage per Channel (MHz)
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -
@@ -147,7 +154,7 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 The ASRC algorithm also runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channel with adaptive coefficients calculation and the second table specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
 .. tip::
-  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16. 
+  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
 
 .. tip::
   Typically you will need to allow for performance headroom for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication. Please refer to the application notes for practical examples of usage.
@@ -156,7 +163,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -
@@ -218,7 +225,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
      :header-rows: 1
 
-     * - 
+     * -
        - Output sample rate
        -
        -

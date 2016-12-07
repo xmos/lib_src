@@ -12,7 +12,7 @@ SET dither=-d0
 SET n_samps_in_tot=-l256
 @rem Number of input samples to process in one chunk
 SET n_samps_proc=-n4
-@rem List of deviation of actual sample rate ratio from nominal 
+@rem List of deviation of actual sample rate ratio from nominal
 set FsRatio_deviations=1.000000, 0.990099, 1.009999
 
 @rem iterate over this list
@@ -23,7 +23,7 @@ for %%f in (%FsRatio_deviations%) do (
 
 @echo ASRC 44.1 - 44.1
 @echo ----------------
-@..\Project\Debug\ASRC_demo.exe -iIn\s1k_0dB_44.dat -jIn\im10k11k_m6dB_44.dat -k0 -oOut\s1k_0dB_44_44_%%f.expect -pOut\im10k11k_m6dB_44_44_%%f.expect -q0 %dither% %n_samps_in_tot% %n_samps_proc% -e%%f 
+@..\Project\Debug\ASRC_demo.exe -iIn\s1k_0dB_44.dat -jIn\im10k11k_m6dB_44.dat -k0 -oOut\s1k_0dB_44_44_%%f.expect -pOut\im10k11k_m6dB_44_44_%%f.expect -q0 %dither% %n_samps_in_tot% %n_samps_proc% -e%%f
 
 @echo ASRC 44.1 - 48
 @echo --------------

@@ -1,5 +1,8 @@
 .. include:: ../../../README.rst
 
+Multi-rate Hi-Fi functionality
+==============================
+
 Usage
 -----
 
@@ -27,7 +30,7 @@ The settings include:
  * The number of input samples to expect. Minimum 4 samples input per call, must be power of 2
  * The dither setting. Dithers the output from 32bit to 24bit
 
-The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``. 
+The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``.
 
 There are a number of arrays of structures that must be declared from the application which contain the state, buffers between the FIR stages, state and adapted coefficients (ASRC only). There must be one element of each structure declared for each channel handled by the SRC instance. The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
 
@@ -44,12 +47,12 @@ For the case of SSRC, the following state structures are required::
 For the ASRC, the state structures must be declared. Note that only one instance of the filter coefficients need be declared because these are shared amongst channels within the instance::
 
     //ASRC state
-    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];                                  
-    int                asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];  
+    asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];
+    int                asrc_stack[ASRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * ASRC_N_IN_SAMPLES];
     //Control structure
     asrc_ctrl_t        asrc_ctrl[ASRC_CHANNELS_PER_INSTANCE];
     //Adaptive filter coefficients
-    asrc_adfir_coefs_t asrc_adfir_coefs;                                                                 
+    asrc_adfir_coefs_t asrc_adfir_coefs;
 
 Processing
 ..........
@@ -59,9 +62,9 @@ Following initialization, the processing API is called for each block of input s
 .. figure:: images/src_proc.pdf
    :width: 100%
 
-   SRC Operation  
+   SRC Operation
 
-The processing function call is passed the input and output buffers and a reference to the control structure:: 
+The processing function call is passed the input and output buffers and a reference to the control structure::
 
     unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t *ssrc_ctrl)
 
@@ -73,7 +76,7 @@ The SRC processing call always returns a whole number of output samples produced
 
 The fractional number of samples produced to be carried to the next operation is stored internally inside the control structure, and additional whole samples are added during subsequent calls to the sample rate converter as necessary.
 
-For example, a sample rate conversion from 44.1KHz to 48KHz with a input block size of 4 will produce a 4 sample result with a 5 sample result approximately every third call. 
+For example, a sample rate conversion from 44.1KHz to 48KHz with a input block size of 4 will produce a 4 sample result with a 5 sample result approximately every third call.
 
 Each SRC processing call returns the integer number of samples produced during the sample rate conversion.
 
@@ -91,7 +94,7 @@ In the case where two channels are handled by a single SRC instance, you can see
 .. figure:: images/stereo_single_instance.pdf
    :width: 25%
 
-   Buffer Format for Single Stereo SRC instance 
+   Buffer Format for Single Stereo SRC instance
 
 
 Where a single audio channel is mapped to a single instance, the buffers are simply an array of samples starting with the oldest sample and ending with the newest sample.
@@ -99,7 +102,7 @@ Where a single audio channel is mapped to a single instance, the buffers are sim
 .. figure:: images/stereo_dual_instance.pdf
    :width: 50%
 
-   Buffer Format for Dual Mono SRC instances 
+   Buffer Format for Dual Mono SRC instances
 
 
 |newpage|
@@ -109,11 +112,11 @@ In the case where four channels are processed by two instances, channels 0 & 1 a
 .. figure:: images/quad_dual_instance.pdf
    :width: 50%
 
-   Buffer Format for Dual Stereo SRC instances (4 channels total)  
+   Buffer Format for Dual Stereo SRC instances (4 channels total)
 
 In addition to the above arguments the ``asrc_process()`` call also requires an unsigned Q4.28 fixed point ratio value specifying the actual input to output ratio for the next calculated block of samples. This allows the input and output rates to be fully asynchronous by allowing rate changes on each call to the ASRC. The converter dynamically computes coefficients using a spline interpolation within the last filter stage. It is up to the callee to maintain the input and output sample rate ratio difference. An example of this calculation, based on measuring the input and output rates, is provided in AN00231.
 
-Further detail about these function arguments are contained within the API section of this guide. 
+Further detail about these function arguments are contained within the API section of this guide.
 
 
 |newpage|
@@ -134,12 +137,12 @@ Below are a series FFT plots showing the most demanding rate conversion case. Th
 .. figure:: images/ssrc_fft_44_192.pdf
    :width: 90%
 
-   FFT of 1kHz sine, 0dB, 44.1kHz to 192kHz  
+   FFT of 1kHz sine, 0dB, 44.1kHz to 192kHz
 
 .. figure:: images/ssrc_fft_176_48.pdf
    :width: 90%
 
-   FFT of 1kHz sine, 0dB, 176.4kHz to 48kHz 
+   FFT of 1kHz sine, 0dB, 176.4kHz to 48kHz
 
 .. figure:: images/ssrc_fft_96_88.pdf
    :width: 90%
@@ -152,7 +155,7 @@ ASRC Performance
 
 The performance of the SSRC library is as follows:
 
- * THD+N: (1kHz, 0dBFs): better than -130dB 
+ * THD+N: (1kHz, 0dBFs): better than -130dB
  * SNR:   135dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
 The performance was analyzed by converting output test files to 32 bits integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
@@ -163,12 +166,12 @@ Below are a series FFT plots showing the most demanding rate conversion case. Th
 .. figure:: images/asrc_fft_44_192.pdf
    :width: 90%
 
-   FFT of 1kHz sine, 0dB, 44.1kHz to 192kHz  
+   FFT of 1kHz sine, 0dB, 44.1kHz to 192kHz
 
 .. figure:: images/asrc_fft_176_48.pdf
    :width: 90%
 
-   FFT of 1kHz sine, 0dB, 176.4kHz to 48kHz 
+   FFT of 1kHz sine, 0dB, 176.4kHz to 48kHz
 
 .. figure:: images/asrc_fft_96_88.pdf
    :width: 90%
@@ -190,7 +193,7 @@ The nominal rate change ratios between 44.1KHz and 192KHz are shown in the below
 .. list-table:: Rate Changes for Sample Rate Conversion
      :header-rows: 2
 
-     * - 
+     * -
        - Output sample rate
        -
        -
@@ -249,7 +252,7 @@ The nominal rate change ratios between 44.1KHz and 192KHz are shown in the below
 
 
 .. tip::
-  The table shows the case for SSRC where the ratios are equal to the nominal sample rate ratio. In the case of ASRC, where the ratios cannot be expressed rationally, these are the nominal ratios from which there will usually be a rate deviaton. 
+  The table shows the case for SSRC where the ratios are equal to the nominal sample rate ratio. In the case of ASRC, where the ratios cannot be expressed rationally, these are the nominal ratios from which there will usually be a rate deviaton.
 
 
 SSRC Structure
@@ -281,14 +284,14 @@ Similar to the SSRC, the ASRC algorithm is based three cascaded FIR filters (F1,
 
 The ASRC algorithm is implemented as a two stage structure:
 
- * The Bandwidth control stage includes filters F1 and F2 which are responsible for limiting the bandwidth of the input signal (to min(Fsin/2,Fsout/2) and for providing integer rate sample rate conversion to condition the input signal for the adaptive polyphase stage (F3). 
+ * The Bandwidth control stage includes filters F1 and F2 which are responsible for limiting the bandwidth of the input signal (to min(Fsin/2,Fsout/2) and for providing integer rate sample rate conversion to condition the input signal for the adaptive polyphase stage (F3).
  * The polyphase filter stage consists of the adaptive polyphase filter F3, which effectively provides the asynchronous connection between the input and output clock domains.
 
 
 SRC Filter list
 ...............
 
-A complete list of the filters supported by the SRC library, both SSRC and ASRC, is shown in the below table. The filters are implemented in C within the ``FilterDefs.c`` function and the coefficients can be found in the ``/FilterData`` folder. The particular combination of filters cascaded together for a given sample rate change is specified in ``ssrc.c`` and ``asrc.c``. 
+A complete list of the filters supported by the SRC library, both SSRC and ASRC, is shown in the below table. The filters are implemented in C within the ``FilterDefs.c`` function and the coefficients can be found in the ``/FilterData`` folder. The particular combination of filters cascaded together for a given sample rate change is specified in ``ssrc.c`` and ``asrc.c``.
 
 .. list-table:: SSRC Processor Usage per channel (MHz)
      :header-rows: 1
@@ -316,7 +319,7 @@ A complete list of the filters supported by the SRC library, both SSRC and ASRC,
        - 0.01 dB
        - 155 dB
        - 160
-       - Low-pass filter, steep for 96 to 44.1   
+       - Low-pass filter, steep for 96 to 44.1
      * - BL8848
        - 2
        - 0.494
@@ -381,7 +384,7 @@ A complete list of the filters supported by the SRC library, both SSRC and ASRC,
        - 155 dB
        - 96
        - Over sample by 2, steep for 192 to 176.4
-     * - DS 
+     * - DS
        - 4
        - 0.57
        - 1.39
@@ -428,14 +431,16 @@ A complete list of the filters supported by the SRC library, both SSRC and ASRC,
 SRC File Structure and Overview
 -------------------------------
 
+All source files for the SSRC and ASRC are located within the ``multirate_hifi`` subdirectory.
+
  * ssrc_wrapper.c / ssrc_wrapper.h
 
-   These wrapper files provide a simplified public API to the SSRC initialization and processing functions. 
+   These wrapper files provide a simplified public API to the SSRC initialization and processing functions.
 
 
  * asrc_wrapper.c / asrc_wrapper.h
 
-   These wrapper files provide a simplified public API to the ASRC initialization and processing functions. 
+   These wrapper files provide a simplified public API to the ASRC initialization and processing functions.
 
 
  * SSRC.c / SSRC.h
@@ -455,7 +460,7 @@ SRC File Structure and Overview
 
  * FilterDefs.c / FilterDefs.h
 
-   These files define the size and coefficient sources for all the filters used by the SRC algorithms. 
+   These files define the size and coefficient sources for all the filters used by the SRC algorithms.
 
 
  * /FilterData directory (various files)
@@ -475,7 +480,7 @@ SRC File Structure and Overview
 
  * spline_coeff_gen_inner_loop_asm.S / spline_coeff_gen_inner_loop_asm.h
 
-   Inner loop for generating the spline interpolated coefficients. This assembler function is optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions. 
+   Inner loop for generating the spline interpolated coefficients. This assembler function is optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions.
 
 
  * adfir_inner_loop_asm.S / adfir_inner_loop_asm.h
@@ -529,6 +534,87 @@ ASRC Processing
 
 .. doxygenfunction:: asrc_process
 
+Fixed factor of 3 functions
+===========================
+
+The SRC library also includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of three. In each case, the processing is carried out each time a single output sample is required. In the case of the decimator, three input samples passed to filter with a resulting one sample output on calling the processing function. The interpolator produces an output sample each time the processing function is called but will require a single sample to be pushed into the filter every third cycle. All samples use Q31 format (left justified signed 32b integer).
+
+Both sample rate converters are based on a 144 tap FIR filter with two sets of coefficients available, depending on application requirements:
+
+ * firos3_b_144.dat / firds3_b_144.dat - These filters have 20dB of attenuation at the nyquist frequency and a higher cutoff frequency
+ * firos3_144.dat / firds3_144.dat - These filters have 60dB of attenuation at the nyquist frequency but trade this off with a lower cutoff frequency
+
+The filter coefficients may be selected by adjusting the line::
+
+  #define   FIROS3_COEFS_FILE
+
+and::
+
+  #define   FIRDS3_COEFS_FILE
+
+in the files ``os3.h`` (API for oversampling) and ``ds3.h`` (API for downsampling) respectively.
+
+The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53us at 100MHz or 2.448us at 62.5MHz core speed. This permits up to 8 channels of 16KHz -> 48KHz sample rate conversion in a single 62.5MHz core.
+
+The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89us at 100MHz or 6.224us at 62.5MHz core speed. This permits up to 9 channels of 48KHz -> 16KHz sample rate conversion in a single 62.5MHz core.
+
+Both downsample and oversample functions return ``ERROR`` or  ``NOERROR`` status codes as defined in return codes enums listed below.
+
+The down sampling functions return the following error codes ::
+
+  FIRDS3_NO_ERROR
+  FIRDS3_ERROR
+
+The up sampling functions return the following error codes ::
+
+  FIROS3_NO_ERROR
+  FIROS3_ERROR
+
+API
+---
+
+.. doxygenenum:: src_ff3_return_code_t
+
+DS3 API
+-------
+
+.. doxygenstruct:: src_ds3_ctrl_t
+
+.. doxygenfunction:: src_ds3_init
+
+.. doxygenfunction:: src_ds3_sync
+
+.. doxygenfunction:: src_ds3_proc
+
+OS3 API
+-------
+
+.. doxygenstruct:: src_os3_ctrl_t
+
+.. doxygenfunction:: src_os3_init
+
+.. doxygenfunction:: src_os3_sync
+
+.. doxygenfunction:: src_os3_input
+
+.. doxygenfunction:: src_os3_proc
+
+Fixed factor of 3 functions optimised for use with voice
+========================================================
+
+Voice DS3 API
+-------------
+
+.. doxygenvariable:: src_ds3_voice_coefs_debug
+
+.. doxygenvariable:: src_ds3_voice_coefs
+
+.. doxygenfunction:: src_ds3_voice_add_sample
+
+.. doxygenfunction:: src_ds3_voice_add_final_sample
+
+
+|newpage|
 
 |appendix|
 
@@ -540,7 +626,7 @@ Certain ASRC configurations, mainly conversions between 176.4/192KHz to 176.4/19
 * Further inner loop optimization using assembler
 * Increase in scope of assembler sections removing additional function calls
 * Pipelining of the FIR filter stages into separate tasks
-* Calculation of adaptive filter coefficients in a separate task 
+* Calculation of adaptive filter coefficients in a separate task
 
 These optimizations may be the target for future revisions of this library.
 
