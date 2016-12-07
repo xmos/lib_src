@@ -71,7 +71,7 @@ src_ff3_return_code_t src_ds3_init(src_ds3_ctrl_t* src_ds3_ctrl)
     src_ds3_ctrl->delay_len       = SRC_DS3_N_COEFS<<1;                                    // Double length for circular buffer simulation
     src_ds3_ctrl->delay_wrap      = src_ds3_ctrl->delay_base + SRC_DS3_N_COEFS;
     src_ds3_ctrl->delay_offset    = SRC_DS3_N_COEFS;
-    src_ds3_ctrl->inner_loops     = (SRC_DS3_N_COEFS>>1) / N_LOOPS_PER_ASM;                // Right shift to 2 x 32bits read for coefs per inner loop
+    src_ds3_ctrl->inner_loops     = (SRC_DS3_N_COEFS>>1) / SRC_FF3_N_LOOPS_PER_ASM;        // Right shift to 2 x 32bits read for coefs per inner loop
     src_ds3_ctrl->num_coeffs      = SRC_DS3_N_COEFS;
     src_ds3_ctrl->coeffs          = src_ds3_coeffs;
 

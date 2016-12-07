@@ -2,7 +2,7 @@
 #ifndef _firff3_inner_loop_ASM_H_
 #define _firff3_inner_loop_ASM_H_
 
-#define N_LOOPS_PER_ASM   12
+#define SRC_FF3_N_LOOPS_PER_ASM   12
 
 void firff3_inner_loop_asm(int *piData, int *piCoefs, int iData[], int count);
 void firff3_inner_loop_asm_odd(int *piData, int *piCoefs, int iData[], int count);

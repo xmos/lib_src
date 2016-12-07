@@ -58,7 +58,7 @@ src_ff3_return_code_t src_os3_init(src_os3_ctrl_t* src_os3_ctrl)
     src_os3_ctrl->delay_len         = (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)<<1;                        // Double length for circular buffer simulation. x3 over-sampler, so only 1/3rd of coefs length needed
     src_os3_ctrl->delay_wrap        = src_os3_ctrl->delay_base + (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES);
     src_os3_ctrl->delay_offset      = (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES);
-    src_os3_ctrl->inner_loops       = ((SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)>>1) / N_LOOPS_PER_ASM;    // Right shift due to 2 x 32bits read for coefs per inner loop and x3 over-sampler, so only 1/3rd of coefs length needed
+    src_os3_ctrl->inner_loops       = ((SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)>>1) / SRC_FF3_N_LOOPS_PER_ASM;    // Right shift due to 2 x 32bits read for coefs per inner loop and x3 over-sampler, so only 1/3rd of coefs length needed
     src_os3_ctrl->num_coeffs        = SRC_OS3_N_COEFS;
     src_os3_ctrl->coeffs            = src_os3_coeffs;
 
