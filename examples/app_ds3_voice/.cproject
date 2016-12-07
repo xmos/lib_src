@@ -800,7 +800,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="app_ds3.null.181439143" name="app_ds3"/>
+		<project id="app_ds3_voice.null.181439143" name="app_ds3_voice"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
