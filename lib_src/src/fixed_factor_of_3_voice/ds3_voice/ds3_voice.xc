@@ -1,6 +1,18 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include <stdint.h>
 
+/** Used for FIR compensation.
+ *
+ *  Generated using ds3_voice.py
+ */
+const unsigned src_ds3_voice_fir_comp_q = 30;
+
+/** Used for FIR compensation.
+ *
+ *  Generated using ds3_voice.py
+ */
+const int32_t src_ds3_voice_fir_comp =2225098336;
+
 /** Used for self testing src_ds3_voice functionality
  *
  *  Generated using ds3_voice.py

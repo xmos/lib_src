@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+extern const unsigned src_ds3_voice_fir_comp_q;
+extern const int32_t src_ds3_voice_fir_comp;
+
 extern int32_t src_ds3_voice_coefs_debug[72];
 extern const int32_t src_ds3_voice_coefs[3][24];
 
