@@ -2,8 +2,6 @@
 // ===========================================================================
 // ===========================================================================
 //
-// File: SSRC.c
-//
 // Top level implementation file for the SSRC
 //
 // Target:    MS Windows
@@ -23,7 +21,7 @@
 #include <math.h>
 
 // Integer arithmetic include
-#include "IntArithmetic.h"
+#include "src_mrhf_int_arithmetic.h"
 // XMOS built in functions
 #include <xs1.h>
 // SSRC include

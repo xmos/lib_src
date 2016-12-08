@@ -22,7 +22,7 @@
 #include <math.h>
 
 // Integer arithmetic include
-#include "IntArithmetic.h"
+#include "src_mrhf_int_arithmetic.h"
 // ASRC include
 #include "src.h"
 

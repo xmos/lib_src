@@ -17,7 +17,7 @@
 #define     ASRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
 #define     ASRC_DITHER_SETTING              OFF
 
-#include "asrc_checks.h"                        //Do some checking on the defines above
+#include "src_mrhf_asrc_checks.h"               //Do some checking on the defines above
 
 
 //Input and output files
@@ -27,7 +27,7 @@ char * unsafe pzOutFileName[ASRC_N_CHANNELS] = {null};
 //Number of samples to process
 int uiNTotalInSamples = -1;
 
-//Input and output frequency indicies. Initialise to invalid. See asrc.h ASRCFs_t for these codes. 0=44.1 - 5=192
+//Input and output frequency indicies. Initialise to invalid. See src_mrhf_asrc.h ASRCFs_t for these codes. 0=44.1 - 5=192
 int uiInFs = -1;
 int uiOutFs = -1;
 
@@ -115,7 +115,7 @@ void dsp_slave(chanend c_dsp)
         }
 
         if (sr_in_out_new != sr_in_out) {
-            // Set input/output sampling rate codes. See ASRCFs_t in ASRC.h (ie 0=44.1 5=192 etc.)
+            // Set input/output sampling rate codes. See ASRCFs_t in src_mrhf_asrc.h (ie 0=44.1 5=192 etc.)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 

@@ -1,7 +1,6 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-
-#ifndef __asrc_checks_h__
-#define __asrc_checks_h__
+#ifndef _SRC_MRHF_ASRC_CHECKS_H_
+#define _SRC_MRHF_ASRC_CHECKS_H_
 
 #include "src.h"
 
@@ -34,4 +33,4 @@
 #warning "SRC buffering configured so that fs out <= fs in"
 #endif
 
-#endif
+#endif // _SRC_MRHF_ASRC_CHECKS_H_

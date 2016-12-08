@@ -2,8 +2,6 @@
 // ===========================================================================
 // ===========================================================================
 //
-// File: ASRC.h
-//
 // Top level definition file for the ASRC
 //
 // Target:    MS Windows
@@ -12,19 +10,19 @@
 // ===========================================================================
 // ===========================================================================
 
-#ifndef _ASRC_H_
-#define _ASRC_H_
+#ifndef _SRC_MRHF_ASRC_H_
+#define _SRC_MRHF_ASRC_H_
 
     // ===========================================================================
     //
     // Includes
     //
     // ===========================================================================
-    #include "FIR.h"
-    #include "FilterDefs.h"
+    #include "src_mrhf_fir.h"
+    #include "src_mrhf_filter_defs.h"
     #include "src.h"
-        #include "spline_coeff_gen_inner_loop_asm.h"
-        #include "adfir_inner_loop_asm.h"
+    #include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
+    #include "src_mrhf_adfir_inner_loop_asm.h"
 
     // ===========================================================================
     //
@@ -292,4 +290,4 @@
 
     #endif // nINCLUDE_FROM_ASM
 
-#endif // _ASRC_H_
+#endif // _SRC_MRHF_ASRC_H_

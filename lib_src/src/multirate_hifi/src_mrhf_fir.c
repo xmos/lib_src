@@ -2,8 +2,6 @@
 // ===========================================================================
 // ===========================================================================
 //
-// File: FIR.c
-//
 // FIR functions implementation file for the ASRC and SSRC
 //
 //
@@ -22,13 +20,13 @@
 #include <math.h>
 
 // Optimised assembler inner loop functions
-#include "fir_os_inner_loop_asm.h"
-#include "fir_inner_loop_asm.h"
-#include "adfir_inner_loop_asm.h"
-#include "spline_coeff_gen_inner_loop_asm.h"
+#include "src_mrhf_fir_os_inner_loop_asm.h"
+#include "src_mrhf_fir_inner_loop_asm.h"
+#include "src_mrhf_adfir_inner_loop_asm.h"
+#include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
 
 // FIR includes
-#include "FIR.h"
+#include "src_mrhf_fir.h"
 
 // ===========================================================================
 //

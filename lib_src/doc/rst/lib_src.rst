@@ -433,32 +433,32 @@ SRC File Structure and Overview
 
 All source files for the SSRC and ASRC are located within the ``multirate_hifi`` subdirectory.
 
- * ssrc_wrapper.c / ssrc_wrapper.h
+ * src_mrhf_ssrc_wrapper.c / src_mrhf_ssrc_wrapper.h
 
    These wrapper files provide a simplified public API to the SSRC initialization and processing functions.
 
 
- * asrc_wrapper.c / asrc_wrapper.h
+ * src_mrhf_asrc_wrapper.c / src_mrhf_asrc_wrapper.h
 
    These wrapper files provide a simplified public API to the ASRC initialization and processing functions.
 
 
- * SSRC.c / SSRC.h
+ * src_mrhf_ssrc.c / src_mrhf_ssrc.h
 
    These files contain the core of the SSRC algorithm. It sets up the correct filtering chains depending on rate change and applies them in the processing calls. The table sFiltersIDs declared in SSRC.c contains definitions of the filter chains for all supported rated changes. The files also integrate the code for the optional dithering function.
 
 
- * ASRC.c / ASRC.h
+ * src_mrhf_asrc.c / src_mrhf_asrc.h
 
    These files contain the core of the ASRC algorithm. They setup the correct filtering chains depending on rate change and apply them for the corresponding processing calls. Note that filters F1, F2 and dithering are implemented using a block based approach (code similar to SSRC). The adaptive polyphase filter (ADFIR) is implemented on a sample by sample basis. These files also contain functions to compute the adaptive poly-phase filter coefficients.
 
 
- * FIR.c / FIR.h
+ * src_mrhf_fir.c / src_mrhf_fir.h
 
    These files provide Finite Impulse Response (FIR) filtering setup, with calls to the  assembler-optimized inner loops. It provides functions for handling down-sampling by 2, synchronous or over-sampling by 2 FIRs. It also provides functions for handling polyphase filters used for rational ratio rate change in the SSRC and adaptive FIR filters used in the asynchronous section of the ASRC.
 
 
- * FilterDefs.c / FilterDefs.h
+ * src_mrhf_filter_defs.c / src_mrhf_filter_defs.h
 
    These files define the size and coefficient sources for all the filters used by the SRC algorithms.
 
@@ -468,27 +468,27 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
    This directory contains the pre-computed coefficients for all of the fixed FIR filters. The numbers are stored as signed Q1.31 format and are directly included into the source from FilterDefs.c. Both the .dat files used by the C compiler and the .sfp ScopeFIR (http://iowegian.com/scopefir/) design source files, used to originally create the filters, are included.
 
 
- * fir_inner_loop_asm.S / fir_inner_loop_asm.h
+ * src_mrhf_fir_inner_loop_asm.S / src_mrhf_fir_inner_loop_asm.h
 
    Inner loop for the standard FIR function optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions. Even and odd sample long word alignment versions are provided.
 
 
- * fir_os_inner_loop_asm.S / fir_os_inner_loop_asm.h
+ * src_mrhf_fir_os_inner_loop_asm.S / scr_mrhf_fir_os_inner_loop_asm.h
 
    Inner loop for the oversampling FIR function optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided.
 
 
- * spline_coeff_gen_inner_loop_asm.S / spline_coeff_gen_inner_loop_asm.h
+ * src_mrhf_spline_coeff_gen_inner_loop_asm.S / src_mrhf_spline_coeff_gen_inner_loop_asm.h
 
    Inner loop for generating the spline interpolated coefficients. This assembler function is optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions.
 
 
- * adfir_inner_loop_asm.S / adfir_inner_loop_asm.h
+ * src_mrhf_adfir_inner_loop_asm.S / src_mrhf_adfir_inner_loop_asm.h
 
    Inner loop for the adaptive FIR function using the previously computed spline interpolated coefficients. It is optimized for double-word load and store, 32bit * 32bit -> 64bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided.
 
 
- * IntArithmetic.c / IntArithmetic.h
+ * src_mrhf_int_arithmetic.c / src_mrhf_int_arithmetic.h
 
    These files contain simulation implementations of following XMOS assembler instructions. These are only used for dithering functions, and may be eliminated during future optimizations.
 
@@ -552,7 +552,7 @@ and::
 
   #define   FIRDS3_COEFS_FILE
 
-in the files ``os3.h`` (API for oversampling) and ``ds3.h`` (API for downsampling) respectively.
+in the files ``src_ff3_os3.h`` (API for oversampling) and ``src_ff3_ds3.h`` (API for downsampling) respectively.
 
 The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53us at 100MHz or 2.448us at 62.5MHz core speed. This permits up to 8 channels of 16KHz -> 48KHz sample rate conversion in a single 62.5MHz core.
 

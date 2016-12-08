@@ -19,8 +19,8 @@
 #include <math.h>
 
 #include "src.h"
-#include "ds3.h"
-#include "firff3_inner_loop_asm.h"
+#include "src_ff3_ds3.h"
+#include "src_ff3_fir_inner_loop_asm.h"
 
 
 // ===========================================================================
