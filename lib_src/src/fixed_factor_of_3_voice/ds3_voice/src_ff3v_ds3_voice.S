@@ -30,12 +30,12 @@
 	maccs sum_h, sum_l, c1, d0;\
 	std	d0, d1, data[N];
 
-.cc_top src_ds3_impl.function
-.globl	src_ds3_impl
+.cc_top src_ds3_voice_impl.function
+.globl	src_ds3_voice_impl
 .align	8
-.type	src_ds3_impl,@function
+.type	src_ds3_voice_impl,@function
 .issue_mode dual
-src_ds3_impl:
+src_ds3_voice_impl:
 	EVEN_STEP(0);
 	ODD_STEP(1);
 	EVEN_STEP(2);
@@ -50,18 +50,18 @@ src_ds3_impl:
 	ODD_STEP(11);
     {retsp 0; nop}
 .src_ds3_impl_tmp:
-	.size	src_ds3_impl, .src_ds3_impl_tmp-src_ds3_impl
+	.size	src_ds3_voice_impl, .src_ds3_impl_tmp-src_ds3_voice_impl
 	.align	4
-	.cc_bottom src_ds3_impl.function
+	.cc_bottom src_ds3_voice_impl.function
 
-	.set	src_ds3_impl.nstackwords, 0
-	.globl	src_ds3_impl.nstackwords
-	.set	src_ds3_impl.maxcores,1
-	.globl	src_ds3_impl.maxcores
-	.set	src_ds3_impl.maxtimers,0
-	.globl	src_ds3_impl.maxtimers
-	.set	src_ds3_impl.maxchanends,0
-	.globl	src_ds3_impl.maxchanends
+	.set	src_ds3_voice_impl.nstackwords, 0
+	.globl	src_ds3_voice_impl.nstackwords
+	.set	src_ds3_voice_impl.maxcores,1
+	.globl	src_ds3_voice_impl.maxcores
+	.set	src_ds3_voice_impl.maxtimers,0
+	.globl	src_ds3_voice_impl.maxtimers
+	.set	src_ds3_voice_impl.maxchanends,0
+	.globl	src_ds3_voice_impl.maxchanends
 
 
 
@@ -79,7 +79,7 @@ src_ds3_voice_add_sample://(int64_t sum, int32_t data[], int32_t coefs[], int32_
 
 	ldw s, sp[STACKWORDS+1]
 
-    bl src_ds3_impl
+    bl src_ds3_voice_impl
 
 	ldd r4, r5, sp[0]
 	ldd r6, r7, sp[1]
@@ -113,7 +113,7 @@ src_ds3_voice_add_final_sample://(int64_t sum, int32_t data[], int32_t coefs[], 
 
 	ldw s, sp[STACKWORDS+1]
 
-    bl src_ds3_impl
+    bl src_ds3_voice_impl
 
 	{ldc d0, 31; nop}
 	lextract r0, r1, r0, d0, 32
