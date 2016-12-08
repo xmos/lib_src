@@ -27,7 +27,7 @@ int main(void)
         // OS3 instances variables
         // -----------------------
         // State and Control structures (one per channel)
-        int32_t           src_os3_delay[NUM_CHANNELS][(SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)<<1];        // Delay line length is 1/3rd of number of coefs as over-sampler by 3 (and double for circular buffer simulation)
+        int32_t           src_os3_delay[NUM_CHANNELS][(SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES)<<1];        // Delay line length is 1/3rd of number of coefs as over-sampler by 3 (and double for circular buffer simulation)
         src_os3_ctrl_t    src_os3_ctrl[NUM_CHANNELS];
 
         //Init OS3

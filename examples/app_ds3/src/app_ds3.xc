@@ -30,7 +30,7 @@ int main(void)
         // DS3 instances variables
         // -----------------------
         // State and Control structures (one for each channel)
-        int                 src_ds3_delay[NUM_CHANNELS][SRC_DS3_N_COEFS<<1];
+        int                 src_ds3_delay[NUM_CHANNELS][SRC_FF3_DS3_N_COEFS<<1];
         src_ds3_ctrl_t      src_ds3_ctrl[NUM_CHANNELS];
 
         //Init DS3

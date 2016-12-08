@@ -567,7 +567,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
     piADCoefs        = pasrc_ctrl->piADCoefs;        // Given limited number of registers, this should be DP
 
-    spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+    src_mrhf_spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
     // Step time for next output sample
     // --------------------------------

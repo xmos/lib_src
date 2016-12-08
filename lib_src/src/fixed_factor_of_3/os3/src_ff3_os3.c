@@ -37,8 +37,8 @@
 //
 // ===========================================================================
 
-int                    src_os3_coeffs[SRC_OS3_N_COEFS]     = {
-    #include SRC_OS3_COEFS_FILE
+int                    src_os3_coeffs[SRC_FF3_OS3_N_COEFS]     = {
+    #include SRC_FF3_OS3_COEFS_FILE
 };
 
 // ===========================================================================
@@ -55,11 +55,11 @@ src_ff3_return_code_t src_os3_init(src_os3_ctrl_t* src_os3_ctrl)
     }
 
     // Setup from FIROS2 descriptor
-    src_os3_ctrl->delay_len         = (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)<<1;                        // Double length for circular buffer simulation. x3 over-sampler, so only 1/3rd of coefs length needed
-    src_os3_ctrl->delay_wrap        = src_os3_ctrl->delay_base + (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES);
-    src_os3_ctrl->delay_offset      = (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES);
-    src_os3_ctrl->inner_loops       = ((SRC_OS3_N_COEFS/SRC_OS3_N_PHASES)>>1) / SRC_FF3_N_LOOPS_PER_ASM;    // Right shift due to 2 x 32bits read for coefs per inner loop and x3 over-sampler, so only 1/3rd of coefs length needed
-    src_os3_ctrl->num_coeffs        = SRC_OS3_N_COEFS;
+    src_os3_ctrl->delay_len         = (SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES)<<1;                        // Double length for circular buffer simulation. x3 over-sampler, so only 1/3rd of coefs length needed
+    src_os3_ctrl->delay_wrap        = src_os3_ctrl->delay_base + (SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES);
+    src_os3_ctrl->delay_offset      = (SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES);
+    src_os3_ctrl->inner_loops       = ((SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES)>>1) / SRC_FF3_N_LOOPS_PER_ASM;    // Right shift due to 2 x 32bits read for coefs per inner loop and x3 over-sampler, so only 1/3rd of coefs length needed
+    src_os3_ctrl->num_coeffs        = SRC_FF3_OS3_N_COEFS;
     src_os3_ctrl->coeffs            = src_os3_coeffs;
 
     // Sync the FIROS3
@@ -115,17 +115,17 @@ src_ff3_return_code_t                src_os3_proc(src_os3_ctrl_t* src_os3_ctrl)
     accumulator     = 0;
 
     if ((unsigned)data & 0b0100) {
-        firff3_inner_loop_asm_odd(data, coeffs, &data0, src_os3_ctrl->inner_loops);
+        src_ff3_fir_inner_loop_asm_odd(data, coeffs, &data0, src_os3_ctrl->inner_loops);
     } else {
-        firff3_inner_loop_asm(data, coeffs, &data0, src_os3_ctrl->inner_loops);
+        src_ff3_fir_inner_loop_asm(data, coeffs, &data0, src_os3_ctrl->inner_loops);
     }
 
     // Write output
     src_os3_ctrl->out_data = data0;
 
     // Step phase
-    src_os3_ctrl->phase += (SRC_OS3_N_COEFS/SRC_OS3_N_PHASES);
-    if (src_os3_ctrl->phase == SRC_OS3_N_COEFS) {
+    src_os3_ctrl->phase += (SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES);
+    if (src_os3_ctrl->phase == SRC_FF3_OS3_N_COEFS) {
         src_os3_ctrl->phase = 0;
     }
 

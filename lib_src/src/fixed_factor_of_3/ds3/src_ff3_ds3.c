@@ -31,7 +31,7 @@
 
 
 // State init value
-#define        SRC_DS3_STATE_INIT                        0
+#define        SRC_FF3_DS3_STATE_INIT                    0
 
 
 
@@ -42,8 +42,8 @@
 //
 // ===========================================================================
 
-int src_ds3_coeffs[SRC_DS3_N_COEFS] = {
-    #include SRC_DS3_COEFS_FILE
+int src_ds3_coeffs[SRC_FF3_DS3_N_COEFS] = {
+    #include SRC_FF3_DS3_COEFS_FILE
 };
 
 // ===========================================================================
@@ -68,11 +68,11 @@ src_ff3_return_code_t src_ds3_init(src_ds3_ctrl_t* src_ds3_ctrl)
     }
 
     // Setup from FIRDS2 descriptor
-    src_ds3_ctrl->delay_len       = SRC_DS3_N_COEFS<<1;                                    // Double length for circular buffer simulation
-    src_ds3_ctrl->delay_wrap      = src_ds3_ctrl->delay_base + SRC_DS3_N_COEFS;
-    src_ds3_ctrl->delay_offset    = SRC_DS3_N_COEFS;
-    src_ds3_ctrl->inner_loops     = (SRC_DS3_N_COEFS>>1) / SRC_FF3_N_LOOPS_PER_ASM;        // Right shift to 2 x 32bits read for coefs per inner loop
-    src_ds3_ctrl->num_coeffs      = SRC_DS3_N_COEFS;
+    src_ds3_ctrl->delay_len       = SRC_FF3_DS3_N_COEFS<<1;                                    // Double length for circular buffer simulation
+    src_ds3_ctrl->delay_wrap      = src_ds3_ctrl->delay_base + SRC_FF3_DS3_N_COEFS;
+    src_ds3_ctrl->delay_offset    = SRC_FF3_DS3_N_COEFS;
+    src_ds3_ctrl->inner_loops     = (SRC_FF3_DS3_N_COEFS>>1) / SRC_FF3_N_LOOPS_PER_ASM;        // Right shift to 2 x 32bits read for coefs per inner loop
+    src_ds3_ctrl->num_coeffs      = SRC_FF3_DS3_N_COEFS;
     src_ds3_ctrl->coeffs          = src_ds3_coeffs;
 
     // Sync the FIRDS3
@@ -90,7 +90,7 @@ src_ff3_return_code_t src_ds3_sync(src_ds3_ctrl_t* src_ds3_ctrl)
 
     // Clear delay line
     for (unsigned int ui = 0; ui < src_ds3_ctrl->delay_len; ui++) {
-        src_ds3_ctrl->delay_base[ui]    = SRC_DS3_STATE_INIT;
+        src_ds3_ctrl->delay_base[ui]    = SRC_FF3_DS3_STATE_INIT;
     }
 
     return SRC_FF3_NO_ERROR;
@@ -129,9 +129,9 @@ src_ff3_return_code_t src_ds3_proc(src_ds3_ctrl_t* src_ds3_ctrl)
     coeffs                  = src_ds3_ctrl->coeffs;
     accumulator             = 0;
     if ((unsigned)data & 0b0100) {
-        firff3_inner_loop_asm_odd(data, coeffs, &data0, src_ds3_ctrl->inner_loops);
+        src_ff3_fir_inner_loop_asm_odd(data, coeffs, &data0, src_ds3_ctrl->inner_loops);
     } else {
-        firff3_inner_loop_asm(data, coeffs, &data0, src_ds3_ctrl->inner_loops);
+        src_ff3_fir_inner_loop_asm(data, coeffs, &data0, src_ds3_ctrl->inner_loops);
     }
 
     *src_ds3_ctrl->out_data = data0;

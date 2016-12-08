@@ -35,13 +35,13 @@ w, h = signal.freqz(taps)
 
 taps = taps / sum(abs(taps))    # Guarantee no overflow
 
-print 'int32_t src_ds3_voice_coefs_debug[72] = {'
+print 'int32_t src_ff3v_ds3_voice_coefs_debug[72] = {'
 for c in taps:
     c = int(c*(2**31 - 1))
     print str(c) + ', '
 print '};'
 
-print 'const int32_t src_ds3_voice_coefs[3][24] = {'
+print 'const int32_t src_ff3v_ds3_voice_coefs[3][24] = {'
 for step in range(2, -1, -1):
     print '\t{'
     for i in range(step, len(taps), 3):

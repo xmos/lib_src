@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-extern int32_t src_ds3_voice_coefs_debug[72];
-extern const int32_t src_ds3_voice_coefs[3][24];
+extern int32_t src_ff3v_ds3_voice_coefs_debug[72];
+extern const int32_t src_ff3v_ds3_voice_coefs[3][24];
 
 #endif // _SRC_FF3V_DS3_VOICE_H_

@@ -605,9 +605,9 @@ Fixed factor of 3 functions optimised for use with voice
 Voice DS3 API
 -------------
 
-.. doxygenvariable:: src_ds3_voice_coefs_debug
+.. doxygenvariable:: src_ff3v_ds3_voice_coefs_debug
 
-.. doxygenvariable:: src_ds3_voice_coefs
+.. doxygenvariable:: src_ff3v_ds3_voice_coefs
 
 .. doxygenfunction:: src_ds3_voice_add_sample
 
