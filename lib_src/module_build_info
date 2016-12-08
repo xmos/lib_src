@@ -1,5 +1,5 @@
 OPTIONAL_HEADERS += src_conf.h
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) -Wno-missing-braces -O3
-DEPENDENT_MODULES = lib_logging(>=2.0.0) lib_xassert(>=2.0.0)
+DEPENDENT_MODULES = lib_logging(>=2.1.0) lib_xassert(>=3.0.0)
 VERSION = 1.1.0
