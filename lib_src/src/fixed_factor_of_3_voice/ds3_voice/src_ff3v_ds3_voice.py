@@ -33,7 +33,13 @@ w, h = signal.freqz(taps)
 #plot_response(fs, w, h, "Low-pass Filter")
 #plot_response_passband(fs, w, h, "Low-pass Filter")
 
-taps = taps / sum(abs(taps))    # Guarantee no overflow
+pass_band_atten = sum(abs(taps))
+
+taps = taps / pass_band_atten    # Guarantee no overflow
+
+q = 31 -int(np.log2(pass_band_atten) + 0.5)
+print 'const unsigned src_ff3v_ds3_voice_fir_comp_q = ' + str(q) + ';'
+print 'const int32_t src_ff3v_ds3_voice_fir_comp =' + str(int(((2**q)-1) * pass_band_atten)) + ';'
 
 print 'int32_t src_ff3v_ds3_voice_coefs_debug[72] = {'
 for c in taps:

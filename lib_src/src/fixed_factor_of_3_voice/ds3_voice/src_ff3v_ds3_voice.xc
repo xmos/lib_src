@@ -1,9 +1,21 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include <stdint.h>
 
+/** Used for FIR compensation.
+ *
+ *  Generated using src_ff3v_ds3_voice.py
+ */
+const unsigned src_ff3v_ds3_voice_fir_comp_q = 30;
+
+/** Used for FIR compensation.
+ *
+ *  Generated using src_ff3v_ds3_voice.py
+ */
+const int32_t src_ff3v_ds3_voice_fir_comp =2225098336;
+
 /** Used for self testing src_ds3_voice functionality
  *
- *  Generated using ds3_voice.py
+ *  Generated using src_ff3v_ds3_voice.py
  */
 int32_t src_ff3v_ds3_voice_coefs_debug[72] = {
     1005142, 1367390, 29412, -4146838, -10154637,
@@ -20,7 +32,7 @@ int32_t src_ff3v_ds3_voice_coefs_debug[72] = {
 
 /** Coefficients for use with src_ds3_voice functions
  *
- *  Generated using ds3_voice.py
+ *  Generated using src_ff3v_ds3_voice.py
  */
 const int32_t src_ff3v_ds3_voice_coefs[3][24] = { {
     29412, -14619962, 2692812, -2814524, 2193307,
