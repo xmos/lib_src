@@ -1,11 +1,11 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-#ifndef _src_h_
-#define _src_h_
-#include "ssrc.h"
-#include "asrc.h"
-#include "ds3.h"
-#include "os3.h"
-#include "ds3_voice.h"
+#ifndef _SRC_H_
+#define _SRC_H_
+#include "src_mrhf_ssrc.h"
+#include "src_mrhf_asrc.h"
+#include "src_ff3_ds3.h"
+#include "src_ff3_os3.h"
+#include "src_ff3v_ds3_voice.h"
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
@@ -199,4 +199,4 @@ int64_t src_ds3_voice_add_sample(int64_t sum, int32_t data[],
 int64_t src_ds3_voice_add_final_sample(int64_t sum, int32_t data[],
                                        const int32_t coefs[], int32_t sample);
 
-#endif // _src_h_
+#endif // _SRC_H_

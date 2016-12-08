@@ -2,12 +2,12 @@
     .section    .dp.data,"awd",@progbits
     .text
 
-    .cc_top adfir_inner_loop_asm.function
-    .globl    adfir_inner_loop_asm
+    .cc_top src_mrhf_fir_inner_loop_asm.function
+    .globl    src_mrhf_fir_inner_loop_asm
     .align    8
-    .type    adfir_inner_loop_asm,@function
+    .type    src_mrhf_fir_inner_loop_asm,@function
 
-adfir_inner_loop_asm:
+src_mrhf_fir_inner_loop_asm:
 
 #define piData_p             r0
 #define piCoefs_p             r1
@@ -96,7 +96,7 @@ main_loop:
 done:
     //pop return value pointer from stack so we can use it to write back
     //Write back the two return values
-    {ldw iDataRet_p, sp[6];     ldc counter, 30}                        //Reuse counter (r3)
+    {ldw iDataRet_p, sp[6];     ldc counter, 31}                        //Reuse counter (r3)
 
     lsats Acc0_h, Acc0_l, r3            //Saturate first
     lextract iData0, Acc0_h, Acc0_l, counter, 32    //Extract
@@ -109,30 +109,29 @@ done:
   retsp stack_size
 
 .atmp:
-    .size    adfir_inner_loop_asm, .atmp-adfir_inner_loop_asm
+    .size    src_mrhf_fir_inner_loop_asm, .atmp-src_mrhf_fir_inner_loop_asm
     .align    8
-    .cc_bottom adfir_inner_loop_asm.function
+    .cc_bottom src_mrhf_fir_inner_loop_asm.function
 
-    .set    adfir_inner_loop_asm.nstackwords, stack_size
-    .globl    adfir_inner_loop_asm.nstackwords
-    .set    adfir_inner_loop_asm.maxcores, 1
-    .globl    adfir_inner_loop_asm.maxcores
-    .set    adfir_inner_loop_asm.maxtimers,0
-    .globl    adfir_inner_loop_asm.maxtimers
-    .set    adfir_inner_loop_asm.maxchanends,0
+    .set    src_mrhf_fir_inner_loop_asm.nstackwords, stack_size
+    .globl    src_mrhf_fir_inner_loop_asm.nstackwords
+    .set    src_mrhf_fir_inner_loop_asm.maxcores, 1
+    .globl    src_mrhf_fir_inner_loop_asm.maxcores
+    .set    src_mrhf_fir_inner_loop_asm.maxtimers,0
+    .globl    src_mrhf_fir_inner_loop_asm.maxtimers
+    .set    src_mrhf_fir_inner_loop_asm.maxchanends,0
+    .globl     .maxchanends
 
 
-// Odd data alignment (4byte odd instead of 8byte) version
-
-    .section    .dp.data,"awd",@progbits
+        .section    .dp.data,"awd",@progbits
     .text
 
-    .cc_top adfir_inner_loop_asm_odd.function
-    .globl    adfir_inner_loop_asm_odd
+    .cc_top src_mrhf_fir_inner_loop_asm_odd.function
+    .globl    src_mrhf_fir_inner_loop_asm_odd
     .align    8
-    .type    adfir_inner_loop_asm_odd,@function
+    .type    src_mrhf_fir_inner_loop_asm_odd,@function
 
-adfir_inner_loop_asm_odd:
+src_mrhf_fir_inner_loop_asm_odd:
 
 #define piData_p             r0
 #define piCoefs_p             r1
@@ -223,7 +222,7 @@ main_loop_odd:
 
 done_odd:
     //pop return value pointer from stack so we can use it to write back
-    {ldw iDataRet_p, sp[6]; ldc counter, 30}                        //Reuse counter (r3)
+    {ldw iDataRet_p, sp[6]; ldc counter, 31}                        //Reuse counter (r3)
 
     //Write back the return value
     lsats Acc0_h, Acc0_l, r3            //Saturate first
@@ -237,15 +236,15 @@ done_odd:
   retsp stack_size
 
 .atmp_odd:
-    .size    adfir_inner_loop_asm_odd, .atmp-adfir_inner_loop_asm_odd
+    .size    src_mrhf_fir_inner_loop_asm_odd, .atmp-src_mrhf_fir_inner_loop_asm_odd
     .align    8
-    .cc_bottom adfir_inner_loop_asm_odd.function
+    .cc_bottom src_mrhf_fir_inner_loop_asm_odd.function
 
-    .set    adfir_inner_loop_asm_odd.nstackwords, stack_size
-    .globl    adfir_inner_loop_asm_odd.nstackwords
-    .set    adfir_inner_loop_asm_odd.maxcores, 1
-    .globl    adfir_inner_loop_asm_odd.maxcores
-    .set    adfir_inner_loop_asm_odd.maxtimers,0
-    .globl    adfir_inner_loop_asm_odd.maxtimers
-    .set    adfir_inner_loop_asm_odd.maxchanends,0
-
+    .set    src_mrhf_fir_inner_loop_asm_odd.nstackwords, stack_size
+    .globl    src_mrhf_fir_inner_loop_asm_odd.nstackwords
+    .set    src_mrhf_fir_inner_loop_asm_odd.maxcores, 1
+    .globl    src_mrhf_fir_inner_loop_asm_odd.maxcores
+    .set    src_mrhf_fir_inner_loop_asm_odd.maxtimers,0
+    .globl    src_mrhf_fir_inner_loop_asm_odd.maxtimers
+    .set    src_mrhf_fir_inner_loop_asm_odd.maxchanends,0
+    .globl     .maxchanends

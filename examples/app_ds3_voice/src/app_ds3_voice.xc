@@ -27,7 +27,7 @@ int main()
         int64_t sum = 0;
 
         int32_t d = pseudo_random(x);
-        sum = src_ds3_voice_add_sample(sum, data[0], src_ds3_voice_coefs[0], d);
+        sum = src_ds3_voice_add_sample(sum, data[0], src_ff3v_ds3_voice_coefs[0], d);
         for (unsigned i=72-1;i>0;i--)
         {
             data_debug[i] = data_debug[i-1];
@@ -35,7 +35,7 @@ int main()
         data_debug[0] = d;
 
         d = pseudo_random(x);
-        sum = src_ds3_voice_add_sample(sum, data[1], src_ds3_voice_coefs[1], d);
+        sum = src_ds3_voice_add_sample(sum, data[1], src_ff3v_ds3_voice_coefs[1], d);
         for (unsigned i=72-1;i>0;i--)
         {
             data_debug[i] = data_debug[i-1];
@@ -43,7 +43,7 @@ int main()
         data_debug[0] = d;
 
         d = pseudo_random(x);
-        sum = src_ds3_voice_add_final_sample(sum, data[2], src_ds3_voice_coefs[2], d);
+        sum = src_ds3_voice_add_final_sample(sum, data[2], src_ff3v_ds3_voice_coefs[2], d);
         for (unsigned i=72-1;i>0;i--)
         {
             data_debug[i] = data_debug[i-1];
@@ -53,11 +53,11 @@ int main()
         int64_t sum_debug = 0;
         for (unsigned i=0;i<72;i++)
         {
-            sum_debug += (int64_t)src_ds3_voice_coefs_debug[i]*(int64_t)data_debug[i];
+            sum_debug += (int64_t)src_ff3v_ds3_voice_coefs_debug[i]*(int64_t)data_debug[i];
         }
         sum_debug >>= 31;
 
-        sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ds3_voice_fir_comp )>>src_ds3_voice_fir_comp_q);
+        sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ff3v_ds3_voice_fir_comp)>>src_ff3v_ds3_voice_fir_comp_q);
 
         if ((int32_t)sum != (int32_t)sum_debug)
         {

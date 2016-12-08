@@ -1,9 +1,8 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
+#ifndef _SRC_MRHF_SSRC_CHECKS_H_
+#define _SRC_MRHF_SSRC_CHECKS_H_
 
-#ifndef __ssrc_checks_h__
-#define __ssrc_checks_h__
-
-#include "ssrc.h"
+#include "src_mrhf_ssrc.h"
 
 //Compile time checks on SRC configuration defines
 #if (SSRC_N_CHANNELS % SSRC_N_INSTANCES != 0)
@@ -34,4 +33,4 @@
 #warning "SRC buffering configured so that fs out <= fs in"
 #endif
 
-#endif
+#endif // _SRC_MRHF_SSRC_CHECKS_H_

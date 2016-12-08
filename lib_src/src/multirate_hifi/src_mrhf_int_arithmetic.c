@@ -24,7 +24,7 @@
 #include <math.h>
 
 // Integer arithmetic includes
-#include "IntArithmetic.h"
+#include "src_mrhf_int_arithmetic.h"
 
 // ===========================================================================
 //

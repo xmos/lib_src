@@ -2,8 +2,6 @@
 // ===========================================================================
 // ===========================================================================
 //
-// File: FIR.c
-//
 // FIR functions implementation file for the ASRC and SSRC
 //
 //
@@ -22,13 +20,13 @@
 #include <math.h>
 
 // Optimised assembler inner loop functions
-#include "fir_os_inner_loop_asm.h"
-#include "fir_inner_loop_asm.h"
-#include "adfir_inner_loop_asm.h"
-#include "spline_coeff_gen_inner_loop_asm.h"
+#include "src_mrhf_fir_os_inner_loop_asm.h"
+#include "src_mrhf_fir_inner_loop_asm.h"
+#include "src_mrhf_adfir_inner_loop_asm.h"
+#include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
 
 // FIR includes
-#include "FIR.h"
+#include "src_mrhf_fir.h"
 
 // ===========================================================================
 //
@@ -242,9 +240,9 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
         if ((unsigned)piData & 0b0100)
-            fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
+            src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
-            fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+            src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -271,9 +269,9 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
         if ((unsigned)piData & 0b0100)
-            fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
+            src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
-            fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+            src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -330,8 +328,8 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
 
-        if ((unsigned)piData & 0b0100) fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
-        else fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+        if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
+        else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
 
         // Write output with step
         *piOut                    = iData0;
@@ -389,8 +387,8 @@ FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
         // Clear accumulator and set access pointers
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
-        if ((unsigned)piData & 0b0100) fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
-        else fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+        if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
+        else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
         // Write output with step
         *piOut                    = iData0;
         piOut                    += uiOutStep;
@@ -504,8 +502,8 @@ FIRReturnCodes_t                ADFIR_proc_macc(ADFIRCtrl_t* psADFIRCtrl)
     // Clear accumulator and set access pointers
     piData                    = psADFIRCtrl->piDelayI;
     piCoefs                    = psADFIRCtrl->piADCoefs;
-    if ((unsigned)piData & 0b0100) adfir_inner_loop_asm_odd(piData, piCoefs, &iData, psADFIRCtrl->uiNLoops);
-    else                               adfir_inner_loop_asm(piData, piCoefs, &iData, psADFIRCtrl->uiNLoops);
+    if ((unsigned)piData & 0b0100) src_mrhf_adfir_inner_loop_asm_odd(piData, piCoefs, &iData, psADFIRCtrl->uiNLoops);
+    else                               src_mrhf_adfir_inner_loop_asm(piData, piCoefs, &iData, psADFIRCtrl->uiNLoops);
 
     // Write output
     *(psADFIRCtrl->piOut)        = iData;
@@ -674,8 +672,8 @@ FIRReturnCodes_t                PPFIR_proc(PPFIRCtrl_t* psPPFIRCtrl)
             piData                    = piDelayI;
             piCoefs                    = piCoefsB + uiCoefsPhase;
 
-            if ((unsigned)piData & 0b0100) fir_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
-            else fir_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+            if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
+            else src_mrhf_fir_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
 
 
             // Write output with step

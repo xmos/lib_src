@@ -1,19 +1,6 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-// ===========================================================================
-// ===========================================================================
-//
-// File: IntArithmetic.h
-//
-// Integer arithmetic definition file for the ASRC
-//
-// Target:    MS Windows
-// Version: 1.0
-//
-// ===========================================================================
-// ===========================================================================
-
-#ifndef _INT_ARITHMETIC_H_
-#define _INT_ARITHMETIC_H_
+#ifndef _SRC_MRHF_INT_ARITHEMTIC_H_
+#define _SRC_MRHF_INT_ARITHEMTIC_H_
 
     // ===========================================================================
     //
@@ -87,4 +74,4 @@
 
     #endif // nINCLUDE_FROM_ASM
 
-#endif // _INT_ARITHMETIC_H_
+#endif // _SRC_MRHF_INT_ARITHEMTIC_H_

@@ -20,7 +20,7 @@
 #define     SSRC_N_OUT_IN_RATIO_MAX          5  //Max ratio between samples out:in per processing step (44.1->192 is worst case)
 #define     SSRC_DITHER_SETTING              OFF//Enables or disables quantisation of output with dithering to 24b
 
-#include "ssrc_checks.h"                        //Do some checking on the defines above
+#include "src_mrhf_ssrc_checks.h"               //Do some checking on the defines above
 
 //Input and output files
 char * unsafe pzInFileName[SSRC_N_CHANNELS] = {null};
@@ -29,7 +29,7 @@ char * unsafe pzOutFileName[SSRC_N_CHANNELS] = {null};
 //Number of samples to process
 int uiNTotalInSamples = -1;
 
-//Input and output frequency indicies. See ssrc.h SSRCFs_t for these codes. 0=44.1 - 5=192
+//Input and output frequency indicies. See src_mrhf_ssrc.h SSRCFs_t for these codes. 0=44.1 - 5=192
 int uiInFs = -1;
 int uiOutFs = -1;
 
@@ -94,7 +94,7 @@ void dsp_slave(chanend c_dsp)
         }
 
         if (sr_in_out_new != sr_in_out) {
-            // Set input/output sampling rate codes. See SSRCFs_t in SSRC.h (ie 0=44.1 5=192)
+            // Set input/output sampling rate codes. See SSRCFs_t in src_mrhf_ssrc.h (ie 0=44.1 5=192)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 

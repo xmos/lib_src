@@ -2,12 +2,12 @@
     .section    .dp.data,"awd",@progbits
     .text
 
-    .cc_top fir_os_inner_loop_asm.function
-    .globl    fir_os_inner_loop_asm
+    .cc_top src_mrhf_fir_os_inner_loop_asm.function
+    .globl    src_mrhf_fir_os_inner_loop_asm
     .align    8
-    .type    fir_os_inner_loop_asm,@function
+    .type    src_mrhf_fir_os_inner_loop_asm,@function
 
-fir_os_inner_loop_asm:
+src_mrhf_fir_os_inner_loop_asm:
 
 #define piData_p             r0
 #define piCoefs_p             r1
@@ -112,17 +112,17 @@ done:
   retsp stack_size
 
 .atmp:
-    .size    fir_os_inner_loop_asm, .atmp-fir_os_inner_loop_asm
+    .size    src_mrhf_fir_os_inner_loop_asm, .atmp-src_mrhf_fir_os_inner_loop_asm
     .align    8
-    .cc_bottom fir_os_inner_loop_asm.function
+    .cc_bottom src_mrhf_fir_os_inner_loop_asm.function
 
-    .set    fir_os_inner_loop_asm.nstackwords, stack_size
-    .globl    fir_os_inner_loop_asm.nstackwords
-    .set    fir_os_inner_loop_asm.maxcores, 1
-    .globl    fir_os_inner_loop_asm.maxcores
-    .set    fir_os_inner_loop_asm.maxtimers,0
-    .globl    fir_os_inner_loop_asm.maxtimers
-    .set    fir_os_inner_loop_asm.maxchanends,0
+    .set    src_mrhf_fir_os_inner_loop_asm.nstackwords, stack_size
+    .globl    src_mrhf_fir_os_inner_loop_asm.nstackwords
+    .set    src_mrhf_fir_os_inner_loop_asm.maxcores, 1
+    .globl    src_mrhf_fir_os_inner_loop_asm.maxcores
+    .set    src_mrhf_fir_os_inner_loop_asm.maxtimers,0
+    .globl    src_mrhf_fir_os_inner_loop_asm.maxtimers
+    .set    src_mrhf_fir_os_inner_loop_asm.maxchanends,0
     .globl     .maxchanends
 
 
@@ -136,12 +136,12 @@ done:
     .section    .dp.data,"awd",@progbits
     .text
 
-    .cc_top fir_os_inner_loop_asm_odd.function
-    .globl    fir_os_inner_loop_asm_odd
+    .cc_top src_mrhf_fir_os_inner_loop_asm_odd.function
+    .globl    src_mrhf_fir_os_inner_loop_asm_odd
     .align    8
-    .type    fir_os_inner_loop_asm_odd,@function
+    .type    src_mrhf_fir_os_inner_loop_asm_odd,@function
 
-fir_os_inner_loop_asm_odd:
+src_mrhf_fir_os_inner_loop_asm_odd:
 
 #define piData_p             r0
 #define piCoefs_p             r1
@@ -248,17 +248,17 @@ done_odd:
   retsp stack_size
 
 .atmp_odd:
-    .size    fir_os_inner_loop_asm_odd, .atmp-fir_os_inner_loop_asm_odd
+    .size    src_mrhf_fir_os_inner_loop_asm_odd, .atmp-src_mrhf_fir_os_inner_loop_asm_odd
     .align    8
-    .cc_bottom fir_os_inner_loop_asm_odd.function
+    .cc_bottom src_mrhf_fir_os_inner_loop_asm_odd.function
 
-    .set    fir_os_inner_loop_asm_odd.nstackwords, stack_size
-    .globl    fir_os_inner_loop_asm_odd.nstackwords
-    .set    fir_os_inner_loop_asm_odd.maxcores, 1
-    .globl    fir_os_inner_loop_asm_odd.maxcores
-    .set    fir_os_inner_loop_asm_odd.maxtimers,0
-    .globl    fir_os_inner_loop_asm_odd.maxtimers
-    .set    fir_os_inner_loop_asm_odd.maxchanends,0
+    .set    src_mrhf_fir_os_inner_loop_asm_odd.nstackwords, stack_size
+    .globl    src_mrhf_fir_os_inner_loop_asm_odd.nstackwords
+    .set    src_mrhf_fir_os_inner_loop_asm_odd.maxcores, 1
+    .globl    src_mrhf_fir_os_inner_loop_asm_odd.maxcores
+    .set    src_mrhf_fir_os_inner_loop_asm_odd.maxtimers,0
+    .globl    src_mrhf_fir_os_inner_loop_asm_odd.maxtimers
+    .set    src_mrhf_fir_os_inner_loop_asm_odd.maxchanends,0
     .globl     .maxchanends
 
 

@@ -2,8 +2,6 @@
 // ===========================================================================
 // ===========================================================================
 //
-// File: FilterDefs.c
-//
 // Filters Definitions implementation file for the SRC
 //
 // ===========================================================================
@@ -21,8 +19,8 @@
 #include <math.h>
 
 // FIR and FilterDefs includes
-#include "FIR.h"
-#include "FilterDefs.h"
+#include "src_mrhf_fir.h"
+#include "src_mrhf_filter_defs.h"
 
 // ===========================================================================
 //

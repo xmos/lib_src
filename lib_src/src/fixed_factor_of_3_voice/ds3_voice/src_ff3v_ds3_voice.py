@@ -38,16 +38,16 @@ pass_band_atten = sum(abs(taps))
 taps = taps / pass_band_atten    # Guarantee no overflow
 
 q = 31 -int(np.log2(pass_band_atten) + 0.5)
-print 'const unsigned src_ds3_voice_fir_comp_q = ' + str(q) + ';'
-print 'const int32_t src_ds3_voice_fir_comp =' + str(int(((2**q)-1) * pass_band_atten)) + ';'
+print 'const unsigned src_ff3v_ds3_voice_fir_comp_q = ' + str(q) + ';'
+print 'const int32_t src_ff3v_ds3_voice_fir_comp =' + str(int(((2**q)-1) * pass_band_atten)) + ';'
 
-print 'int32_t src_ds3_voice_coefs_debug[72] = {'
+print 'int32_t src_ff3v_ds3_voice_coefs_debug[72] = {'
 for c in taps:
     c = int(c*(2**31 - 1))
     print str(c) + ', '
 print '};'
 
-print 'const int32_t src_ds3_voice_coefs[3][24] = {'
+print 'const int32_t src_ff3v_ds3_voice_coefs[3][24] = {'
 for step in range(2, -1, -1):
     print '\t{'
     for i in range(step, len(taps), 3):

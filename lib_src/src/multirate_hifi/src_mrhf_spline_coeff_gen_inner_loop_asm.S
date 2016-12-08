@@ -4,12 +4,12 @@
     .section    .dp.data,"awd",@progbits
     .text
 
-    .cc_top spline_coeff_gen_inner_loop_asm.function
-    .globl    spline_coeff_gen_inner_loop_asm
+    .cc_top src_mrhf_spline_coeff_gen_inner_loop_asm.function
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm
     .align    8
-    .type    spline_coeff_gen_inner_loop_asm,@function
+    .type    src_mrhf_spline_coeff_gen_inner_loop_asm,@function
 
-spline_coeff_gen_inner_loop_asm:
+src_mrhf_spline_coeff_gen_inner_loop_asm:
 
 #define piPhase                 r0 //Arg 1
 #define piH                  r1 //Arg 2
@@ -216,15 +216,15 @@ done:
   retsp stack_size
 
 .atmp:
-    .size    spline_coeff_gen_inner_loop_asm, .atmp-spline_coeff_gen_inner_loop_asm
+    .size    src_mrhf_spline_coeff_gen_inner_loop_asm, .atmp-src_mrhf_spline_coeff_gen_inner_loop_asm
     .align    8
-    .cc_bottom spline_coeff_gen_inner_loop_asm.function
+    .cc_bottom src_mrhf_spline_coeff_gen_inner_loop_asm.function
 
-    .set    spline_coeff_gen_inner_loop_asm.nstackwords, stack_size
-    .globl    spline_coeff_gen_inner_loop_asm.nstackwords
-    .set    spline_coeff_gen_inner_loop_asm.maxcores, 1
-    .globl    spline_coeff_gen_inner_loop_asm.maxcores
-    .set    spline_coeff_gen_inner_loop_asm.maxtimers,0
-    .globl    spline_coeff_gen_inner_loop_asm.maxtimers
-    .set    spline_coeff_gen_inner_loop_asm.maxchanends,0
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm.nstackwords, stack_size
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm.nstackwords
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxcores, 1
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm.maxcores
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxtimers,0
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm.maxtimers
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxchanends,0
 
