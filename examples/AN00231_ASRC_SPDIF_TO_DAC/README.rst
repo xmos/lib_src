@@ -16,11 +16,11 @@ The XMOS Asynchronous Sample Rate Conversion (ASRC) library allows audio to be s
 - Allow systems to receive and mix multiple digital audio streams
 - Remove the cost and hardware complexity of audio clock recovery using a PLL
 - Allow systems to use the highest possible sample rate rather than the lowest common denominator
-- Addition of interfaces and processing to existing audio architctures
+- Addition of interfaces and processing to existing audio architectures
 
-In addition, the ASRC can perform major rate changes between the standard audio sample rates of 44.1, 48, 88.2, 96, 176.4 and 192KHz. 
+In addition, the ASRC can perform major rate changes between the standard audio sample rates of 44.1, 48, 88.2, 96, 176.4 and 192KHz.
 
-This application note demonstrates the use of the XMOS Sample Rate Conversion library in a system that receives samples from an SPDIF input and outputs them to a DAC over |i2s|. The |i2s| subsystem uses a fixed frequency local master clock oscillator and the SPDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces. 
+This application note demonstrates the use of the XMOS Sample Rate Conversion library in a system that receives samples from an SPDIF input and outputs them to a DAC over |i2s|. The |i2s| subsystem uses a fixed frequency local master clock oscillator and the SPDIF clock is encoded within the received stream. This means that, even if operating at the same nominal sample rate, the clocks will not be synchronized and consequently ASRC is required to properly stream audio between these two audio interfaces.
 
 The sample rates supported for this demonstration are 44.1, 48, 88.2 and 96KHz. This restriction is applied by the SPDIF receiver which is only rated up to 96KHz for optical sources and the ASRC library which can currently only handle rates of 176.4/192KHz on one side. The restricted sample rates also allow significant chip resource usage optimization which is discussed later within this application note.
 
