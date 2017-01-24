@@ -8,6 +8,8 @@ lib_src change log
     oversampling
   * ADDED: Fixed factor of 3 downsampling function optimised for use with voice
     (reduced memory and compute footprint)
+  * ADDED: Fixed factor of 3 upsampling function optimised for use with voice
+    (reduced memory and compute footprint)
 
 1.0.0
 -----

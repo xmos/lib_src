@@ -1,23 +1,23 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2017, XMOS Ltd, All rights reserved
 #include <stdint.h>
 
 /** Used for FIR compensation.
  *
- *  Generated using src_ff3v_ds3_voice.py
+ *  Generated using src_ff3v_fir_generator.py
  */
-const unsigned src_ff3v_ds3_voice_fir_comp_q = 30;
+const unsigned src_ff3v_fir_comp_q = 30;
 
 /** Used for FIR compensation.
  *
- *  Generated using src_ff3v_ds3_voice.py
+ *  Generated using src_ff3v_fir_generator.py
  */
-const int32_t src_ff3v_ds3_voice_fir_comp =2225098336;
+const int32_t src_ff3v_fir_comp =2225098336;
 
-/** Used for self testing src_ds3_voice functionality
+/** Used for self testing src_ds3_voice and src_us3_voice functionality
  *
- *  Generated using src_ff3v_ds3_voice.py
+ *  Generated using src_ff3v_fir_generator.py
  */
-int32_t src_ff3v_ds3_voice_coefs_debug[72] = {
+int32_t src_ff3v_fir_coefs_debug[72] = {
     1005142, 1367390, 29412, -4146838, -10154637,
     -14619962, -13776186, -6744830, 2692812, 8121360, 5508436, -2814524,
     -9285443, -7351357, 2193307, 10930750, 9953155, -1338213, -13227624,
@@ -30,11 +30,11 @@ int32_t src_ff3v_ds3_voice_coefs_debug[72] = {
     -2814524, 5508436, 8121360, 2692812, -6744830, -13776186, -14619962,
     -10154637, -4146838, 29412, 1367390, 1005142, };
 
-/** Coefficients for use with src_ds3_voice functions
+/** Coefficients for use with src_ds3_voice and src_us3_voice functions
  *
- *  Generated using src_ff3v_ds3_voice.py
+ *  Generated using src_ff3v_fir_generator.py
  */
-const int32_t src_ff3v_ds3_voice_coefs[3][24] = { {
+const int32_t src_ff3v_fir_coefs[3][24] = { {
     29412, -14619962, 2692812, -2814524, 2193307,
     -1338213, -123797, 2582573, -6837031, 15085431, -37235961, 320542055,
     74585089, -37763299, 26249516, -20205295, 16201217, -13227624, 10930750,

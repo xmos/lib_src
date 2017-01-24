@@ -5,7 +5,7 @@
 #include "src_mrhf_asrc.h"
 #include "src_ff3_ds3.h"
 #include "src_ff3_os3.h"
-#include "src_ff3v_ds3_voice.h"
+#include "src_ff3v_fir.h"
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
@@ -198,5 +198,26 @@ int64_t src_ds3_voice_add_sample(int64_t sum, int32_t data[],
  */
 int64_t src_ds3_voice_add_final_sample(int64_t sum, int32_t data[],
                                        const int32_t coefs[], int32_t sample);
+
+/** This function performs the first two iterations of the upsampling process
+ *
+ *  \param      sum      Partially accumulated value returned during previous cycle
+ *  \param      data     Data delay line
+ *  \param      coefs    FIR filter coefficients
+ *  \param      sample   The newest sample
+ *  \returns    Partially accumulated value, passed as ``sum`` parameter next cycle
+ */
+int32_t src_us3_voice_input_sample(int32_t data[],
+                                   const int32_t coefs[], int32_t sample);
+
+/** This function performs the final iteration of the upsampling process
+ *
+ *  \param      sum      Partially accumulated value returned during previous cycle
+ *  \param      data     Data delay line
+ *  \param      coefs    FIR filter coefficients
+ *  \param      sample   The newest sample
+ *  \returns    The decimated sample
+ */
+int32_t src_us3_voice_get_next_sample(int32_t data[], const int32_t coefs[]);
 
 #endif // _SRC_H_
