@@ -201,18 +201,16 @@ int64_t src_ds3_voice_add_final_sample(int64_t sum, int32_t data[],
 
 /** This function performs the first two iterations of the upsampling process
  *
- *  \param      sum      Partially accumulated value returned during previous cycle
  *  \param      data     Data delay line
  *  \param      coefs    FIR filter coefficients
  *  \param      sample   The newest sample
  *  \returns    Partially accumulated value, passed as ``sum`` parameter next cycle
  */
-int32_t src_us3_voice_input_sample(int32_t data[],
-                                   const int32_t coefs[], int32_t sample);
+int32_t src_us3_voice_input_sample(int32_t data[], const int32_t coefs[],
+                                   int32_t sample);
 
 /** This function performs the final iteration of the upsampling process
  *
- *  \param      sum      Partially accumulated value returned during previous cycle
  *  \param      data     Data delay line
  *  \param      coefs    FIR filter coefficients
  *  \param      sample   The newest sample
