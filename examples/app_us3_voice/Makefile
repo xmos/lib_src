@@ -9,7 +9,7 @@ TARGET = XCORE-200-EXPLORER
 APP_NAME = app_us3_voice
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = lib_src
+USED_MODULES = lib_src(>=1.1.0)
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
