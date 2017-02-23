@@ -6,6 +6,8 @@
 #include <string.h>
 #include "src.h"
 
+#define NUM_OF_TAPS (SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE)
+
 static int pseudo_random(unsigned &x)
 {
     crc32(x, -1, 0xEB31D82E);
@@ -16,19 +18,19 @@ int main()
 {
     unsigned x = 1;
 
-    int32_t data_debug[72];
+    int32_t data_debug[NUM_OF_TAPS];
     memset(data_debug, 0, sizeof(data_debug));
 
-    int32_t data[3][24];
+    int32_t data[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
     memset(data, 0, sizeof(data));
 
-    for (unsigned r=0;r<72*8;r++)
+    for (unsigned r = 0; r < (NUM_OF_TAPS*8); r++)
     {
         int64_t sum = 0;
 
         int32_t d = pseudo_random(x);
         sum = src_ds3_voice_add_sample(sum, data[0], src_ff3v_fir_coefs[0], d);
-        for (unsigned i=72-1;i>0;i--)
+        for (unsigned i = (NUM_OF_TAPS-1); i > 0; i--)
         {
             data_debug[i] = data_debug[i-1];
         }
@@ -36,7 +38,7 @@ int main()
 
         d = pseudo_random(x);
         sum = src_ds3_voice_add_sample(sum, data[1], src_ff3v_fir_coefs[1], d);
-        for (unsigned i=72-1;i>0;i--)
+        for (unsigned i = (NUM_OF_TAPS-1); i > 0; i--)
         {
             data_debug[i] = data_debug[i-1];
         }
@@ -44,14 +46,14 @@ int main()
 
         d = pseudo_random(x);
         sum = src_ds3_voice_add_final_sample(sum, data[2], src_ff3v_fir_coefs[2], d);
-        for (unsigned i=72-1;i>0;i--)
+        for (unsigned i = (NUM_OF_TAPS-1); i > 0; i--)
         {
             data_debug[i] = data_debug[i-1];
         }
         data_debug[0] = d;
 
         int64_t sum_debug = 0;
-        for (unsigned i=0;i<72;i++)
+        for (unsigned i = 0; i < NUM_OF_TAPS; i++)
         {
             sum_debug += (int64_t)src_ff3v_fir_coefs_debug[i]*(int64_t)data_debug[i];
         }
