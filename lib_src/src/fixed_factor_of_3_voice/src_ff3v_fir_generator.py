@@ -27,6 +27,12 @@ def plot_response_passband(fs, w, h, title):
 
 def generate_header_file(num_taps_per_phase, num_phases):
     header_template = """\
+
+/* This file is generated using src_ff3v_fir_generator.py
+ *
+ * Do not modify it directly, changes may be overwritten!
+ */
+
 #ifndef _SRC_FF3V_FIR_H_
 #define _SRC_FF3V_FIR_H_
 
@@ -52,33 +58,27 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
 
 def generate_xc_file(q, pass_band_atten, taps):
     xc_template = """\
+
+/* This file is generated using src_ff3v_fir_generator.py
+ *
+ * Do not modify it directly, changes may be overwritten!
+ */
+
 #include "src_ff3v_fir.h"
 #include <stdint.h>
 
-/** Used for FIR compensation.
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for FIR compensation */
 const unsigned src_ff3v_fir_comp_q = %(comp_q)s;
 
-/** Used for FIR compensation.
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for FIR compensation */
 const int32_t src_ff3v_fir_comp = %(comp)s;
 
-/** Used for self testing src_ds3_voice and src_us3_voice functionality
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for self testing src_ds3_voice and src_us3_voice functionality */
 int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE] = {
    %(coefs_debug)s
 };
 
-/** Coefficients for use with src_ds3_voice and src_us3_voice functions
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Coefficients for use with src_ds3_voice and src_us3_voice functions */
 const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
 %(coefs)s};
 """

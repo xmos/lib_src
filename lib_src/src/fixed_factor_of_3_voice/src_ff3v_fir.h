@@ -1,4 +1,10 @@
 // Copyright (c) 2017, XMOS Ltd, All rights reserved
+
+/* This file is generated using src_ff3v_fir_generator.py
+ *
+ * Do not modify it directly, changes may be overwritten!
+ */
+
 #ifndef _SRC_FF3V_FIR_H_
 #define _SRC_FF3V_FIR_H_
 

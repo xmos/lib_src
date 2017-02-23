@@ -1,23 +1,20 @@
 // Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+
+/* This file is generated using src_ff3v_fir_generator.py
+ *
+ * Do not modify it directly, changes may be overwritten!
+ */
+
 #include "src_ff3v_fir.h"
 #include <stdint.h>
 
-/** Used for FIR compensation.
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for FIR compensation */
 const unsigned src_ff3v_fir_comp_q = 30;
 
-/** Used for FIR compensation.
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for FIR compensation */
 const int32_t src_ff3v_fir_comp = 2225098336;
 
-/** Used for self testing src_ds3_voice and src_us3_voice functionality
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Used for self testing src_ds3_voice and src_us3_voice functionality */
 int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE] = {
     1005142, 1367390, 29412, -4146838, -10154637, -14619962, -13776186,
     -6744830, 2692812, 8121360, 5508436, -2814524, -9285443, -7351357,
@@ -32,10 +29,7 @@ int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER
     1367390, 1005142,
 };
 
-/** Coefficients for use with src_ds3_voice and src_us3_voice functions
- *
- *  Generated using src_ff3v_fir_generator.py
- */
+/** Coefficients for use with src_ds3_voice and src_us3_voice functions */
 const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
     { 29412, -14619962, 2692812, -2814524, 2193307, -1338213, -123797,
      2582573, -6837031, 15085431, -37235961, 320542055, 74585089, -37763299,
