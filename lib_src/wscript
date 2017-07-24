@@ -1,0 +1,11 @@
+def use_module(bld):
+    bld.env.append_value('XCC_FLAGS', ['-Wno-missing-braces', '-O3'])
+    source = bld.path.ant_glob(['src/**/*.xc', 'src/**/*.c', 'src/**/*.S'])
+    headers = bld.path.ant_glob('src/**/*.h')
+    header_dirs = list(set([h.parent for h in headers]))
+    bld.module(
+        source=source,
+        includes=['api'] + header_dirs,
+        depends_on=['lib_logging(>=2.1.0)', 'lib_xassert(>=3.0.0)'],
+        optional_headers='src_conf.h',
+        version='1.1.0')
