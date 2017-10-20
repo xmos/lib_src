@@ -42,7 +42,7 @@ def generate_header_file(num_taps_per_phase, num_phases):
 #define SRC_FF3V_FIR_TAPS_PER_PHASE (%(taps_per_phase)s)
 
 extern const unsigned src_ff3v_fir_comp_q;
-extern const int32_t src_ff3v_fir_comp;
+extern const uint32_t src_ff3v_fir_comp;
 
 extern int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE];
 extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
@@ -71,7 +71,7 @@ def generate_xc_file(q, pass_band_atten, taps):
 const unsigned src_ff3v_fir_comp_q = %(comp_q)s;
 
 /** Used for FIR compensation */
-const int32_t src_ff3v_fir_comp = %(comp)s;
+const uint32_t src_ff3v_fir_comp = %(comp)s;
 
 /** Used for self testing src_ds3_voice and src_us3_voice functionality */
 int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE] = {
