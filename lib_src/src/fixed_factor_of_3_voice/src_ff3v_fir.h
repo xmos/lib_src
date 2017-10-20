@@ -14,7 +14,7 @@
 #define SRC_FF3V_FIR_TAPS_PER_PHASE (24)
 
 extern const unsigned src_ff3v_fir_comp_q;
-extern const int32_t src_ff3v_fir_comp;
+extern const uint32_t src_ff3v_fir_comp;
 
 extern int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE];
 extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
