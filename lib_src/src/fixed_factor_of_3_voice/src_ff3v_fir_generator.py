@@ -14,6 +14,7 @@ def plot_response(fs, w, h, title):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Gain (dB)')
     plt.title(title)
+    plt.show()
 
 def plot_response_passband(fs, w, h, title):
     plt.figure()
@@ -24,6 +25,7 @@ def plot_response_passband(fs, w, h, title):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Gain (dB)')
     plt.title(title)
+    plt.show()
 
 def generate_header_file(num_taps_per_phase, num_phases):
     header_template = """\
@@ -56,7 +58,7 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
         header_file.writelines(header_template % {'taps_per_phase':num_taps_per_phase,
                                                   'phases':num_phases})
 
-def generate_xc_file(q, pass_band_atten, taps):
+def generate_xc_file(total_atten, taps):
     xc_template = """\
 
 /* This file is generated using src_ff3v_fir_generator.py
@@ -93,9 +95,9 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
 
     coefs = ''
     i = 1
-    for step in range(2, -1, -1):
+    for step in range(num_phases-1, -1, -1):
         coefs += '    {'
-        for j in range(step, len(taps), 3):
+        for j in range(step, len(taps), num_phases):
             coefs += ' ' + str(int(taps[j]*(2**31 - 1))) + ','
             if ((i % 7) == 0):
                 coefs += '\n    '
@@ -106,8 +108,9 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
     xc_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'src_ff3v_fir.xc')
     with open(xc_path, "w") as xc_file:
+        q = 30 - int(np.log2(total_atten) + 0.5)
         xc_file.writelines(xc_template % {'comp_q':str(q),
-                                          'comp':str(int(((2**q)-1) * pass_band_atten)),
+                                          'comp':str(int(((2**q)-1) * total_atten)),
                                           'coefs_debug':coefs_debug,
                                           'coefs':coefs})
 
@@ -115,22 +118,18 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
 # Low-pass filter design parameters
 fs = 48000.0        # Sample rate, Hz
 num_phases = 3
-num_taps_per_phase = 12*2
-# num_phases*num_taps_per_phase = Size of the FIR filter.
+num_taps_per_phase = 36
 
 taps = signal.remez((num_phases*num_taps_per_phase), [0, 7300, 8700, 0.5*fs], [1, 0], [.008, 1], Hz=fs)
 w, h = signal.freqz(taps)
 
-pass_band_atten = sum(abs(taps))
-
+pass_band_atten =  sum(abs(taps))
+phase_atten = num_phases
 taps = taps / pass_band_atten    # Guarantee no overflow
 
-q = 31 -int(np.log2(pass_band_atten) + 0.5)
-
-
 if __name__ == "__main__":
-    # plot_response(fs, w, h, "Low-pass Filter")
-    # plot_response_passband(fs, w, h, "Low-pass Filter")
+    plot_response(fs, w, h, "Low-pass Filter")
+    plot_response_passband(fs, w, h, "Low-pass Filter")
     generate_header_file(num_taps_per_phase, num_phases)
-    generate_xc_file(q, pass_band_atten, taps)
+    generate_xc_file(phase_atten*pass_band_atten, taps)
 
