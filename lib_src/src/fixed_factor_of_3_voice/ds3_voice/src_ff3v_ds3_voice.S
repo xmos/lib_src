@@ -63,12 +63,12 @@ src_ds3_voice_add_final_sample://(int64_t sum, int32_t data[], int32_t coefs[], 
   {ldc d0, 31; nop}
   lextract r0, r1, r0, d0, 32
 
-  ldaw s, cp[src_ff3v_fir_comp]
+  ldaw s, cp[src_ff3v_fir_comp_ds]
   ldw s, s[0]
   {ldc c0, 0; ldc c1, 0}
   maccs c0, c1, r0, s
 
-  ldaw s, cp[src_ff3v_fir_comp_q]
+  ldaw s, cp[src_ff3v_fir_comp_q_ds]
   ldw s, s[0]
 
   lsats c0, c1, s
