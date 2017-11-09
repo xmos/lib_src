@@ -9,8 +9,6 @@
 
 #include "src.h"
 
-#define NUM_OF_TAPS (SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE)
-
 #define NUM_OF_SAMPLES (100)
 #define MIN_VALUE (1000000)
 #define INTERVAL_VALUE (20)
