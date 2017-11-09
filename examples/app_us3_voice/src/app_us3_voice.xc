@@ -43,7 +43,7 @@ int main()
             sum_debug += (int64_t)src_ff3v_fir_coefs_debug[i]*(int64_t)data_debug[i];
         }
         sum_debug >>= 31;
-        sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp )>>src_ff3v_fir_comp_q);
+        sum_debug = (int64_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp_us )>>src_ff3v_fir_comp_q_us);
 
         if ((int32_t)sample != (int32_t)sum_debug)
         {
@@ -65,7 +65,7 @@ int main()
                 sum_debug += (int64_t)src_ff3v_fir_coefs_debug[i]*(int64_t)data_debug[i];
             }
             sum_debug >>= 31;
-            sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp )>>src_ff3v_fir_comp_q);
+            sum_debug = (int64_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp_us )>>src_ff3v_fir_comp_q_us);
 
             if ((int32_t)sample != (int32_t)sum_debug)
             {

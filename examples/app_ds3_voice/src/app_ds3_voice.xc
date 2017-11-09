@@ -59,7 +59,7 @@ int main()
         }
         sum_debug >>= 31;
 
-        sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp)>>src_ff3v_fir_comp_q);
+        sum_debug = (int32_t)(((int64_t)sum_debug * (int64_t)src_ff3v_fir_comp_ds)>>src_ff3v_fir_comp_q_ds);
 
         if ((int32_t)sum != (int32_t)sum_debug)
         {
