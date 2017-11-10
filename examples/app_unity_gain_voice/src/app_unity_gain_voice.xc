@@ -9,9 +9,18 @@
 
 #include "src.h"
 
+#define DEBUG_PRINT (0)
+
+#define MAX_ATTEN_DB (-20)
 #define NUM_OF_SAMPLES (100)
 #define MIN_VALUE (1000000)
 #define INTERVAL_VALUE (20)
+
+#if DEBUG_PRINT
+    #define degub_print printf
+#else
+    #define degub_print(fmt, ...) 
+#endif
 
 int main()
 {
@@ -27,30 +36,34 @@ int main()
         int32_t data[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
         memset(data, 0, sizeof(data));
 
-        printf("Upsampling\nInput value: %d\nOutput samples: ", d);
+        degub_print("Upsampling\nInput value: %d\nOutput samples: ", d);
 
         for (unsigned s=0;s<NUM_OF_SAMPLES;s++)
         {
             // feed the input value to the upsampling functions
             int32_t sample = src_us3_voice_input_sample(data[0], src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES-1], d);
             
-            if (s==NUM_OF_SAMPLES-1) printf("%d ", sample);
+            if (s==NUM_OF_SAMPLES-1) degub_print("%d ", sample);
 
             for(unsigned r = 1; r < SRC_FF3V_FIR_NUM_PHASES; r++) {
                 int32_t sample = src_us3_voice_get_next_sample(data[0], src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES-1-r]);
                 
-                if (s==NUM_OF_SAMPLES-1) printf("%d ", sample); 
+                if (s==NUM_OF_SAMPLES-1) degub_print("%d ", sample); 
             }
             
             if (s==NUM_OF_SAMPLES-1) {
                 // calculate the attenuation in dB
-                float atten =  (float) (d) / sample;
+                float atten =  (float) abs(d - sample) / (float) abs(d);
                 float atten_db = 20 * log10 (atten);
-                printf("\nAtten: %f dB\n", atten_db);
+                degub_print("\nAtten: %f dB\n", atten_db);
+                if (atten_db>MAX_ATTEN_DB) {
+                    printf("Error: the upsampling attenutation is %f dB, max attenuation is %f dB", atten_db, MAX_ATTEN_DB);
+                    return 1;
+                }
             }    
         }
  
-        printf("Downsampling\nInput value: %d\nOutput sample: ", d);
+        degub_print("Downsampling\nInput value: %d\nOutput sample: ", d);
 
         memset(data, 0, sizeof(data));
 
@@ -65,9 +78,13 @@ int main()
             sum = src_ds3_voice_add_final_sample(sum, data[SRC_FF3V_FIR_NUM_PHASES-1], src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES-1], d);
             if (s==NUM_OF_SAMPLES-1) {
                 // calculate the attenuation in dB
-                float atten =  (float) (d) / (int32_t) sum;
+                float atten =  (float) abs(d - sum) / (float) abs(d);
                 float atten_db = 20 * log10 (atten);
-                printf("%d \nAtten: %f dB\n", (int32_t) sum, atten_db);
+                degub_print("%lld \nAtten: %f dB\n", sum, atten_db);
+                if (atten_db>MAX_ATTEN_DB){
+                    printf("Error: the downsampling attenutation is %f dB, max attenuation is %f dB", atten_db, MAX_ATTEN_DB);
+                    return 1;
+                }
             }
         }
 
