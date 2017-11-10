@@ -13,16 +13,17 @@ static int pseudo_random(unsigned &x)
     crc32(x, -1, 0xEB31D82E);
     return (int)x;
 }
+// function to clamp a int64 value
 int64_t int64_clamp(int64_t val)
 {
     if (val>INT_MAX) {
         val = INT_MAX;
-        printf("Positive overflow!\n");
+        //printf("Positive overflow!\n");
     } 
     
     if (val<INT_MIN) {
         val = INT_MIN;
-        printf("Negative overflow!\n");
+        //printf("Negative overflow!\n");
     } 
     return val;
 }   
