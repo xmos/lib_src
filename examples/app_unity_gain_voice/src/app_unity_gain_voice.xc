@@ -12,7 +12,7 @@
 #define NUM_OF_SAMPLES (100)
 #define MIN_VALUE (1000000)
 #define INTERVAL_VALUE (20)
-#define DEBUG_PRINT (0)
+#define DEBUG_PRINT (1)
 
 int main()
 {
@@ -85,7 +85,7 @@ int main()
                 // return error if the attenuation is more than 10% off
                 if (atten<0.9 || atten>1.1) {
                     printf("Error: wrong downsampling attenuation %f\n", atten);
-                    //return 1;
+                    return 1;
                 }
             }
         }
