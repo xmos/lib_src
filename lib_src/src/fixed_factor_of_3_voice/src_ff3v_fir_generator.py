@@ -20,7 +20,7 @@ def plot_response_passband(fs, w, h, title):
     plt.figure()
     plt.plot(0.5*fs*w/np.pi, 20*np.log10(np.abs(h)))
     plt.ylim(-1, 1)
-    plt.xlim(0, 0.5*fs)
+    plt.xlim(0, 0.25*fs)
     plt.grid(True)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Gain (dB)')
@@ -61,7 +61,7 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
         header_file.writelines(header_template % {'taps_per_phase':num_taps_per_phase,
                                                   'phases':num_phases})
 
-def generate_xc_file(pass_band_atten, upsampling_atten, taps):
+def generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps):
     xc_template = """\
 
 /* This file is generated using src_ff3v_fir_generator.py
@@ -86,7 +86,7 @@ const int32_t src_ff3v_fir_comp_us = %(comp_us)s;
 
 /** Used for self testing src_ds3_voice and src_us3_voice functionality */
 int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE] = {
-   %(coefs_debug)s
+%(coefs_debug)s
 };
 
 /** Coefficients for use with src_ds3_voice and src_us3_voice functions */
@@ -97,34 +97,31 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
     coefs_debug = ''
     i = 1
     for c in taps:
-        coefs_debug += (' ' + str(int(c*(2**31 - 1))) + ',')
-        if ((i % 7) == 0):
-            coefs_debug += '\n   '
+        coefs_debug += (' ' + str(int(c*(2**31 - 1))).rjust(12) + ',')
+        if ((i % 6) == 0):
+            coefs_debug += '\n'
         i+=1
 
     coefs = ''
-    i = 1
+
     for step in range(num_phases-1, -1, -1):
-        coefs += '    {'
+        i = 1
+        coefs += '    {\n    '
         for j in range(step, len(taps), num_phases):
-            coefs += ' ' + str(int(taps[j]*(2**31 - 1))) + ','
-            if ((i % 7) == 0):
+            coefs += ' ' + str(int(taps[j]*(2**31 - 1))).rjust(12)  + ','
+            if ((i % 6) == 0):
                 coefs += '\n    '
             i+=1
-        coefs += ' },\n'
-        i = 0
+        coefs += '},\n'
 
     xc_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'src_ff3v_fir.xc')
     with open(xc_path, "w") as xc_file:
 
-        q_ds = 30 - int(np.log2(pass_band_atten) + 0.5)
-        q_us = 30 - int(np.log2(pass_band_atten * upsampling_atten) + 0.5)
-
         xc_file.writelines(xc_template % {'comp_q_ds':str(q_ds),
-                                          'comp_ds':str(int(((2**q_ds)-1) * pass_band_atten)),
+                                          'comp_ds':str(comp_ds),
                                           'comp_q_us':str(q_us),
-                                          'comp_us':str(int(((2**q_us)-1) * pass_band_atten * upsampling_atten)),
+                                          'comp_us':str(comp_us),
                                           'coefs_debug':coefs_debug,
                                           'coefs':coefs})
 
@@ -140,9 +137,15 @@ pass_band_atten =  sum(abs(taps))
 upsampling_atten = num_phases
 taps = taps / pass_band_atten    # Guarantee no overflow
 
+# generate the compensation factors
+q_ds = 30 - int(np.log2(pass_band_atten) + 0.5)
+q_us = 30 - int(np.log2(pass_band_atten * upsampling_atten) + 0.5)
+comp_ds = int(((2**q_ds)-1) * pass_band_atten)
+comp_us = int(((2**q_us)-1) * pass_band_atten * upsampling_atten)
+
 if __name__ == "__main__":
     # plot_response(fs, w, h, "Low-pass Filter")
     # plot_response_passband(fs, w, h, "Low-pass Filter")
     generate_header_file(num_taps_per_phase, num_phases)
-    generate_xc_file(pass_band_atten, upsampling_atten, taps)
+    generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps)
 
