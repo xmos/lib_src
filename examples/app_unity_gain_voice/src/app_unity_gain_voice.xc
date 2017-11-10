@@ -16,9 +16,9 @@
 
 int main()
 {
-    int32_t d = -INT_MAX;
+    int32_t d = INT_MIN;
+
     for (uint32_t num_tests = 0; num_tests < 2*INTERVAL_VALUE; num_tests++) {
-        
         // increment the value the test
         d = d + INT_MAX/INTERVAL_VALUE;
 
@@ -49,20 +49,20 @@ int main()
             
             if (s==NUM_OF_SAMPLES-1) {
                 // round up attenuation to the second decimal digit
-                float atten =  roundf((float) (d)/sample * 100) / 100;
+                float atten =  roundf((float) (d) / sample * 100) / 100;
                 #if DEBUG_PRINT
                     printf("\nAtten: %f\n", atten);
                 #endif
                 // return error if the attenuation is more than 10% off
                 if (atten<0.9 || atten>1.1) {
                     printf("Error: wrong upsampling attenuation %f\n", atten);
-                    //return 1;
+                    return 1;
                 }
             }    
         }
  
         #if DEBUG_PRINT
-            printf("Downsampling\nInput value: %d\nOutput samples: ", d);
+            printf("Downsampling\nInput value: %d\nOutput sample: ", d);
         #endif
         memset(data[0], 0, sizeof(data[0]));
         memset(data[1], 0, sizeof(data[1]));
@@ -70,20 +70,17 @@ int main()
         for (unsigned s=0;s<NUM_OF_SAMPLES;s++)
         {
             // feed the input value to the downsampling functions
-            int32_t sum = 0;
+            int64_t sum = 0;
             for(unsigned r = 0; r < SRC_FF3V_FIR_NUM_PHASES-1; r++) {
                 //memset(data, 0, sizeof(data));
-                sum = src_ds3_voice_add_sample(sum, data[r], src_ff3v_fir_coefs[r], d);
-                #if DEBUG_PRINT
-                    if (s==NUM_OF_SAMPLES-1) printf("%d ", sum);
-                #endif    
+                sum = src_ds3_voice_add_sample(sum, data[r], src_ff3v_fir_coefs[r], d);   
             }
             sum = src_ds3_voice_add_final_sample(sum, data[SRC_FF3V_FIR_NUM_PHASES-1], src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES-1], d);
             if (s==NUM_OF_SAMPLES-1) {
                 // round up attenuation to the second digit
-                float atten =  roundf((float) (d)/sum * 100) / 100;
+                float atten =  roundf((float) (d) / (int32_t) sum* 100) / 100;
                 #if DEBUG_PRINT
-                    printf("%d \nAtten: %f\n", sum, atten);
+                    printf("%d \nAtten: %f\n", (int32_t) sum, atten);
                 #endif
                 // return error if the attenuation is more than 10% off
                 if (atten<0.9 || atten>1.1) {
