@@ -7,7 +7,7 @@
 #include <stdlib.h>  /* abs */
 #include <math.h>    /* log10 */
 
-//#define DEBUG_PRINT_ENABLE 1 // uncomment this line to enable debug printing
+//to enable debug printing set -DDEBUG_PRINT_ENABLE=1 in the Makefile
 #include "debug_print.h"
 
 #include "src.h"

@@ -16,7 +16,7 @@ APP_NAME = app_unity_gain_voice
 XCC_FLAGS = -O2 -g -DDEBUG_PRINT_ENABLE=0
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = lib_src(>=1.1.1) lib_logging
+USED_MODULES = lib_src(>=1.1.1) lib_logging (>=2.1.1)
 
 # The XCORE_ARM_PROJECT variable, if set to 1, configures this
 # project to create both xCORE and ARM binaries.
