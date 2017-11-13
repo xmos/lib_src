@@ -11,8 +11,9 @@
 
 #define DEBUG_PRINT (0)
 
-#define MAX_ATTEN_DB (-20)
-#define NUM_OF_SAMPLES (100)
+#define MAX_DIFF_DB (-20)
+#define NUM_OF_TAPS (SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE)
+#define NUM_OF_SAMPLES (NUM_OF_TAPS + 1)
 #define MIN_VALUE (1000000)
 #define INTERVAL_VALUE (20)
 
@@ -53,17 +54,21 @@ int main()
             
             if (s==NUM_OF_SAMPLES-1) {
                 // calculate the attenuation in dB
-                float atten =  (float) abs(d - sample) / (float) abs(d);
+                float atten =  (float) abs(d) / (float) abs(sample);
                 float atten_db = 20 * log10 (atten);
-                degub_print("\nAtten: %f dB\n", atten_db);
-                if (atten_db>MAX_ATTEN_DB) {
-                    printf("Error: the upsampling attenutation is %f dB, max attenuation is %f dB", atten_db, MAX_ATTEN_DB);
+                degub_print("\nAttenuation: %f dB\n", atten_db);
+                // calculate the difference in dB
+                float diff =  (float) abs(d - sample) / (float) abs(d);
+                float diff_db = 20 * log10 (diff);
+                degub_print("Difference: %f dB\n", diff_db);
+                if (diff_db>MAX_DIFF_DB) {
+                    printf("Error: the difference for upsampling is %f dB, max value is %f dB", diff_db, MAX_DIFF_DB);
                     return 1;
                 }
             }    
         }
  
-        degub_print("Downsampling\nInput value: %d\nOutput sample: ", d);
+        degub_print("Downsampling\nInput value: %d\n", d);
 
         memset(data, 0, sizeof(data));
 
@@ -77,12 +82,17 @@ int main()
             }
             sum = src_ds3_voice_add_final_sample(sum, data[SRC_FF3V_FIR_NUM_PHASES-1], src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES-1], d);
             if (s==NUM_OF_SAMPLES-1) {
+                degub_print("Output sample: %lld\n", sum);
                 // calculate the attenuation in dB
-                float atten =  (float) abs(d - sum) / (float) abs(d);
+                float atten =  (float) abs(d) / (float) abs(sum);
                 float atten_db = 20 * log10 (atten);
-                degub_print("%lld \nAtten: %f dB\n", sum, atten_db);
-                if (atten_db>MAX_ATTEN_DB){
-                    printf("Error: the downsampling attenutation is %f dB, max attenuation is %f dB", atten_db, MAX_ATTEN_DB);
+                degub_print("Attenuation: %f dB\n", atten_db);
+                // calculate the difference in dB
+                float diff =  (float) abs(d - sum) / (float) abs(d);
+                float diff_db = 20 * log10 (diff);
+                degub_print("Atten: %f dB\n", diff_db);
+                if (diff_db>MAX_DIFF_DB){
+                    printf("Error: the difference for  downsampling is %f dB, max value is %f dB", diff_db, MAX_DIFF_DB);
                     return 1;
                 }
             }
