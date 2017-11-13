@@ -15,7 +15,7 @@
 #define NUM_OF_TAPS (SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE)
 #define NUM_OF_SAMPLES (NUM_OF_TAPS + 1)
 #define MIN_VALUE (1000000)
-#define INTERVAL_VALUE (20)
+#define NUM_OF_TEST (32)
 
 #if DEBUG_PRINT
     #define degub_print printf
@@ -49,9 +49,9 @@ int main()
 {
     int32_t d = INT_MIN;
 
-    for (uint32_t num_tests = 0; num_tests < 2*INTERVAL_VALUE; num_tests++) {
+    for (uint32_t num_tests = 0; num_tests < NUM_OF_TEST; num_tests++) {
         // increment the value the test
-        d = d + INT_MAX/INTERVAL_VALUE;
+        d = d + INT_MAX/NUM_OF_TEST;
 
         // skip lower valies
         if (abs(d)<MIN_VALUE) continue;
