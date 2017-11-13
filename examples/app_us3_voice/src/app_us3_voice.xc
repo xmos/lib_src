@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+//#define DEBUG_PRINT_ENABLE 1 // uncomment this line to enable debug printing
+#include "debug_print.h"
+
 #include "src.h"
 
 #define NUM_OF_TAPS (SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE)
@@ -18,12 +22,12 @@ int64_t int64_clamp(int64_t val)
 {
     if (val>INT_MAX) {
         val = INT_MAX;
-        //printf("Positive overflow!\n");
+        debug_printf("\nWarning: positive overflow\n");
     } 
     
     if (val<INT_MIN) {
         val = INT_MIN;
-        //printf("Negative overflow!\n");
+        debug_printf("\nWarning: negative overflow!\n");
     } 
     return val;
 }   
