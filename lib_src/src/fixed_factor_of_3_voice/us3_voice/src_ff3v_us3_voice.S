@@ -45,12 +45,12 @@ src_us3_voice_input_sample://(int32_t data[], int32_t coefs[], int32_t sample);
 	{ldc d0, 31; nop}
 	lextract r0, r1, r0, d0, 32
 
-    ldaw s, cp[src_ff3v_fir_comp]
+    ldaw s, cp[src_ff3v_fir_comp_us]
     ldw s, s[0]
     {ldc c0, 0; ldc c1, 0}
     maccs c0, c1, r0, s
 
-    ldaw s, cp[src_ff3v_fir_comp_q]
+    ldaw s, cp[src_ff3v_fir_comp_q_us]
     ldw s, s[0]
 
     lsats c0, c1, s
@@ -106,12 +106,12 @@ src_us3_voice_get_next_sample://(int32_t data[], int32_t coefs[], int32_t sample
 	{ldc d0, 31; nop}
 	lextract r0, r1, r0, d0, 32
 
-    ldaw s, cp[src_ff3v_fir_comp]
+    ldaw s, cp[src_ff3v_fir_comp_us]
     ldw s, s[0]
     {ldc c0, 0; ldc c1, 0}
     maccs c0, c1, r0, s
 
-    ldaw s, cp[src_ff3v_fir_comp_q]
+    ldaw s, cp[src_ff3v_fir_comp_q_us]
     ldw s, s[0]
 
     lsats c0, c1, s
