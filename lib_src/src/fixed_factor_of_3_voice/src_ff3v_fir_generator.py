@@ -29,11 +29,12 @@ def plot_response_passband(fs, w, h, title):
 
 def generate_header_file(num_taps_per_phase, num_phases):
     header_template = """\
-
-/* This file is generated using src_ff3v_fir_generator.py
- *
- * Do not modify it directly, changes may be overwritten!
- */
+// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+//
+// This file is generated using src_ff3v_fir_generator.py
+//
+// Do not modify it directly, changes may be overwritten!
+//
 
 #ifndef _SRC_FF3V_FIR_H_
 #define _SRC_FF3V_FIR_H_
@@ -63,11 +64,12 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
 
 def generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps):
     xc_template = """\
-
-/* This file is generated using src_ff3v_fir_generator.py
- *
- * Do not modify it directly, changes may be overwritten!
- */
+// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+//
+// This file is generated using src_ff3v_fir_generator.py
+//
+// Do not modify it directly, changes may be overwritten!
+//
 
 #include "src_ff3v_fir.h"
 #include <stdint.h>

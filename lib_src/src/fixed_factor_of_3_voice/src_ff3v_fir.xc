@@ -1,8 +1,9 @@
-
-/* This file is generated using src_ff3v_fir_generator.py
- *
- * Do not modify it directly, changes may be overwritten!
- */
+// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+//
+// This file is generated using src_ff3v_fir_generator.py
+//
+// Do not modify it directly, changes may be overwritten!
+//
 
 #include "src_ff3v_fir.h"
 #include <stdint.h>
