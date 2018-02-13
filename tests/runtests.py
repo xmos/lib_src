@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import xmostest, sys, subprocess
 
 if __name__ == "__main__":
