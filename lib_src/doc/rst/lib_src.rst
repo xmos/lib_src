@@ -616,9 +616,9 @@ Voice DS3 API
 Voice US3 API
 -------------
 
-.. doxygenfunction:: src_us3_voice_add_sample
+.. doxygenfunction:: src_us3_voice_input_sample
 
-.. doxygenfunction:: src_us3_voice_add_final_sample
+.. doxygenfunction:: src_us3_voice_get_next_sample
 
 |newpage|
 
