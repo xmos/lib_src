@@ -602,9 +602,11 @@ OS3 API
 Fixed factor of 3 functions optimised for use with voice
 ========================================================
 
-.. doxygenvariable:: src_ff3v_fir_coefs_debug
+..
+  .. doxygenvariable:: src_ff3v_fir_coefs_debug
 
-.. doxygenvariable:: src_ff3v_fir_coefs
+..
+  .. doxygenvariable:: src_ff3v_fir_coefs
 
 Voice DS3 API
 -------------
