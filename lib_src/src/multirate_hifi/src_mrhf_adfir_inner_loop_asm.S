@@ -120,6 +120,7 @@ done:
     .set    src_mrhf_adfir_inner_loop_asm.maxtimers,0
     .globl    src_mrhf_adfir_inner_loop_asm.maxtimers
     .set    src_mrhf_adfir_inner_loop_asm.maxchanends,0
+    .globl    src_mrhf_adfir_inner_loop_asm.maxchanends
 
 
 // Odd data alignment (4byte odd instead of 8byte) version
@@ -237,7 +238,7 @@ done_odd:
   retsp stack_size
 
 .atmp_odd:
-    .size    src_mrhf_adfir_inner_loop_asm_odd, .atmp-src_mrhf_adfir_inner_loop_asm_odd
+    .size    src_mrhf_adfir_inner_loop_asm_odd, .atmp_odd-src_mrhf_adfir_inner_loop_asm_odd
     .align    8
     .cc_bottom src_mrhf_adfir_inner_loop_asm_odd.function
 
@@ -248,4 +249,4 @@ done_odd:
     .set    src_mrhf_adfir_inner_loop_asm_odd.maxtimers,0
     .globl    src_mrhf_adfir_inner_loop_asm_odd.maxtimers
     .set    src_mrhf_adfir_inner_loop_asm_odd.maxchanends,0
-
+    .globl    src_mrhf_adfir_inner_loop_asm_odd.maxchanends

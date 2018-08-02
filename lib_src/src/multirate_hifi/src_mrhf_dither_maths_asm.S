@@ -66,7 +66,7 @@ dither_maths_asm:
     .set    dither_maths_asm.maxtimers,0
     .globl    dither_maths_asm.maxtimers
     .set    dither_maths_asm.maxchanends,0
-    .globl     .maxchanends
+    .globl     dither_maths_asm.maxchanends
 
 
 
