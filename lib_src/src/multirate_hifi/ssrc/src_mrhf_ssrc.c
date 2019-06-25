@@ -67,59 +67,58 @@
 SSRCFiltersIDs_t        sFiltersIDs[SSRC_N_FS][SSRC_N_FS] =                // Filter configuration table [Fsin][Fsout]
 {
     {    // Fsin = 44.1kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294},        // Fsout = 48kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 88.2kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_147},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_OS_ID,            FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_OS_ID,            FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_147}        // Fsout = 192kHz
+        // F1                                  F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294},      // Fsout = 48kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_147},      // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_OS_ID,          FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_OS_ID,          FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_147}       // Fsout = 192kHz
     },
     {    // Fsin = 48kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_UP4844_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_160},        // Fsout = 88.2kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_OS_ID,            FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_160},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_OS_ID,            FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0}            // Fsout = 192kHz
+        // F1                                  F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_UP4844_ID,      FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},      // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_160},      // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_OS_ID,          FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_160},      // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_OS_ID,          FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0}         // Fsout = 192kHz
     },
     {    // Fsin = 88.2kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_BL8848_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294},        // Fsout = 48kHz
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 88.2kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_147}        // Fsout = 192kHz
+        // F1                                  F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_BL_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_BL8848_ID,      FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294},      // Fsout = 48kHz
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294},      // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_147}       // Fsout = 192kHz
     },
     {    // Fsin = 96kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_BL9644_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
-        {FILTER_DEFS_SSRC_FIR_UP4844_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 88.2kHz
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_160},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_UP_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0}            // Fsout = 192kHz
+        // F1                                  F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_BL9644_ID,      FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},      // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_BL_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
+        {{FILTER_DEFS_SSRC_FIR_UP4844_ID,      FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},      // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_160},      // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_UP_ID,          FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0}         // Fsout = 192kHz
     },
     {    // Fsin = 176.4kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL8848_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294},        // Fsout = 48kHz
-        {FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 88.2kHz
-        {FILTER_DEFS_SSRC_FIR_BL17696_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_UPF_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_294}        // Fsout = 192kHz
+        // F1                                 F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_DS_ID,         FILTER_DEFS_SSRC_FIR_BL_ID,          FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},         // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_DS_ID,         FILTER_DEFS_SSRC_FIR_BL8848_ID,      FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294},       // Fsout = 48kHz
+        {{FILTER_DEFS_SSRC_FIR_BL_ID,         FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},         // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_BL17696_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294},       // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,       FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},         // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_UPF_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS320_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_294}        // Fsout = 192kHz
     },
     {    // Fsin = 192kHz
-        // F1                            F2                                F3                                Phase step
-        {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL9644_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 44.1kHz
-        {FILTER_DEFS_SSRC_FIR_DS_ID,            FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 48kHz
-        {FITLER_DEFS_SSRC_FIR_BL19288_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 88.2kHz
-
-        {FILTER_DEFS_SSRC_FIR_BL_ID,            FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0},        // Fsout = 96kHz
-        {FILTER_DEFS_SSRC_FIR_UP192176_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_320},        // Fsout = 176.4kHz
-        {FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID,        FILTER_DEFS_PPFIR_PHASE_STEP_0}            // Fsout = 192kHz
+        // F1                                 F2                                   F3                                Phase step
+        {{FILTER_DEFS_SSRC_FIR_DS_ID,         FILTER_DEFS_SSRC_FIR_BL9644_ID,      FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},       // Fsout = 44.1kHz
+        {{FILTER_DEFS_SSRC_FIR_DS_ID,         FILTER_DEFS_SSRC_FIR_BL_ID,          FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},         // Fsout = 48kHz
+        {{FITLER_DEFS_SSRC_FIR_BL19288_ID,    FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},       // Fsout = 88.2kHz
+        {{FILTER_DEFS_SSRC_FIR_BL_ID,         FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0},         // Fsout = 96kHz
+        {{FILTER_DEFS_SSRC_FIR_UP192176_ID,   FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_HS294_ID},       FILTER_DEFS_PPFIR_PHASE_STEP_320},       // Fsout = 176.4kHz
+        {{FILTER_DEFS_SSRC_FIR_NONE_ID,       FILTER_DEFS_SSRC_FIR_NONE_ID,        FILTER_DEFS_PPFIR_NONE_ID},        FILTER_DEFS_PPFIR_PHASE_STEP_0}          // Fsout = 192kHz
     }
 };
 

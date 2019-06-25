@@ -119,57 +119,57 @@ ASRCFiltersIDs_t        sASRCFiltersIDs[ASRC_N_FS][ASRC_N_FS] =                /
 {
     {    // Fsin = 44.1kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 48kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     },
     {    // Fsin = 48kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 48kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     },
     {    // Fsin = 88.2kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_BL8848_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_BL8848_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 48kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     },
     {    // Fsin = 96kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_BL9644_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 48kHz
-        {FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_BL9644_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_BL_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 48kHz
+        {{FILTER_DEFS_ASRC_FIR_UP4844_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 88.2kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UP_ID,            FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     },
     {    // Fsin = 176.4kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID},            // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL8848_ID},        // Fsout = 48kHz
-        {FITLER_DEFS_ASRC_FIR_BLF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID,},        // Fsout = 88.2kHz
-        {FILTER_DEFS_ASRC_FIR_BL17696_ID,    FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UPF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UPF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID}},          // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL8848_ID}},      // Fsout = 48kHz
+        {{FITLER_DEFS_ASRC_FIR_BLF_ID,           FILTER_DEFS_ASRC_FIR_NONE_ID,}},       // Fsout = 88.2kHz
+        {{FILTER_DEFS_ASRC_FIR_BL17696_ID,       FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UPF_ID,           FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UPF_ID,           FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     },
     {    // Fsin = 192kHz
         // F1                            F2
-        {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL9644_ID},        // Fsout = 44.1kHz
-        {FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID},            // Fsout = 48kHz
-        {FITLER_DEFS_ASRC_FIR_BL19288_ID,    FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 88.2kHz
-        {FITLER_DEFS_ASRC_FIR_BLF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 96kHz
-        {FILTER_DEFS_ASRC_FIR_UP192176_ID,    FILTER_DEFS_ASRC_FIR_NONE_ID},        // Fsout = 176.4kHz
-        {FILTER_DEFS_ASRC_FIR_UPF_ID,        FILTER_DEFS_ASRC_FIR_NONE_ID}        // Fsout = 192kHz
+        {{FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL9644_ID}},      // Fsout = 44.1kHz
+        {{FILTER_DEFS_ASRC_FIR_DS_ID,            FILTER_DEFS_ASRC_FIR_BL_ID}},          // Fsout = 48kHz
+        {{FITLER_DEFS_ASRC_FIR_BL19288_ID,       FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 88.2kHz
+        {{FITLER_DEFS_ASRC_FIR_BLF_ID,           FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 96kHz
+        {{FILTER_DEFS_ASRC_FIR_UP192176_ID,      FILTER_DEFS_ASRC_FIR_NONE_ID}},        // Fsout = 176.4kHz
+        {{FILTER_DEFS_ASRC_FIR_UPF_ID,           FILTER_DEFS_ASRC_FIR_NONE_ID}}         // Fsout = 192kHz
     }
 };
 

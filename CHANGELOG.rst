@@ -6,6 +6,7 @@ lib_src change log
 
   * RESOLVED: correct compensation factor for voice upsampling
   * ADDED: test of voice unity gain
+  * CHANGED: initialisation lists to avoid warnings when building
 
 1.1.0
 -----
