@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+1.1.2
+-----
+
+  * CHANGED: initialisation lists to avoid warnings when building
+
 1.1.1
 -----
 
