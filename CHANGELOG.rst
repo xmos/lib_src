@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+2.0.0
+-----
+
+  * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
+
 1.1.2
 -----
 
