@@ -22,10 +22,18 @@ pipeline {
     upstream(
       upstreamProjects:
         (env.JOB_NAME.contains('PR-') ?
+          "../lib_gpio/${env.CHANGE_TARGET}," +
+          "../lib_i2c/${env.CHANGE_TARGET}," +
+          "../lib_i2s/${env.CHANGE_TARGET}," +
           "../lib_logging/${env.CHANGE_TARGET}," +
+          "../lib_spdif/${env.CHANGE_TARGET}," +
           "../lib_xassert/${env.CHANGE_TARGET}"
         :
+          "../lib_gpio/${env.BRANCH_NAME}," +
+          "../lib_i2c/${env.BRANCH_NAME}," +
+          "../lib_i2s/${env.BRANCH_NAME}," +
           "../lib_logging/${env.BRANCH_NAME}," +
+          "../lib_spdif/${env.BRANCH_NAME}," +
           "../lib_xassert/${env.BRANCH_NAME}"),
       threshold: hudson.model.Result.SUCCESS
     )
