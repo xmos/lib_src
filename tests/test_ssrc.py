@@ -1,3 +1,4 @@
+# Copyright (c) 2016-2019, XMOS Ltd, All rights reserved
 import xmostest, os
 
 supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
