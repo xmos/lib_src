@@ -52,11 +52,6 @@ pipeline {
         xcoreLibraryChecks("${REPO}")
       }
     }
-    stage('Tests') {
-      steps {
-        runXmostest("${REPO}", 'tests')
-      }
-    }
     stage('xCORE builds') {
       steps {
         dir("${REPO}") {
@@ -66,6 +61,11 @@ pipeline {
             runXdoc('doc')
           }
         }
+      }
+    }
+    stage('Tests') {
+      steps {
+        runXmostest("${REPO}", 'tests')
       }
     }
   }
