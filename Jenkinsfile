@@ -72,7 +72,6 @@ pipeline {
               sh 'xdoc xmospdf'
             }
           }
-          //list-table:: LED Indicator meaning
           dir("${REPO}") {
             runXdoc('doc')
           }
