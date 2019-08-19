@@ -22,6 +22,7 @@ org.eclipse.cdt.core.prefs
 xsim.args
 tests/src_output
 *.bak
+**/.venv/**
 
 # waf build files
 .lock-waf_*
