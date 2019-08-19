@@ -62,7 +62,17 @@ pipeline {
       steps {
         dir("${REPO}") {
           xcoreAllAppsBuild('examples')
-          xcoreAllAppNotesBuild('examples')
+          /* App note AN00231 contains a list-table (LED Indicator meaning)
+           * which xdoc fails to handle correctly when producing HTML output.
+           * Therefore xcoreAllAppNotesBuild('examples') cannot be used for the
+           * time being, and xdoc must be called explicitly to only build PDFs.
+           */
+          dir('examples/AN00231_ASRC_SPDIF_TO_DAC/doc') {
+            viewEnv() {
+              sh 'xdoc xmospdf'
+            }
+          }
+          //list-table:: LED Indicator meaning
           dir("${REPO}") {
             runXdoc('doc')
           }
