@@ -13,6 +13,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'flake8~=3.8',
+        'matplotlib~=3.3',
+        'numpy~=1.18',
+        'scipy~=1.4',
     ],
     dependency_links=[
     ],
