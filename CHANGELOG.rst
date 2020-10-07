@@ -1,6 +1,12 @@
 lib_src change log
 ==================
 
+2.0.1
+-----
+
+  * CHANGED: Pin Python package versions
+  * REMOVED: not necessary cpanfile
+
 2.0.0
 -----
 
