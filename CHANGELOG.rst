@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+2.1.0
+-----
+
+  * CHANGED: Use XMOS Public Licence Version 1
+
 2.0.1
 -----
 
