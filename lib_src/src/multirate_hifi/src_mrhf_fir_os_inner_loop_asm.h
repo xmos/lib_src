@@ -1,4 +1,5 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright 2016-2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef SRC_MRHF_FIR_OS_INNER_LOOP_ASM_H_
 #define SRC_MRHF_FIR_OS_INNER_LOOP_ASM_H_
 
