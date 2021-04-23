@@ -1,13 +1,9 @@
 Sample Rate Conversion Library
 ==============================
 
-.. |i2s| replace:: I |-| :sup:`2` |-| S
-.. |i2c| replace:: I |-| :sup:`2` |-| C
+.. |i2s| replace:: I\ :sup:`2`\ S
+.. |i2c| replace:: I\ :sup:`2`\ C
 
-
-.. rheader::
-
-   Sample Rate Conversion Library |version|
 
 Overview
 --------
@@ -47,8 +43,8 @@ Components
 Software version and dependencies
 .................................
 
-.. libdeps::
-
+The CHANGELOG contains information about the current and previous versions.
+For a list of direct dependencies, look for DEPENDENT_MODULES in lib_src/module_build_info.
 
 Related application notes
 .........................
@@ -56,23 +52,6 @@ The following application notes use this library:
 
     * AN00230 - [Adding Synchronous Sample Rate Conversion to the USB Audio reference design]
     * AN00231 - [SPDIF receive to |i2s| output using Asynchronous Sample Rate Conversion]
-
-
-|newpage|
-
-Typical Resource Usage
-......................
-
-.. resusage::
-
-  * - configuration: SSRC
-    - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; ssrc_state_t sSSRCState[2]; int iSSRCStack[2][32]; ssrc_ctrl_t sSSRCCtrl[2];
-    - ports: 0
-    - locals:
-    - flags:
-    - pins: 0
-    - fn: unsafe{ssrc_init(0, 0, sSSRCCtrl, 2, 4, 0);ssrc_process(in_buff, out_buff, sSSRCCtrl);}
 
 The SSRC algorithm runs a series of cascaded FIR filters to perform the rate conversion. This includes interpolation, decimation and bandwidth limiting filters with a final polyphase FIR filter. The last stage supports the rational rate change of 147:160 or 160:147 allowing conversion between 44.1KHz family of sample rates to the 48KHz family of sample rates.
 
@@ -139,17 +118,6 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 80MHz
        - 4MHz
 
-
-.. resusage::
-
-  * - configuration: ASRC
-    - target: XCORE-200-EXPLORER
-    - globals: int in_buff[4]; int out_buff[20]; asrc_ctrl_t sASRCCtrl[2]; asrc_adfir_coefs_t SiASRCADFIRCoefs; asrc_state_t sASRCState[2]; int asrc_stack[2][32];
-    - locals:
-    - ports: 0
-    - flags:
-    - pins: 0
-    - fn: unsafe{asrc_init(0, 0, sASRCCtrl, 2, 4, 0); asrc_process(in_buff, out_buff, 0, sASRCCtrl);}
 
 The ASRC algorithm also runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; the first table enumerates the MHz required for the first channel with adaptive coefficients calculation and the second table specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
