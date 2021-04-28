@@ -33,6 +33,8 @@ pipeline {
             runXdoc('doc')
           }
         }
+        // Archive all the generated .pdf docs
+        archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
       }
     }
     stage('Tests') {
