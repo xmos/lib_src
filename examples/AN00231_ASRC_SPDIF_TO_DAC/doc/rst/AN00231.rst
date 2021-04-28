@@ -1,3 +1,7 @@
+.. appnote:: AN00231
+
+.. include:: ../../../../lib_src/doc/rst/version.rst
+
 .. include:: ../../README.rst
 
 |newpage|
