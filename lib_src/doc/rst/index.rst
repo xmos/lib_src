@@ -1,5 +1,7 @@
 .. include:: ../../../README.rst
 
+.. include:: resource_usage_summary.rst
+
 Multi-rate Hi-Fi functionality
 ==============================
 

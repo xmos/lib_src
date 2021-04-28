@@ -1,4 +1,5 @@
-# Copyright (c) 2016-2019, XMOS Ltd, All rights reserved
+# Copyright 2016-2021 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest, os
 
 supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
