@@ -1,4 +1,5 @@
-// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+// Copyright 2016-2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 //
 // This file is generated using src_ff3v_fir_generator.py
 //

@@ -1,12 +1,8 @@
 SPDIF Receive to I2S output using Asynchronous Sample Rate Conversion
 =====================================================================
 
-.. |i2s| replace:: I |-| :sup:`2` |-| S
-.. |i2c| replace:: I |-| :sup:`2` |-| C
-
-.. appnote:: AN00231
-
-.. version:: 1.0.2
+.. |i2s| replace:: I\ :sup:`2`\ S
+.. |i2c| replace:: I\ :sup:`2`\ C
 
 Summary
 -------
