@@ -1,4 +1,5 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright 2016-2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef AUDIO_CODEC_H_
 #define AUDIO_CODEC_H_
 #include <xs1.h>
