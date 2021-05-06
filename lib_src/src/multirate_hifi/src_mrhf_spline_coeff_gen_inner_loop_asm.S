@@ -228,4 +228,4 @@ done:
     .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxtimers,0
     .globl    src_mrhf_spline_coeff_gen_inner_loop_asm.maxtimers
     .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxchanends,0
-
+    .globl     src_mrhf_spline_coeff_gen_inner_loop_asm.maxchanends
