@@ -46,10 +46,6 @@ def generate_header_file(num_taps_per_phase, num_phases):
 #define SRC_FF3V_FIR_NUM_PHASES (%(phases)s)
 #define SRC_FF3V_FIR_TAPS_PER_PHASE (%(taps_per_phase)s)
 
-#if defined(__cplusplus) || defined(__XC__)
-extern "C" {
-#endif
-
 extern const unsigned src_ff3v_fir_comp_q_ds;
 extern const int32_t src_ff3v_fir_comp_ds;
 
@@ -57,10 +53,13 @@ extern const unsigned src_ff3v_fir_comp_q_us;
 extern const int32_t src_ff3v_fir_comp_us;
 
 extern int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE];
-extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
 
-#if defined(__cplusplus) || defined(__XC__)
-}
+#if defined(__XC__)
+extern const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_xc
+#else
+extern const int32_t (*src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_c
 #endif
 
 #endif // _SRC_FF3V_FIR_H_
@@ -72,8 +71,8 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
         header_file.writelines(header_template % {'taps_per_phase':num_taps_per_phase,
                                                   'phases':num_phases})
 
-def generate_c_file(q_ds, q_us, comp_ds, comp_us, taps):
-    c_template = """\
+def generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps):
+    xc_template = """\
 // Copyright (c) 2016-2021, XMOS Ltd, All rights reserved
 //
 // This file is generated using src_ff3v_fir_generator.py
@@ -102,8 +101,14 @@ int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER
 };
 
 /** Coefficients for use with src_ds3_voice and src_us3_voice functions */
-const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
+static const int32_t src_ff3v_fir_coefs_i[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
 %(coefs)s};
+
+unsafe {
+    const int32_t (* unsafe src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
+}
+
+const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
 """
 
     coefs_debug = ''
@@ -126,16 +131,16 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
             i+=1
         coefs += '},\n'
 
-    c_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               'src_ff3v_fir.c')
-    with open(c_path, "w") as c_file:
+    xc_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'src_ff3v_fir.xc')
+    with open(xc_path, "w") as xc_file:
 
-        c_file.writelines(c_template % {'comp_q_ds':str(q_ds),
-                                        'comp_ds':str(comp_ds),
-                                        'comp_q_us':str(q_us),
-                                        'comp_us':str(comp_us),
-                                        'coefs_debug':coefs_debug,
-                                        'coefs':coefs})
+        xc_file.writelines(xc_template % {'comp_q_ds':str(q_ds),
+                                          'comp_ds':str(comp_ds),
+                                          'comp_q_us':str(q_us),
+                                          'comp_us':str(comp_us),
+                                          'coefs_debug':coefs_debug,
+                                          'coefs':coefs})
 
 # Low-pass filter design parameters
 fs = 48000.0        # Sample rate, Hz
@@ -159,5 +164,5 @@ if __name__ == "__main__":
     # plot_response(fs, w, h, "Low-pass Filter")
     # plot_response_passband(fs, w, h, "Low-pass Filter")
     generate_header_file(num_taps_per_phase, num_phases)
-    generate_c_file(q_ds, q_us, comp_ds, comp_us, taps)
+    generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps)
 

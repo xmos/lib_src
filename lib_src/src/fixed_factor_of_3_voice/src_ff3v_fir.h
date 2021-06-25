@@ -14,10 +14,6 @@
 #define SRC_FF3V_FIR_NUM_PHASES (3)
 #define SRC_FF3V_FIR_TAPS_PER_PHASE (24)
 
-#if defined(__cplusplus) || defined(__XC__)
-extern "C" {
-#endif
-
 extern const unsigned src_ff3v_fir_comp_q_ds;
 extern const int32_t src_ff3v_fir_comp_ds;
 
@@ -25,10 +21,13 @@ extern const unsigned src_ff3v_fir_comp_q_us;
 extern const int32_t src_ff3v_fir_comp_us;
 
 extern int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE];
-extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
 
-#if defined(__cplusplus) || defined(__XC__)
-}
+#if defined(__XC__)
+extern const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_xc
+#else
+extern const int32_t (*src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_c
 #endif
 
 #endif // _SRC_FF3V_FIR_H_
