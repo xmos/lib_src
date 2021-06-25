@@ -101,7 +101,7 @@ int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER
 };
 
 /** Coefficients for use with src_ds3_voice and src_us3_voice functions */
-static const int32_t src_ff3v_fir_coefs_i[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
+static const int32_t [[aligned(8)]] src_ff3v_fir_coefs_i[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
 %(coefs)s};
 
 unsafe {
