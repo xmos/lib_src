@@ -31,7 +31,7 @@ def plot_response_passband(fs, w, h, title):
 
 def generate_header_file(num_taps_per_phase, num_phases):
     header_template = """\
-// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+// Copyright (c) 2016-2021, XMOS Ltd, All rights reserved
 //
 // This file is generated using src_ff3v_fir_generator.py
 //
@@ -53,7 +53,14 @@ extern const unsigned src_ff3v_fir_comp_q_us;
 extern const int32_t src_ff3v_fir_comp_us;
 
 extern int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER_PHASE];
-extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
+
+#if defined(__XC__)
+extern const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_xc
+#else
+extern const int32_t (*src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE];
+#define src_ff3v_fir_coefs src_ff3v_fir_coefs_c
+#endif
 
 #endif // _SRC_FF3V_FIR_H_
 """
@@ -66,7 +73,7 @@ extern const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TA
 
 def generate_xc_file(q_ds, q_us, comp_ds, comp_us, taps):
     xc_template = """\
-// Copyright (c) 2016-2017, XMOS Ltd, All rights reserved
+// Copyright (c) 2016-2021, XMOS Ltd, All rights reserved
 //
 // This file is generated using src_ff3v_fir_generator.py
 //
@@ -94,8 +101,14 @@ int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER
 };
 
 /** Coefficients for use with src_ds3_voice and src_us3_voice functions */
-const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
+static const int32_t [[aligned(8)]] src_ff3v_fir_coefs_i[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
 %(coefs)s};
+
+unsafe {
+    const int32_t (* unsafe src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
+}
+
+const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
 """
 
     coefs_debug = ''
