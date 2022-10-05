@@ -23,7 +23,7 @@ importlib-metadata==4.13.0
 matplotlib==3.3.1
 
 # Pin numpy to 1.18.5 due to tensorflow v2.1.1 hard pinning it to that version.
-numpy==1.18.5
+numpy==1.22.0
 
 # Pin scipy to 1.4.1 due to tensorflow v2.1.1 hard pinning it to that version.
 scipy==1.4.1
