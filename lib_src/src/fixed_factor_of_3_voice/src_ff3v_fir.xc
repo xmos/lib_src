@@ -39,7 +39,7 @@ int32_t src_ff3v_fir_coefs_debug[SRC_FF3V_FIR_NUM_PHASES * SRC_FF3V_FIR_TAPS_PER
 };
 
 /** Coefficients for use with src_ds3_voice and src_us3_voice functions */
-const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
+static const int32_t [[aligned(8)]] src_ff3v_fir_coefs_i[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE] = {
     {
             29412,    -14619962,      2692812,     -2814524,      2193307,     -1338213,
           -123797,      2582573,     -6837031,     15085431,    -37235961,    320542055,
@@ -59,3 +59,9 @@ const int32_t src_ff3v_fir_coefs[SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_
          -1338213,      2193307,     -2814524,      2692812,    -14619962,        29412,
     },
 };
+
+unsafe {
+    const int32_t (* unsafe src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
+}
+
+const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE] = src_ff3v_fir_coefs_i;
