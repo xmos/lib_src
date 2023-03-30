@@ -8,6 +8,7 @@ pipeline {
   }
   environment {
     REPO = 'lib_src'
+    VIEW = getViewName(REPO)
     VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
   }
   options {
