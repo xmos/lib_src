@@ -12,6 +12,12 @@ lib_src change log
     not crash with a LOAD_STORE exception.
   * ADDED: Missing device attributes to the .xn file of the AN00231 app note.
 
+  * Changes to dependencies:
+
+    - lib_logging: 2.0.1 -> 3.1.1
+
+    - lib_xassert: 2.0.1 -> 4.1.0
+
 2.1.0
 -----
 
