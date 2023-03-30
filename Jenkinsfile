@@ -8,7 +8,7 @@ pipeline {
   }
   environment {
     REPO = 'lib_src'
-    VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
+    VIEW = getViewName(REPO)
   }
   options {
     skipDefaultCheckout()
