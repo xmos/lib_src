@@ -1,6 +1,23 @@
 lib_src change log
 ==================
 
+2.2.0
+-----
+
+  * CHANGED: Made the FIR coefficient array that is used with the voice fixed
+    factor of 3 up and down sampling functions usable from within C files as
+    well as XC files.
+  * CHANGED: Aligned the FIR coefficient array to an 8-byte boundary. This
+    ensures that the voice fixed factor of 3 up and down sampling functions do
+    not crash with a LOAD_STORE exception.
+  * ADDED: Missing device attributes to the .xn file of the AN00231 app note.
+
+  * Changes to dependencies:
+
+    - lib_logging: 2.0.1 -> 3.1.1
+
+    - lib_xassert: 2.0.1 -> 4.1.0
+
 2.1.0
 -----
 
