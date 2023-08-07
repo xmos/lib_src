@@ -218,7 +218,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
     unsigned int    uiNLoops    = psFIRCtrl->uiNLoops;
     int*            piData;
     int*            piCoefs;
-    int                iData[2];
+    int        DWORD_ALIGNED        iData[2];
     unsigned        ui;
 
     for(ui = 0; ui < psFIRCtrl->uiNInSamples; ui+=2) //Note step by 2 as inner loop unrolled twice
@@ -701,4 +701,3 @@ FIRReturnCodes_t                PPFIR_proc(PPFIRCtrl_t* psPPFIRCtrl)
 
     return FIR_NO_ERROR;
 }
-

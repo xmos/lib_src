@@ -10,7 +10,23 @@
 
 #ifndef _SRC_MRHF_FIR_H
 #define _SRC_MRHF_FIR_H
+#ifndef ALIGNMENT
+#  ifdef __xcore__
+#    define ALIGNMENT(N)  __attribute__((aligned (N)))
+#  else
+#    define ALIGNMENT(N)
+#  endif
+#endif
 
+/// (on xcore) Force variable to word alignment
+#ifndef WORD_ALIGNED
+#  define WORD_ALIGNED   ALIGNMENT(4)
+#endif
+
+/// (on xcore) Force variable to double word alignment
+#ifndef DWORD_ALIGNED
+#  define DWORD_ALIGNED  ALIGNMENT(8)
+#endif
     // ===========================================================================
     //
     // Defines
