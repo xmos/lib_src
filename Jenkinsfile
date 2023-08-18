@@ -58,7 +58,7 @@ pipeline {
     stage ("Create Python environment")
     {
       steps {
-        dir("${REPO}") {
+        dir("${REPO}") { // xcorePrepareSandbox creates REPO subdir so we need to change into there
           createVenv('requirements.txt')
           withVenv {
               sh 'pip install -r requirements.txt'
