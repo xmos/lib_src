@@ -9,6 +9,11 @@ pipeline {
   environment {
     REPO = 'lib_src'
     VIEW = getViewName(REPO)
+    PYTHON_VERSION = "3.10.5"
+    VENV_DIRNAME = ".venv"
+    // Download to the same place where it gets built on a dev machine so it's easy
+    // to replicate
+    DOWNLOAD_DIRNAME = "build"
   }
   options {
     skipDefaultCheckout()
@@ -19,13 +24,6 @@ pipeline {
       defaultValue: '15.2.1',
       description: 'The XTC tools version'
     )
-  }
-  environment {
-    PYTHON_VERSION = "3.10.5"
-    VENV_DIRNAME = ".venv"
-    // Download to the same place where it gets built on a dev machine so it's easy
-    // to replicate
-    DOWNLOAD_DIRNAME = "build"
   }
   stages {
     stage('Get view') {
