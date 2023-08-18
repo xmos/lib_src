@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.18.0') _
+@Library('xmos_jenkins_shared_library@v0.25.0') _
 
 getApproval()
 
@@ -39,7 +39,13 @@ pipeline {
     }
     stage('Tests') {
       steps {
-        runXmostest("${REPO}", 'tests')
+        withTools(params.TOOLS_VERSION) {
+          withVenv {
+            dir("tests") {
+              localRunPytest('')
+            }
+          }
+        }
       }
     }
   }
