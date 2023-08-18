@@ -20,9 +20,6 @@ pipeline {
     VIEW = getViewName(REPO)
     PYTHON_VERSION = "3.10.5"
     VENV_DIRNAME = ".venv"
-    // Download to the same place where it gets built on a dev machine so it's easy
-    // to replicate
-    DOWNLOAD_DIRNAME = "build"
   }
   options {
     skipDefaultCheckout()
