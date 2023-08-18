@@ -58,15 +58,22 @@ pipeline {
     stage ("Create Python environment")
     {
       steps {
-        installPipfile(false)
+        dir("${REPO}") {
+          createVenv('requirements.txt')
+          withVenv {
+              sh 'pip install -r requirements.txt'
+          }
+        }
       }
     }
     stage('Tests') {
       steps {
-        withTools(params.TOOLS_VERSION) {
-          withVenv {
-            dir("tests") {
-              localRunPytest('')
+        dir("${REPO}") {
+          withTools(params.TOOLS_VERSION) {
+            withVenv {
+              dir("tests") {
+                localRunPytest('')
+              }
             }
           }
         }
