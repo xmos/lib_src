@@ -42,7 +42,7 @@ pipeline {
           // checkout repo
           checkout scm
           sh 'pwd'
-          sh 'git submodule update --init --recursive --depth 1 --jobs \$(nproc)'
+          sh 'git submodule update --init --recursive --depth 1'
           sh 'tree'
         }
       }
