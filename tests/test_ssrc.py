@@ -15,8 +15,10 @@ import numpy as np
 import contextlib, os
 import subprocess
 import re
+import shutil
+import csv
 
-NUM_SAMPLES_TO_PROCESS = 512
+NUM_SAMPLES_TO_PROCESS = 16
 
 
 def graph_it(filename, freqs, y_axis_name, horiz_line=None, title_suffix=None):
@@ -87,26 +89,41 @@ def compare_results(golden_file, dut_file, isclose=False):
 
 def run_dut(in_sr, out_sr):
     file_dir = Path(__file__).resolve().parent
+    tmp_dir = file_dir / "tmp" / f"{in_sr}_{out_sr}"
+    tmp_dir.mkdir(exist_ok=True, parents=True)
+
+    # When running parallel, make copies of files so we don't encounter issues
+    bin_name = "ssrc_test.xe"
+    bin_path = file_dir / "../build/tests/ssrc_test" / bin_name
+    shutil.copy(bin_path, tmp_dir / bin_name)
+
     test_in_path = file_dir / "src_input"
     test_out_path = file_dir / "src_output"
+    test_out_path.mkdir(exist_ok=True)
 
     fnb = src_mrh_file_name_builder()
 
     test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+    shutil.copy(test_in_path / test_signal_0, tmp_dir / test_signal_0)
+    shutil.copy(test_in_path / test_signal_1, tmp_dir / test_signal_1)
+
     dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "dut")
 
-    bin_path = file_dir / "../build/tests/ssrc_test" / "ssrc_test.xe"
-    cmd = f"xsim --args {str(bin_path)}"
-    cmd += f" -i {test_in_path/test_signal_0} {test_in_path/test_signal_1}"
-    cmd += f" -o {test_out_path/dut_signal_0} {test_out_path/dut_signal_1}"
+    
+    cmd = f"xsim --args {str(tmp_dir / bin_name)}"
+    cmd += f" -i {tmp_dir / test_signal_0} {tmp_dir / test_signal_1}"
+    cmd += f" -o {tmp_dir / dut_signal_0} {tmp_dir / dut_signal_1}"
     cmd += f" -f {in_sr} -g {out_sr} -n {NUM_SAMPLES_TO_PROCESS}"
     print(f"Generating dut {in_sr}->{out_sr}")
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if output.returncode != 0:
         assert 0, f"Error, stdout: {output.stderr} running: {cmd}"
 
-    assert(compare_results(test_in_path/test_signal_0, test_out_path/dut_signal_0))
-    assert(compare_results(test_in_path/test_signal_1, test_out_path/dut_signal_1))
+    assert(compare_results(tmp_dir / test_signal_0, tmp_dir / dut_signal_0))
+    assert(compare_results(tmp_dir / test_signal_1, tmp_dir / dut_signal_1))
+
+    shutil.copy(tmp_dir / test_signal_0, test_out_path / test_signal_0)
+    shutil.copy(tmp_dir / test_signal_1, test_out_path / test_signal_1)
 
     max_mips = 0
     for line in output.stdout.split("\n"):
@@ -120,6 +137,8 @@ def run_dut(in_sr, out_sr):
             mips = instr_per_sample * in_sr / 1e6
             max_mips = mips if mips > max_mips else max_mips
 
+    with open(tmp_dir / f"max_mips.txt", "wt") as mf:
+        mf.write(f"{in_sr}->{out_sr}:{max_mips}")
     print(f"max_mips for {in_sr}->{out_sr}: {max_mips}")
 
 @pytest.fixture(scope="session")
