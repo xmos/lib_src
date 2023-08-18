@@ -4,10 +4,9 @@
 // be appended
 def localRunPytest(String extra_args="") {
     catchError{
-        // sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all ${extra_args}"
-        sh "python -m pytest -s"
+        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all ${extra_args}"
     }
-    // junit "pytest_result.xml"
+    junit "pytest_result.xml"
 }
 
 getApproval()
@@ -41,9 +40,7 @@ pipeline {
         dir("${REPO}") {
           // checkout repo
           checkout scm
-          sh 'pwd'
           sh 'git submodule update --init --recursive --depth 1'
-          sh 'tree'
         }
       }
     }
@@ -71,7 +68,7 @@ pipeline {
         dir("${REPO}") {
           createVenv('requirements.txt')
           withVenv {
-              sh 'pip install -r requirements.txt'
+            sh 'pip install -r requirements.txt'
           }
         }
       }
@@ -82,11 +79,10 @@ pipeline {
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
-                localRunPytest('')
+                localRunPytest('-n 8')
               }
             }
           }
-          sh 'tree'
         }
       }
     }
