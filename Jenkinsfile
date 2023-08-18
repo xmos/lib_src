@@ -33,9 +33,18 @@ pipeline {
     )
   }
   stages {
-    stage('Get view') {
+    stage('Get repo') {
       steps {
-        xcorePrepareSandbox("${VIEW}", "${REPO}")
+        sh "mkdir ${REPO}"
+        // source checks require the directory
+        // name to be the same as the repo name
+        dir("${REPO}") {
+          // checkout repo
+          checkout scm
+          sh 'pwd'
+          sh 'git submodule update --init --recursive --depth 1 --jobs \$(nproc)'
+          sh 'tree'
+        }
       }
     }
     // stage('Library checks') {
@@ -59,7 +68,7 @@ pipeline {
     stage ("Create Python environment")
     {
       steps {
-        dir("${REPO}") { // xcorePrepareSandbox creates REPO subdir so we need to change into there
+        dir("${REPO}") {
           createVenv('requirements.txt')
           withVenv {
               sh 'pip install -r requirements.txt'
@@ -70,8 +79,6 @@ pipeline {
     stage('Tests') {
       steps {
         dir("${REPO}") {
-          sh 'git submodule update --recursive' // Needed as xcorePrepareSandbox doesn't do this and we need xmos_cmake_toolchain
-          sh 'tree'
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
@@ -79,14 +86,12 @@ pipeline {
               }
             }
           }
+          sh 'tree'
         }
       }
     }
   }
   post {
-    success {
-      updateViewfiles()
-    }
     cleanup {
       xcoreCleanSandbox()
     }
