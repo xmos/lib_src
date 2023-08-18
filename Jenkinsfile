@@ -1,5 +1,14 @@
 @Library('xmos_jenkins_shared_library@v0.25.0') _
 
+// run pytest with common flags for project. any passed in though extra args will
+// be appended
+def localRunPytest(String extra_args="") {
+    catchError{
+        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all ${extra_args}"
+    }
+    junit "pytest_result.xml"
+}
+
 getApproval()
 
 pipeline {
