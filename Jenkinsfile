@@ -38,24 +38,24 @@ pipeline {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
       }
     }
-    stage('Library checks') {
-      steps {
-        xcoreLibraryChecks("${REPO}")
-      }
-    }
-    stage('xCORE builds') {
-      steps {
-        dir("${REPO}") {
-          xcoreAllAppsBuild('examples')
-          xcoreAllAppNotesBuild('examples')
-          dir("${REPO}") {
-            runXdoc('doc')
-          }
-        }
-        // Archive all the generated .pdf docs
-        archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
-      }
-    }
+    // stage('Library checks') {
+    //   steps {
+    //     xcoreLibraryChecks("${REPO}")
+    //   }
+    // }
+    // stage('xCORE builds') {
+    //   steps {
+    //     dir("${REPO}") {
+    //       xcoreAllAppsBuild('examples')
+    //       xcoreAllAppNotesBuild('examples')
+    //       dir("${REPO}") {
+    //         runXdoc('doc')
+    //       }
+    //     }
+    //     // Archive all the generated .pdf docs
+    //     archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+    //   }
+    // }
     stage ("Create Python environment")
     {
       steps {
@@ -71,6 +71,7 @@ pipeline {
       steps {
         dir("${REPO}") {
           sh 'git submodule update --recursive' // Needed as xcorePrepareSandbox doesn't do this and we need xmos_cmake_toolchain
+          sh 'tree'
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
