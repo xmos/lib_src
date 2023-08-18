@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.21.0)
+
 project(lib_src LANGUAGES C ASM)
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -10,6 +11,8 @@ if(PROJECT_IS_TOP_LEVEL)
     )
     FetchContent_MakeAvailable(fwk_core)
 endif()
+
+add_subdirectory(tests)
 
 if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS2A))
     ## Source files

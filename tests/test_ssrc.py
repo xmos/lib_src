@@ -1,162 +1,167 @@
-# Copyright 2016-2021 XMOS LIMITED.
+# Copyright 2016-2023 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest, os
+# Copyright 2023 XMOS LIMITED.
+# This Software is subject to the terms of the XCORE VocalFusion Licence.
+
+"""
+Test to check and explore the behaviour of the adaptive rate controller in usb_buffer.
+It uses a simplified model of usb_buffer with the actual sw_pll model and is a good representation of real world behaviour.
+"""
+
+import pytest
+from pathlib import Path
+import matplotlib.pyplot as plt
+import numpy as np
+import contextlib, os
+import subprocess
+import re
+
+NUM_SAMPLES_TO_PROCESS = 512
+
+
+def graph_it(filename, freqs, y_axis_name, horiz_line=None, title_suffix=None):
+    plt.clf()
+
+    # Plot the data
+    x_axis = [x / sof_freq for x in range(len(freqs))]
+    y_axis = freqs
+
+    plt.plot(x_axis, y_axis)
+    if horiz_line is not None:
+        plt.axhline(y=horiz_line, color='r', linestyle='-')
+    title = 'PI controller'
+    title +=  "" if title_suffix is None else f"{title_suffix}"
+    plt.title(title)
+    plt.xlabel('Seconds')
+    plt.ylabel(y_axis_name)
+    filename = filename if title_suffix is None else filename.replace(".", f"{title_suffix}.").replace(" ", "_")
+    plt.savefig(filename, dpi=300)
+    # plt.show()
+
+def plot_histogram(filename, data):
+    plt.clf()
+    plt.hist(data)
+    plt.title("Final frequency PPM at end of simulation")
+    plt.xlabel("PLL Frequency PPM")
+    plt.ylabel("Occurance")
+    plt.savefig(filename, dpi=300)
 
 supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
 num_in_samps = 256
 
-def runtest():
-    if not os.path.exists("src_output"):
-        os.makedirs("src_output")
-
-    """Smoke test single loop"""
-    do_ssrc_test_iteration(192000, 44100, "smoke")
-
-    """Nightly test nested for loop 6 x 6 = 36 tests"""
-    for input_sr in supported_sr:
-        for output_sr in supported_sr:
-            do_ssrc_test_iteration(input_sr, output_sr, "nightly")
-
-def do_ssrc_test_iteration(input_sr, output_sr, testlevel):
-    simargs_ssrc = ""
-    resources = xmostest.request_resource("xsim")
-    file_name = file_name_builder()
-
-    #print ('Running SSRC test iteration SR input = %d, output = %d' % (input_sr, output_sr))
-    test_files = (os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "pure_sine")), os.path.join("src_output", file_name.output_signal(input_sr, output_sr, "inter_modulation")))
-    golden_files = (os.path.join("ssrc_test","expected", file_name.golden_signal(input_sr, output_sr, "pure_sine")), os.path.join("ssrc_test", "expected", file_name.golden_signal(input_sr, output_sr, "inter_modulation")))
-    tester = FileComparisonTester(test_files, golden_files, "lib_src", "ssrc_test", str(input_sr) + "->" + str(output_sr), {}, regexp = False, ignore=[])
-    tester.set_min_testlevel(testlevel)
-
-    args = ["-i", os.path.join("src_input", file_name.test_signal(input_sr, "pure_sine")), os.path.join("src_input", file_name.test_signal(input_sr, "inter_modulation")), "-o", test_files[0], test_files[1]]
-    args += ["-f", str(input_sr), "-g", str(output_sr), "-n", str(num_in_samps)]
-
-
-    appargs_ssrc = args
-    #print("xsim cmd line = %s" % " ".join(appargs_ssrc))
-    xmostest.run_on_simulator(resources["xsim"],
-                              os.path.join("ssrc_test", "bin", "ssrc_test.xe"),
-                              appargs=appargs_ssrc,
-                              simargs=simargs_ssrc,
-                              tester=tester)
-    xmostest.complete_all_jobs()
-    """Uncomment this line to help debug - ensures that previous test run before next iteration loop. Makes reading stdout easier"""
-
-
-def check_file_count(test_files, golden_files):
-    len_test_files = len(test_files)
-    len_golden_files = len(golden_files)
-
-    if isinstance(test_files, str):
-        len_test_files = 1
-    if isinstance(golden_files, str):
-        len_golden_files = 1
-    if len_test_files != len_golden_files:
-        print("ERROR: %d test file(s) specified and %d golden file(s)" % (len_test_files, len_golden_files))
-        xmostest.set_test_result(product, group, test, config, result=False, output = "Number of inout and output files does not match", env = env)
-    print("Found %d audio channels to process" % len(test_files))
-
-
-class file_name_builder:
+class src_mrh_file_name_builder:
     """Helper to build the input/output/golden filenames from various input output sample rares"""
 
     signal_types = {"pure_sine": "s1k_0dB", "inter_modulation": "im10k11k_m6dB"}
     file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
 
     def test_signal(self, input_sr, signal_type):
-        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + ".dat"
-        return file_name
-
-    def golden_signal(self, input_sr, output_sr, signal_type):
-        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + "_" + file_name_builder.file_name_helper[output_sr] + ".expect"
+        file_name = self.signal_types[signal_type] + "_" + self.file_name_helper[input_sr] + ".dat"
         return file_name
 
     def output_signal(self, input_sr, output_sr, signal_type):
-        file_name = file_name_builder.signal_types[signal_type] + "_" + file_name_builder.file_name_helper[input_sr] + "_" + file_name_builder.file_name_helper[output_sr] + ".result"
+        file_name = self.signal_types[signal_type] + "_" + self.file_name_helper[input_sr] + "_" + self.file_name_helper[output_sr]
         return file_name
 
+    def get_in_signal_pair(self, input_sr):
+        ch0 = self.test_signal(input_sr, "pure_sine")
+        ch1 = self.test_signal(input_sr, "inter_modulation")
+        return (ch0, ch1)
 
-class FileComparisonTester(xmostest.Tester):
-    """
-        This tester will compare two files and pass a test if
-        the output matches
-        """
+    def get_out_signal_pair(self, input_sr, output_sr, extension):
+        ch0 = self.output_signal(input_sr, output_sr, "pure_sine") + f".{extension}"
+        ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + f".{extension}"
+        return (ch0, ch1)
 
-    def __init__(self, input, golden, product, group, test, config = {}, env = {},
-                 regexp = False, ignore=[]):
-        super(FileComparisonTester, self).__init__()
-        self.register_test(product, group, test, config)
-        self._golden = golden
-        self._input = input
-        self._test = (product, group, test, config, env)
-        self._regexp = regexp
-        self._ignore = ignore
+def compare_results(golden_file, dut_file, isclose=False):
+    golden = np.loadtxt(golden_file, dtype=np.int32)
+    dut = np.loadtxt(golden_file, dtype=np.int32)
 
-    def record_failure(self, failure_reason):
-        # Append a newline if there isn't one already
-        if not failure_reason.endswith('\n'):
-            failure_reason += '\n'
-        self.failures.append(failure_reason)
-        print ("ERROR: %s" % failure_reason), # Print without newline
-        self.result = False
+    same = True
+    if(isclose):
+        same = np.all_close(golden, dut, rtol=2)
+    else:
+        same = np.array_equal(golden, dut)
 
-    def run(self, output):
-        input_files = self._input
-        index = 0
-        for input_file_name in input_files:
-            print("Tester opening input file %s" % input_file_name)
-            input_file = open(input_file_name, "r")
-            test_result = [x.strip() for x in input_file.readlines()]
+    return same
 
-            (product, group, test, config, env) = self._test
-            regexp = self._regexp
+def run_dut(in_sr, out_sr):
+    file_dir = Path(__file__).resolve().parent
+    test_in_path = file_dir / "src_input"
+    test_out_path = file_dir / "src_output"
 
-            golden_file_name = self._golden[index]
-            print("Tester opening golden file %s" % golden_file_name)
-            golden = open(golden_file_name, "r")
-            expected = [x.strip() for x in golden.readlines()]
+    fnb = src_mrh_file_name_builder()
 
-            if expected[0].strip()=='':
-                expected = expected[1:]
-            if expected[-1].strip()=='':
-                expected = expected[:-1]
+    test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+    dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "dut")
 
-            self.result = True
-            self.failures = []
-            line_num = -1
-            for i in range(len(test_result)):
-                ignore = False
-                for p in self._ignore:
-                    if re.match(p,test_result[i].strip()):
-                        ignore = True
-                        break
-                if ignore:
-                    continue
-                line_num += 1
+    bin_path = file_dir / "../build/tests/ssrc_test" / "ssrc_test.xe"
+    cmd = f"xsim --args {str(bin_path)}"
+    cmd += f" -i {test_in_path/test_signal_0} {test_in_path/test_signal_1}"
+    cmd += f" -o {test_out_path/dut_signal_0} {test_out_path/dut_signal_1}"
+    cmd += f" -f {in_sr} -g {out_sr} -n {NUM_SAMPLES_TO_PROCESS}"
+    print(f"Generating dut {in_sr}->{out_sr}")
+    output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if output.returncode != 0:
+        assert 0, f"Error, stdout: {output.stderr} running: {cmd}"
 
-                #print("line_num=%d, result=%s, line=%s" % (line_num, self.result, test_result[i].strip()))
-                if line_num >= len(expected):
-                    self.record_failure("Length of expected test result less than expected file")
-                    break
+    assert(compare_results(test_in_path/test_signal_0, test_out_path/dut_signal_0))
+    assert(compare_results(test_in_path/test_signal_1, test_out_path/dut_signal_1))
 
-                if regexp:
-                    match = re.match(expected[line_num]+"$", test_result[i].strip())
-                else:
-                    match = expected[line_num] == test_result[i].strip()
+    max_mips = 0
+    for line in output.stdout.split("\n"):
+        found = re.search(r".*Process time per chan ticks=(\d+).*", line)
+        if found:
+            process_time_ticks =int(found.group(1))
+            timer_hz = 100e6
+            cpu_hz = 600e6
+            num_threads = 5
+            instr_per_sample = process_time_ticks * cpu_hz / timer_hz / num_threads
+            mips = instr_per_sample * in_sr / 1e6
+            max_mips = mips if mips > max_mips else max_mips
 
-                if not match:
-                    self.record_failure(("Line %d of test result does not match expected file\n"+
-                                         "  Expected     : %s\n"+
-                                         "  Actual input : %s")
-                                        % (line_num,
-                                           expected[line_num].strip(),
-                                           test_result[i].strip()))
+    print(f"max_mips for {in_sr}->{out_sr}: {max_mips}")
 
-            if (len(expected) > line_num + 1):
-                self.record_failure("Length of expected file greater than test result")
-                test_result = {'test_result':''.join(test_result)}
-            if not self.result:
-                test_result = ''.join(self.failures)
-            index += 1
-        xmostest.set_test_result(product, group, test, config, self.result,
-                             output = test_result, env = env)
+@pytest.fixture(scope="session")
+def build_host_app():
+    file_dir = Path(__file__).resolve().parent
+    bin_path = file_dir / "ssrc_test/model" 
+    subprocess.run("make", cwd=str(bin_path))
+
+@pytest.fixture(scope="session")
+def build_firmware():
+    file_dir = Path(__file__).resolve().parent
+    build_path = file_dir / "../build" 
+    build_path.mkdir(exist_ok=True)
+    subprocess.run("cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake  ..", shell=True, cwd=str(build_path))
+    subprocess.run("make -j ssrc_test", shell=True, cwd=str(build_path))
+
+@pytest.fixture(scope="session")
+def gen_golden_files():
+    """ -- """
+
+    fnb = src_mrh_file_name_builder()
+    freqs = tuple(fnb.file_name_helper.keys())
+
+    file_dir = Path(__file__).resolve().parent
+    bin_path = file_dir / "ssrc_test/model/ssrc_golden" 
+    test_in_path = file_dir / "src_input"
+    test_out_path = file_dir / "src_output"
+    test_out_path.mkdir(exist_ok=True)
+
+    for q, out_sr in zip(range(len(freqs)), freqs):
+        for k, in_sr in zip(range(len(freqs)), freqs):
+            print(f"Generating golden {in_sr}->{out_sr}")
+            test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+            golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "golden")
+
+            cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
+            cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{NUM_SAMPLES_TO_PROCESS} -n4"
+            output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
+            if output.returncode != 0:
+                print(f"Error, stdout: {output.stdout}")
+
+@pytest.mark.parametrize("sr_out", (44100, 48000, 88200, 96000, 176400, 192000))
+@pytest.mark.parametrize("sr_in", (44100, 48000, 88200, 96000, 176400, 192000))
+def test_ssrc(build_host_app, build_firmware, gen_golden_files, sr_in, sr_out):
+    run_dut(sr_in, sr_out)
