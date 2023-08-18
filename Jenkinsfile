@@ -49,6 +49,12 @@ pipeline {
         archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
       }
     }
+    stage ("Create Python environment")
+    {
+      steps {
+        installPipfile(false)
+      }
+    }
     stage('Tests') {
       steps {
         withTools(params.TOOLS_VERSION) {
