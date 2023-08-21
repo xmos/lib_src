@@ -6,6 +6,7 @@ import numpy as np
 from pathlib import Path
 import subprocess
 import re
+import shutil
 
 def graph_it(filename, freqs, y_axis_name, horiz_line=None, title_suffix=None):
     plt.clf()
@@ -58,6 +59,60 @@ class src_mrh_file_name_builder:
         ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + f".{extension}"
         return (ch0, ch1)
 
+def run_dut(in_sr, out_sr, src_type, num_samples_to_process):
+    file_dir = Path(__file__).resolve().parent
+    tmp_dir = file_dir / "tmp" / src_type / f"{in_sr}_{out_sr}"
+    tmp_dir.mkdir(exist_ok=True, parents=True)
+
+    # When running parallel, make copies of files so we don't encounter issues using xdist
+    bin_name = f"{src_type}_test.xe"
+    bin_path = file_dir / f"../build/tests/{src_type}_test" / bin_name
+    shutil.copy(bin_path, tmp_dir / bin_name)
+
+    test_in_path = file_dir / "src_input"
+    test_out_path = file_dir / "src_output"
+    test_out_path.mkdir(exist_ok=True)
+
+    fnb = src_mrh_file_name_builder()
+
+    test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+    shutil.copy(test_in_path / test_signal_0, tmp_dir / test_signal_0)
+    shutil.copy(test_in_path / test_signal_1, tmp_dir / test_signal_1)
+
+    dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "dut")
+
+    
+    cmd = f"xsim --args {str(tmp_dir / bin_name)}"
+    cmd += f" -i {tmp_dir / test_signal_0} {tmp_dir / test_signal_1}"
+    cmd += f" -o {tmp_dir / dut_signal_0} {tmp_dir / dut_signal_1}"
+    cmd += f" -f {in_sr} -g {out_sr} -n {num_samples_to_process}"
+    print(f"Generating dut {in_sr}->{out_sr}")
+    output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if output.returncode != 0:
+        assert 0, f"Error, stdout: {output.stdout}, sterr: {output.stderr}, running: {cmd}"
+
+    assert(compare_results(tmp_dir / test_signal_0, tmp_dir / dut_signal_0))
+    assert(compare_results(tmp_dir / test_signal_1, tmp_dir / dut_signal_1))
+
+    # shutil.copy(tmp_dir / test_signal_0, test_out_path / test_signal_0)
+    # shutil.copy(tmp_dir / test_signal_1, test_out_path / test_signal_1)
+
+    max_mips = 0.0
+    for line in output.stdout.split("\n"):
+        found = re.search(r".*Process time per chan ticks=(\d+).*", line)
+        if found:
+            process_time_ticks =int(found.group(1))
+            timer_hz = 100e6
+            cpu_hz = 600e6
+            num_threads = 5
+            instr_per_sample = process_time_ticks * cpu_hz / timer_hz / num_threads
+            mips = instr_per_sample * in_sr / 1e6
+            max_mips = mips if mips > max_mips else max_mips
+
+    with open(tmp_dir / f"max_mips.txt", "wt") as mf:
+        mf.write(f"{in_sr}->{out_sr}:{max_mips}")
+    print(f"max_mips for {in_sr}->{out_sr}: {max_mips}")
+
 def compare_results(golden_file, dut_file, isclose=False):
     golden = np.loadtxt(golden_file, dtype=np.int32)
     dut = np.loadtxt(golden_file, dtype=np.int32)
@@ -90,7 +145,6 @@ def build_host_app(targets):
     for target in targets:
         bin_path = file_dir / f"{target}_/model" 
         subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
-
 
 def generate_mips_report(src_type):
     mips_report_filename = f"mips_report_{src_type}.csv"

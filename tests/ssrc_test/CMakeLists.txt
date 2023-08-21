@@ -1,7 +1,5 @@
 # Test firmware
-message(STATUS HERE ${CMAKE_SYSTEM_PROCESSOR})
 if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS2A))
-    message(STATUS FIRMWARE)
     #**********************
     # Gather Sources
     #**********************
