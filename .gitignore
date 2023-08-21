@@ -28,3 +28,4 @@ tests/src_output
 .lock-waf_*
 .waf-*/
 build/
+tests/tmp
