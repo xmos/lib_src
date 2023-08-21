@@ -95,7 +95,7 @@
 			unsigned int							uiNOutSamples;	// Number of output samples produced
 			unsigned int							uiOutStep;		// Step between output data samples
 
-			FIRReturnCodes_t 						(*pvProc)(_FIRCtrl);			// Processing function address
+			FIRReturnCodes_t 						(*pvProc)(void*);			// Processing function address
 
 			int*									piDelayB;		// Pointer to delay line base
 			unsigned int							uiDelayL;		// Total length of delay line

@@ -169,6 +169,16 @@
 		//
 		// ===========================================================================
 
+        // ==================================================================== //
+        // Function:        ASRC_prepare_coefs                                  //
+        // Arguments:       ASRCCtrl_t  *psASRCCtrl: Ctrl strct.                //
+        // Return values:   ASRC_NO_ERROR on success                            //
+        //                  ASRC_ERROR on failure                               //
+        // Description:     Prepares the ASRC coefficients from the prototype   //
+        //                  Needs to be called only once                        //
+        // ==================================================================== //
+        ASRCReturnCodes_t               ASRC_prepare_coefs(void);
+
 		// ==================================================================== //
 		// Function:		ASRC_init											//
 		// Arguments:		ASRCCtrl_t 	*psASRCCtrl: Ctrl strct.				//
