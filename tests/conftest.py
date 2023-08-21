@@ -10,5 +10,5 @@ def pytest_sessionfinish(session, exitstatus):
     if not hasattr(session.config, "workerinput"):
         pass
 
-    for mips_report_type in ["ssrc"]:
+    for mips_report_type in ["ssrc", "asrc"]:
         generate_mips_report(mips_report_type)

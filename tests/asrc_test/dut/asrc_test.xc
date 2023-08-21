@@ -87,9 +87,9 @@ void dsp_slave(chanend c_dsp)
         t :> t2;  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
     int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
-        if (n_samps_in_tot) printf("proc time chan=%d, In sample period=%d, Thread util=%d%%, Tot samp in count=%d\n",
-           (t_dsp / (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)), sample_time, (100 * (t_dsp / ( ASRC_N_IN_SAMPLES))) / sample_time, n_samps_in_tot);
-
+        if (n_samps_in_tot) printf("Process time per chan ticks=%d, Tot samp in count=%d\n",
+            (t_dsp / (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)),
+            n_samps_in_tot);
         c_dsp :> sr_in_out_new;
         c_dsp :> FsRatio;
 

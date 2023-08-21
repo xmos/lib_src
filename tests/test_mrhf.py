@@ -36,4 +36,4 @@ def test_ssrc(sr_in, sr_out):
 @pytest.mark.parametrize("sr_in", SR_LIST)
 @pytest.mark.parametrize("fs_deviation", ASRC_DEVIATIONS)
 def test_asrc(sr_in, sr_out, fs_deviation):
-    run_dut(sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation)
+    run_dut(sr_in, sr_out, "asrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation)

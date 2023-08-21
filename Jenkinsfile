@@ -13,7 +13,7 @@ getApproval()
 
 pipeline {
   agent {
-    label 'x86_64&&macOS'
+    label 'x86_64&&macOS' // These agents have 24 cores so good for parallel xsim runs
   }
   environment {
     REPO = 'lib_src'

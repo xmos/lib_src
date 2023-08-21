@@ -54,9 +54,13 @@ class src_mrh_file_name_builder:
         ch1 = self.test_signal(input_sr, "inter_modulation")
         return (ch0, ch1)
 
-    def get_out_signal_pair(self, input_sr, output_sr, extension):
-        ch0 = self.output_signal(input_sr, output_sr, "pure_sine") + f".{extension}"
-        ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + f".{extension}"
+    def get_out_signal_pair(self, input_sr, output_sr, src_type, extension, fs_deviation=None):
+        if src_type == "ssrc":
+            suffix = ""
+        else:
+            suffix = f"_{fs_deviation}"
+        ch0 = self.output_signal(input_sr, output_sr, "pure_sine") + suffix + f".{extension}"
+        ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + suffix + f".{extension}"
         return (ch0, ch1)
 
 def prepare(host_app, firmware, src_type, num_samples_to_process, fs_deviations):
@@ -76,12 +80,18 @@ def prepare(host_app, firmware, src_type, num_samples_to_process, fs_deviations)
             for fs_deviation in fs_deviations if src_type == "asrc" else [1.0]:
                 print(f"Generating golden {in_sr}->{out_sr} ({fs_deviation})")
                 test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
-                golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "golden")
+                golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, src_type, "golden", fs_deviation=fs_deviation)
 
                 cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
-                cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{num_samples_to_process} -n4"
+                if src_type == "ssrc":
+                    cmd += f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1}"
+                else:
+                    op_path = test_out_path / f"{fs_deviation}"
+                    op_path.mkdir(exist_ok=True, parents=True)
+                    cmd += f" -o{op_path/golden_signal_0} -p{op_path/golden_signal_1}"
+                cmd += f" -q{q} -d0 -l{num_samples_to_process} -n4"
                 if src_type == "asrc":
-                    cmd += f" -f{fs_deviation}"
+                    cmd += f" -e{fs_deviation}"
                 output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
                 if output.returncode != 0:
                     print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
@@ -89,6 +99,8 @@ def prepare(host_app, firmware, src_type, num_samples_to_process, fs_deviations)
 def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     file_dir = Path(__file__).resolve().parent
     tmp_dir = file_dir / "tmp" / src_type / f"{in_sr}_{out_sr}"
+    if src_type == "asrc":
+        tmp_dir = tmp_dir / f"{fs_deviation}"
     tmp_dir.mkdir(exist_ok=True, parents=True)
 
     # When running parallel, make copies of files so we don't encounter issues using xdist
@@ -98,6 +110,8 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
 
     test_in_path = file_dir / "src_input"
     test_out_path = file_dir / "src_output" / src_type
+    if src_type == "asrc":
+        test_out_path = test_out_path / fs_deviation
     test_out_path.mkdir(exist_ok=True)
 
     fnb = src_mrh_file_name_builder()
@@ -106,13 +120,14 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     shutil.copy(test_in_path / test_signal_0, tmp_dir / test_signal_0)
     shutil.copy(test_in_path / test_signal_1, tmp_dir / test_signal_1)
 
-    dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "dut")
-
+    dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, src_type, "dut", fs_deviation=fs_deviation)
     
     cmd = f"xsim --args {str(tmp_dir / bin_name)}"
     cmd += f" -i {tmp_dir / test_signal_0} {tmp_dir / test_signal_1}"
     cmd += f" -o {tmp_dir / dut_signal_0} {tmp_dir / dut_signal_1}"
     cmd += f" -f {in_sr} -g {out_sr} -n {num_samples_to_process}"
+    if src_type == "asrc":
+        cmd += f" -e {fs_deviation}"
     print(f"Generating dut {in_sr}->{out_sr}")
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if output.returncode != 0:
@@ -137,8 +152,12 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
             max_mips = mips if mips > max_mips else max_mips
 
     with open(tmp_dir / f"max_mips.txt", "wt") as mf:
-        mf.write(f"{in_sr}->{out_sr}:{max_mips}")
-    print(f"max_mips for {in_sr}->{out_sr}: {max_mips}")
+        if src_type == "ssrc":
+            line = f"{in_sr}->{out_sr}:{max_mips}"
+        else:
+            line = f"{in_sr}->{out_sr},{fs_deviation}:{max_mips}"
+        mf.write(line)
+        print(f"max_mips {line}")
 
 def compare_results(golden_file, dut_file, isclose=False):
     golden = np.loadtxt(golden_file, dtype=np.int32)
@@ -175,12 +194,19 @@ def build_host_app(target):
 def generate_mips_report(src_type):
     mips_report_filename = f"mips_report_{src_type}.csv"
     with open(mips_report_filename, "w") as mips_report:
-        mips_report.write("input_sr, output_sr, MIPS\n")
+        if src_type == "ssrc":
+            mips_report.write("input_sr, output_sr, MIPS\n")
+        else:
+            mips_report.write("input_sr, output_sr, fs_deviation, MIPS\n")
         file_list = subprocess.run(f'find tmp/{src_type} -iname "max_mips.txt"', shell=True, capture_output=True, text=True).stdout
         for mips_file in file_list.split():
             with open(mips_file) as mf:
-                vals = re.search(r'(\d+)->(\d+):([\d.]+)', mf.readlines()[0])
-                mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}\n")
+                if src_type == "ssrc":
+                    vals = re.search(r'(\d+)->(\d+):([\d.]+)', mf.readlines()[0])
+                    mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}\n")
+                else:
+                    vals = re.search(r'(\d+)->(\d+),([\d.]+):([\d.]+)', mf.readlines()[0])
+                    mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}, {vals.group(4)}\n")
 
 if __name__ == "__main__":
     print("test")
