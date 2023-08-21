@@ -116,14 +116,14 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
 
     fnb = src_mrh_file_name_builder()
 
-    test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
-    shutil.copy(test_in_path / test_signal_0, tmp_dir / test_signal_0)
-    shutil.copy(test_in_path / test_signal_1, tmp_dir / test_signal_1)
+    input_signal_0, input_signal_1 = fnb.get_in_signal_pair(in_sr)
+    shutil.copy(test_in_path / input_signal_0, tmp_dir / input_signal_0)
+    shutil.copy(test_in_path / input_signal_1, tmp_dir / input_signal_1)
 
     dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, src_type, "dut", fs_deviation=fs_deviation)
     
     cmd = f"xsim --args {str(tmp_dir / bin_name)}"
-    cmd += f" -i {tmp_dir / test_signal_0} {tmp_dir / test_signal_1}"
+    cmd += f" -i {tmp_dir / input_signal_0} {tmp_dir / input_signal_1}"
     cmd += f" -o {tmp_dir / dut_signal_0} {tmp_dir / dut_signal_1}"
     cmd += f" -f {in_sr} -g {out_sr} -n {num_samples_to_process}"
     if src_type == "asrc":
@@ -133,8 +133,15 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     if output.returncode != 0:
         assert 0, f"Error, stdout: {output.stdout}, sterr: {output.stderr}, running: {cmd}"
 
-    assert(compare_results(tmp_dir / test_signal_0, tmp_dir / dut_signal_0))
-    assert(compare_results(tmp_dir / test_signal_1, tmp_dir / dut_signal_1))
+    golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, src_type, "golden", fs_deviation)
+
+    shutil.copy(test_out_path / golden_signal_0, tmp_dir / golden_signal_0)
+    shutil.copy(test_out_path / golden_signal_1, tmp_dir / golden_signal_1)
+
+    print(f"comparing {golden_signal_0} and {dut_signal_0}")
+
+    assert(compare_results(tmp_dir / golden_signal_0, tmp_dir / dut_signal_0))
+    assert(compare_results(tmp_dir / golden_signal_1, tmp_dir / dut_signal_1))
 
     # shutil.copy(tmp_dir / test_signal_0, test_out_path / test_signal_0)
     # shutil.copy(tmp_dir / test_signal_1, test_out_path / test_signal_1)
@@ -161,14 +168,9 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
 
 def compare_results(golden_file, dut_file, isclose=False):
     golden = np.loadtxt(golden_file, dtype=np.int32)
-    dut = np.loadtxt(golden_file, dtype=np.int32)
+    dut = np.loadtxt(dut_file, dtype=np.int32)
 
-    same = True
-    if(isclose):
-        same = np.all_close(golden, dut, rtol=2)
-    else:
-        same = np.array_equal(golden, dut)
-    return same
+    return array_compare_1d(golden, dut)
 
 def build_firmware(target):
     file_dir = Path(__file__).resolve().parent
@@ -207,6 +209,85 @@ def generate_mips_report(src_type):
                 else:
                     vals = re.search(r'(\d+)->(\d+),([\d.]+):([\d.]+)', mf.readlines()[0])
                     mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}, {vals.group(4)}\n")
+
+def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_print=200, save_comparison_file=False, allow_different_lengths=False):
+    """ Do numpy compare except give useful debug if fails
+
+        array_a - first comparision array
+        array_b - second comparision array
+        rtol - relative tolernace. If rtol and atol are None, an exact comparison is made. If either is not None then it uses the supplied value or np default if not specified.
+        atol - absolute tolerance. See above.
+        close - allows a closeness test rather exact test. Use this if you don't want to supply rtol and atol, in which case it uses np default
+        max_print - if differing values are found, it will print the diff up to this count
+        save_comparison_file - optionally save a wave file with the two comparison data with the name passed. This will succeed even if the array lengths are different
+        allow_different_lengths - optionally allows largest array to be trimmed down to smallest array size (chops end off, start is unchanged)
+    """
+    shape_a = array_a.shape
+    shape_b = array_b.shape
+
+    num_axes = len(shape_a)
+    size = array_a.size
+
+    assert num_axes == 1, f"multidimensional arrays not yet supported"
+
+    if save_comparison_file is not False:
+        largest = array_a.size if array_a.size > array_b.size else array_b.size
+        dtype = type(array_a[0])
+        comparison_data = np.zeros((largest, 2), dtype=dtype)
+        comparison_data[:array_a.size, 0] = array_a
+        comparison_data[:array_b.size, 1] = array_b
+
+        soundfile.write(save_comparison_file, comparison_data, 16000)
+
+    if allow_different_lengths is True:
+        if array_a.size > array_b.size:
+            array_a = array_a[:array_b.size]
+        else:
+            array_b = array_b[:array_a.size]
+    else:
+        assert shape_a == shape_b, f"Compared arrays have differing shapes: {shape_a} {shape_b}"
+
+    # array equality
+    if rtol == None and atol == None and close == False:
+        passed = True
+        if not np.array_equal(array_a, array_b, num_axes):
+            print(f"ERROR: in array_compare_1d (exact):")
+            diff_count = 0
+            for idx in range(size):
+                if array_a[idx] != array_b[idx]:
+                    print(f"arrays differ at idx {idx}: {array_a[idx]}, {array_b[idx]}")
+                    passed = False
+                    diff_count += 1
+                    if diff_count == max_print:
+                        print(f"reached {max_print} diffs, giving up....")
+                        return False
+            print("All other values equal.")
+        return passed
+
+    # array closeness
+    else:
+        if rtol is None:
+            rtol=1e-05  # numpy default https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
+        if atol is None:
+            atol=1e-08  # numpy default
+        passed = True
+        if not np.allclose(array_a, array_b, rtol=rtol, atol=atol):
+            print(f"ERROR: in array_compare_1d (close) rtol: {rtol} atol: {atol}")
+            diff_count = 0
+            for idx in range(size):
+                if not np.allclose(array_a[idx], array_b[idx], rtol=rtol, atol=atol):
+                    ratio = abs(array_a[idx]) / abs(array_b[idx]) - 1 if abs(array_a[idx]) > abs(array_b[idx]) else abs(array_b[idx]) / abs(array_a[idx]) - 1
+                    diff = abs(array_a[idx] - array_b[idx])
+                    print(f"arrays differ at idx {idx}: {array_a[idx]}, {array_b[idx]} - ratio: {ratio} diff: {diff}")
+                    passed = False
+                    diff_count += 1
+                    if diff_count == max_print:
+                        print(f"reached {max_print} diffs, giving up....")
+                        return False
+            print("All other values close.")
+
+        return passed
+
 
 if __name__ == "__main__":
     print("test")
