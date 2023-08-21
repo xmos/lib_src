@@ -59,6 +59,30 @@ class src_mrh_file_name_builder:
         ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + f".{extension}"
         return (ch0, ch1)
 
+def prepare(host_app, firmware, src_type, num_samples_to_process):
+    """ -- """
+
+    fnb = src_mrh_file_name_builder()
+    freqs = tuple(fnb.file_name_helper.keys())
+
+    file_dir = Path(__file__).resolve().parent
+    bin_path = file_dir / f"../build/tests/{src_type}_test/{src_type}_golden" 
+    test_in_path = file_dir / "src_input"
+    test_out_path = file_dir / "src_output" / src_type
+    test_out_path.mkdir(exist_ok=True, parents=True)
+
+    for q, out_sr in zip(range(len(freqs)), freqs):
+        for k, in_sr in zip(range(len(freqs)), freqs):
+            print(f"Generating golden {in_sr}->{out_sr}")
+            test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+            golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "golden")
+
+            cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
+            cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{num_samples_to_process} -n4"
+            output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
+            if output.returncode != 0:
+                print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
+
 def run_dut(in_sr, out_sr, src_type, num_samples_to_process):
     file_dir = Path(__file__).resolve().parent
     tmp_dir = file_dir / "tmp" / src_type / f"{in_sr}_{out_sr}"
@@ -70,7 +94,7 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process):
     shutil.copy(bin_path, tmp_dir / bin_name)
 
     test_in_path = file_dir / "src_input"
-    test_out_path = file_dir / "src_output"
+    test_out_path = file_dir / "src_output" / src_type
     test_out_path.mkdir(exist_ok=True)
 
     fnb = src_mrh_file_name_builder()

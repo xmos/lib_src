@@ -81,7 +81,6 @@ pipeline {
               dir("tests") {
                 localRunPytest('-m prepare')
                 localRunPytest('-m main -n auto')
-                sh 'tree' //debug
                 archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
               }
             }
