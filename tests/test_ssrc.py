@@ -146,7 +146,7 @@ def build_host_app():
     bin_path = file_dir / "ssrc_test/model" 
     subprocess.run("make", cwd=str(bin_path))
 
-@pytest.mark.prepare
+@pytest.fixture(scope="session")
 def test_build_firmware():
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build" 
