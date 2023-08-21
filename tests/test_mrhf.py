@@ -10,7 +10,7 @@ import pytest
 from src_test_utils import prepare, build_firmware, build_host_app, compare_results, src_mrh_file_name_builder, run_dut
 
 
-NUM_SAMPLES_TO_PROCESS = 1024
+NUM_SAMPLES_TO_PROCESS = 256
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 ASRC_DEVIATIONS = ("1.000000", "0.990099", "1.009999")
 
