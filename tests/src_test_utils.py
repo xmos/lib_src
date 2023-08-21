@@ -59,7 +59,7 @@ class src_mrh_file_name_builder:
         ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + f".{extension}"
         return (ch0, ch1)
 
-def prepare(host_app, firmware, src_type, num_samples_to_process):
+def prepare(host_app, firmware, src_type, num_samples_to_process, fs_deviations):
     """ -- """
 
     fnb = src_mrh_file_name_builder()
@@ -73,17 +73,20 @@ def prepare(host_app, firmware, src_type, num_samples_to_process):
 
     for q, out_sr in zip(range(len(freqs)), freqs):
         for k, in_sr in zip(range(len(freqs)), freqs):
-            print(f"Generating golden {in_sr}->{out_sr}")
-            test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
-            golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "golden")
+            for fs_deviation in fs_deviations if src_type == "asrc" else [1.0]:
+                print(f"Generating golden {in_sr}->{out_sr} ({fs_deviation})")
+                test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
+                golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "golden")
 
-            cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
-            cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{num_samples_to_process} -n4"
-            output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
-            if output.returncode != 0:
-                print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
+                cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
+                cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{num_samples_to_process} -n4"
+                if src_type == "asrc":
+                    cmd += f" -f{fs_deviation}"
+                output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
+                if output.returncode != 0:
+                    print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
 
-def run_dut(in_sr, out_sr, src_type, num_samples_to_process):
+def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     file_dir = Path(__file__).resolve().parent
     tmp_dir = file_dir / "tmp" / src_type / f"{in_sr}_{out_sr}"
     tmp_dir.mkdir(exist_ok=True, parents=True)
@@ -148,27 +151,26 @@ def compare_results(golden_file, dut_file, isclose=False):
         same = np.array_equal(golden, dut)
     return same
 
-def build_firmware(targets):
+def build_firmware(target):
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build" 
     build_path.mkdir(exist_ok=True)
     subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
     subprocess.run("cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake  ..", shell=True, cwd=str(build_path))
-    
-    for target in targets:
-        subprocess.run(f"make -j {target}_test", shell=True, cwd=str(build_path))
-    return [target + ".xe" for target in targets]
+    subprocess.run(f"make -j {target}_test", shell=True, cwd=str(build_path))
 
-def build_host_app(targets):
+    return target + ".xe"
+
+def build_host_app(target):
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build" 
     build_path.mkdir(exist_ok=True)
     subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
     subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
+    bin_path = file_dir / f"{target}_/model" 
+    subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
 
-    for target in targets:
-        bin_path = file_dir / f"{target}_/model" 
-        subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
+    return f"{target}_golden"
 
 def generate_mips_report(src_type):
     mips_report_filename = f"mips_report_{src_type}.csv"

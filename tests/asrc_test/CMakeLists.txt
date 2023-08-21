@@ -41,7 +41,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     #*************************
     # Create Target - Note just single tile as no RTOS
     #*************************
-    set(TARGET_NAME ssrc_test)
+    set(TARGET_NAME asrc_test)
     add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
     target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES})
     target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
@@ -57,7 +57,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
 else ()
 
 # Golden ref app
-    set(TARGET_NAME ssrc_golden)
+    set(TARGET_NAME asrc_golden)
     project(${TARGET_NAME} C)
 
     file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/model/*.c
@@ -65,6 +65,7 @@ else ()
 
     set(APP_INCLUDES
          ${CMAKE_CURRENT_LIST_DIR}/../../lib_src/src/multirate_hifi
+         ${CMAKE_CURRENT_LIST_DIR}/model
     )
 
     set(APP_COMPILER_FLAGS
