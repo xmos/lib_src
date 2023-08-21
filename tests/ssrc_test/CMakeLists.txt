@@ -28,7 +28,8 @@ set(APP_COMPILE_DEFINITIONS
 set(APP_LINK_OPTIONS
     -report
     -target=XCORE-AI-EXPLORER
-    -fcmdline-buffer-bytes=512
+    # Jenkins paths can get quite long
+    -fcmdline-buffer-bytes=2048
 )
 
 set(APP_COMMON_LINK_LIBRARIES

@@ -177,7 +177,7 @@ def test_prepare(build_host_app, test_build_firmware):
             cmd +=f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1} -q{q} -d0 -l{NUM_SAMPLES_TO_PROCESS} -n4"
             output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
             if output.returncode != 0:
-                print(f"Error, stdout: {output.stdout}")
+                print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
 
 @pytest.mark.main
 @pytest.mark.parametrize("sr_out", (44100, 48000, 88200, 96000, 176400, 192000))
