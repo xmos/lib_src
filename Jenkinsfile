@@ -79,7 +79,9 @@ pipeline {
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
-                localRunPytest('-n 8')
+                localRunPytest('-m prepare')
+                localRunPytest('-m main -n auto')
+                archiveArtifacts artifacts: "mips_report.csv", allowEmptyArchive: true
               }
             }
           }

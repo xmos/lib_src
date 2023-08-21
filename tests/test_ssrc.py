@@ -18,7 +18,7 @@ import re
 import shutil
 import csv
 
-NUM_SAMPLES_TO_PROCESS = 16
+NUM_SAMPLES_TO_PROCESS = 128
 
 
 def graph_it(filename, freqs, y_axis_name, horiz_line=None, title_suffix=None):
@@ -49,7 +49,6 @@ def plot_histogram(filename, data):
     plt.savefig(filename, dpi=300)
 
 supported_sr = (44100, 48000, 88200, 96000, 176400, 192000)
-num_in_samps = 256
 
 class src_mrh_file_name_builder:
     """Helper to build the input/output/golden filenames from various input output sample rares"""
@@ -147,16 +146,16 @@ def build_host_app():
     bin_path = file_dir / "ssrc_test/model" 
     subprocess.run("make", cwd=str(bin_path))
 
-@pytest.fixture(scope="session")
-def build_firmware():
+@pytest.mark.prepare
+def test_build_firmware():
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build" 
     build_path.mkdir(exist_ok=True)
     subprocess.run("cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake  ..", shell=True, cwd=str(build_path))
     subprocess.run("make -j ssrc_test", shell=True, cwd=str(build_path))
 
-@pytest.fixture(scope="session")
-def gen_golden_files():
+@pytest.mark.prepare
+def test_gen_golden_files(build_host_app, test_build_firmware):
     """ -- """
 
     fnb = src_mrh_file_name_builder()
@@ -180,7 +179,8 @@ def gen_golden_files():
             if output.returncode != 0:
                 print(f"Error, stdout: {output.stdout}")
 
+@pytest.mark.main
 @pytest.mark.parametrize("sr_out", (44100, 48000, 88200, 96000, 176400, 192000))
 @pytest.mark.parametrize("sr_in", (44100, 48000, 88200, 96000, 176400, 192000))
-def test_ssrc(build_host_app, build_firmware, gen_golden_files, sr_in, sr_out):
+def test_ssrc(sr_in, sr_out):
     run_dut(sr_in, sr_out)
