@@ -116,7 +116,7 @@ def run_dut(in_sr, out_sr):
     print(f"Generating dut {in_sr}->{out_sr}")
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if output.returncode != 0:
-        assert 0, f"Error, stdout: {output.stderr} running: {cmd}"
+        assert 0, f"Error, stdout: {output.stdout}, sterr: {output.stderr}, running: {cmd}"
 
     assert(compare_results(tmp_dir / test_signal_0, tmp_dir / dut_signal_0))
     assert(compare_results(tmp_dir / test_signal_1, tmp_dir / dut_signal_1))
@@ -155,7 +155,7 @@ def test_build_firmware():
     subprocess.run("make -j ssrc_test", shell=True, cwd=str(build_path))
 
 @pytest.mark.prepare
-def test_gen_golden_files(build_host_app, test_build_firmware):
+def test_prepare(build_host_app, test_build_firmware):
     """ -- """
 
     fnb = src_mrh_file_name_builder()
