@@ -1,16 +1,12 @@
 
-cmake_minimum_required(VERSION 3.20)
-
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../../../xmos_cmake_toolchain/xs3a.cmake)
+cmake_minimum_required(VERSION 3.21)
 
 project(src_rat_test)
 enable_language(CXX C ASM)
 
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
 
-    add_subdirectory(../.. module_src)
-
-    set(TARGET_NAME test_src_rat)
+    set(TARGET_NAME src_vpu_rat_test)
 
     add_executable(${TARGET_NAME})
     
@@ -21,7 +17,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
 
     target_link_libraries(${TARGET_NAME}
         PUBLIC
-            fwk_xvf::src
+            lib_src
     )
 
     target_compile_options(${TARGET_NAME}
