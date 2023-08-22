@@ -4,6 +4,8 @@
 #ifndef _SRC_POLY_VPU_H_
 #define _SRC_POLY_VPU_H_
 
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
+
 #include "stdint.h"
 #include "src_low_level.h"
 
@@ -106,5 +108,7 @@ static inline void src_rat_3_2_96t_us(int32_t samp_in[2], int32_t samp_out[3], c
     samp_out[1] = conv_s32_32t(state_us, coefs_us[2]) * 3;
     samp_out[2] = fir_s32_32t(state_us, coefs_us[1], samp_in[1]) * 3;
 }
+
+#endif // (defined(__XS3A__))
 
 #endif // _SRC_POLY_VPU_H_

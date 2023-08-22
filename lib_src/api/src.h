@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _SRC_H_
 #define _SRC_H_
@@ -7,6 +7,7 @@
 #include "src_ff3_ds3.h"
 #include "src_ff3_os3.h"
 #include "src_ff3v_fir.h"
+#include "src_poly.h"
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
