@@ -6,14 +6,15 @@ from pathlib import Path
 import subprocess
 import sys, os
 import pytest
-from hardware_test_tools.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
+import src_test_utils
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
 script_path = os.path.join(package_dir, '../../python')
 sys.path.append(script_path)
 
 try:
-    import src_ff3_fir_gen as gf
+    from fixed_factor_vpu_voice import src_ff3_fir_gen as gf
 except ModuleNotFoundError:
     assert False, "Could not find src_ff3_fir_gen.py script"
 
@@ -105,22 +106,12 @@ def run_py(sig48k_int, taps, fc, xe_name):
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 
 def build_c(taps_int, mixed_int, taps_per_phase, xe_name):
-    if build_dir.exists():
-        rm_cmd = f"rm -rf {build_dir}/*"
-        stdout = subprocess.check_output(rm_cmd, shell=True)
-    else:
-        mkdir_cmd = f"mkdir {build_dir}"
-        stdout = subprocess.check_output(mkdir_cmd, shell=True)
+    coeffs_path = Path(__file__).resolve().parent / "vpu_ff3_test" / "autogen"
+    coeffs_path.mkdir(exist_ok=True, parents=True)
+    gf.generate_header_file(coeffs_path, num_taps_per_phase = taps_per_phase)
+    gf.generate_c_file(coeffs_path, taps_int, mixed_int, num_taps_per_phase = taps_per_phase)
 
-    gf.generate_header_file(num_taps_per_phase = taps_per_phase, filename = xe_name)
-    gf.generate_c_file(taps_int, mixed_int, num_taps_per_phase = taps_per_phase, filename = xe_name)
-
-    cmake_cmd = f"cmake -S {test_dir} -B {build_dir} -D{xe_name}_build=ON"
-    stdout = subprocess.check_output(cmake_cmd, shell=True)
-
-    make_cmd = f"make -C {build_dir} {xe_name}"
-    stdout = subprocess.check_output(make_cmd, shell=True)
-    #print("build msg\n", stdout)
+    src_test_utils.build_firmware("src_vpu_96t_test")
 
 def run_c(fc, xe_name):
 

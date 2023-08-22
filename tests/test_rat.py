@@ -7,14 +7,16 @@ import subprocess
 import sys, os
 import pytest
 import soundfile as sf
-from hardware_test_tools.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
 script_path = os.path.join(package_dir, '../../python')
 sys.path.append(script_path)
 
 try:
-    import src_rat_fir_gen as gf
+    # import lib_srcsrc_rat_fir_gen as gf
+    import lib_src
+    print("***", dir(lib_src))
 except ModuleNotFoundError:
     assert False, "Could not find src_rat_fir_gen.py script"
 

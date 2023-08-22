@@ -12,7 +12,6 @@ from pathlib import Path
 fs = 48000.0
 NUM_PHASES = 3
 NUM_TAPS_PER_PHASE = 32
-DEFAULT_NAME = "src_ff3_fir"
 
 def test_bounds(Y, F, freq, min, max):
     # This will find the closest frequency we can get and test the responce
@@ -98,8 +97,8 @@ def plot_response(taps, passband = False, freq_domain = True):
     title = Path(__file__).parent / title
     fig.savefig(title, dpi = 200)
 
-def generate_header_file(num_taps_per_phase = NUM_TAPS_PER_PHASE, 
-                         num_phases = NUM_PHASES, filename = DEFAULT_NAME):
+def generate_header_file(output_path, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
+                         num_phases = NUM_PHASES):
     header_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -136,19 +135,16 @@ extern const int32_t %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TAPS_PER
 #endif // _SRC_FF3_COEFS_H_
 
 """
-    if filename == DEFAULT_NAME:
-        header_path = Path(__file__).parents[1] / "api" /  (filename + "_coefs.h")
-    else:
-        header_path = Path(__file__).parents[1] / "test" / "ff3" / "build" / (filename + "_coefs.h")
-
+    filename = "src_ff3_fir_coefs.h"
+    header_path = Path(output_path) / filename
     with open(header_path, "w") as header_file:
         header_file.writelines(header_template % {  'name_up': filename.upper(),
                                                     'name': filename,
                                                     'taps_per_phase':num_taps_per_phase,
                                                     'phases':num_phases})
 
-def generate_c_file(taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
-                    num_phases = NUM_PHASES, filename = DEFAULT_NAME):
+def generate_c_file(output_path, taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
+                    num_phases = NUM_PHASES):
     c_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -158,7 +154,7 @@ def generate_c_file(taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE,
 /*********************************/
 
 // Use src_ff3_fir_gen.py script to regenare this file
-// python src_ff3_fir_gen.py -gc True -ntp 32 -np 3
+// python src_ff3_fir_gen.py <output_path> -gc True -ntp 32 -np 3
 
 #include "%(name)s_coefs.h"
 #include <stdint.h>
@@ -191,13 +187,10 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
                 coefs += '\n    '
         coefs += '},\n'
 
-    if filename == DEFAULT_NAME:
-        c_path = Path(__file__).parents[1] / "src" /  (filename + "_coefs.c")
-    else:
-        c_path = Path(__file__).parents[1] / "test" / "ff3" / "build" / (filename + "_coefs.c")
-
+    filename = "src_ff3_fir_coefs.h"
+    c_path = Path(output_path) / filename
+    
     with open(c_path, "w") as c_file:
-
         c_file.writelines(c_template % {    'name_up': filename.upper(),
                                             'name': filename,
                                             'coefs_debug':coefs_debug,
@@ -205,6 +198,7 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate FIR coefficiens for a 48 - 16 kHz polyphase SRC")
+    parser.add_argument('--output_dir','-o', help='output path for filter files')
     parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', default=True)
     parser.add_argument('--gen_plots', '-gp', help='Generate .png files', default=False)
     parser.add_argument('--num_taps_per_phase', '-ntp', help='Number of filter taps per phase', default=NUM_TAPS_PER_PHASE, type=int)
