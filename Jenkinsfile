@@ -78,6 +78,20 @@ pipeline {
         }
       }
     }
+    stage('xmake build') {
+      steps {
+        runningOn(env.NODE_NAME)
+        dir("${REPO}") {
+          sh 'git clone git@github.com:xmos/lib_logging.git git@github.com:xmos/lib_xassert.git'
+          withTools(params.TOOLS_VERSION) {           
+              dir("tests") {
+                localRunPytest('-k "legacy" -vv')
+              }
+            }
+          }
+        }
+      }
+    }
     stage('Tests XS2') {
       steps {
         runningOn(env.NODE_NAME)
