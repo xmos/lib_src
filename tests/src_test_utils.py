@@ -174,13 +174,13 @@ def compare_results(golden_file, dut_file, isclose=False):
 
     return array_compare_1d(golden, dut)
 
-def build_firmware(target):
+def build_firmware(target, extra_args=""):
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build" 
     build_path.mkdir(exist_ok=True)
     subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-    subprocess.run("cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake  ..", shell=True, cwd=str(build_path))
-    subprocess.run(f"make -j {target}_test", shell=True, cwd=str(build_path))
+    subprocess.run(f"cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake {extra_args} ..", shell=True, cwd=str(build_path))
+    subprocess.run(f"make -j {target}", shell=True, cwd=str(build_path))
 
     return target + ".xe"
 

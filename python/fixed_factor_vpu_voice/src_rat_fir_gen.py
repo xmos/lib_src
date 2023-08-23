@@ -107,7 +107,7 @@ def plot_response(taps, passband = False, freq_domain = True):
     title = Path(__file__).parent / title
     fig.savefig(title, dpi = 200)
 
-def generate_header_file(total_num_taps = NUM_TAPS, num_phases_ds = NUM_PHASES_DS, num_phases_us = NUM_PHASES_US):
+def generate_header_file(total_num_taps = NUM_TAPS, num_phases_ds = NUM_PHASES_DS, num_phases_us = NUM_PHASES_US, filename = None):
     header_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -148,6 +148,7 @@ extern const int32_t src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_RAT_FIR
 
 """
 
+    
     header_path = Path(__file__).parents[1] / "api" / "src_rat_fir_coefs.h"
 
     tph_ds = total_num_taps // num_phases_ds

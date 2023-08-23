@@ -19,10 +19,10 @@ except ModuleNotFoundError:
     assert False, "Could not find src_ff3_fir_gen.py script"
 
 test_dir = Path(__file__).parent
-build_dir = test_dir / "build"
+build_dir = test_dir / "../build/tests/vpu_ff3_test/"
 
-TEST_NAME_72t = "test_src_72t"
-TEST_NAME_96t = "test_src_96t"
+TEST_NAME_72t = "test_src_vpu_72t"
+TEST_NAME_96t = "test_src_vpu_96t"
 
 fsup = 48000
 fsdown = 16000
@@ -41,7 +41,7 @@ def gen_sig(f):
     
     name = f"sig_{str(48) if fsup == 48000.0 else str(16)}k"
     sig_int.tofile(build_dir /  str(name + ".bin"))
-    thdn, freq = THDN_and_freq(sig_int, 48000)
+    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), 48000)
     print(f"NP 48k THDN: {thdn}, fc: {freq}")
 
     return sig_fl, sig_int
@@ -82,7 +82,7 @@ def run_py(sig48k_int, taps, fc, xe_name):
             
             sig16k_int[i] = (acc * 2 ** (-30)).astype(np.int32)
 
-    thdn, freq = THDN_and_freq(sig16k_int, fsdown)
+    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown)
     print(f"PY 16k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[0], fc)
 
@@ -101,17 +101,18 @@ def run_py(sig48k_int, taps, fc, xe_name):
             sig48k_int[i * 3 + 1] = (conv_simple(mixed_taps[1], state) * 3 * 2 ** (-30)).astype(np.int32)
             sig48k_int[i * 3 + 2] = (conv_simple(mixed_taps[0], state) * 3 * 2 ** (-30)).astype(np.int32)
 
-    thdn, freq = THDN_and_freq(sig48k_int, fsup)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 
 def build_c(taps_int, mixed_int, taps_per_phase, xe_name):
     coeffs_path = Path(__file__).resolve().parent / "vpu_ff3_test" / "autogen"
     coeffs_path.mkdir(exist_ok=True, parents=True)
-    gf.generate_header_file(coeffs_path, num_taps_per_phase = taps_per_phase)
-    gf.generate_c_file(coeffs_path, taps_int, mixed_int, num_taps_per_phase = taps_per_phase)
 
-    src_test_utils.build_firmware("src_vpu_96t_test")
+    name = "test_src_96t" if "96" in xe_name else "test_src_72t"
+    gf.generate_header_file(coeffs_path, num_taps_per_phase = taps_per_phase, name = name)
+    gf.generate_c_file(coeffs_path, taps_int, mixed_int, num_taps_per_phase = taps_per_phase, name = name)
+    src_test_utils.build_firmware(xe_name, extra_args=f"-D{xe_name}_build=ON")
 
 def run_c(fc, xe_name):
 
@@ -130,7 +131,7 @@ def run_c(fc, xe_name):
     assert sig_bin.is_file(), "could not find sig_c_16k.bin"
     sig16k_int = np.fromfile(sig_bin, dtype=np.int32)
 
-    thdn, freq = THDN_and_freq(sig16k_int, fsdown)
+    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown)
     print(f"C  16k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[0], fc)
 
@@ -138,7 +139,7 @@ def run_c(fc, xe_name):
     assert sig_bin.is_file(), "could not find sig_c_48k.bin"
     sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
 
-    thdn, freq = THDN_and_freq(sig48k_int, fsup)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup)
     print(f"C  48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 

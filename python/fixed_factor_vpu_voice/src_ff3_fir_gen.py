@@ -98,7 +98,7 @@ def plot_response(taps, passband = False, freq_domain = True):
     fig.savefig(title, dpi = 200)
 
 def generate_header_file(output_path, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
-                         num_phases = NUM_PHASES):
+                         num_phases = NUM_PHASES, name=None):
     header_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -108,7 +108,7 @@ def generate_header_file(output_path, num_taps_per_phase = NUM_TAPS_PER_PHASE,
 /*********************************/
 
 // Use src_ff3_fir_gen.py script to regenare this file
-// python src_ff3_fir_gen.py -gc True -ntp 32 -np 3
+// python src_ff3_fir_gen.py -o <output_path> -gc True -ntp 32 -np 3
 
 #ifndef _SRC_FF3_COEFS_H_
 #define _SRC_FF3_COEFS_H_
@@ -135,16 +135,16 @@ extern const int32_t %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TAPS_PER
 #endif // _SRC_FF3_COEFS_H_
 
 """
-    filename = "src_ff3_fir_coefs.h"
+    filename = "src_ff3_fir_coefs.h" if name is None else name + "_coefs.h"
     header_path = Path(output_path) / filename
     with open(header_path, "w") as header_file:
-        header_file.writelines(header_template % {  'name_up': filename.upper(),
-                                                    'name': filename,
+        header_file.writelines(header_template % {  'name_up': name.upper(),
+                                                    'name': name.rstrip(".h"),
                                                     'taps_per_phase':num_taps_per_phase,
                                                     'phases':num_phases})
 
 def generate_c_file(output_path, taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
-                    num_phases = NUM_PHASES):
+                    num_phases = NUM_PHASES, name=None):
     c_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -154,7 +154,7 @@ def generate_c_file(output_path, taps, mixed_taps, num_taps_per_phase = NUM_TAPS
 /*********************************/
 
 // Use src_ff3_fir_gen.py script to regenare this file
-// python src_ff3_fir_gen.py <output_path> -gc True -ntp 32 -np 3
+// python src_ff3_fir_gen.py -o <output_path> -gc True -ntp 32 -np 3
 
 #include "%(name)s_coefs.h"
 #include <stdint.h>
@@ -187,12 +187,12 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
                 coefs += '\n    '
         coefs += '},\n'
 
-    filename = "src_ff3_fir_coefs.h"
+    filename = "src_ff3_fir_coefs.c" if name is None else name + "_coefs.c"
     c_path = Path(output_path) / filename
     
     with open(c_path, "w") as c_file:
-        c_file.writelines(c_template % {    'name_up': filename.upper(),
-                                            'name': filename,
+        c_file.writelines(c_template % {    'name_up': name.upper(),
+                                            'name': name,
                                             'coefs_debug':coefs_debug,
                                             'coefs':coefs})
 

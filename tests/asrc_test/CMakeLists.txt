@@ -41,7 +41,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     #*************************
     # Create Target - Note just single tile as no RTOS
     #*************************
-    set(TARGET_NAME asrc_test)
+    set(TARGET_NAME test_asrc)
     add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
     target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES})
     target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
