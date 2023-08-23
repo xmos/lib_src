@@ -29,6 +29,7 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
     target_link_options(${TARGET_NAME}
         PUBLIC
             "-target=XCORE-200-EXPLORER"
+            "-report"
     )
 
 endif()

@@ -92,6 +92,10 @@ pipeline {
                 sh 'xsim ./tests/us3_voice_test/test_us3_voice.xe'
                 sh 'xsim ./tests/ds3_voice_test/test_ds3_voice.xe'
                 sh 'xsim ./tests/unity_gain_voice_test/test_unity_gain_voice.xe'
+              }
+              dir("tests") {
+              }
+              dir("build") {
                 sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
               }
             }
