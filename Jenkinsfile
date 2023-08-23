@@ -88,9 +88,10 @@ pipeline {
               dir("build") {
                 sh 'rm -rf'
                 sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
-                sh 'make test_ds3_voice test_us3_voice -j'
+                sh 'make test_ds3_voice test_us3_voice test_unity_gain_voice -j'
                 sh 'xsim ./tests/us3_voice_test/test_us3_voice.xe'
                 sh 'xsim ./tests/ds3_voice_test/test_ds3_voice.xe'
+                sh 'xsim ./tests/unity_gain_voice_test/test_unity_gain_voice.xe'
                 sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
               }
             }
