@@ -86,11 +86,11 @@ pipeline {
             withVenv {
               sh 'mkdir build'
               dir("build") {
-                  sh 'rm -rf'
-                  sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
-                  sh 'make test_us3_voice -j'
-                  sh 'xsim ./tests/us3_voice_test/test_us3_voice.xe'
-                  sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
+                sh 'rm -rf'
+                sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
+                sh 'make test_us3_voice -j'
+                sh 'xsim ./tests/us3_voice_test/test_us3_voice.xe'
+                sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
               }
             }
           }
