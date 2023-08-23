@@ -1,4 +1,9 @@
-@Library('xmos_jenkins_shared_library@v0.25.0') _
+@Library('xmos_jenkins_shared_library@v0.25.0')
+
+def runningOn(machine) {
+    println "Stage running on:"
+    println machine
+}
 
 // run pytest with common flags for project. any passed in though extra args will
 // be appended
