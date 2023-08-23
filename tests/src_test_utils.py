@@ -106,7 +106,7 @@ def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     tmp_dir.mkdir(exist_ok=True, parents=True)
 
     # When running parallel, make copies of files so we don't encounter issues using xdist
-    bin_name = f"{src_type}_test.xe"
+    bin_name = f"test_{src_type}.xe"
     bin_path = file_dir / f"../build/tests/{src_type}_test" / bin_name
     shutil.copy(bin_path, tmp_dir / bin_name)
 
