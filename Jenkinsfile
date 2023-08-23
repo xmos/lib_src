@@ -94,6 +94,7 @@ pipeline {
           }
         }
       }
+    }
     stage('Tests XS3') {
       steps {
         runningOn(env.NODE_NAME)
