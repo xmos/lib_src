@@ -83,6 +83,7 @@ pipeline {
         runningOn(env.NODE_NAME)
         dir("${REPO}") {
           sh 'git clone git@github.com:xmos/lib_logging.git git@github.com:xmos/lib_xassert.git'
+          sh 'tree'
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
