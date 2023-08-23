@@ -79,12 +79,14 @@ pipeline {
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
-                localRunPytest('-m prepare -k "mrhf" ')
-                localRunPytest('-m main -n auto -k "mrhf" ')
+                // ASRC and SSRC tests
+                localRunPytest('-m prepare -k "mrhf"')
+                localRunPytest('-m main -n auto -k "mrhf" -vv')
                 archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
 
-                localRunPytest('-m prepare -k "vpu" ')
-                localRunPytest('-m main -k "vpu" ') // xdist not working yet so no -n auto
+                // VPU enabled ff3 and rat tests
+                localRunPytest('-m prepare -k "vpu"')
+                localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
               }
             }
           }

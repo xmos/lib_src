@@ -145,7 +145,7 @@ def run_c(fc, xe_name):
     TEST_NAME_96t]
 )
 @pytest.mark.prepare
-def test_src_ff3_prepare(xe_name):
+def test_src_vpu_ff3_prepare(xe_name):
     print(f"Preparing test name {xe_name}")
 
     if xe_name == TEST_NAME_96t:
@@ -166,7 +166,7 @@ def test_src_ff3_prepare(xe_name):
     TEST_NAME_96t]
 )
 @pytest.mark.main
-def test_src_ff3(test_freq, xe_name):
+def test_src_vpu_ff3(test_freq, xe_name):
     print(f"Test name {xe_name}")
     print(f"Testing {test_freq} Hz sinewave")
 

@@ -129,16 +129,24 @@ def run_c(fc_ex):
     print(f"C 48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, -60, fc_ex)
 
+@pytest.mark.prepare
+def test_src_vpu_rat_prepare():
+    print(f"Preparing rat test")
+    total_num_taps = 8 * 2 * 3 * 2 # 8 for vpu, 2 and 3 for ds and us phases adds up to 96 taps
+    taps, poly_ds, poly_ds_int, poly_us, poly_us_int = gf.gen_coefs(total_num_taps)
+    build_c(poly_ds_int, poly_us_int)
+
+
 @pytest.mark.parametrize(
     "test_freq", [
         100, 14000
         ]
 )
-def test_src_rat(test_freq):
+@pytest.mark.main
+def test_src_vpu_rat(test_freq):
     print(f"Testing {test_freq} Hz sinewave")
     total_num_taps = 8 * 2 * 3 * 2 # 8 for vpu, 2 and 3 for ds and us phases adds up to 96 taps
     taps, poly_ds, poly_ds_int, poly_us, poly_us_int = gf.gen_coefs(total_num_taps)
-    build_c(poly_ds_int, poly_us_int)
     sig_fl, sig_int = get_sig(test_freq)
     sig32k = downsample(sig_fl, taps, poly_ds, test_freq)
     upsample(sig32k, taps, poly_us, test_freq)
