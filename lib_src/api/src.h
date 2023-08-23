@@ -7,7 +7,9 @@
 #include "src_ff3_ds3.h"
 #include "src_ff3_os3.h"
 #include "src_ff3v_fir.h"
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
 #include "src_poly.h"
+#endif // __XS3A__
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
