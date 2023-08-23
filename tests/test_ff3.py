@@ -9,10 +9,6 @@ import pytest
 from thdncalculator import THDN_and_freq
 import src_test_utils
 
-package_dir = os.path.dirname(os.path.abspath(__file__))
-script_path = os.path.join(package_dir, '../../python')
-sys.path.append(script_path)
-
 try:
     from fixed_factor_vpu_voice import src_ff3_fir_gen as gf
 except ModuleNotFoundError:

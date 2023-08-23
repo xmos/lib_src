@@ -83,8 +83,8 @@ pipeline {
                 localRunPytest('-m main -n auto -k "mrhf" ')
                 archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
 
-                localRunPytest('-m prepare -k "ff3" ')
-                localRunPytest('-m main -k "ff3" ') // xdist not working yet
+                localRunPytest('-m prepare -k "vpu" ')
+                localRunPytest('-m main -k "vpu" ') // xdist not working yet so no -n auto
               }
             }
           }

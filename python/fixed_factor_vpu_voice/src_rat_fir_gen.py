@@ -107,7 +107,7 @@ def plot_response(taps, passband = False, freq_domain = True):
     title = Path(__file__).parent / title
     fig.savefig(title, dpi = 200)
 
-def generate_header_file(total_num_taps = NUM_TAPS, num_phases_ds = NUM_PHASES_DS, num_phases_us = NUM_PHASES_US, filename = None):
+def generate_header_file(output_path, total_num_taps = NUM_TAPS, num_phases_ds = NUM_PHASES_DS, num_phases_us = NUM_PHASES_US, filename = None):
     header_template = """\
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
@@ -117,7 +117,7 @@ def generate_header_file(total_num_taps = NUM_TAPS, num_phases_ds = NUM_PHASES_D
 /*********************************/
 
 // Use src_rat_fir_gen.py script to regenare this file
-// python src_rat_fir_gen.py -gc True -nt 96
+// python src_rat_fir_gen.py  -o <outpath> -gc True -nt 96
 
 #ifndef _SRC_RAT_COEFS_H_
 #define _SRC_RAT_COEFS_H_
@@ -148,8 +148,8 @@ extern const int32_t src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_RAT_FIR
 
 """
 
-    
-    header_path = Path(__file__).parents[1] / "api" / "src_rat_fir_coefs.h"
+    filename = "src_rat_fir_coefs.h"
+    header_path = Path(output_path) / filename
 
     tph_ds = total_num_taps // num_phases_ds
     tph_us = total_num_taps // num_phases_us
@@ -162,7 +162,7 @@ extern const int32_t src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_RAT_FIR
                                         'phases_us':num_phases_us,
                                         'taps_per_phase_us':tph_us})
 
-def generate_c_file(mixed_taps_ds, mixed_taps_us, total_num_taps = NUM_TAPS,
+def generate_c_file(output_path, mixed_taps_ds, mixed_taps_us, total_num_taps = NUM_TAPS,
                     num_phases_ds = NUM_PHASES_DS, num_phases_us = NUM_PHASES_US):
     c_template = """\
 // Copyright 2023 XMOS LIMITED.
@@ -173,7 +173,7 @@ def generate_c_file(mixed_taps_ds, mixed_taps_us, total_num_taps = NUM_TAPS,
 /*********************************/
 
 // Use src_rat_fir_gen.py script to regenare this file
-// python src_rat_fir_gen.py -gc True -nt 96
+// python src_rat_fir_gen.py -o <outpath> -gc True -nt 96
 
 #include "src_rat_fir_coefs.h"
 #include <stdint.h>
@@ -212,16 +212,17 @@ const int32_t ALIGNMENT(8) src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_R
                 coefs_us += '\n    '
         coefs_us += '},\n'
 
-    c_path = Path(__file__).parents[1] / "src" / "src_rat_fir_coefs.c"
+    filename = "src_rat_fir_coefs.c"
+    c_path = Path(output_path) / filename
 
     with open(c_path, "w") as c_file:
-
         c_file.writelines(c_template % {
                                     'coefs_ds':coefs_ds,
                                     'coefs_us':coefs_us})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate FIR coefficiens for a 48 - 32 kHz polyphase SRC")
+    parser.add_argument('--output_dir','-o', help='output path for filter files')
     parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', default=True)
     parser.add_argument('--gen_plots', '-gp', help='Generate .png files', default=False)
     parser.add_argument('--num_taps', '-nt', help='number of taps', default=NUM_TAPS, type=int)
@@ -230,8 +231,8 @@ if __name__ == "__main__":
     taps, poly_ds, poly_ds_int, poly_us, poly_us_int = gen_coefs(args.num_taps)
 
     if args.gen_c_files:
-        generate_header_file(args.num_taps)
-        generate_c_file(poly_ds_int, poly_us_int, args.num_taps)
+        generate_header_file(args.out_dir, args.num_taps)
+        generate_c_file(args.out_dir, poly_ds_int, poly_us_int, args.num_taps)
     if args.gen_plots:
         plot_response(taps, False)
         plot_response(taps, True)

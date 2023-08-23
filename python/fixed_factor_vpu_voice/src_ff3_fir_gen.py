@@ -208,8 +208,8 @@ if __name__ == "__main__":
     taps_fl, taps, mixed_taps = gen_coefs(args.num_taps_per_phase, args.num_phases)
 
     if args.gen_c_files:
-        generate_header_file(args.num_taps_per_phase, args.num_phases)
-        generate_c_file(taps, mixed_taps, args.num_taps_per_phase, args.num_phases)
+        generate_header_file(args.out_dir, args.num_taps_per_phase, args.num_phases)
+        generate_c_file(args.out_dir, taps, mixed_taps, args.num_taps_per_phase, args.num_phases)
     if args.gen_plots:
         plot_response(taps_fl, False)
         plot_response(taps_fl, True)

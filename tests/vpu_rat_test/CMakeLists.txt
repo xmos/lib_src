@@ -6,7 +6,7 @@ enable_language(CXX C ASM)
 
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
 
-    set(TARGET_NAME src_vpu_rat_test)
+    set(TARGET_NAME test_src_vpu_rat)
 
     add_executable(${TARGET_NAME})
     

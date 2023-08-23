@@ -8,20 +8,16 @@ import sys, os
 import pytest
 import soundfile as sf
 from thdncalculator import THDN_and_freq
+import src_test_utils
 
-package_dir = os.path.dirname(os.path.abspath(__file__))
-script_path = os.path.join(package_dir, '../../python')
-sys.path.append(script_path)
 
 try:
-    # import lib_srcsrc_rat_fir_gen as gf
-    import lib_src
-    print("***", dir(lib_src))
+    from fixed_factor_vpu_voice import src_rat_fir_gen as gf
 except ModuleNotFoundError:
-    assert False, "Could not find src_rat_fir_gen.py script"
+    assert False, "Could not find src_rat_fir_gen.py script in module fixed_factor_vpu_voice"
 
 test_dir = Path(__file__).parent
-build_dir = test_dir / "build"
+build_dir = test_dir / "../build/tests/vpu_rat_test/"
 
 def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
     assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
@@ -36,7 +32,7 @@ def get_sig(frequency):
     sig_int = (sig_fl * (2 ** 31)).astype(np.int32)
     name = f"sig_48k"
     sig_int.tofile(build_dir /  str(name + ".bin"))
-    thdn, freq = THDN_and_freq(sig_int, fs)
+    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), fs)
     #print(f"NP 48k THDN: {thdn}, fc: {freq}")
 
     return sig_fl, sig_int
@@ -69,7 +65,7 @@ def upsample(sig32k_fl, orig_taps, poly_taps, fc_ex):
             state[0] = sig32k_fl[i * 2 + 1]
             sig48k[i * 3 + 2] = conv_simple(poly_taps[1], state) * fact_up
 
-    thdn, freq = THDN_and_freq(sig48k, 48000)
+    thdn, freq = THDN_and_freq(sig48k.astype(np.float64), 48000)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, -60, fc_ex)
     return sig48k
@@ -95,32 +91,23 @@ def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
             state[0] = sig48k_fl[i * 3 + 2]
             sig32k[i * 2 + 1] = conv_simple(poly_taps[1], state) * fact_up
 
-    thdn, freq = THDN_and_freq(sig32k, 32000)
+    thdn, freq = THDN_and_freq(sig32k.astype(np.float64), 32000)
     print(f"PY 32k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, -70, fc_ex)
     return sig32k
 
 def build_c(poly_ds_int, poly_us_int):
-    if build_dir.exists():
-        rm_cmd = f"rm -rf {build_dir}/*"
-        stdout = subprocess.check_output(rm_cmd, shell=True)
-    else:
-        mkdir_cmd = f"mkdir {build_dir}"
-        stdout = subprocess.check_output(mkdir_cmd, shell=True)
+    coeffs_path = Path(__file__).resolve().parent / "vpu_rat_test" / "autogen"
+    coeffs_path.mkdir(exist_ok=True, parents=True)
 
-    gf.generate_header_file()
-    gf.generate_c_file(poly_ds_int, poly_us_int)
+    gf.generate_header_file(coeffs_path)
+    gf.generate_c_file(coeffs_path, poly_ds_int, poly_us_int)
 
-    cmake_cmd = f"cmake -S {test_dir} -B {build_dir}"
-    stdout = subprocess.check_output(cmake_cmd, shell=True)
-
-    make_cmd = "make -C " + str(build_dir)
-    stdout = subprocess.check_output(make_cmd, cwd=build_dir, shell=True)
-    #print("build msg\n", stdout, "\n")
+    src_test_utils.build_firmware("test_src_vpu_rat")
 
 def run_c(fc_ex):
 
-    app = "xsim --args " + str(build_dir) + "/test_src_rat.xe"
+    app = "xsim --args " + str(build_dir) + "/test_src_vpu_rat.xe"
     stdout = subprocess.check_output(app, cwd = build_dir, shell = True)
     #print("run msg\n", stdout)
 
@@ -129,7 +116,7 @@ def run_c(fc_ex):
     sig32k_int = np.fromfile(sig_bin, dtype=np.int32)
 
     sf.write(build_dir / "sig_c_32k.wav", sig32k_int, 32000, "PCM_32")
-    thdn, freq = THDN_and_freq(sig32k_int, 32000)
+    thdn, freq = THDN_and_freq(sig32k_int.astype(np.float64), 32000)
     print(f"C 32k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, -70, fc_ex)
 
@@ -138,7 +125,7 @@ def run_c(fc_ex):
     sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
 
     sf.write(build_dir / "sig_c_48k.wav", sig48k_int, 48000, "PCM_32")
-    thdn, freq = THDN_and_freq(sig48k_int, 48000)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), 48000)
     print(f"C 48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, -60, fc_ex)
 
