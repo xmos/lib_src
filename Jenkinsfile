@@ -84,9 +84,8 @@ pipeline {
         dir("${REPO}") {
           sh 'git clone git@github.com:xmos/lib_logging.git git@github.com:xmos/lib_xassert.git'
           withTools(params.TOOLS_VERSION) {           
-              dir("tests") {
-                localRunPytest('-k "legacy" -vv')
-              }
+            dir("tests") {
+              localRunPytest('-k "legacy" -vv')
             }
           }
         }
