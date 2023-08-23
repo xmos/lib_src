@@ -75,13 +75,19 @@ pipeline {
     }
     stage('Tests') {
       steps {
+        runningOn(env.NODE_NAME)
         dir("${REPO}") {
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {
-                localRunPytest('-m prepare')
-                localRunPytest('-m main -n auto')
+                localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
+
+                // ASRC and SSRC tests
+                localRunPytest('-m main -n auto -k "mrhf" -vv')
                 archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+
+                // VPU enabled ff3 and rat tests
+                localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
               }
             }
           }

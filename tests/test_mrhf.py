@@ -19,7 +19,7 @@ ASRC_DEVIATIONS = ("1.000000", "0.990099", "1.009999")
 def test_prepare(src_type):
     """ Builds firmware and host reference and generates the golden reference signals on the host """
     host_app = build_host_app(src_type)
-    firmware = build_firmware(src_type)
+    firmware = build_firmware("test_" + src_type)
     gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, ASRC_DEVIATIONS if src_type == "asrc" else None)
   
 

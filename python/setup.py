@@ -17,7 +17,8 @@ setuptools.setup(
         'matplotlib',
         'numpy',
         'soundfile',
-        'pytest-xdist'
+        'pytest-xdist',
+        'scipy'
     ],
     dependency_links=[
     ],
