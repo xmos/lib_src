@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-//to enable debug printing set -DDEBUG_PRINT_ENABLE=1 in the Makefile
 #define debug_printf printf
 
 #include "src.h"

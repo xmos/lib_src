@@ -1,17 +1,17 @@
 
 cmake_minimum_required(VERSION 3.21)
 
-project(test_us3_voice)
+project(test_ds3_voice)
 enable_language(CXX C ASM)
 
 if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS2A))
-    set(TARGET_NAME test_us3_voice)
+    set(TARGET_NAME test_ds3_voice)
 
     add_executable(${TARGET_NAME})
     
     target_sources(${TARGET_NAME}
         PRIVATE
-            app_us3_voice.xc
+            app_ds3_voice.xc
     )
 
     target_link_libraries(${TARGET_NAME}
