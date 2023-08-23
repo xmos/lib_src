@@ -144,6 +144,22 @@ def run_c(fc, xe_name):
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 
 @pytest.mark.parametrize(
+    "xe_name", [
+    TEST_NAME_72t,
+    TEST_NAME_96t]
+)
+@pytest.mark.prepare
+def test_src_ff3_prepare(xe_name):
+    print(f"Preparing test name {xe_name}")
+
+    if xe_name == TEST_NAME_96t:
+        taps_per_phase = 32
+    else:
+        taps_per_phase = 24
+    taps_fl, taps_int, mixed_int = gf.gen_coefs(num_taps_per_phase = taps_per_phase)
+    build_c(taps_int, mixed_int, taps_per_phase, xe_name)
+
+@pytest.mark.parametrize(
     "test_freq", [
         1000, 
         7000]
@@ -153,15 +169,17 @@ def run_c(fc, xe_name):
     TEST_NAME_72t,
     TEST_NAME_96t]
 )
+@pytest.mark.main
 def test_src_ff3(test_freq, xe_name):
     print(f"Test name {xe_name}")
     print(f"Testing {test_freq} Hz sinewave")
+
     if xe_name == TEST_NAME_96t:
         taps_per_phase = 32
     else:
         taps_per_phase = 24
+
     taps_fl, taps_int, mixed_int = gf.gen_coefs(num_taps_per_phase = taps_per_phase)
-    build_c(taps_int, mixed_int, taps_per_phase, xe_name)
     sig_fl, sig_int = gen_sig(test_freq)
     run_py(sig_int, taps_int, test_freq, xe_name)
     run_c(test_freq, xe_name)
