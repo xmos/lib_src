@@ -25,4 +25,6 @@ def test_prepare(src_type):
 @pytest.mark.parametrize("src_type", ["ds3", "os3"])
 def test_hifi_ff3(src_type):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
-    run_dut(sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS)
+    sr_in = 16000 if src_type == "os3" else 48000
+    sr_out = 48000 if src_type == "os3" else 16000
+    run_dut(sr_in, sr_out, src_type, NUM_SAMPLES_TO_PROCESS)
