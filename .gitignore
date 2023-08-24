@@ -23,10 +23,6 @@ xsim.args
 tests/src_output
 *.bak
 **/.venv/**
-
-# waf build files
-.lock-waf_*
-.waf-*/
 build/
 tests/tmp
 tests/vpu_ff3_test/autogen

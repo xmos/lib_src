@@ -56,7 +56,7 @@ jobs:
       - name: Save documentation artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: docs-xvf3800
-          path: doc/_build_xvf3800
+          name: docs lib_src
+          path: doc/_build
           if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn` 
           retention-days: 30
