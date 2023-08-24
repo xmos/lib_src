@@ -46,12 +46,12 @@ jobs:
                      --rm \
                      -v ${{ github.workspace }}:/build \
                      -e EXCLUDE_PATTERNS="/build/doc/exclude-patterns.inc" \
-                     -e OUTPUT_DIR=/build/doc/_build_lib_src \
+                     -e OUTPUT_DIR=${{ github.workspace }}:/build \
                      -e PDF=1 \
                      -e SKIP_LINK=1 \
                      ${XCORE_DOC_BUILDER}
           DOC_VERSION=$(grep version settings.json | grep -o "[0-9]*\.[0-9]*\.[0-9]")
-          mv doc/_build_/pdf/programming_guide.pdf doc/_build/pdf/programming_guide_v${DOC_VERSION}.pdf
+          mv doc/_build/pdf/programming_guide.pdf doc/_build/pdf/programming_guide_v${DOC_VERSION}.pdf
 
       - name: Save documentation artifacts
         uses: actions/upload-artifact@v3
