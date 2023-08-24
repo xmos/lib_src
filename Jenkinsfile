@@ -78,7 +78,7 @@ pipeline {
         }
       }
     }
-    stage('xmake build') {
+    stage('Test xmake build') {
       steps {
         runningOn(env.NODE_NAME)
         dir("${REPO}") {

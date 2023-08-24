@@ -30,7 +30,7 @@
 	// This filter has about 20dB attenuation at 8kHz -> For OS3 this is the recommended filter
 	#define		FIROS3_COEFS_FILE						"FilterData/firos3_144.dat"
 	// This filter has more than 60dB attenuation at 8kHz
-	//#define		FIROS3_COEFS_FILE						"FilterData/firos3_b_144.dat"
+	// #define		FIROS3_COEFS_FILE						"FilterData/firos3_b_144.dat"
 	
 
 

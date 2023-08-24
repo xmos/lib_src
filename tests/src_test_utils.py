@@ -212,7 +212,10 @@ def compare_results_ff3(stdout, golden_signal_0, golden_signal_1):
     print(dut_data[:,0])
     print(dut_data[:,1])
 
-    return array_compare_1d(golden_0, dut_data[:,0], allow_different_lengths=True) and  array_compare_1d(golden_1, dut_data[:,1], allow_different_lengths=True)
+    same = array_compare_1d(golden_0, dut_data[:,0], allow_different_lengths=True) 
+    same &= array_compare_1d(golden_1, dut_data[:,1], allow_different_lengths=True)
+
+    return same  
 
 def build_firmware(target, extra_args=""):
     file_dir = Path(__file__).resolve().parent
