@@ -38,7 +38,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
         -fcmdline-buffer-bytes=2048
     )
 
-    set(TARGET_NAME test_os3_voice)
+    set(TARGET_NAME test_os3)
     add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
     target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES})
     target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})

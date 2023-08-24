@@ -20,7 +20,7 @@ def test_prepare(src_type):
     """ Builds firmware and host reference and generates the golden reference signals on the host """
     host_app = build_host_app(src_type)
     firmware = build_firmware("test_" + src_type)
-    gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, ASRC_DEVIATIONS if src_type == "asrc" else None)
+    gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, SR_LIST, SR_LIST, ASRC_DEVIATIONS if src_type == "asrc" else None)
   
 
 @pytest.mark.main

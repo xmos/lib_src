@@ -36,7 +36,7 @@ class src_mrh_file_name_builder:
     """ Helper to build the input/output/golden filenames from various input output sample rates """
 
     signal_types = {"pure_sine": "s1k_0dB", "inter_modulation": "im10k11k_m6dB"}
-    file_name_helper = {44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
+    file_name_helper = {16000: "16", 44100: "44", 48000: "48", 88200: "88", 96000: "96", 176400: "176", 192000: "192"}
 
     def test_signal(self, input_sr, signal_type):
         file_name = self.signal_types[signal_type] + "_" + self.file_name_helper[input_sr] + ".dat"
@@ -60,12 +60,11 @@ class src_mrh_file_name_builder:
         ch1 = self.output_signal(input_sr, output_sr, "inter_modulation") + suffix + f".{extension}"
         return (ch0, ch1)
 
-def gen_golden(host_app, src_type, num_samples_to_process, fs_deviations):
+def gen_golden(host_app, src_type, num_samples_to_process, input_freqs, output_freqs, fs_deviations):
     """ generate golden reference by running the test vector through the compiled 
         model on the host. """
 
     fnb = src_mrh_file_name_builder()
-    freqs = tuple(fnb.file_name_helper.keys())
 
     file_dir = Path(__file__).resolve().parent
     bin_path = file_dir / f"../build/tests/{src_type}_test/{src_type}_golden" 
@@ -73,26 +72,31 @@ def gen_golden(host_app, src_type, num_samples_to_process, fs_deviations):
     test_out_path = file_dir / "src_output" / src_type
     test_out_path.mkdir(exist_ok=True, parents=True)
 
-    for q, out_sr in zip(range(len(freqs)), freqs):
-        for k, in_sr in zip(range(len(freqs)), freqs):
+    for q, out_sr in zip(range(len(output_freqs)), output_freqs):
+        for k, in_sr in zip(range(len(input_freqs)), input_freqs):
             for fs_deviation in fs_deviations if src_type == "asrc" else [1.0]:
                 print(f"Generating golden {in_sr}->{out_sr} ({fs_deviation})")
                 test_signal_0, test_signal_1 = fnb.get_in_signal_pair(in_sr)
                 golden_signal_0, golden_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, src_type, "golden", fs_deviation=fs_deviation)
 
-                cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
-                if src_type == "ssrc":
-                    cmd += f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1}"
+                if src_type is "asrc" or src_type is "ssrc":
+                    cmd = f"{bin_path} -i{test_in_path/test_signal_0} -j{test_in_path/test_signal_1} -k{k}"
+                    if src_type == "ssrc":
+                        cmd += f" -o{test_out_path/golden_signal_0} -p{test_out_path/golden_signal_1}"
+                    else:
+                        op_path = test_out_path / f"{fs_deviation}"
+                        op_path.mkdir(exist_ok=True, parents=True)
+                        cmd += f" -o{op_path/golden_signal_0} -p{op_path/golden_signal_1}"
+                    cmd += f" -q{q} -d0 -l{num_samples_to_process} -n4"
+                    if src_type == "asrc":
+                        cmd += f" -e{fs_deviation}"
                 else:
-                    op_path = test_out_path / f"{fs_deviation}"
-                    op_path.mkdir(exist_ok=True, parents=True)
-                    cmd += f" -o{op_path/golden_signal_0} -p{op_path/golden_signal_1}"
-                cmd += f" -q{q} -d0 -l{num_samples_to_process} -n4"
-                if src_type == "asrc":
-                    cmd += f" -e{fs_deviation}"
+                    cmd = f"{bin_path} -i{test_in_path/test_signal_0} -o{test_out_path/golden_signal_0}"
+
                 output = subprocess.run(cmd, input=" ", text=True, shell=True, capture_output=True) # pass an input as the binary expects to press any key at end 
-                if output.returncode != 0:
+                if output.returncode != 0 or "ERROR" in output.stdout:
                     print(f"Error, stdout: {output.stdout}, stderr {output.stderr}")
+                    assert 0
 
 def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     """ Run the test vector through the compiled fimrware application and compare with 
