@@ -21,7 +21,7 @@ def test_license_check():
     """
     runs xmos_license_check and asserts on the exit code
     """
-    ret = run(f"xmos_license_check check {REPO_ROOT} vocalfusion38xx_v1".split())
+    ret = run(f"xmos_license_check check {REPO_ROOT} xmos_public_v1".split())
     assert 0 == ret.returncode
 
 def test_changelog_check():
