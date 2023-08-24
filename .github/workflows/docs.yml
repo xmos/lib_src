@@ -36,10 +36,6 @@ jobs:
         with:
           python-version: '3.10.x'
 
-      - name: Fetch submodules
-        run: |
-          python ${{github.workspace}}/tools/try-update-submodules.py --shallow --replace-ssh
-
       - name: Pull doc_builder container
         run: |
           docker pull ${XCORE_DOC_BUILDER}
@@ -50,16 +46,14 @@ jobs:
                      --rm \
                      -v ${{ github.workspace }}:/build \
                      -e EXCLUDE_PATTERNS="/build/doc/exclude-patterns.inc" \
-                     -e OUTPUT_DIR=/build/doc/_build_xvf3800 \
+                     -e OUTPUT_DIR=/build/doc/_build_lib_src \
                      -e PDF=1 \
                      -e SKIP_LINK=1 \
                      ${XCORE_DOC_BUILDER}
           DOC_VERSION=$(grep version settings.json | grep -o "[0-9]*\.[0-9]*\.[0-9]")
-          mv doc/_build_xvf3800/pdf/datasheet.pdf doc/_build_xvf3800/pdf/xvf3800_datasheet_v${DOC_VERSION}.pdf
-          mv doc/_build_xvf3800/pdf/programming_guide.pdf doc/_build_xvf3800/pdf/xvf3800_programming_guide_v${DOC_VERSION}.pdf
-          mv doc/_build_xvf3800/pdf/user_guide.pdf doc/_build_xvf3800/pdf/xvf3800_user_guide_v${DOC_VERSION}.pdf
+          # mv doc/_build_lib_src/pdf/datasheet.pdf doc/_build_lib_src/pdf/xvf3800_datasheet_v${DOC_VERSION}.pdf
 
-      - name: Save documentation xvf3800 artifacts
+      - name: Save documentation artifacts
         uses: actions/upload-artifact@v3
         with:
           name: docs-xvf3800
