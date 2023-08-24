@@ -139,7 +139,7 @@ done:
 	.set	src_ff3_fir_inner_loop_asm.maxtimers,0
 	.globl	src_ff3_fir_inner_loop_asm.maxtimers
 	.set	src_ff3_fir_inner_loop_asm.maxchanends,0
-	.globl	 .maxchanends
+	.globl	src_ff3_fir_inner_loop_asm.maxchanends
 
 
 		.section	.dp.data,"awd",@progbits
@@ -287,4 +287,4 @@ done_odd:
 	.set	src_ff3_fir_inner_loop_asm_odd.maxtimers,0
 	.globl	src_ff3_fir_inner_loop_asm_odd.maxtimers
 	.set	src_ff3_fir_inner_loop_asm_odd.maxchanends,0
-	.globl	 .maxchanends
+	.globl	src_ff3_fir_inner_loop_asm_odd.maxchanends
