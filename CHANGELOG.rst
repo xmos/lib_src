@@ -32,7 +32,7 @@ lib_src change log
 2.1.0
 -----
 
-  * CHANGED: Use XMOS Public Licence Version 1
+  * CHANGED: Use XMOS Public License Version 1
 
 2.0.1
 -----
@@ -43,7 +43,7 @@ lib_src change log
 2.0.0
 -----
 
-  * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
+  * CHANGED: Build files updated to support new "xcommon" behavior in xwaf.
 
 1.1.2
 -----

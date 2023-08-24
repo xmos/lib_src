@@ -30,24 +30,4 @@ def test_changelog_check():
     """
     ret = run(f"xmos_changelog_check check {REPO_ROOT}".split())
     assert 0 == ret.returncode
-
-def test_version_matches():
-    """
-    check the JSON version matches the changelog
-    """
-    pass
-    # with open('../../settings.json', 'r') as f:
-    #     json_version = json.load(f)["version"]
     
-    # with open('../../CHANGELOG.rst', 'r') as f:
-    #     changelog = f.readlines()
-    #     rm = r'(\d+\.\d+\.\d+)'
-    #     changelog_version = None
-    #     for line in changelog:
-    #         match = re.match(rm, line)
-    #         if match:
-    #             changelog_version = match.group(0)
-    #             break
-    #     assert changelog_version is not None, "Version not found in changelog"
-
-    # assert changelog_version == json_version, f"Versions do not match - changelog {changelog_version}, json {json_version}"
