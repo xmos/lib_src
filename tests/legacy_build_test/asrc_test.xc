@@ -346,7 +346,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(int argc, char * unsafe argv[]) 
+int main(int argc, char * unsafe argv[argc]) 
 {
     int ui;
 

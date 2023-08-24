@@ -126,10 +126,10 @@ pipeline {
               dir("tests") {
                 localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
 
-                // FF3 HiFi tests
+                // FF3 HiFi tests for OS3 and DS3
                 localRunPytest('-m main -n auto -k "hifi_ff3" -vv')
 
-                // ASRC and SSRC tests
+                // ASRC and SSRC tests across all in/out freqs and deviations (asrc only)
                 localRunPytest('-m main -n auto -k "mrhf" -vv')
                 archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
 
