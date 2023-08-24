@@ -1,5 +1,5 @@
 # Copyright 2023 XMOS LIMITED.
-# This Software is subject to the terms of the XCORE VocalFusion Licence.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Tests that check the contents of the files meet our standards"""
 from subprocess import run
 from pathlib import Path
@@ -12,9 +12,9 @@ def test_source_check():
     """
     runs xmos_source_check and asserts on the exit code
 
-    To fix a failure run `xmos_source_check update . vocalfusion3600` from the repo root.
+    To fix a failure run `xmos_source_check update . xmos_public_v1` from the repo root.
     """
-    ret = run(f"xmos_source_check check {REPO_ROOT} vocalfusion3600".split())
+    ret = run(f"xmos_source_check check {REPO_ROOT} xmos_public_v1".split())
     assert 0 == ret.returncode
 
 def test_license_check():

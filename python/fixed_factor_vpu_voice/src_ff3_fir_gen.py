@@ -1,5 +1,5 @@
 # Copyright 2023 XMOS LIMITED.
-# This Software is subject to the terms of the XCORE VocalFusion Licence.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
 This script generates filter coefficient for a 48 - 16 kHz fixed-factor-of-3 sample rate conversion
 """

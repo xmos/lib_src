@@ -1,5 +1,5 @@
 // Copyright 2023 XMOS LIMITED.
-// This Software is subject to the terms of the XCORE VocalFusion Licence.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #ifndef _SRC_POLY_VPU_H_
 #define _SRC_POLY_VPU_H_
