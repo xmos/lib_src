@@ -8,7 +8,7 @@ Test verify the operation of both SSRC and ASRC (which belong to the multi-rate 
 import pytest
 from src_test_utils import gen_golden, build_firmware, build_host_app, compare_results, src_mrh_file_name_builder, run_dut
 
-NUM_SAMPLES_TO_PROCESS = 128
+NUM_SAMPLES_TO_PROCESS = 256
 
 @pytest.mark.prepare
 @pytest.mark.parametrize("src_type", ["ds3", "os3"])

@@ -49,24 +49,6 @@ pipeline {
         }
       }
     }
-    // stage('Library checks') {
-    //   steps {
-    //     xcoreLibraryChecks("${REPO}")
-    //   }
-    // }
-    // stage('xCORE builds') {
-    //   steps {
-    //     dir("${REPO}") {
-    //       xcoreAllAppsBuild('examples')
-    //       xcoreAllAppNotesBuild('examples')
-    //       dir("${REPO}") {
-    //         runXdoc('doc')
-    //       }
-    //     }
-    //     // Archive all the generated .pdf docs
-    //     archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
-    //   }
-    // }
     stage ("Create Python environment")
     {
       steps {
@@ -74,6 +56,20 @@ pipeline {
           createVenv('requirements.txt')
           withVenv {
             sh 'pip install -r requirements.txt'
+          }
+        }
+      }
+    }
+    stage('Library checks') {
+      steps {
+        dir("${REPO}") {
+          sh 'git clone git@github.com:xmos/infr_apps.git'
+          sh 'git clone git@github.com:xmos/infr_scripts_py.git'
+          sh 'pip install infr_scripts_py infr_apps'
+          withVenv {
+            dir("tests") {
+              localRunPytest('-s test_lib_checks.py -vv')
+            }
           }
         }
       }

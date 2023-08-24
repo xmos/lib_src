@@ -208,10 +208,6 @@ def compare_results_ff3(stdout, golden_signal_0, golden_signal_1):
     golden_0 = np.loadtxt(golden_signal_0, dtype=np.int32)
     golden_1 = np.loadtxt(golden_signal_1, dtype=np.int32)
 
-    print(dut_data.shape)
-    print(dut_data[:,0])
-    print(dut_data[:,1])
-
     same = array_compare_1d(golden_0, dut_data[:,0], allow_different_lengths=True) 
     same &= array_compare_1d(golden_1, dut_data[:,1], allow_different_lengths=True)
 
