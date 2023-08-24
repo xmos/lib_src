@@ -66,7 +66,7 @@ pipeline {
           sh 'git clone git@github.com:xmos/infr_apps.git'
           sh 'git clone git@github.com:xmos/infr_scripts_py.git'
           withVenv {
-            sh 'pip install -e infr_scripts_py infr_apps'
+            sh 'pip install -e infr_apps infr_scripts_py'
             dir("tests") {
               localRunPytest('-s test_lib_checks.py -vv')
             }
