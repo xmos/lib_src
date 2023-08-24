@@ -1,0 +1,68 @@
+name: Documentation
+
+on:
+  schedule:
+    # run at 5am every day
+    - cron:  '0 5 * * *'
+  push:
+    paths:
+      - '.github/workflows/docs.yml'
+      - 'settings.json'
+      - 'doc/exclude_patterns.inc'
+      - '**/doc/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docs.yml'
+      - 'settings.json'
+      - 'doc/exclude-patterns.inc'
+      - '**/doc/**'
+
+  # Allow manually triggering the workflow.
+  workflow_dispatch: {}
+
+env:
+  XCORE_DOC_BUILDER: 'ghcr.io/xmos/doc_builder:v3.0.0'
+
+jobs:
+  build_documentation:
+    name: Build and package documentation
+    if: github.repository_owner == 'xmos'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10.x'
+
+      - name: Fetch submodules
+        run: |
+          python ${{github.workspace}}/tools/try-update-submodules.py --shallow --replace-ssh
+
+      - name: Pull doc_builder container
+        run: |
+          docker pull ${XCORE_DOC_BUILDER}
+
+      - name: Build documentation
+        run: |
+          docker run --user "$(id -u):$(id -g)" \
+                     --rm \
+                     -v ${{ github.workspace }}:/build \
+                     -e EXCLUDE_PATTERNS="/build/doc/exclude-patterns.inc" \
+                     -e OUTPUT_DIR=/build/doc/_build_xvf3800 \
+                     -e PDF=1 \
+                     -e SKIP_LINK=1 \
+                     ${XCORE_DOC_BUILDER}
+          DOC_VERSION=$(grep version settings.json | grep -o "[0-9]*\.[0-9]*\.[0-9]")
+          mv doc/_build_xvf3800/pdf/datasheet.pdf doc/_build_xvf3800/pdf/xvf3800_datasheet_v${DOC_VERSION}.pdf
+          mv doc/_build_xvf3800/pdf/programming_guide.pdf doc/_build_xvf3800/pdf/xvf3800_programming_guide_v${DOC_VERSION}.pdf
+          mv doc/_build_xvf3800/pdf/user_guide.pdf doc/_build_xvf3800/pdf/xvf3800_user_guide_v${DOC_VERSION}.pdf
+
+      - name: Save documentation xvf3800 artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-xvf3800
+          path: doc/_build_xvf3800
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn` 
+          retention-days: 30
