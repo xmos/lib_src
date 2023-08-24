@@ -6,6 +6,7 @@ lib_src change log
 
   * ADDED: XS3 VPU optimised voice fixed factor of 3 upsampling/downsampling
   * ADDED: XS3 VPU optimised voice fixed factor of 3/2 upsampling/downsampling
+  * CHANGED: OS3 uses firos3_144.dat coefficients by default inline with model
   * CHANGED: Replaced xmostest with pytest for all SRC automated tests
   * CHANGED: Golden reference test signals now generated automatically by CI
   * RESOLVED: Linker warning on channel ends
