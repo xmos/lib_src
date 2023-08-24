@@ -29,3 +29,6 @@ tests/src_output
 .waf-*/
 build/
 tests/tmp
+tests/vpu_ff3_test/autogen
+tests/vpu_rat_test/autogen
+*.csv
