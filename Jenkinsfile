@@ -65,11 +65,16 @@ pipeline {
         dir("${REPO}") {
           sh 'git clone git@github.com:xmos/infr_apps.git'
           sh 'git clone git@github.com:xmos/infr_scripts_py.git'
+          // These are needed for xmake legacy build and also changelog check
+          sh 'git clone git@github.com:xmos/lib_logging.git'
+          sh 'git clone git@github.com:xmos/lib_xassert.git'
           withVenv {
             sh 'pip install -e infr_scripts_py'
             sh 'pip install -e infr_apps'
             dir("tests") {
-              localRunPytest('-s test_lib_checks.py -vv')
+              withEnv(["XMOS_ROOT=.."]) {
+                localRunPytest('-s test_lib_checks.py -vv')
+              }
             }
           }
         }
@@ -79,8 +84,6 @@ pipeline {
       steps {
         runningOn(env.NODE_NAME)
         dir("${REPO}") {
-          sh 'git clone git@github.com:xmos/lib_logging.git'
-          sh 'git clone git@github.com:xmos/lib_xassert.git'
           withTools(params.TOOLS_VERSION) {
             withVenv {
               dir("tests") {

@@ -30,5 +30,3 @@ tests/ssrc_test/model/Main.c
 tests/ssrc_test/model/Main.h
 tests/ssrc_test/model/SSRC.c
 tests/ssrc_test/model/SSRC.h
-tests/test_mrhf.py
-tests/thdncalculator.py

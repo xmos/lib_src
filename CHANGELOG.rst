@@ -1,6 +1,21 @@
 lib_src change log
 ==================
 
+2.3.0
+-----
+
+  * ADDED: XS3 VPU optimised voice fixed factor of 3 upsampling/downsampling
+  * ADDED: XS3 VPU optimised voice fixed factor of 3/2 upsampling/downsampling
+  * CHANGED: Replaced xmostest with pytest for all SRC automated tests
+  * CHANGED: Golden reference test signals now generated automatically by CI
+  * RESOLVED: Linker warning on channel ends
+
+  * Changes to dependencies:
+
+    - lib_logging: 2.0.1 -> 3.1.1
+
+    - lib_xassert: 2.0.1 -> 4.1.0
+
 2.2.0
 -----
 
