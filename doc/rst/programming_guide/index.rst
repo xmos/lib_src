@@ -179,7 +179,7 @@ The performance was analyzed by converting output test files to 32 bits integer 
 Below are a series FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
 
 
-.. figure:: images/asrc_fft_44_192_1.001.png
+.. figure:: images/asrc_fft_44_192.pdf
    :width: 90%
 
    FFT of 1kHz sine, 0dB, 44.1kHz to 192kHz
