@@ -51,18 +51,20 @@ def tmp_dir(new_dir):
     finally:
         os.chdir(curdir)
 
+@pytest.fixture(scope="session")
+def firmware_build():
+    return build_firmware("test_asrc")
 
-@pytest.mark.parametrize("in_sr", [44100])
-@pytest.mark.parametrize("out_sr", [192000])
+@pytest.mark.parametrize("in_sr", [44100, 48000])
+@pytest.mark.parametrize("out_sr", [48000, 192000])
 @pytest.mark.parametrize("fs_deviation", ["0.990099"])
-def test_profile_asrc(in_sr, out_sr, fs_deviation):
+@pytest.mark.main
+def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
     run = lambda cmd : subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode().splitlines()
 
     file_dir = Path(__file__).resolve().parent
     output_dir = file_dir / "gprof_results"
     Path(output_dir).mkdir(exist_ok=True)
-
-    build_firmware("test_asrc")
 
     with tmp_dir(output_dir):
         xe_file = f"{file_dir}/../build/tests/asrc_test/test_asrc.xe"
@@ -224,6 +226,6 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
         ax.set_yticks(y_pos, labels=labels)
         ax.invert_yaxis()  # labels read top-to-bottom
         ax.set_xlabel('Instructions')
-        ax.set_title(f'ASRC instr per sample after {int(num_iterations)} loops (not incl. descendents)')
+        ax.set_title(f'ASRC instr per sample {in_sr} {out_sr} after {int(num_iterations)} loops (not incl. descendents)')
         plt.subplots_adjust(left=0.3, right=0.99, top=0.95, bottom=0.05) # margins
-        plt.savefig("asrc_profile_bargraph.png")
+        plt.savefig(f"asrc_profile_bargraph_{in_sr}_{out_sr}.png")
