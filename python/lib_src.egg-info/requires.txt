@@ -1,6 +1,0 @@
-pytest
-matplotlib
-numpy
-soundfile
-pytest-xdist
-scipy

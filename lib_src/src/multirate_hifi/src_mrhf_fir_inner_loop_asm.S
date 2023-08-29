@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2021 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
     .section    .dp.data,"awd",@progbits
     .text
@@ -45,8 +45,8 @@ src_mrhf_fir_inner_loop_asm:
     {ldc Acc0_h, 0; ldc Acc0_l, 0}
 
 
-    bf counter, src_mrhf_fir_done
-src_mrhf_fir_main_loop:
+    bf counter, done
+main_loop:
     sub counter, counter, 1
 
     ldd iData0, iData1, piData_p[0]
@@ -92,9 +92,9 @@ src_mrhf_fir_main_loop:
     //Decrement loop counter and increment pointers and branch if still running
     {add piData_p, piData_p, step; add piCoefs_p, piCoefs_p, step}
 
-    bt counter, src_mrhf_fir_main_loop
+    bt counter, main_loop
 
-src_mrhf_fir_done:
+done:
     //pop return value pointer from stack so we can use it to write back
     //Write back the two return values
     {ldw iDataRet_p, sp[6];     ldc counter, 31}                        //Reuse counter (r3)
@@ -165,8 +165,8 @@ src_mrhf_fir_inner_loop_asm_odd:
     //Initilise MACC regsiters to zero
     {ldc Acc0_h, 0; ldc Acc0_l, 0}
 
-    bf counter, src_mrhf_fir_done
-src_mrhf_fir_main_loop_odd:
+    bf counter, done
+main_loop_odd:
 
     {sub counter, counter, 1; ldc step, 0x38}
 
@@ -219,9 +219,9 @@ src_mrhf_fir_main_loop_odd:
     //Increment pointers and branch if still running
 
     ldc step, 0x40
-    {bt counter, src_mrhf_fir_main_loop_odd; add piCoefs_p, piCoefs_p, step}
+    {bt counter, main_loop_odd; add piCoefs_p, piCoefs_p, step}
 
-src_mrhf_fir_done_odd:
+done_odd:
     //pop return value pointer from stack so we can use it to write back
     {ldw iDataRet_p, sp[6]; ldc counter, 31}                        //Reuse counter (r3)
 

@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2021 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #define        FILTER_DEFS_ADFIR_PHASE_N_TAPS        ((1920 / 128) + 1)        // Number of taps per phase
@@ -48,7 +48,7 @@ src_mrhf_spline_coeff_gen_inner_loop_asm:
     {add piPhase0, piPhase, 0; shl n_taps, n_taps, 2}    //offset needs to be * 4 because is int
         add piPhase, piPhase, n_taps                    //PiPhase is PiPhase1 now - will swap between PiPhase1/2
 
-src_mrhf_spline_coeff_gen_main_loop:
+main_loop:
     //Loop = 0
         {ldc Acc0_h, 0; ldc Acc0_l, 0}        //Initialise MACC registers to zero
     {ldc Acc1_h, 0; ldc Acc1_l, 0}
@@ -208,7 +208,7 @@ src_mrhf_spline_coeff_gen_main_loop:
     maccs Acc1_h, Acc1_l, tmp, iData1
 
     std Acc0_h, Acc1_h, piADCoefs[7]
-src_mrhf_spline_coeff_gen_done:
+done:
     //Pop registers
     ldd r4, r5, sp[0]
     ldd r6, r7, sp[1]
