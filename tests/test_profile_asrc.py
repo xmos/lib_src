@@ -12,7 +12,7 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import contextlib, os
-from src_test_utils import gen_golden, build_firmware, src_mrh_file_name_builder
+from src_test_utils import gen_golden, build_firmware, src_mrh_file_name_builder, max_mips_fron_std_out
 
 
 # For calculating cycle count
@@ -41,6 +41,8 @@ def extract_function_timing(function, gprof_terminated):
 
 
     return None, None, None, None, None, None
+
+
 
 @contextlib.contextmanager
 def tmp_dir(new_dir):
@@ -85,8 +87,11 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
             cmd += f" -f {in_sr} -g {out_sr} -n {num_samples_to_process}"
             cmd += f" -e {fs_deviation}"
 
-            xsim_output = run(cmd)
             print(f"Command: {cmd}")
+            xsim_output = run(cmd)
+
+            max_mips = max_mips_fron_std_out(xsim_output, in_sr)
+
             with open("xsim_output.txt", "w") as gpo:
                 for line in xsim_output:
                     gpo.write(f"{line}\n")
