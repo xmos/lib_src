@@ -1,0 +1,1 @@
+docker run --rm -t -u "$(id -u):$(id -g)" -v $(pwd):/build -e SKIP_LINK=1 -e PDF=1 -e DOXYGEN_INCLUDE="/build/doc/Doxyfile.inc" -e DOXYGEN_INPUT=ignore ghcr.io/xmos/doc_builder:v3.0.0

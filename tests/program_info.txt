@@ -1,0 +1,15 @@
+Application id number: 0x00000000
+Application id string: "".
+tile[0] (node "0", tile 0) stack usage,  upper bound: 8792
+tile[0] (node "0", tile 0) program size,  upper bound: 72536
+tile[0] (node "0", tile 0) free memory,  lower bound: 442960
+tile[0] (node "0", tile 0) thread usage,  upper bound: 2
+tile[0] (node "0", tile 0) unused threads,  lower bound: 6
+tile[0] (node "0", tile 0) timer count,  upper bound: 2
+tile[0] (node "0", tile 0) unused timers,  lower bound: 8
+tile[0] (node "0", tile 0) channel end usage,  upper bound: 2
+tile[0] (node "0", tile 0) unused channel ends,  lower bound: 30
+Node "0" routing id =  0x8002
+Node "0" PLL configuration register value =  0x00003100
+Node "0" reference clock divider register value =  0x00000005
+Node "0" system frequency (Hz) =  600000000

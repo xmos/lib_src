@@ -21,7 +21,7 @@ f_clock_mhz = 600
 instr_per_mm = f_clock_mhz * 1e6 / num_threads / 1e6 
 instr_per_m = f_clock_mhz * 1e6 / num_threads / 1e3
 
-num_iterations = 256
+num_iterations = 32
 
 def extract_function_timing(function, gprof_terminated):
 
@@ -52,8 +52,8 @@ def tmp_dir(new_dir):
         os.chdir(curdir)
 
 
-@pytest.mark.parametrize("in_sr", [48000])
-@pytest.mark.parametrize("out_sr", [48000])
+@pytest.mark.parametrize("in_sr", [44100])
+@pytest.mark.parametrize("out_sr", [192000])
 @pytest.mark.parametrize("fs_deviation", ["0.990099"])
 def test_profile_asrc(in_sr, out_sr, fs_deviation):
     run = lambda cmd : subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode().splitlines()
@@ -62,15 +62,9 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
     output_dir = file_dir / "gprof_results"
     Path(output_dir).mkdir(exist_ok=True)
 
+    build_firmware("test_asrc")
+
     with tmp_dir(output_dir):
-        # This is not needed in the Jenkins run but keep here for local pytest runs
-        print()
-        # print("Building...")
-        # root_dir = Path(__file__).parent.parent.parent.parent.resolve()
-        # subprocess.run(f"cmake --preset=app_xvf3800 -DTIMING_NUM_ITERATIONS={num_iterations}".split(), check=True, cwd=root_dir)
-        # subprocess.run(f"cmake --build build/app_xvf3800 -t audio_task_timing -j".split(), check=True, cwd=root_dir)
-
-
         xe_file = f"{file_dir}/../build/tests/asrc_test/test_asrc.xe"
         print("Dumping object...")
         run(f"xobjdump --split {xe_file}")
@@ -90,6 +84,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
             cmd += f" -e {fs_deviation}"
 
             xsim_output = run(cmd)
+            print(f"Command: {cmd}")
             with open("xsim_output.txt", "w") as gpo:
                 for line in xsim_output:
                     gpo.write(f"{line}\n")
@@ -109,7 +104,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
 
             known_function = "asrc_process"
             if known_function in "\n".join(gprof):
-                print(f"Found correct gprof file containing {known_function}..")
+                print(f"Found correct gprof file {gprof_output_file} containing {known_function}..")
                 core_found = core_number
 
                 # Save file for archiving
@@ -135,10 +130,25 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
                                 "asrc_process",
 
                                 "src_mrhf_fir_os_inner_loop_asm",
+                                "src_mrhf_fir_os_main_loop",
+                                "src_mrhf_fir_os_done",
+
                                 "src_mrhf_fir_os_inner_loop_asm_odd",
+                                "src_mrhf_fir_os_main_loop_odd",
+                                "src_mrhf_fir_os_done_odd",
+
                                 "src_mrhf_adfir_inner_loop_asm",
+                                "src_mrhf_adfir_main_loop",
+                                "src_mrhf_adfir_done",
+
                                 "src_mrhf_adfir_inner_loop_asm_odd",
+                                "src_mrhf_adfir_main_loop_odd",
+                                "src_mrhf_adfir_done_odd",
+
                                 "src_mrhf_spline_coeff_gen_inner_loop_asm",
+                                "src_mrhf_spline_coeff_gen_main_loop",
+                                "src_mrhf_spline_coeff_gen_done",
+
 
                                 "ADFIR_init_from_desc",
                                 "ASRC_prepare_coefs",
@@ -146,15 +156,6 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
                                 "ASRC_proc_F1_F2",
                                 "FIR_proc_ds2",
                                 
-                                "__umoddi3",
-                                "__udivdi3",
-
-                                "sample_delay_current_delay",
-                                "sample_delay_apply",
-                                "memcpy",
-                                
-                                "main_loop",
-                                "main_loop_odd",
                                 ]
 
         """ From https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_chapter/gprof_5.html
@@ -174,6 +175,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
         This is the name of the function. The flat profile is sorted by this field alphabetically after the self seconds and calls fields are sorted.
         """
 
+
         # Now build a dictionary with just the call count and time for all calls
         instr_cycles = []
         num_calls = []
@@ -186,6 +188,21 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
                 continue
             # print(f"{function} - {percent} {time_milli_cum} {time_milli} {calls} {mm_call_self} {mm_call_tot}")
             
+            # gprof doesn't report loops in ASM properly so manually insert the number of runs  
+            hack_list =     ["src_mrhf_spline_coeff_gen_main_loop",
+                            "src_mrhf_fir_os_main_loop_odd",
+                            "src_mrhf_fir_os_main_loop",
+                            "src_mrhf_adfir_main_loop_odd",
+                            "src_mrhf_adfir_main_loop",
+                            "src_mrhf_adfir_done",
+                            "src_mrhf_adfir_done_odd",
+                            "src_mrhf_spline_coeff_gen_done",
+                            "src_mrhf_fir_os_done",
+                            "src_mrhf_fir_os_done_odd",
+                            ]
+            if function in hack_list:
+                calls = num_iterations
+
             # gprof can change its units depending on how long the run was. Use % if reporting in m rather than mm for better accuracy
             if use_mm:
                 instructions = int(mm_call_self * instr_per_mm * calls / num_iterations)
@@ -207,9 +224,9 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
         ax.set_yticks(y_pos, labels=labels)
         ax.invert_yaxis()  # labels read top-to-bottom
         ax.set_xlabel('Instructions')
-        ax.set_title(f'ASRC instr per loop after {int(num_iterations)} loops (not incl. descendents)')
+        ax.set_title(f'ASRC instr per sample after {int(num_iterations)} loops (not incl. descendents)')
         plt.subplots_adjust(left=0.3, right=0.99, top=0.95, bottom=0.05) # margins
-        plt.savefig("bargraph.png")
+        plt.savefig("asrc_profile_bargraph.png")
     
     
 
