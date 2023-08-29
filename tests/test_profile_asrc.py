@@ -21,7 +21,7 @@ f_clock_mhz = 600
 instr_per_mm = f_clock_mhz * 1e6 / num_threads / 1e6 
 instr_per_m = f_clock_mhz * 1e6 / num_threads / 1e3
 
-num_iterations = 32
+num_iterations = 256
 
 def extract_function_timing(function, gprof_terminated):
 
@@ -102,7 +102,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
         # The core assignment can change on compile so scan through elf files to find right one
         core_found = None
         for core_number in range(8):
-            gprof_output_file = f"Tile[0]_core{core_number}.gprof"
+            gprof_output_file = f"tile[0]_core{core_number}.gprof"
             print(f"Found core - {gprof_output_file}")
             #                    Use tile 1 app   use core number for gprof file
             gprof = run(f"xgprof image_n0c0_2.elf {gprof_output_file}")
@@ -126,60 +126,35 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
             use_mm = True 
         else:
             use_mm = False
-            # First get call to ma_rx to calc scaling factors for better accuracy as gprof uses milliseconds
-            # ma_frame_rx has big numbers so we can get an accurate factor
-            percent, time_milli_cum, time_milli, calls, mm_call_self, mm_call_tot = extract_function_timing("ma_frame_rx", gprof_terminated)
+            # First get call to asrc_process to calc scaling factors for better accuracy as gprof uses milliseconds
+            # this function has big numbers so we can get an accurate factor
+            percent, time_milli_cum, time_milli, calls, mm_call_self, mm_call_tot = extract_function_timing("asrc_process", gprof_terminated)
             percent_scaling = time_milli / percent
 
         functions_of_interest = [
-                                "update_idle_time",
+                                "asrc_process",
 
-                                "fir_s32_24t",
-                                "conv_s32_24t",
+                                "src_mrhf_fir_os_inner_loop_asm",
+                                "src_mrhf_fir_os_inner_loop_asm_odd",
+                                "src_mrhf_adfir_inner_loop_asm",
+                                "src_mrhf_adfir_inner_loop_asm_odd",
+                                "src_mrhf_spline_coeff_gen_inner_loop_asm",
+
+                                "ADFIR_init_from_desc",
+                                "ASRC_prepare_coefs",
+                                "FIR_proc_os2",
+                                "ASRC_proc_F1_F2",
+                                "FIR_proc_ds2",
                                 
-                                "receive_from_i2s",
-                                "fifo_chan_rx_fsm_receive",
-                                "unpack",
-                                "unmake_collection_array_and_downsample",
-                                "downsample",
-                                "fifo_chan_rx_fsm_done",
-                                
-                                "mute_at_boot",
-                                "memset",
+                                "__umoddi3",
+                                "__udivdi3",
 
                                 "sample_delay_current_delay",
                                 "sample_delay_apply",
                                 "memcpy",
                                 
-                                "shf_int32_to_float32_scaled",
-                                
-                                "apply_gain",
-                                "float_to_mux_buf",
-
-                                "push_samps_to_shf",
-                                "pull_samps_from_shf",
-
-                                "post_shf_dsp",
-                                "current_azimuths",
-                                "beam_selection",
-
-                                "fifo_chan_tx_next_buf",
-                                "mux",
-                                "prepare_output_channel",
-                                "pack",
-                                "upsample",
-                                "fifo_chan_tx_send",
-
-                                "do_audio_control",
-                                "queue_read_packet",
-                                "handle_through_lookup",
-                                "queue_set_packet_done",
-
-                                "float_s32_to_f32",
-                                "unpack_float",
-                                "chan_non_blocking_flush",
-                                "chan_non_blocking_check_notification",
-
+                                "main_loop",
+                                "main_loop_odd",
                                 ]
 
         """ From https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_chapter/gprof_5.html
@@ -232,7 +207,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
         ax.set_yticks(y_pos, labels=labels)
         ax.invert_yaxis()  # labels read top-to-bottom
         ax.set_xlabel('Instructions')
-        ax.set_title(f'Audio instr per loop after {int(num_iterations)} loops (not incl. descendents)')
+        ax.set_title(f'ASRC instr per loop after {int(num_iterations)} loops (not incl. descendents)')
         plt.subplots_adjust(left=0.3, right=0.99, top=0.95, bottom=0.05) # margins
         plt.savefig("bargraph.png")
     
