@@ -138,6 +138,7 @@ pipeline {
 
                 // Profile the ASRC
                 localRunPytest('-m main -k "profile_asrc" -vv')
+                sh 'tree'
                 archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
               }
             }
