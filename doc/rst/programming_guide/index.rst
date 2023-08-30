@@ -453,7 +453,14 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
 SSRC API
 --------
 
+.. doxygengroup:: src_ssrc
+   :content-only:
 
+ASRC API
+--------
+
+.. doxygengroup:: src_asrc
+   :content-only:
 
 
 .. include:: ./fixed_ratio_src.rst

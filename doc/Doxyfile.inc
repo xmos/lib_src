@@ -1,7 +1,7 @@
 # This file provides overrides to the Doxyfile configuration
 
 PROJECT_NAME           = lib_src
-PROJECT_BRIEF          = "Synchronous and Asynchronous rate conversion documentation"
+PROJECT_BRIEF          = "Synchronous and Asynchronous Rate Conversion Documentation"
 
 INPUT                  = ../lib_src/api ../lib_src/src
 
