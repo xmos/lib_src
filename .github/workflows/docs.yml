@@ -48,13 +48,13 @@ jobs:
                      -t \
                      -v ${{ github.workspace }}:/build \
                      -e EXCLUDE_PATTERNS=/build/doc/exclude-patterns.inc \
-                     -e OUTPUT_DIR=${{ github.workspace }}:/build \
+                     -e OUTPUT_DIR=${{ github.workspace }}:/build/doc/_build \
                      -e DOXYGEN_INCLUDE=/build/doc/Doxyfile.inc \
                      -e DOXYGEN_INPUT=ignore ${XCORE_DOC_BUILDER} \
                      -e PDF=1 \
                      -e SKIP_LINK=1 \
-                     -e REPO:/build \
                      ${XCORE_DOC_BUILDER}
+          tree
           DOC_VERSION=$(grep version settings.json | grep -o "[0-9]*\.[0-9]*\.[0-9]")
           mv doc/_build/pdf/programming_guide.pdf doc/_build/pdf/programming_guide_v${DOC_VERSION}.pdf
 
