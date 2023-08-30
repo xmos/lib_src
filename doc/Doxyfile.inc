@@ -1,9 +1,9 @@
 # This file provides overrides to the Doxyfile configuration
 
-PROJECT_NAME           = lib_ssrc
+PROJECT_NAME           = lib_src
 PROJECT_BRIEF          = "Synchronous and Asynchronous rate conversion documentation"
 
-INPUT                  = ../lib_src/api ../lib_src/src ../examples/AN00231_ASRC_SPDIF_TO_DAC/src
+INPUT                  = ../lib_src/api ../lib_src/src
 
 PREDEFINED             = C_API= EXTERN_C= 
 
