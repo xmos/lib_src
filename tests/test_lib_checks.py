@@ -36,8 +36,8 @@ def test_version_matches():
     """
     Check docs version vs changelog
     """
-    with open("settings.json") as sj:
-        with open("CHANGELOG.rst") as cl:
+    with open(Path(__file__).resolve().parent / "../settings.json") as sj:
+        with open(Path(__file__).resolve().parent / "../CHANGELOG.rst") as cl:
             re_string = r"([0-9]*)\.([0-9]*)\.([0-9]*)"
             sj_ver = re.search(re_string, sj.readlines()[3]).groups()
             cl_ver = re.search(re_string, cl.readlines()[3]).groups()
