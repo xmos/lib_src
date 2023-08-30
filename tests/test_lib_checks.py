@@ -31,3 +31,14 @@ def test_changelog_check():
     ret = run(f"xmos_changelog_check check {REPO_ROOT}".split())
     assert 0 == ret.returncode
     
+
+def test_version_matches():
+    """
+    Check docs version vs changelog
+    """
+    with open("settings.json") as sj:
+        with open("CHANGELOG.rst") as cl:
+            re_string = r"([0-9]*)\.([0-9]*)\.([0-9]*)"
+            sj_ver = re.search(re_string, sj.readlines()[3]).groups()
+            cl_ver = re.search(re_string, cl.readlines()[3]).groups()
+            assert sj_ver == cl_ver, f"Version match issue between settings.json and CHANGELOG.rst: {sj_ver} {cl_ver}"
