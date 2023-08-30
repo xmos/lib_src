@@ -10,6 +10,8 @@ lib_src change log
   * CHANGED: Aligned the FIR coefficient array to an 8-byte boundary. This
     ensures that the voice fixed factor of 3 up and down sampling functions do
     not crash with a LOAD_STORE exception.
+  * ADDED: Missing device attributes to the .xn file of the AN00231 app note.
+  * ADDED: Minimal cmake support.
 
 2.1.0
 -----
