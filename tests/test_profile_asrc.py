@@ -21,7 +21,9 @@ f_clock_mhz = 600
 instr_per_mm = f_clock_mhz * 1e6 / num_threads / 1e6 
 instr_per_m = f_clock_mhz * 1e6 / num_threads / 1e3
 
-num_iterations = 32
+num_samples_to_process = 128
+num_channels = 2
+total_samples_processed = num_samples_to_process * num_channels
 
 def extract_function_timing(function, gprof_terminated):
 
@@ -57,8 +59,10 @@ def tmp_dir(new_dir):
 def firmware_build():
     return build_firmware("test_asrc")
 
-@pytest.mark.parametrize("in_sr", [44100, 48000])
+@pytest.mark.parametrize("in_sr", [44100, 176400])
 @pytest.mark.parametrize("out_sr", [48000, 192000])
+# @pytest.mark.parametrize("in_sr", [176400])
+# @pytest.mark.parametrize("out_sr", [48000])
 @pytest.mark.parametrize("fs_deviation", ["0.990099"])
 @pytest.mark.main
 def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
@@ -73,13 +77,12 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
         print("Dumping object...")
         run(f"xobjdump --split {xe_file}")
 
-        print(f"Simulating {int(num_iterations)} iterations...")
+        print(f"Simulating {int(num_samples_to_process)} lots of {num_channels} samples...")
         try:
             fnb = src_mrh_file_name_builder()
             input_signal_0, input_signal_1 = fnb.get_in_signal_pair(in_sr, "asrc")
             dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "asrc", "dut", fs_deviation=fs_deviation)
             signal_dir = file_dir / "src_input"
-            num_samples_to_process = num_iterations
     
             cmd = f"xsim --gprof --args {xe_file}"
             cmd += f" -i {signal_dir / input_signal_0} {signal_dir / input_signal_1}"
@@ -90,7 +93,7 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
             print(f"Command: {cmd}")
             xsim_output = run(cmd)
 
-            max_mips = max_mips_fron_std_out(xsim_output, in_sr)
+            max_instr_per_samp = max_mips_fron_std_out(xsim_output, in_sr, get_max_instr_per_samp=True)
 
             with open("xsim_output.txt", "w") as gpo:
                 for line in xsim_output:
@@ -128,13 +131,26 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
             use_mm = True 
         else:
             use_mm = False
-            # First get call to asrc_process to calc scaling factors for better accuracy as gprof uses milliseconds
-            # this function has big numbers so we can get an accurate factor
-            percent, time_milli_cum, time_milli, calls, mm_call_self, mm_call_tot = extract_function_timing("asrc_process", gprof_terminated)
+            # First get call to a big fn to calc scaling factors for better accuracy as gprof uses milliseconds
+            percent, time_milli_cum, time_milli, calls, mm_call_self, mm_call_tot = extract_function_timing("dsp_slave", gprof_terminated)
             percent_scaling = time_milli / percent
+
+        print(f"Using mm units (no need to work out from %): {use_mm}")
 
         functions_of_interest = [
                                 "asrc_process",
+
+                                "FIR_proc_os2",
+                                "ASRC_proc_F1_F2",
+                                "FIR_proc_ds2",
+
+                                "src_mrhf_fir_inner_loop_asm",
+                                "src_mrhf_fir_main_loop",
+                                "src_mrhf_fir_done",
+
+                                "src_mrhf_fir_inner_loop_asm_odd",
+                                "src_mrhf_fir_main_loop_odd",
+                                "src_mrhf_fir_done_odd",
 
                                 "src_mrhf_fir_os_inner_loop_asm",
                                 "src_mrhf_fir_os_main_loop",
@@ -159,10 +175,6 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
 
                                 "ADFIR_init_from_desc",
                                 "ASRC_prepare_coefs",
-                                "FIR_proc_os2",
-                                "ASRC_proc_F1_F2",
-                                "FIR_proc_ds2",
-                                
                                 ]
 
         """ From https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_chapter/gprof_5.html
@@ -193,7 +205,6 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
                 instr_cycles.append(0)
                 num_calls.append(0)
                 continue
-            # print(f"{function} - {percent} {time_milli_cum} {time_milli} {calls} {mm_call_self} {mm_call_tot}")
             
             # gprof doesn't report loops in ASM properly so manually insert the number of runs  
             hack_list =     ["src_mrhf_spline_coeff_gen_main_loop",
@@ -205,20 +216,30 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
                             "src_mrhf_adfir_done_odd",
                             "src_mrhf_spline_coeff_gen_done",
                             "src_mrhf_fir_os_done",
-                            "src_mrhf_fir_os_done_odd",
+                            "src_mrhf_fir_os_done_odd"
+                            "src_mrhf_fir_inner_loop_asm",
+                            "src_mrhf_fir_main_loop",
+                            "src_mrhf_fir_done",
+                            "src_mrhf_fir_inner_loop_asm_odd",
+                            "src_mrhf_fir_main_loop_odd",
+                            "src_mrhf_fir_done_odd",
                             ]
             if function in hack_list:
-                calls = num_iterations
+                calls = total_samples_processed
 
             # gprof can change its units depending on how long the run was. Use % if reporting in m rather than mm for better accuracy
             if use_mm:
-                instructions = int(mm_call_self * instr_per_mm * calls / num_iterations)
+                instructions = int(mm_call_self * instr_per_mm / total_samples_processed)
             else:
-                instructions = 0 if calls == 0 else int(percent * percent_scaling * instr_per_m / num_iterations)
+                instructions = 0 if calls == 0 else int(percent * percent_scaling * instr_per_m / total_samples_processed)
+
+            # print(f"* {function} - {percent}% ({time_milli_cum}) self_milli: {time_milli} calls: {calls} ... {mm_call_self} {mm_call_tot} Instructions: {instructions}")
 
             instr_cycles.append(instructions)
             num_calls.append(int(calls))  
             print(function, int(calls), instructions)          
+
+        print(f"max_instr_per_samp: {max_instr_per_samp}")
 
         # Plot the data
         plt.rcdefaults()
@@ -227,10 +248,10 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
         fig, ax = plt.subplots(figsize=(10, 5), dpi=150)
         y_pos = np.arange(len(instr_cycles))
         ax.barh(y_pos, instr_cycles, align='center')
-        labels = [ f"{f} ({c/num_iterations})" for f, c in zip(functions_of_interest, num_calls)]
+        labels = [ f"{f} ({c/total_samples_processed})" for f, c in zip(functions_of_interest, num_calls)]
         ax.set_yticks(y_pos, labels=labels)
         ax.invert_yaxis()  # labels read top-to-bottom
         ax.set_xlabel('Instructions')
-        ax.set_title(f'ASRC instr per sample {in_sr} {out_sr} after {int(num_iterations)} loops (not incl. descendents)')
-        plt.subplots_adjust(left=0.3, right=0.99, top=0.95, bottom=0.05) # margins
+        ax.set_title(f'ASRC instr per single sample {in_sr} {out_sr} after {int(total_samples_processed)} total samples (not incl. descendents)\nTotal max instructions per sample: {max_instr_per_samp}')
+        plt.subplots_adjust(left=0.3, right=0.99, top=0.90, bottom=0.05) # margins
         plt.savefig(f"asrc_profile_bargraph_{in_sr}_{out_sr}.png")

@@ -106,17 +106,22 @@ def gen_golden(host_app, src_type, num_samples_to_process, input_freqs, output_f
                     run_cmd(cmd)
                     
 
-def max_mips_fron_std_out(output, in_sr, timer_hz = 100e6, cpu_hz = 600e6, num_threads = 5):
+def max_mips_fron_std_out(output, in_sr, timer_hz = 100e6, cpu_hz = 600e6, num_threads = 5, get_max_instr_per_samp=False):
     max_mips = 0.0
+    max_instr_per_samp = 0
     for line in output:
         found = re.search(r".*Process time per chan ticks=(\d+).*", line)
         if found:
             process_time_ticks =int(found.group(1))
 
             instr_per_sample = process_time_ticks * cpu_hz / timer_hz / num_threads
+            max_instr_per_samp = max_instr_per_samp if max_instr_per_samp > instr_per_sample else instr_per_sample
+
+
             mips = instr_per_sample * in_sr / 1e6
             max_mips = mips if mips > max_mips else max_mips
-    return max_mips
+
+    return max_instr_per_samp if get_max_instr_per_samp else max_mips
 
 def run_dut(in_sr, out_sr, src_type, num_samples_to_process, fs_deviation=None):
     """ Run the test vector through the compiled fimrware application and compare with 
