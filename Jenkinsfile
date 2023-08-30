@@ -135,6 +135,11 @@ pipeline {
 
                 // VPU enabled ff3 and rat tests
                 localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
+
+                // Profile the ASRC
+                localRunPytest('-m main -k "profile_asrc" -vv')
+                sh 'tree'
+                archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
               }
             }
           }

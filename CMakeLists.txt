@@ -74,5 +74,6 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
     target_compile_options(lib_src
         PRIVATE 
             -O3
+            -g
     )
 endif()
