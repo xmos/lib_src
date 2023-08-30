@@ -8,6 +8,8 @@ Both sample rate converters are based on a 144 tap FIR filter with two sets of c
  * firos3_b_144.dat / firds3_b_144.dat - These filters have 20dB of attenuation at the nyquist frequency and a higher cutoff frequency
  * firos3_144.dat / firds3_144.dat - These filters have 60dB of attenuation at the nyquist frequency but trade this off with a lower cutoff frequency
 
+The default setting is to use the 60dB of attenuation at the nyquist frequency coefficients.
+
 The filter coefficients may be selected by adjusting the line::
 
   #define   FIROS3_COEFS_FILE
@@ -22,7 +24,7 @@ The OS3 processing takes up to 153 core cycles to compute a sample which transla
 
 The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89us at 100MHz or 6.224us at 62.5MHz core speed. This permits up to 9 channels of 48KHz -> 16KHz sample rate conversion in a single 62.5MHz core.
 
-Both downsample and oversample functions return ``ERROR`` or  ``NOERROR`` status codes as defined in return codes enums listed below.
+Both downsample and oversample functions return ``ERROR`` or  ``NOERROR`` status codes as defined in return codes enums listed below. The only way these functions can error is if the passed `delay_base` structure member has been uninitialised and is NULL.
 
 The down sampling functions return the following error codes ::
 
@@ -63,8 +65,11 @@ OS3 API
 
 .. doxygenfunction:: src_os3_proc
 
+
 Fixed factor of 3 functions optimised for use with voice
 ========================================================
+
+TODO ADD SOME INTRO HERE
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -85,4 +90,52 @@ Voice US3 API
 .. doxygenfunction:: src_us3_voice_input_sample
 
 .. doxygenfunction:: src_us3_voice_get_next_sample
+
+
+Fixed factor of 3 and 3/2 functions optimised for XS3 (xCORE-AI) and for use with voice
+=======================================================================================
+
+TODO ADD SOME INTRO HERE
+
+Example usage 16 kHz <-> 48 kHz and 32 kHz <-> 48 kHz
+
+ALSO UPDATE THESE BELOW
+
+Use Pavel's table.
+
+https://xmosjira.atlassian.net/wiki/spaces/CONF/pages/3771990022/XVF3800+SRC+Low-Pass+filter+design
+
+https://xmosjira.atlassian.net/wiki/spaces/CONF/pages/3784245249/XVF3820+SRC+Low-Pass+filter+design
+
+..
+  .. doxygenvariable:: src_ff3v_fir_coefs_debug
+
+..
+  .. doxygenvariable:: src_ff3v_fir_coefs
+
+Voice DS3 API
+-------------
+
+.. doxygengroup:: src_ff3_96t_ds
+   :content-only:
+
+Voice US3 API
+-------------
+
+.. doxygengroup:: src_ff3_96t_us
+   :content-only:
+
+Voice DS3/2 API
+-------------
+
+.. doxygengroup:: src_rat_2_3_96t_ds
+   :content-only:
+
+Voice US3/2 API
+-------------
+
+.. doxygengroup:: src_rat_3_2_96t_us
+   :content-only:
+
+
 

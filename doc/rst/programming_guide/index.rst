@@ -1,5 +1,12 @@
 Programmer Guide
-================
+################
+
+
+.. include:: ../../../README.rst
+
+
+Multi-rate HiFi Sample Rate Conversion
+======================================
 
 Usage
 -----
@@ -463,6 +470,10 @@ ASRC API
    :content-only:
 
 
+
+
+
 .. include:: ./fixed_ratio_src.rst
+
 
 .. include:: ../../../CHANGELOG.rst
