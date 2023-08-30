@@ -45,12 +45,11 @@ jobs:
           tree
           docker run --user "$(id -u):$(id -g)" \
                      --rm \
-                     -t \
                      -v ${{ github.workspace }}:/build \
                      -e EXCLUDE_PATTERNS=/build/doc/exclude-patterns.inc \
                      -e OUTPUT_DIR=${{ github.workspace }}:/build/doc/_build \
                      -e DOXYGEN_INCLUDE=/build/doc/Doxyfile.inc \
-                     -e DOXYGEN_INPUT=ignore ${XCORE_DOC_BUILDER} \
+                     -e DOXYGEN_INPUT=ignore \
                      -e PDF=1 \
                      -e SKIP_LINK=1 \
                      ${XCORE_DOC_BUILDER}
