@@ -11,6 +11,8 @@
 // read Richard G. Lyons "Understanding digital signal processing"
 // capters 10.1 - 10.7, 10.10 - 10.11
 
+
+
 /**
  * @brief Performs VPU-optimised 72 taps polyphase fixed-factor-of-3 downsampling
  * 
@@ -44,6 +46,14 @@ static inline void src_ff3_72t_us(int32_t samp_in[1], int32_t samp_out[3], const
     samp_out[2] = conv_s32_24t(state_us, coefs_ff3[0]) * 3;
 }
 
+
+/**
+ * \addtogroup src_ff3_96t_ds src_ff3_96t_ds
+ *
+ * The public API for using SRC.
+ * @{
+ */
+
 /**
  * @brief Performs VPU-optimised 96 taps polyphase fixed-factor-of-3 downsampling
  * 
@@ -62,6 +72,15 @@ static inline void src_ff3_96t_ds(int32_t samp_in[3], int32_t samp_out[1], const
     samp_out[0] = (int32_t)acc;
 }
 
+/**@}*/ // END: addtogroup src_ff3_96t_ds
+
+/**
+ * \addtogroup src_ff3_96t_us src_ff3_96t_us
+ *
+ * The public API for using SRC.
+ * @{
+ */
+
 /**
  * @brief Performs VPU-optimised 96 taps polyphase fixed-factor-of-3 upsampling
  * 
@@ -76,6 +95,16 @@ static inline void src_ff3_96t_us(int32_t samp_in[1], int32_t samp_out[3], const
     samp_out[1] = conv_s32_32t(state_us, coefs_ff3[1]) * 3;
     samp_out[2] = conv_s32_32t(state_us, coefs_ff3[0]) * 3;
 }
+
+/**@}*/ // END: addtogroup src_ff3_96t_us
+
+
+/**
+ * \addtogroup src_rat_2_3_96t_ds src_rat_2_3_96t_ds
+ *
+ * The public API for using SRC.
+ * @{
+ */
 
 /**
  * @brief Performs VPU-optimised 96 taps polyphase rational factor 2/3 downsampling
@@ -92,6 +121,16 @@ static inline void src_rat_2_3_96t_ds(int32_t samp_in[3], int32_t samp_out[2], c
     samp_out[1] = fir_s32_48t(state_ds, coefs_ds[1], samp_in[2]) * 2;
 }
 
+/**@}*/ // END: addtogroup src_rat_2_3_96t_ds
+
+
+/**
+ * \addtogroup src_rat_3_2_96t_us src_rat_3_2_96t_us
+ *
+ * The public API for using SRC.
+ * @{
+ */
+
 /**
  * @brief Performs VPU-optimised 96 taps polyphase rational factor 3/2 upsampling
  * 
@@ -106,5 +145,7 @@ static inline void src_rat_3_2_96t_us(int32_t samp_in[2], int32_t samp_out[3], c
     samp_out[1] = conv_s32_32t(state_us, coefs_us[2]) * 3;
     samp_out[2] = fir_s32_32t(state_us, coefs_us[1], samp_in[1]) * 3;
 }
+
+/**@}*/ // END: addtogroup src_rat_3_2_96t_us
 
 #endif // _SRC_POLY_VPU_H_

@@ -8,7 +8,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 
 
 .. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance
-     :header-rows: 1
+     :header-rows: 2
 
      * -
        - Output sample rate
@@ -70,7 +70,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 .. caution:: Configurations requiring more than 100MHz cannot currently be run in real time on a single core. The performance limit for a single core on a 500MHz xCORE-200 device is 100MHz (500/5). Further optimization of the library, including assembler optimization and pipelining of the adaptive filter generation and FIR filter stages, is feasible to achieve higher sample rate operation within the constraints of a 100MHz logical core.
 
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
-     :header-rows: 1
+     :header-rows: 2
 
      * -
        - Output sample rate
