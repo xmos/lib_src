@@ -16,7 +16,8 @@ EXPORT_INCLUDE_DIRS = api \
                       src/fixed_factor_of_3_voice \
                       src/multirate_hifi \
                       src/multirate_hifi/asrc \
-                      src/multirate_hifi/ssrc
+                      src/multirate_hifi/ssrc \
+                      src/fixed_factor_vpu_voice
 
 INCLUDE_DIRS = $(EXPORT_INCLUDE_DIRS)
 
