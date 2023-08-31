@@ -47,10 +47,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     target_link_options(${TARGET_NAME} PRIVATE ${APP_LINK_OPTIONS})
     target_link_libraries(${TARGET_NAME} PUBLIC ${APP_COMMON_LINK_LIBRARIES})
     unset(TARGET_NAME)
-
-    # Copy output to a handy location
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.xe DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-
+    
 else ()
 
 # Golden ref app
