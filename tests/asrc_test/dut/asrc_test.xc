@@ -33,7 +33,7 @@ int uiInFs = -1;
 int uiOutFs = -1;
 
 //Global deviation ratio from nominal sample rate in/out ratio. Initialise to invalid.
-float fFsRatioDeviation = -1.0000;
+double fFsRatioDeviation = (double)-1.0000;
 
 const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
 
@@ -67,13 +67,13 @@ void dsp_slave(chanend c_dsp)
         asrc_ctrl[ui].piStack                   = asrc_stack[ui];
         asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
     }
-    
+
 /*
      // Update Fs Ratio
     for(int i = 0; i < ASRC_N_CHANNELS; i++)
     {
     // Make Fs Ratio deviate
-    asrc_ctrl[i].uiFsRatio        = (unsigned int)(asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
+    asrc_ctrl[i].uiFsRatio        = (unsigned int)((double)asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
         if(ASRC_update_fs_ratio(&asrc_ctrl[i]) != ASRC_NO_ERROR)
         {
               printf("Error updating ASRC fs ratio\n");
@@ -103,7 +103,7 @@ void dsp_slave(chanend c_dsp)
         }
 
         n_samps_in_tot += ASRC_N_IN_SAMPLES;
-        
+
         c_dsp <: n_samps_out;       //Send number of samples to receive
 
         for(unsigned uj = 0; uj < n_samps_out; uj++)
@@ -121,7 +121,7 @@ void dsp_slave(chanend c_dsp)
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
             unsigned nominal_FsRatio = asrc_init(InFs, OutFs, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
-            
+
             sr_in_out = sr_in_out_new;
             printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
         }
@@ -130,7 +130,7 @@ void dsp_slave(chanend c_dsp)
     }
 }
 
-void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
+void dsp_mgr(chanend c_dsp[], double fFsRatioDeviation){
 
     FILE            * movable InFileDat[ASRC_N_CHANNELS];
     FILE            * movable OutFileDat[ASRC_N_CHANNELS];
@@ -140,11 +140,11 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
     unsigned iEndOfFile  = 0;
     unsigned int    sr_in_out = uiInFs << 16 | uiOutFs ; //Input fs in upper 16bits and Output fs in lower 16bits
     unsigned FsRatio = (unsigned) (((unsigned long long)sample_rates[uiInFs] * (unsigned long long)(1<<28)) / (unsigned long long)sample_rates[uiOutFs]);
-    
-    FsRatio =  (unsigned int)((float)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
+
+    FsRatio =  (unsigned int)((double)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
     printf("Adjusted FsRatio dsp_mgr = %d, 0x%x\n", FsRatio, FsRatio);
 
-    
+
 
     for (int i=0; i<ASRC_N_CHANNELS; i++)
     unsafe
@@ -164,7 +164,7 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
 
 
     while(!iEndOfFile)
-    {        
+    {
         for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
             c_dsp[j] <: sr_in_out;
             c_dsp[j] <: FsRatio;
@@ -180,21 +180,21 @@ void dsp_mgr(chanend c_dsp[], float fFsRatioDeviation){
                     printf("EOF\n");
                 }
                 c_dsp[j] <: samp;       //Send the sample
-            }            
+            }
         }
-        count_in += ASRC_N_IN_SAMPLES; 
+        count_in += ASRC_N_IN_SAMPLES;
 
 
         unsigned n_samps;
-        for (unsigned j=0; j<ASRC_N_INSTANCES; j++) 
+        for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
         {
             c_dsp[j] :> n_samps;  //Get number of samps to receive
         }
 
-        for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_INSTANCE; i++) 
+        for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_INSTANCE; i++)
         {
             int samp;
-            for (unsigned j=0; j<ASRC_N_INSTANCES; j++) 
+            for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
             {
                 unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
                 c_dsp[j] :> samp; //Get samples
@@ -232,7 +232,7 @@ void ShowUsage()
         "         -g     Output sample rate (44100 - 192000)\n\n"
         "         -n     Number of input samples (all channels) to process\n\n"
         );
-    
+
     exit(0);
 }
 
@@ -268,13 +268,13 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
 {
   switch (*input)
   {
-  
+
     case 'h':
     case 'H':
       ShowUsage();
       exit(0);
       break;
-    
+
     case 'i':
     case 'I':
       for (int i=0; i<ASRC_N_CHANNELS; i++)
@@ -305,7 +305,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
     case 'g':
     case 'G':
       uiOutFs = (unsigned int)(atoi((char *)argv[ui + 1]));
-      uiOutFs = samp_rate_to_code(uiOutFs);      
+      uiOutFs = samp_rate_to_code(uiOutFs);
       if((uiOutFs < ASRC_FS_MIN) || (uiOutFs > ASRC_FS_MAX))
       {
         printf("ERROR: invalid frequency index %d\n", uiOutFs);
@@ -315,7 +315,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
 
     case 'e':
     case 'E':
-      fFsRatioDeviation = (float)(atof((char *)argv[ui + 1]));
+      fFsRatioDeviation = (double)(atof((char *)argv[ui + 1]));
       //Note no check. This is done at run-time.
       break;
 
@@ -346,14 +346,14 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(int argc, char * unsafe argv[]) 
+int main(int argc, char * unsafe argv[])
 {
     int ui;
 
     printf("Running ASRC test simulation \n");
     if (argc <= 1 ) ShowUsage();
 
-    //Parse command line arguments 
+    //Parse command line arguments
     for (ui = 1; ui < (unsigned int)argc; ui++)
     unsafe{
         if (*(argv[ui]) == '-')
@@ -370,7 +370,7 @@ int main(int argc, char * unsafe argv[])
         printf("ERROR: number of input samples not set\n");
         exit(1);
     }
-    
+
     if (uiInFs == -1)
     {
         printf("ERROR: input sample rate not set\n");
