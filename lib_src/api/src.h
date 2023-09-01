@@ -60,7 +60,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
  *  \param   dither_on_off            Dither to 24b on/off
  *  \returns The nominal sample rate ratio of in to out in Q4.28 format
  */
-unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
+uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
                    asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
                    const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
@@ -72,9 +72,7 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
  *  \param   asrc_ctrl        Reference to array of ASRC control structures
  *  \returns The number of output samples produced by the SRC operation.
  */
-unsigned asrc_process(int in_buff[], int out_buff[], unsigned fs_ratio,
-                      asrc_ctrl_t asrc_ctrl[]);
-
+unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_t asrc_ctrl[]);
 // To avoid C type definitions when including this file from assembler
 #ifndef INCLUDE_FROM_ASM
 

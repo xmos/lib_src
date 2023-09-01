@@ -23,7 +23,7 @@ static void asrc_error(int code)
 }
 
 
-unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
+uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
         const unsigned n_in_samples, const dither_flag_t dither_on_off)
 {
     unsigned ui;
@@ -31,12 +31,12 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t as
     ASRCReturnCodes_t ret_code;
 
     ret_code = ASRC_prepare_coefs();
+
     if (ret_code != ASRC_NO_ERROR) asrc_error(10);
 
     //Check to see if n_channels_per_instance, n_in_samples are reasonable
     if ((n_in_samples & 0x1) || (n_in_samples < 4)) asrc_error(100);
     if (n_channels_per_instance < 1) asrc_error(101);
-
 
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
@@ -56,21 +56,23 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t as
 
         // Init ASRC instances
         ret_code = ASRC_init(&asrc_ctrl[ui]);
+
         if (ret_code != ASRC_NO_ERROR) asrc_error(11);
     }
 
     // Sync
     // ----
     // Sync ASRC. This is just to show that the function works and returns success
+
     for(ui = 0; ui < n_channels_per_instance; ui++)    {
         ret_code = ASRC_sync(&asrc_ctrl[ui]);
         if (ret_code != ASRC_NO_ERROR) asrc_error(12);
     }
 
-    return (asrc_ctrl[0].uiFsRatio);
+    return (uint64_t)((((uint64_t)asrc_ctrl[0].uiFsRatio) << 32) | asrc_ctrl[0].uiFsRatio_lsb);
 }
 
-unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_t asrc_ctrl[]){
+unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_t asrc_ctrl[]){
 
     int ui, uj; //General counters
     int             uiSplCntr;  //Spline counter
@@ -78,25 +80,30 @@ unsigned asrc_process(int *in_buff, int *out_buff, unsigned fs_ratio, asrc_ctrl_
     // Get the number of channels per instance from first channel
     const unsigned n_channels_per_instance = asrc_ctrl[0].uiNchannels;
 
+    uint32_t fs_ratio_hi = (uint32_t)(fs_ratio >> 32);
+    uint32_t fs_ratio_lo = (uint32_t)(fs_ratio);
 
     for(ui = 0; ui < n_channels_per_instance; ui++)
     {
     // Update Fs Ratio
-        asrc_ctrl[ui].uiFsRatio     = fs_ratio;
+        asrc_ctrl[ui].uiFsRatio     = fs_ratio_hi;
+        asrc_ctrl[ui].uiFsRatio_lsb = fs_ratio_lo;
 
 #if DO_FS_BOUNDS_CHECK
         // Check for bounds of new Fs ratio
-        if( (fs_ratio < sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMinFsRatio) ||
-            (fs_ratio > sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMaxFsRatio) )
+        if( (fs_ratio_hi < sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMinFsRatio) ||
+            (fs_ratio_hi > sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiMaxFsRatio) )
         {
-            //debug_printf("Passed = %x, Nominal = 0x%x\n", fs_ratio, sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio);
-            fs_ratio = sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
+            //debug_printf("Passed = %x, Nominal = 0x%x\n", fs_ratio_hi, sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio);
+            fs_ratio_hi = sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio; //Important to prevent buffer overflow if fs_ratio requests too many samples.
+            fs_ratio_lo = sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].uiNominalFsRatio_lo;
             //debug_printf("!");
         }
 #endif
         // Apply shift to time ratio to build integer and fractional parts of time step
-        asrc_ctrl[ui].iTimeStepInt     = fs_ratio >> (sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
-        asrc_ctrl[ui].uiTimeStepFract  = fs_ratio << (32 - sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
+        asrc_ctrl[ui].iTimeStepInt     = fs_ratio_hi >> (sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
+        asrc_ctrl[ui].uiTimeStepFract  = fs_ratio_hi << (32 - sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
+        asrc_ctrl[ui].uiTimeStepFract |= (uint32_t)(fs_ratio_lo >> sFsRatioConfigs[asrc_ctrl[ui].eInFs][asrc_ctrl[ui].eOutFs].iFsRatioShift);
 
 
 
