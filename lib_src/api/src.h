@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _SRC_H_
 #define _SRC_H_
@@ -7,6 +7,9 @@
 #include "src_ff3_ds3.h"
 #include "src_ff3_os3.h"
 #include "src_ff3v_fir.h"
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
+#include "src_poly.h"
+#endif // __XS3A__
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
@@ -29,6 +32,13 @@ typedef enum dither_flag_t {
     ON = 1
 } dither_flag_t;
 
+/**
+ * \addtogroup src_ssrc src_ssrc
+ *
+ * The public API for using SSRC.
+ * @{
+ */
+
 /** Initialises synchronous sample rate conversion instance.
  *  \param   sr_in                    Nominal sample rate code of input stream
  *  \param   sr_out                   Nominal sample rate code of output stream
@@ -49,6 +59,15 @@ void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t ssrc_c
  *  \returns The number of output samples produced by the SRC operation
  */
 unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
+
+/**@}*/ // END: addtogroup src_ssrc
+
+/**
+ * \addtogroup src_asrc src_asrc
+ *
+ * The public API for using ASRC.
+ * @{
+ */
 
 /** Initialises asynchronous sample rate conversion instance.
  *
@@ -74,6 +93,9 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
  */
 unsigned asrc_process(int in_buff[], int out_buff[], unsigned fs_ratio,
                       asrc_ctrl_t asrc_ctrl[]);
+
+/**@}*/ // END: addtogroup src_asrc
+
 
 // To avoid C type definitions when including this file from assembler
 #ifndef INCLUDE_FROM_ASM
