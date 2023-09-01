@@ -1,6 +1,6 @@
 // ===========================================================================
 // ===========================================================================
-//	
+//
 // File: Main.c
 //
 // Main implementation file for the ASRC demonstration program
@@ -77,7 +77,7 @@ char*			pzOutFileName[ASRC_N_IO_CHANNELS];				// Output data file name
 
 unsigned int	uiInFs;											// Input sampling rate
 unsigned int	uiOutFs;										// Output sampling rate
-float			fFsRatioDeviation;								// Fs ratio deviation
+double			fFsRatioDeviation;								// Fs ratio deviation
 
 unsigned int	uiNTotalInSamples;								// Total number of input sample pairs to process
 unsigned int	uiNTotalOutSamples;								// Total number of output sample pairs produced
@@ -94,7 +94,7 @@ ASRCState_t		sASRCState[ASRC_N_IO_CHANNELS];
 int				iASRCStack[ASRC_N_IO_CHANNELS][ASRC_STACK_LENGTH_MULT * N_IN_SAMPLES_MAX];
 ASRCCtrl_t		sASRCCtrl[ASRC_N_IO_CHANNELS];
 int				iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH];
-	
+
 
 // Data I/O
 // --------
@@ -133,13 +133,13 @@ void main(int argc, char *argv[])
 	int				iEndOfFile;
 	unsigned int	ui, uj;
 
-	//	Display application information 
+	//	Display application information
 	fprintf(stdout, "\n%s  \nVersion: %s\n%s\n\n",
 		APPLICATION, VERSION, COPYRIGHT);
-	
+
 	// Initialize default values
-	pzInFileName[0]		= INPUT_FILE_CHANNEL_0_DEFAULT;			// Input data for channel 0			
-	pzInFileName[1]		= INPUT_FILE_CHANNEL_1_DEFAULT;			// Input data for channel 1	
+	pzInFileName[0]		= INPUT_FILE_CHANNEL_0_DEFAULT;			// Input data for channel 0
+	pzInFileName[1]		= INPUT_FILE_CHANNEL_1_DEFAULT;			// Input data for channel 1
 	pzOutFileName[0]	= OUTPUT_FILE_CHANNEL_0_DEFAULT;		// Output data for channel 0
 	pzOutFileName[1]	= OUTPUT_FILE_CHANNEL_0_DEFAULT;		// Output data for channel 1
 
@@ -155,7 +155,7 @@ void main(int argc, char *argv[])
 	uiASRCRandSeed[0]	= ASRC_RAND_SEED_CHANNEL_0_DEFAULT;		// Random seed for channel 0
 	uiASRCRandSeed[1]	= ASRC_RAND_SEED_CHANNEL_1_DEFAULT;		// Random seed for channel 1
 
-	//	Parse command line arguments 
+	//	Parse command line arguments
 	for (ui = 1; ui < (unsigned int)argc; ui++)
 	{
 		if (*(argv[ui]) == '-')
@@ -187,7 +187,7 @@ void main(int argc, char *argv[])
 
 	printf("Total number of input samples: %i\n", uiNTotalInSamples);
 	printf("Number of input samples to process in one call: %i\n\n", uiNInSamples);
-	
+
 
 	// Clear data buffers
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS * N_TOTAL_IN_SAMPLES_MAX; ui++)
@@ -195,7 +195,7 @@ void main(int argc, char *argv[])
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS * N_TOTAL_IN_SAMPLES_MAX * ASRC_N_IN_OUT_RATIO_MAX; ui++)
 		iOut[ui]	= 0;
 
-	// Open i/o files 
+	// Open i/o files
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 	{
 		if ((InFileDat[ui] = fopen(pzInFileName[ui], "rt")) == NULL)
@@ -209,7 +209,7 @@ void main(int argc, char *argv[])
 			HandleError(pzError, FATAL);
 		}
 	}
-	
+
 
 	// Process init
 	// ------------
@@ -280,7 +280,7 @@ void main(int argc, char *argv[])
 
 	// Process data
 	// ------------
-	// Initialize remaing number of samples to total number of input samples, 
+	// Initialize remaing number of samples to total number of input samples,
 	// total number of output samples to 0 and setup input / output data pointers to base of buffers
 	iNRemainingSamples		= (int)uiNTotalInSamples;
 	uiNTotalOutSamples		= 0;
@@ -322,7 +322,7 @@ void main(int argc, char *argv[])
 		// ==================================
 		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 			// Note: this is block based similar to SSRC, output will be on stack
-			// and there will be sASRCCtrl[0].uiNSyncSamples samples per channel produced		
+			// and there will be sASRCCtrl[0].uiNSyncSamples samples per channel produced
 			if(ASRC_proc_F1_F2(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
 			{
 				sprintf(pzError, "Error at ASRC F1 F2 process");
@@ -377,13 +377,13 @@ void main(int argc, char *argv[])
 		// We are back to block based processing. This is where the number of ASRC output samples is required again
 		// (would not be used if sample by sample based (on output samples))
 		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-			// Note: this is block based similar to SSRC	
+			// Note: this is block based similar to SSRC
 			if(ASRC_proc_dither(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
 			{
 				sprintf(pzError, "Error at ASRC F1 F2 process");
 				HandleError(pzError, FATAL);
 			}
-	
+
 
 		// Write output data to files
 		// --------------------------
@@ -393,8 +393,8 @@ void main(int argc, char *argv[])
 				{
 					sprintf(pzError, "Error while writing to output file, %s", pzOutFileName[ui]);
 					HandleError(pzError, FATAL);
-				}		
-	
+				}
+
 
 		// Update input and outut data pointers for next round
 		piIn					+= (sASRCCtrl[0].uiNInSamples * ASRC_N_IO_CHANNELS);
@@ -404,9 +404,9 @@ void main(int argc, char *argv[])
 		// Update total output sample counter
 		uiNTotalOutSamples		+= sASRCCtrl[0].uiNASRCOutSamples;
 	}
-	
 
-	// Report MIPS 
+
+	// Report MIPS
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 	{
 		printf("MIPS total load channel %i: %f\n", ui, (sASRCCtrl[ui].fCycleCountF1F2 + sASRCCtrl[ui].fCycleCountF3AdaptiveCoefs + sASRCCtrl[ui].fCycleCountF3 + sASRCCtrl[ui].fCycleCountDither) / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
@@ -414,11 +414,11 @@ void main(int argc, char *argv[])
 		printf("MIPS F3 Adaptive Coefs computation load channel %i: %f\n", ui, sASRCCtrl[ui].fCycleCountF3AdaptiveCoefs / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
 		printf("MIPS F3 load channel %i: %f\n", ui, sASRCCtrl[ui].fCycleCountF3 / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
 		printf("MIPS Dither load channel %i: %f\n\n", ui, sASRCCtrl[ui].fCycleCountDither / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
-		
+
 	}
 	// Report number of output samples produced
 	printf("Total number of output samples produced: %i\n\n\n", uiNTotalOutSamples);
-	
+
 
 	//	Close i/o files
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
@@ -435,11 +435,11 @@ void main(int argc, char *argv[])
 		}
 	}
 
-	
+
 
 	fprintf(stdout, "Application run finished, press any key to exit\n\n");
 	getchar();
-	
+
 	exit(0);
 }
 
@@ -461,15 +461,15 @@ void ParseCmdLine(char *input)
 
 		case 'e':
 		case 'E':
-			fFsRatioDeviation = (float)(atof(input + 1));
+			fFsRatioDeviation = (double)(atof(input + 1));
 			break;
-	
+
 		case 'h':
 		case 'H':
 			ShowUsage();
 			exit(0);
 			break;
-		
+
 		case 'i':
 		case 'I':
 			pzInFileName[0] = input + 1;
@@ -553,7 +553,7 @@ void ShowHelp()
 	fprintf(stdout,"Invalid argument. Application will terminate now. Use -h to get usage.\n");
 	fprintf(stdout, "Press any key to exit\n\n");
 	getchar();
-	
+
 	exit(0);
 }
 
@@ -577,7 +577,7 @@ void ShowUsage()
 		"		  -r	 Random seed for channel 0 for dither generation (default: 1)\n\n"
 		"		  -s	 Random seed for channel 1 for dither generation (default: 1458976)\n\n"
 		);
-	
+
 	exit(0);
 }
 
@@ -603,5 +603,3 @@ void HandleError(char *pzErrorMessage, short sErrorType)
 	getchar();
 	return;
 }
-
-
