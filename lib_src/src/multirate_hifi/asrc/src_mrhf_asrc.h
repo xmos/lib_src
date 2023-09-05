@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // ===========================================================================
 // ===========================================================================
@@ -33,9 +33,10 @@
 
     // General defines
     // ---------------
+    #define		   ASRC_FS_RATIO_UNIT_BIT					28
     #define        ASRC_STACK_LENGTH_MULT                (ASRC_N_CHANNELS * 4)                // Multiplier for stack length (stack length = this value x the number of input samples to process)
-    #define        ASRC_ADFIR_COEFS_LENGTH                FILTER_DEFS_ADFIR_PHASE_N_TAPS        // Length of AD FIR coefficients buffer
-    #define     ASRC_NOMINAL_FS_SCALE           (268435456)      //Nominal Fs Ratio scale value in 4.28 format
+    #define        ASRC_ADFIR_COEFS_LENGTH               FILTER_DEFS_ADFIR_PHASE_N_TAPS        // Length of AD FIR coefficients buffer
+    #define		   ASRC_NOMINAL_FS_SCALE				     (1 << ASRC_FS_RATIO_UNIT_BIT)
 
 
     // Parameter values
@@ -105,6 +106,7 @@
         typedef struct _ASRCFsRatioConfigs
         {
             unsigned int        uiNominalFsRatio;
+            unsigned int		uiNominalFsRatio_lo;
             unsigned int        uiMinFsRatio;
             unsigned int        uiMaxFsRatio;
             int                    iFsRatioShift;
@@ -142,6 +144,7 @@
             ADFIRCtrl_t                                sADFIRF3Ctrl;                        // F3 ADFIR controller
 
             unsigned int                            uiFsRatio;                            // Fs ratio: Fsin / Fsout
+            unsigned int							uiFsRatio_lo;
 
             int                                        iTimeInt;                            // Integer part of time
             unsigned int                            uiTimeFract;                        // Fractional part of time
@@ -170,6 +173,7 @@
             ADFIRCtrl_t                                sADFIRF3Ctrl;                        // F3 ADFIR controller
 
             unsigned int                            uiFsRatio;                            // Fs ratio: Fsin / Fsout
+            unsigned int							uiFsRatio_lo;
 
             int                                        iTimeInt;                            // Integer part of time
             unsigned int                            uiTimeFract;                        // Fractional part of time

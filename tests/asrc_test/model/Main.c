@@ -125,7 +125,7 @@ unsigned int	uiFsTable[ASRC_N_FS]	= {44100, 48000, 88200, 96000, 176400, 192000}
 
 
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int				*piIn, *piOut;
 	int				iNRemainingSamples;
@@ -292,7 +292,10 @@ void main(int argc, char *argv[])
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 	{
 		// Make Fs Ratio deviate
-		sASRCCtrl[ui].uiFsRatio		= (unsigned int)(sASRCCtrl[ui].uiFsRatio * fFsRatioDeviation);
+		unsigned long long fs_ratio_full = ((unsigned long long)sASRCCtrl[ui].uiFsRatio << 32) | ((unsigned long long)sASRCCtrl[ui].uiFsRatio_lo);
+		fs_ratio_full = (unsigned long long)(fs_ratio_full * fFsRatioDeviation);
+		sASRCCtrl[ui].uiFsRatio = (uint32_t)(fs_ratio_full >> 32);
+		sASRCCtrl[ui].uiFsRatio_lo = (uint32_t)fs_ratio_full;
 		if(ASRC_update_fs_ratio(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
 		{
 			sprintf(pzError, "Error at ASRC update fs ratio");
@@ -440,7 +443,7 @@ void main(int argc, char *argv[])
 	fprintf(stdout, "Application run finished, press any key to exit\n\n");
 	getchar();
 
-	exit(0);
+	return 0;
 }
 
 

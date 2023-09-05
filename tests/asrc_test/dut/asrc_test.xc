@@ -58,7 +58,7 @@ void dsp_slave(chanend c_dsp)
 
     unsigned int    n_samps_out = 0;    //number of samples produced by last call to ASRC
     unsigned int    n_samps_in_tot = 0; //Total number of input samples through ASRC
-    unsigned int    FsRatio = ASRC_NOMINAL_FS_SCALE; //Deviation between in Fs and out Fs
+    uint64_t    FsRatio = ASRC_NOMINAL_FS_SCALE; //Deviation between in Fs and out Fs
 
     for(int ui = 0; ui < ASRC_CHANNELS_PER_INSTANCE; ui++)
     unsafe {
@@ -67,19 +67,6 @@ void dsp_slave(chanend c_dsp)
         asrc_ctrl[ui].piStack                   = asrc_stack[ui];
         asrc_ctrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
     }
-
-/*
-     // Update Fs Ratio
-    for(int i = 0; i < ASRC_N_CHANNELS; i++)
-    {
-    // Make Fs Ratio deviate
-    asrc_ctrl[i].uiFsRatio        = (unsigned int)((double)asrc_ctrl[i].uiFsRatio * fFsRatioDeviation);
-        if(ASRC_update_fs_ratio(&asrc_ctrl[i]) != ASRC_NO_ERROR)
-        {
-              printf("Error updating ASRC fs ratio\n");
-        }
-    }
-*/
 
     memset(out_buff, 0, ASRC_N_IN_SAMPLES * ASRC_N_OUT_IN_RATIO_MAX * ASRC_CHANNELS_PER_INSTANCE * sizeof(int));
 
@@ -120,10 +107,10 @@ void dsp_slave(chanend c_dsp)
             unsigned InFs                     = (sr_in_out_new >> 16) & 0xffff;
             unsigned OutFs                    = sr_in_out_new & 0xffff;
 
-            unsigned nominal_FsRatio = asrc_init(InFs, OutFs, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
+            uint64_t nominal_FsRatio = asrc_init(InFs, OutFs, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
             sr_in_out = sr_in_out_new;
-            printf("DSP init Initial nominal_FsRatio=%d, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
+            printf("DSP init Initial nominal_FsRatio=%lld, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
         }
         t:> t1;
         n_samps_out = asrc_process(in_buff, out_buff, FsRatio, asrc_ctrl);
@@ -139,10 +126,11 @@ void dsp_mgr(chanend c_dsp[], double fFsRatioDeviation){
     unsigned count_in = 0, count_out = 0;
     unsigned iEndOfFile  = 0;
     unsigned int    sr_in_out = uiInFs << 16 | uiOutFs ; //Input fs in upper 16bits and Output fs in lower 16bits
-    unsigned FsRatio = (unsigned) (((unsigned long long)sample_rates[uiInFs] * (unsigned long long)(1<<28)) / (unsigned long long)sample_rates[uiOutFs]);
 
-    FsRatio =  (unsigned int)((double)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
-    printf("Adjusted FsRatio dsp_mgr = %d, 0x%x\n", FsRatio, FsRatio);
+    uint64_t FsRatio = (unsigned long long)(((double)sample_rates[uiInFs] / sample_rates[uiOutFs]) * ((unsigned long long)1 << (28 + 32)));
+
+    FsRatio =  (uint64_t)((double)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
+    printf("Adjusted FsRatio dsp_mgr = %lld, 0x%llx\n", FsRatio, FsRatio);
 
 
 
@@ -346,7 +334,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(int argc, char * unsafe argv[])
+int main(unsigned int argc, char * unsafe argv[argc])
 {
     int ui;
 
