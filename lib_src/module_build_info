@@ -1,7 +1,7 @@
-VERSION = 2.2.0
+VERSION = 2.3.0
 
-DEPENDENT_MODULES = lib_logging(>=3.0.0) \
-                    lib_xassert(>=4.0.0)
+DEPENDENT_MODULES = lib_logging(>=3.1.1) \
+                    lib_xassert(>=4.1.0)
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -Wno-missing-braces \
@@ -16,7 +16,8 @@ EXPORT_INCLUDE_DIRS = api \
                       src/fixed_factor_of_3_voice \
                       src/multirate_hifi \
                       src/multirate_hifi/asrc \
-                      src/multirate_hifi/ssrc
+                      src/multirate_hifi/ssrc \
+                      src/fixed_factor_vpu_voice
 
 INCLUDE_DIRS = $(EXPORT_INCLUDE_DIRS)
 

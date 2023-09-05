@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 	.section	.dp.data,"awd",@progbits
 	.text
@@ -139,7 +139,7 @@ done:
 	.set	src_ff3_fir_inner_loop_asm.maxtimers,0
 	.globl	src_ff3_fir_inner_loop_asm.maxtimers
 	.set	src_ff3_fir_inner_loop_asm.maxchanends,0
-	.globl	 .maxchanends
+	.globl	src_ff3_fir_inner_loop_asm.maxchanends
 
 
 		.section	.dp.data,"awd",@progbits
@@ -287,4 +287,4 @@ done_odd:
 	.set	src_ff3_fir_inner_loop_asm_odd.maxtimers,0
 	.globl	src_ff3_fir_inner_loop_asm_odd.maxtimers
 	.set	src_ff3_fir_inner_loop_asm_odd.maxchanends,0
-	.globl	 .maxchanends
+	.globl	src_ff3_fir_inner_loop_asm_odd.maxchanends
