@@ -77,7 +77,7 @@ unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
  *  \param   n_channels_per_instance  Number of channels handled by this instance of SSRC
  *  \param   n_in_samples             Number of input samples per SSRC call
  *  \param   dither_on_off            Dither to 24b on/off
- *  \returns The nominal sample rate ratio of in to out in Q4.28 format
+ *  \returns The nominal sample rate ratio of in to out in Q4.60 format
  */
 uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
                    asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
@@ -87,20 +87,16 @@ uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
  *
  *  \param   in_buff          Reference to input sample buffer array
  *  \param   out_buff         Reference to output sample buffer array
- *  \param   fs_ratio         Fixed point ratio of in/out sample rates in Q4.28 format
+ *  \param   fs_ratio         Fixed point ratio of in/out sample rates in Q4.60 format
  *  \param   asrc_ctrl        Reference to array of ASRC control structures
  *  \returns The number of output samples produced by the SRC operation.
  */
-<<<<<<< HEAD
-unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_t asrc_ctrl[]);
-=======
-unsigned asrc_process(int in_buff[], int out_buff[], unsigned fs_ratio,
+unsigned asrc_process(int in_buff[], int out_buff[], uint64_t fs_ratio,
                       asrc_ctrl_t asrc_ctrl[]);
 
 /**@}*/ // END: addtogroup src_asrc
 
 
->>>>>>> af63c324f9eedc1437460c91b7c4b0b3bb2b7bfd
 // To avoid C type definitions when including this file from assembler
 #ifndef INCLUDE_FROM_ASM
 

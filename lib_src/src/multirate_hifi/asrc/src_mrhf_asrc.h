@@ -33,9 +33,10 @@
 
     // General defines
     // ---------------
+    #define		   ASRC_FS_RATIO_UNIT_BIT					28
     #define        ASRC_STACK_LENGTH_MULT                (ASRC_N_CHANNELS * 4)                // Multiplier for stack length (stack length = this value x the number of input samples to process)
-    #define        ASRC_ADFIR_COEFS_LENGTH                FILTER_DEFS_ADFIR_PHASE_N_TAPS        // Length of AD FIR coefficients buffer
-    #define		ASRC_NOMINAL_FS_SCALE				(1 << ASRC_FS_RATIO_UNIT_BIT)						// 2^28
+    #define        ASRC_ADFIR_COEFS_LENGTH               FILTER_DEFS_ADFIR_PHASE_N_TAPS        // Length of AD FIR coefficients buffer
+    #define		   ASRC_NOMINAL_FS_SCALE				     (1 << ASRC_FS_RATIO_UNIT_BIT)
 
 
     // Parameter values

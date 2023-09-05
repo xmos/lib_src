@@ -45,7 +45,6 @@
 #define        ASRC_FS_176_F                            (176400.0)
 #define        ASRC_FS_192_F                            (192000.0)
 
-#define		ASRC_FS_RATIO_UNIT_BIT					28
 #define		ASRC_FS_RATIO_44_44 						(uint32_t)((unsigned long long)(((double)ASRC_FS_44_F / ASRC_FS_44_F) * ((unsigned long long)1 << (ASRC_FS_RATIO_UNIT_BIT + 32))) >> 32)
 #define		ASRC_FS_RATIO_44_44_LO						(uint32_t)((unsigned long long)(((double)ASRC_FS_44_F / ASRC_FS_44_F) * ((unsigned long long)1 << (ASRC_FS_RATIO_UNIT_BIT + 32))))
 #define		ASRC_FS_RATIO_44_48 						(uint32_t)((unsigned long long)(((double)ASRC_FS_44_F / ASRC_FS_48_F) * ((unsigned long long)1 << (ASRC_FS_RATIO_UNIT_BIT + 32))) >> 32)

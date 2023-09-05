@@ -1,6 +1,6 @@
 // ===========================================================================
 // ===========================================================================
-//	
+//
 // File: ASRC.h
 //
 // Top level definition file for the ASRC
@@ -27,7 +27,7 @@
 	// Defines
 	//
 	// ===========================================================================
-	
+
 	// General defines
 	// ---------------
 	#define		ASRC_N_CHANNELS						1									// Number of channels processed by ASRC instance
@@ -44,7 +44,7 @@
 	// ----------------
 	#define		ASRC_ON								1
 	#define		ASRC_OFF							0
-	
+
 	#define		ASRC_DITHER_OFF						ASRC_OFF
 	#define		ASRC_DITHER_ON						ASRC_ON
 	#define		ASRC_DITHER_ON_OFF_MIN				ASRC_DITHER_OFF
@@ -58,7 +58,7 @@
 	// Defines
 	//
 	// ===========================================================================
-	
+
 
 	// ===========================================================================
 	//
@@ -71,16 +71,16 @@
 
 		// ASRC Return Codes
 		// -----------------
-		typedef enum _ASRCReturnCodes									
+		typedef enum _ASRCReturnCodes
 		{
 			ASRC_NO_ERROR							= 0,
 			ASRC_ERROR								= 1
 		} ASRCReturnCodes_t;
-		
+
 
 		// Sampling rate codes
 		// -------------------
-		typedef enum _ASRCFs											
+		typedef enum _ASRCFs
 		{
 			ASRC_FS_44								= 0,								// Fs = 44.1kHz code
 			ASRC_FS_48								= 1,								// Fs = 48kHz code
@@ -93,14 +93,14 @@
 		#define		ASRC_FS_MIN						ASRC_FS_44
 		#define		ASRC_FS_MAX						ASRC_FS_192
 
-		
+
 		// ASRC Filters IDs structure
 		// --------------------------
 		#define		ASRC_F1_INDEX					0
 		#define		ASRC_F2_INDEX					1
 		#define		ASRC_N_F						(ASRC_F2_INDEX + 1)
 
-		typedef struct _ASRCFiltersIDs										
+		typedef struct _ASRCFiltersIDs
 		{
 			unsigned int		uiFID[ASRC_N_F];
 		} ASRCFiltersIDs_t;
@@ -110,6 +110,7 @@
 		typedef struct _ASRCFsRatioConfigs
 		{
 			unsigned int		uiNominalFsRatio;
+			unsigned int		uiNominalFsRatio_lo;
 			unsigned int		uiMinFsRatio;
 			unsigned int		uiMaxFsRatio;
 			int					iFsRatioShift;
@@ -117,24 +118,24 @@
 
 		// ASRC State structure
 		// --------------------
-		typedef struct _ASRCState							
+		typedef struct _ASRCState
 		{
 			unsigned int							uiRndSeed;												// Dither random seeds current values
 			int										iDelayFIRLong[2 * FILTER_DEFS_FIR_MAX_TAPS_LONG];		// Doubled length for circular buffer simulation
 			int										iDelayFIRShort[2 * FILTER_DEFS_FIR_MAX_TAPS_SHORT];		// Doubled length for circular buffer simulation
 			int										iDelayADFIR[2 * FILTER_DEFS_ADFIR_PHASE_N_TAPS];		// Doubled length for circular buffer simulation
 		} ASRCState_t;
-	
+
 
 		// ASRC Control structure
 		// ----------------------
-		typedef struct _ASRCCtrl											
+		typedef struct _ASRCCtrl
 		{
 			int*									piIn;								// Input buffer pointer (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNInSamples;						// Number of input samples to process in one call to the processing function
 			unsigned int							uiNSyncSamples;						// Number of synchronous samples produced in one call to the processing function
 			ASRCFs_t								eInFs;								// Input sampling rate code
-			int*									piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)							
+			int*									piOut;								// Output buffer poin ter (PCM, 32bits, 2 channels time domain interleaved data)
 			unsigned int							uiNASRCOutSamples;					// Number of output samples produced during last call to the asynchronous processing function
 			ASRCFs_t								eOutFs;								// Output sampling rate code
 
@@ -143,12 +144,13 @@
 			ADFIRCtrl_t								sADFIRF3Ctrl;						// F3 ADFIR controller
 
 			unsigned int							uiFsRatio;							// Fs ratio: Fsin / Fsout
+			unsigned int							uiFsRatio_lsb;
 
 			int										iTimeInt;							// Integer part of time
 			unsigned int							uiTimeFract;						// Fractional part of time
 			int										iTimeStepInt;						// Integer part of time step
 			unsigned int							uiTimeStepFract;					// Fractional part of time step
-		
+
 			unsigned int							uiDitherOnOff;						// Dither on/off flag
 			unsigned int							uiRndSeedInit;						// Dither random seed initial value
 
@@ -186,7 +188,7 @@
 		//					ASRC_ERROR on failure								//
 		// Description:		Inits the ASRC passed as argument					//
 		// ==================================================================== //
-		ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl);	
+		ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl);
 
 		// ==================================================================== //
 		// Function:		ASRC_sync											//
@@ -252,7 +254,7 @@
 		// Description:		Processes dither for a channel						//
 		// ==================================================================== //
 		ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl);
-		
+
 	#endif // nINCLUDE_FROM_ASM
 
 #endif // _ASRC_H_
