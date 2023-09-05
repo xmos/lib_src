@@ -69,7 +69,7 @@ uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out, asrc_ctrl_t as
         if (ret_code != ASRC_NO_ERROR) asrc_error(12);
     }
 
-    return (uint64_t)((((uint64_t)asrc_ctrl[0].uiFsRatio) << 32) | asrc_ctrl[0].uiFsRatio_lsb);
+    return (uint64_t)((((uint64_t)asrc_ctrl[0].uiFsRatio) << 32) | asrc_ctrl[0].uiFsRatio_lo);
 }
 
 unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_t asrc_ctrl[]){
@@ -87,7 +87,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
     {
     // Update Fs Ratio
         asrc_ctrl[ui].uiFsRatio     = fs_ratio_hi;
-        asrc_ctrl[ui].uiFsRatio_lsb = fs_ratio_lo;
+        asrc_ctrl[ui].uiFsRatio_lo = fs_ratio_lo;
 
 #if DO_FS_BOUNDS_CHECK
         // Check for bounds of new Fs ratio

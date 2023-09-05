@@ -349,7 +349,7 @@ ASRCReturnCodes_t                ASRC_init(asrc_ctrl_t* pasrc_ctrl)
 
     // Set nominal fs ratio
     pasrc_ctrl->uiFsRatio    = sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiNominalFsRatio;
-    pasrc_ctrl->uiFsRatio_lsb = sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiNominalFsRatio_lo;
+    pasrc_ctrl->uiFsRatio_lo = sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiNominalFsRatio_lo;
 
     // Check that number of input samples is allocated and is a multiple of 4
     if(pasrc_ctrl->uiNInSamples == 0)
@@ -512,7 +512,7 @@ ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
 ASRCReturnCodes_t                ASRC_update_fs_ratio(asrc_ctrl_t* pasrc_ctrl)
 {
     unsigned int    uiFsRatio        = pasrc_ctrl->uiFsRatio;
-    unsigned int    uiFsRatio_low    = pasrc_ctrl->uiFsRatio_lsb;
+    unsigned int    uiFsRatio_low    = pasrc_ctrl->uiFsRatio_lo;
 
     // Check for bounds of new Fs ratio
     if( (uiFsRatio < sFsRatioConfigs[pasrc_ctrl->eInFs][pasrc_ctrl->eOutFs].uiMinFsRatio) ||

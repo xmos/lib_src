@@ -292,10 +292,10 @@ int main(int argc, char *argv[])
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 	{
 		// Make Fs Ratio deviate
-		unsigned long long fs_ratio_full = ((unsigned long long)sASRCCtrl[ui].uiFsRatio << 32) | ((unsigned long long)sASRCCtrl[ui].uiFsRatio_lsb);
+		unsigned long long fs_ratio_full = ((unsigned long long)sASRCCtrl[ui].uiFsRatio << 32) | ((unsigned long long)sASRCCtrl[ui].uiFsRatio_lo);
 		fs_ratio_full = (unsigned long long)(fs_ratio_full * fFsRatioDeviation);
 		sASRCCtrl[ui].uiFsRatio = (uint32_t)(fs_ratio_full >> 32);
-		sASRCCtrl[ui].uiFsRatio_lsb = (uint32_t)fs_ratio_full;
+		sASRCCtrl[ui].uiFsRatio_lo = (uint32_t)fs_ratio_full;
 		if(ASRC_update_fs_ratio(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
 		{
 			sprintf(pzError, "Error at ASRC update fs ratio");

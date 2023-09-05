@@ -144,7 +144,7 @@
 			ADFIRCtrl_t								sADFIRF3Ctrl;						// F3 ADFIR controller
 
 			unsigned int							uiFsRatio;							// Fs ratio: Fsin / Fsout
-			unsigned int							uiFsRatio_lsb;
+			unsigned int							uiFsRatio_lo;
 
 			int										iTimeInt;							// Integer part of time
 			unsigned int							uiTimeFract;						// Fractional part of time
