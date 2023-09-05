@@ -14,6 +14,8 @@ lib_src change log
   * REMOVED: AN00231 ASRC App Note. See github.com/xmos/sln_voice/examples
   * CHANGED: Increased precision of the fFsRatioDeviation used in the C emulator
     from float to double
+  * CHANGED: Allow for 64 bits in the rate ratio passed to asrc_process() for
+    extra precision
 
   * Changes to dependencies:
 
