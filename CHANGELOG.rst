@@ -12,6 +12,8 @@ lib_src change log
   * CHANGED: Golden reference test signals now generated automatically by CI
   * RESOLVED: Linker warning on channel ends
   * REMOVED: AN00231 ASRC App Note. See github.com/xmos/sln_voice/examples
+  * CHANGED: Increased precision of the fFsRatioDeviation used in the C emulator
+    from float to double
 
   * Changes to dependencies:
 
