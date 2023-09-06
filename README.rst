@@ -27,7 +27,7 @@ Multi-rate Hi-Fi functionality:
 Fixed factor functionality:
 
  * Synchronous fixed factor of 3 downsample and oversample functions supporting either HiFi quality or reduced resource requirements for voice applications.
- * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimised for the XS3 Vector Processing Unit.
+ * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit.
 
 Building
 ........
@@ -45,14 +45,14 @@ Components
  * Synchronous factor of 3 downsample function (ds3)
  * Synchronous factor of 3 oversample function (os3)
 
- * Synchronous factor of 3 downsample function optimised for use with voice (src_ds3_voice)
+ * Synchronous factor of 3 downsample function optimized for use with voice (src_ds3_voice)
  * Synchronous factor of 3 oversample function optimised for use with voice (src_us3_voice)
 
- * Synchronous factor of 3 downsample function optimised for use with voice optimised for XS3 (ff3_96t_ds)
- * Synchronous factor of 3 oversample function optimised for use with voice optimised for XS3 (ff3_96t_us)
+ * Synchronous factor of 3 downsample function for use with voice optimized for XS3 (ff3_96t_ds)
+ * Synchronous factor of 3 oversample function for use with voice optimized for XS3 (ff3_96t_us)
 
- * Synchronous factor of 3/2 downsample function optimised for use with voice optimised for XS3 (rat_2_3_96t_ds)
- * Synchronous factor of 3/2 oversample function optimised for use with voice optimised for XS3 (rat_3_2_96t_us)
+ * Synchronous factor of 3/2 downsample function for use with voice optimized for XS3 (rat_2_3_96t_ds)
+ * Synchronous factor of 3/2 oversample function for use with voice optimized for XS3 (rat_3_2_96t_us)
 
 There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
 

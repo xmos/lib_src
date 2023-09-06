@@ -31,7 +31,7 @@ The OS3 processing takes up to 153 core cycles to compute a sample which transla
 
 The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89 :math:`{\mu}s` at 100 MHz or 6.224 :math:`{\mu}s` at 62.5 MHz core speed. This permits up to 9 channels of 48 kHz -> 16 kHz sample rate conversion in a single 62.5MHz core.
 
-Both downsample and oversample functions return ``ERROR`` or  ``NO_ERROR`` status codes as defined in the return code enums listed below. The only way these functions can error is if the passed `delay_base` structure member is uninitialised (NULL).
+Both downsample and oversample functions return ``ERROR`` or  ``NO_ERROR`` status codes as defined in the return code enums listed below. The only way these functions can error is if the passed `delay_base` structure member is uninitialized (NULL).
 
 The downsampling functions return the following error codes ::
 
@@ -73,17 +73,17 @@ OS3 API
 .. doxygenfunction:: src_os3_proc
 
 
-Fixed factor of 3 functions optimised for use with voice
+Fixed factor of 3 functions optimized for use with voice
 ========================================================
 
 Overview
 --------
 
-A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimised for the XS2 instruction set. 
+A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimized for the XS2 instruction set. 
 
 
 .. warning::
-    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimised components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
+    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -106,13 +106,13 @@ Voice US3 API
 .. doxygenfunction:: src_us3_voice_get_next_sample
 
 
-Fixed factor of 3 and 3/2 voice functions optimised for XS3
+Fixed factor of 3 and 3/2 voice functions optimized for XS3
 ===========================================================
 
 Overview
 --------
 
-A set of SRC components are provided which are optimised for the Vector Processing Unit (VPU) and are suitable for voice applications.
+A set of SRC components are provided which are optimized for the Vector Processing Unit (VPU) and are suitable for voice applications.
 The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
 
 They have been designed for voice applications and, in particular, conformance to the MS Teams v5 specification.
