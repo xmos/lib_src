@@ -32,8 +32,8 @@ Fixed factor functionality:
 Building
 ........
 
-The library can be built under `cmake` or `xcommon` via `xmake` for backwards compatibility for legacy applications.
-We recommend using `cmake` where the library name `lib_src` is included in the cmake files. See `Related application notes`_. 
+The library can be built under `cmake` or `xcommon` via `xmake` offering backwards compatibility for legacy applications.
+It is recommended to use `cmake` where the library name `lib_src` is included in the cmake files. See `Related application notes`_ for example usage. 
 The library has no dependancies when building under `cmake` although does require `lib_logging` and `lib_xassert` when using `xcommon`. 
 
 Components
