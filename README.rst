@@ -34,7 +34,7 @@ Building
 
 The library can be built under `cmake` or `xcommon` via `xmake` for backwards compatibility for legacy applications.
 We recommend using `cmake` where the library name `lib_src` is included in the cmake files. See `Related application notes`_. 
-The library has no dependancies.
+The library has no dependancies when building under `cmake` although does require `lib_logging` and `lib_xassert` when using `xcommon`. 
 
 Components
 ..........
@@ -48,17 +48,17 @@ Components
  * Synchronous factor of 3 downsample function optimised for use with voice (src_ds3_voice)
  * Synchronous factor of 3 oversample function optimised for use with voice (src_us3_voice)
 
- * Synchronous factor of 3 downsample function optimised for use with voice optimised for XS3 (src_ff3_96t_ds)
- * Synchronous factor of 3 oversample function optimised for use with voice optimised for XS3 (src_ff3_96t_us)
+ * Synchronous factor of 3 downsample function optimised for use with voice optimised for XS3 (ff3_96t_ds)
+ * Synchronous factor of 3 oversample function optimised for use with voice optimised for XS3 (ff3_96t_us)
 
- * Synchronous factor of 3/2 downsample function optimised for use with voice optimised for XS3 (src_rat_2_3_96t_ds)
- * Synchronous factor of 3/2 oversample function optimised for use with voice optimised for XS3 (src_rat_3_2_96t_us)
+ * Synchronous factor of 3/2 downsample function optimised for use with voice optimised for XS3 (rat_2_3_96t_ds)
+ * Synchronous factor of 3/2 oversample function optimised for use with voice optimised for XS3 (rat_3_2_96t_us)
 
 There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
 
- #. If HiFi quality (130 dB SNR) up/downsampling is required, use src_ds3_voice or src_us3_voice.
- #. If voice quality (65 dB SNR) is required running on xCORE-200, use src_ds3_voice or src_us3_voice.
- #. If voice quality (75 dB SNR) is required running xCORE-AI, use src_ff3_96t_ds or src_ff3_96t_us.
+ #. If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
+ #. If voice quality (65 dB SNR) is required running on xCORE-200, use ds3_voice or us3_voice.
+ #. If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us.
 
 
 Related Application Notes

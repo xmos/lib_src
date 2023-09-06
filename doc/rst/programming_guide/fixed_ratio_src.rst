@@ -4,7 +4,7 @@ Fixed factor of 3 HiFi functions
 Overview
 --------
 
-The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of three.
+The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of 3.
 
 These components offer a high quality conversion with an SNR of 130 dB.
 
@@ -115,7 +115,7 @@ Overview
 A set of SRC components are provided which are optimised for the Vector Processing Unit (VPU) and are suitable for voice applications.
 The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
 
-They have been designed for voice applications and, in particular, conformance to the MS Teams specification.
+They have been designed for voice applications and, in particular, conformance to the MS Teams v5 specification.
 
 
 .. note::
@@ -131,7 +131,7 @@ The filter specification is shown in :numref:`src_ff3_vpu_filter`.
 
 .. _src_ff3_vpu_filter:
 .. list-table:: Fixed Factor of 3 Voice VPU SRC characteristics
-     :header-rows: 1
+    :header-rows: 1
 
     * - Filter
       - CPU cycles
@@ -145,17 +145,17 @@ The filter specification is shown in :numref:`src_ff3_vpu_filter`.
       - 0.475
       - 0.525
       - 0.01 dB
-      - 70 dB
+      - 70 dB min
       - 96
     * - src_ff3_96t_us
       - 85
       - 0.475
       - 0.525
       - 0.01 dB
-      - 70 dB
+      - 70 dB min
       - 96
 
-The fixed factor of three components produce three samples for each call passing one sample in the case of upsampling and produce a single sample for each call passing three samples in the case of downsampling.
+The fixed factor of 3 components produce three samples for each call passing one sample in the case of upsampling and produce a single sample for each call passing three samples in the case of downsampling.
 All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_vpu` and :numref:`src_ff3_vpu_pb`.
 
 .. _src_ff3_vpu:
@@ -215,7 +215,7 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
       - 70 dB
       - 96
 
-The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce a two samples for each call passing three samples in the case of downsampling. 
+The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce two samples for each call passing three samples in the case of downsampling. 
 All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_2_vpu` and :numref:`src_ff3_2_vpu_pb`.
 
 
