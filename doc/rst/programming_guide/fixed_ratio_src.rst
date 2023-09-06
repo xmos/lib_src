@@ -15,7 +15,7 @@ Both sample rate converters are based on a 144 tap FIR filter with two sets of c
  * firos3_b_144.dat / firds3_b_144.dat - These filters have 20 dB of attenuation at the Nyquist frequency and a higher cutoff frequency
  * firos3_144.dat / firds3_144.dat - These filters have 60 dB of attenuation at the Nyquist frequency but trade this off with a lower cutoff frequency
 
-The default setting is to use the 60dB of attenuation at the Nyquist frequency coefficients.
+The default setting is to use the coefficients that provide 60 dB of attenuation at the Nyquist frequency.
 
 The filter coefficients may be selected by adjusting the line::
 
@@ -27,11 +27,11 @@ and::
 
 in the files ``src_ff3_os3.h`` (API for oversampling) and ``src_ff3_ds3.h`` (API for downsampling) respectively.
 
-The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53 us at 100 MHz or 2.448 us at 62.5 MHz core speed. This permits up to 8 channels of 16 kHz -> 48 kHz sample rate conversion in a single 62.5MHz core.
+The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53 :math:`{\mu}s` at 100 MHz or 2.448 :math:`{\mu}s` at 62.5 MHz core speed. This permits up to 8 channels of 16 kHz -> 48 kHz sample rate conversion in a single 62.5MHz core.
 
-The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89 us at 100 MHz or 6.224 us at 62.5 MHz core speed. This permits up to 9 channels of 48 kHz -> 16 kHz sample rate conversion in a single 62.5MHz core.
+The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89 :math:`{\mu}s` at 100 MHz or 6.224 :math:`{\mu}s` at 62.5 MHz core speed. This permits up to 9 channels of 48 kHz -> 16 kHz sample rate conversion in a single 62.5MHz core.
 
-Both downsample and oversample functions return ``ERROR`` or  ``NO_ERROR`` status codes as defined in the return code enums listed below. The only way these functions can error is if the passed `delay_base` structure member has been uninitialised and is NULL.
+Both downsample and oversample functions return ``ERROR`` or  ``NO_ERROR`` status codes as defined in the return code enums listed below. The only way these functions can error is if the passed `delay_base` structure member is uninitialised (NULL).
 
 The downsampling functions return the following error codes ::
 

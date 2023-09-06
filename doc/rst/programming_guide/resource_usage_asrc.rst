@@ -11,55 +11,63 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
      :header-rows: 2
 
      * -
+       -
        - Output rate
        -
        -
        -
        -
        -
-     * - Input sample rate
+     * -
+       -
        - 44.1 kHz
        - 48 kHz
        - 88.2 kHz
        - 96 kHz
        - 176.4 kHz
        - 192 kHz
-     * - 44.1 kHz
+     * - Input rate
+       - 44.1 kHz
        - 29 MHz
        - 30 MHz
        - 40 MHz
        - 42 MHz
        - 62 MHz
        - 66 MHz
-     * - 48 kHz
+     * -
+       - 48 kHz
        - 33 MHz
        - 32 MHz
        - 42 MHz
        - 43 MHz
        - 63 MHz
        - 66 MHz
-     * - 88.2 kHz
+     * -
+       - 88.2 kHz
        - 47 MHz
        - 50 MHz
        - 58 MHz
        - 61 MHz
        - 80 MHz
        - 85 MHz
-     * - 96 kHz
+     * -
+       - 96 kHz
        - 55 MHz
        - 51 MHz
        - 67 MHz
        - 64 MHz
        - 84 MHz
        - 87 MHz
-     * - 176.4 kHz
+     * - 
+       - 176.4 kHz
        - 60 MHz
        - 66 MHz
        - 76 MHz
        - 81 MHz
        - 105 MHz
        - 106 MHz
-     * - 192 kHz
+     * -
+       - 192 kHz
        - 69 MHz
        - 66 MHz
        - 82 MHz
@@ -67,62 +75,70 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
        - 109 MHz
        - 115 MHz
 
-.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an xcore-ai device running at 600 MHz can provde 120 MHz logical cores.
+.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an xcore-ai device running at 600 MHz can provide 120 MHz logical cores.
 
 .. _fig_asrc_mhz2:
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
      :header-rows: 2
 
      * -
+       -
        - Output rate
        -
        -
        -
        -
        -
-     * - Input sample rate
+     * - 
+       -
        - 44.1 kHz
        - 48 kHz
        - 88.2 kHz
        - 96 kHz
        - 176.4 kHz
        - 192 kHz
-     * - 44.1 kHz
+     * - Input rate
+       - 44.1 kHz
        - 28 MHz
        - 28 MHz
        - 32 MHz
        - 30 MHz
        - 40 MHz
        - 40 MHz
-     * - 48 kHz
+     * - 
+       - 48 kHz
        - 39 MHz
        - 31 MHz
        - 33 MHz
        - 36 MHz
        - 40 MHz
        - 45 MHz
-     * - 88.2 kHz
+     * -
+       - 88.2 kHz
        - 51 MHz
        - 49 MHz
        - 57 MHz
        - 55 MHz
        - 65 MHz
        - 60 MHz
-     * - 96 kHz
+     * -
+       - 96 kHz
        - 51 MHz
        - 56 MHz
        - 57 MHz
        - 62 MHz
        - 66 MHz
        - 71 MHz
-     * - 176.4 kHz
+     * -
+       - 176.4 kHz
        - 60 MHz
        - 66 MHz
        - 76 MHz
        - 79 MHz
        - 92 MHz
        - 91 MHz
-     * - 192 kHz
+     * -
+       - 192 kHz
        - 69 MHz
        - 66 MHz
        - 76 MHz
