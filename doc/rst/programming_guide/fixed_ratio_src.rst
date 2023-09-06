@@ -1,18 +1,21 @@
 Fixed factor of 3 functions
 ===========================
 
-The SRC library also includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of three.
+Overview
+--------
+
+The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of three.
 
 These components offer a high quality conversion with an SNR of 130 dB.
 
-In each case, the processing is carried out each time a single output sample is required. In the case of the decimator, three input samples passed to filter with a resulting one sample output on calling the processing function. The interpolator produces an output sample each time the processing function is called but will require a single sample to be pushed into the filter every third cycle. All samples use Q31 format (left justified signed 32b integer).
+In each case, the processing is carried out each time a single output sample is required. In the case of the decimator, three input samples are passed to the filter with a resulting one sample output on calling the processing function. The interpolator produces an output sample each time the processing function is called but will require a single sample to be pushed into the filter every third cycle. All samples use Q1.31 format (left justified signed 32b integer).
 
 Both sample rate converters are based on a 144 tap FIR filter with two sets of coefficients available, depending on application requirements:
 
- * firos3_b_144.dat / firds3_b_144.dat - These filters have 20dB of attenuation at the nyquist frequency and a higher cutoff frequency
- * firos3_144.dat / firds3_144.dat - These filters have 60dB of attenuation at the nyquist frequency but trade this off with a lower cutoff frequency
+ * firos3_b_144.dat / firds3_b_144.dat - These filters have 20 dB of attenuation at the Nyquist frequency and a higher cutoff frequency
+ * firos3_144.dat / firds3_144.dat - These filters have 60 dB of attenuation at the Nyquist frequency but trade this off with a lower cutoff frequency
 
-The default setting is to use the 60dB of attenuation at the nyquist frequency coefficients.
+The default setting is to use the 60dB of attenuation at the Nyquist frequency coefficients.
 
 The filter coefficients may be selected by adjusting the line::
 
@@ -24,18 +27,18 @@ and::
 
 in the files ``src_ff3_os3.h`` (API for oversampling) and ``src_ff3_ds3.h`` (API for downsampling) respectively.
 
-The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53us at 100MHz or 2.448us at 62.5MHz core speed. This permits up to 8 channels of 16 kHz -> 48 kHz sample rate conversion in a single 62.5MHz core.
+The OS3 processing takes up to 153 core cycles to compute a sample which translates to 1.53 us at 100 MHz or 2.448 us at 62.5 MHz core speed. This permits up to 8 channels of 16 kHz -> 48 kHz sample rate conversion in a single 62.5MHz core.
 
-The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89us at 100MHz or 6.224us at 62.5MHz core speed. This permits up to 9 channels of 48 kHz -> 16 kHz sample rate conversion in a single 62.5MHz core.
+The DS3 processing takes up to 389 core cycles to compute a sample which translates to 3.89 us at 100 MHz or 6.224 us at 62.5 MHz core speed. This permits up to 9 channels of 48 kHz -> 16 kHz sample rate conversion in a single 62.5MHz core.
 
-Both downsample and oversample functions return ``ERROR`` or  ``NOERROR`` status codes as defined in return codes enums listed below. The only way these functions can error is if the passed `delay_base` structure member has been uninitialised and is NULL.
+Both downsample and oversample functions return ``ERROR`` or  ``NO_ERROR`` status codes as defined in the return code enums listed below. The only way these functions can error is if the passed `delay_base` structure member has been uninitialised and is NULL.
 
-The down sampling functions return the following error codes ::
+The downsampling functions return the following error codes ::
 
   FIRDS3_NO_ERROR
   FIRDS3_ERROR
 
-The up sampling functions return the following error codes ::
+The upsampling functions return the following error codes ::
 
   FIROS3_NO_ERROR
   FIROS3_ERROR
@@ -73,12 +76,14 @@ OS3 API
 Fixed factor of 3 functions optimised for use with voice
 ========================================================
 
-A pair of SRC components supporting up and down coversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB),
-use a 72 tap Remez FIR filter and are optimised for the XS2 instruction set. 
+Overview
+--------
+
+A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimised for the XS2 instruction set. 
 
 
 .. warning::
-    These SRC components have been deprecated. For new designs using xCORE-AI, please use the XS3 optimised components which provide both much better performance and use approximately half of the MIPS.
+    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimised components which provide both much better performance and use approximately half of the MIPS.
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -103,6 +108,9 @@ Voice US3 API
 
 Fixed factor of 3 and 3/2 functions optimised for XS3 (xCORE-AI) and for use in voice applications
 ==================================================================================================
+
+Overview
+--------
 
 A set of SRC components are provided which are optimised for the Vector Processing Unit (VPU) and are suitable for voice applications.
 The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
