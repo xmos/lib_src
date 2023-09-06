@@ -1,13 +1,15 @@
 The SSRC algorithm runs a series of cascaded FIR filters to perform the rate conversion. This includes interpolation, decimation and bandwidth limiting filters with a final polyphase FIR filter. The last stage supports the rational rate change of 147:160 or 160:147 allowing conversion between 44.1 kHz family of sample rates to the 48 kHz family of sample rates.
 
 .. tip::
-  The below table shows the worst case  MHz consumption at a given sample rate using the minimum block size of 4 input samples with dithering disabled. The  MHz requirement can be reduced by around 8-12%, depending on sample rate, by increasing the input block size to 16. It is not usefully reduced by increasing block size beyond 16.
+  :numref:`fig_ssrc_mhz` shows the worst case  MHz consumption at a given sample rate using the minimum block size of 4 input samples with dithering disabled. The MHz requirement can be reduced by around 8-12%, depending on sample rate, by increasing the input block size to 16. It is not usefully reduced by increasing block size beyond 16.
 
+
+.. _fig_ssrc_mhz:
 .. list-table:: SSRC Processor Usage per Channel (MHz)
-     :header-rows: 1
+     :header-rows: 2
 
      * -
-       - Output sample rate
+       - Output rate
        -
        -
        -

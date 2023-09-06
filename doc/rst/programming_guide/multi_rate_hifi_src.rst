@@ -62,8 +62,9 @@ Please ensure the settings within ``src_config.h`` are correct for your applicat
 Processing
 ..........
 
-Following initialization, the processing API is called for each block of input samples which will then produce a block of output samples as show below.
+Following initialization, the processing API is called for each block of input samples which will then produce a block of output samples as shown in :numref:`fig_src_proc`.
 
+.. _fig_src_proc:
 .. figure:: images/src_proc.pdf
    :width: 100%
 
@@ -97,16 +98,18 @@ Buffer Formats
 
 The format of the sample buffers sent and received from each SRC instance is time domain interleaved. How this looks in practice depends on the number of channels and SRC instances. Three examples are shown below, each showing ``n_in_samples = 4``. The ordering of sample indicies is 0 representing the oldest sample and ``n - 1``, where n is the buffer size, representing the newest sample.
 
-In the case where two channels are handled by a single SRC instance, you can see that the samples are interleaved into a single buffer of size 8.
+In the case where two channels are handled by a single SRC instance, you can see in :numref:`fig_st_si` that the samples are interleaved into a single buffer of size 8.
 
+.. _fig_st_si:
 .. figure:: images/stereo_single_instance.pdf
    :width: 25%
 
    Buffer Format for Single Stereo SRC instance
 
 
-Where a single audio channel is mapped to a single instance, the buffers are simply an array of samples starting with the oldest sample and ending with the newest sample.
+Where a single audio channel is mapped to a single instance, the buffers are simply an array of samples starting with the oldest sample and ending with the newest sample as shown in :numref:`fig_m_si`.
 
+.. _fig_m_si:
 .. figure:: images/stereo_dual_instance.pdf
    :width: 50%
 
@@ -115,8 +118,9 @@ Where a single audio channel is mapped to a single instance, the buffers are sim
 
 
 
-In the case where four channels are processed by two instances, channels 0 & 1 are processed by SRC instance 0 and channels 2 & 3 are processed by SRC instance 1. For each instance, four pairs of samples are passed into the SRC processing function and n pairs of samples are returned, where n depends on the input and output sample rate ratio.
+In the case where four channels are processed by two instances, channels 0 & 1 are processed by SRC instance 0 and channels 2 & 3 are processed by SRC instance 1 as shown in :numref:`fig_4_di`. For each instance, four pairs of samples are passed into the SRC processing function and n pairs of samples are returned, where n depends on the input and output sample rate ratio.
 
+.. _fig_4_di:
 .. figure:: images/quad_dual_instance.pdf
    :width: 50%
 
@@ -142,18 +146,21 @@ The performance of the SSRC library is as follows:
 
 The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
 
-Below are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
+Figures :numref:`fig_fft_44_192`, :numref:`fig_fft_176_48` and :numref:`fig_fft_96_88` are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
 
+.. _fig_fft_44_192:
 .. figure:: images/ssrc_fft_44_192.pdf
    :width: 90%
 
    FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
 
+.. _fig_fft_176_48:
 .. figure:: images/ssrc_fft_176_48.pdf
    :width: 90%
 
    FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
 
+.. _fig_fft_96_88:
 .. figure:: images/ssrc_fft_96_88.pdf
    :width: 90%
 
@@ -180,19 +187,21 @@ The performance of the ASRC library is as follows:
 
 The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
 
-Below are a series FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
+Figures :numref:`fig_fft_44_192_a`, :numref:`fig_fft_176_48_a` and :numref:`fig_fft_96_88_a` are a series FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
 
-
+.. _fig_fft_44_192_a:
 .. figure:: images/asrc_fft_44_192.pdf
    :width: 90%
 
    FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
 
+.. _fig_fft_176_48_a:
 .. figure:: images/asrc_fft_176_48.pdf
    :width: 90%
 
    FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
 
+.. _fig_fft_96_88_a:
 .. figure:: images/asrc_fft_96_88.pdf
    :width: 90%
 
@@ -218,8 +227,9 @@ The SSRC and ASRC implementations are closely related to each other and share th
 SSRC Structure
 ..............
 
-The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3). These stages are configured differently depending on rate change and only part of them is used in certain cases. The following diagram shows an overall view of the SSRC algorithm:
+The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3). These stages are configured differently depending on rate change and only part of them is used in certain cases. :numref:`fig_ssrc_struct` shows an overall view of the SSRC algorithm:
 
+.. _fig_ssrc_struct:
 .. figure:: images/ssrc_structure.pdf
    :width: 90%
 
@@ -235,8 +245,9 @@ The SSRC algorithm is implemented as a two stage structure:
 ASRC Structure
 ..............
 
-Similar to the SSRC, the ASRC algorithm is based on three cascaded FIR filters (F1, F2 and F3). These are configured differently depending on rate change and F2 is not used in certain rate changes. The following diagram shows an overall view of the ASRC algorithm:
+Similar to the SSRC, the ASRC algorithm is based on three cascaded FIR filters (F1, F2 and F3). These are configured differently depending on rate change and F2 is not used in certain rate changes. :numref:`fig_asrc_struct` shows an overall view of the ASRC algorithm:
 
+.. _fig_asrc_struct:
 .. figure:: images/asrc_structure.pdf
    :width: 90%
 
@@ -251,9 +262,11 @@ The ASRC algorithm is implemented as a two stage structure:
 SRC Filter list
 ...............
 
-A complete list of the filters supported by the SRC library, both SSRC and ASRC, is shown in the below table. The filters are implemented in C within the ``FilterDefs.c`` function and the coefficients can be found in the ``/FilterData`` folder. The particular combination of filters cascaded together for a given sample rate change is specified in ``ssrc.c`` and ``asrc.c``.
+A complete list of the filters supported by the SRC library, both SSRC and ASRC, is shown in :numref:`fig_src_filters`. The filters are implemented in C within the ``FilterDefs.c`` function and the coefficients can be found in the ``/FilterData`` folder. The particular combination of filters cascaded together for a given sample rate change is specified in ``ssrc.c`` and ``asrc.c``.
 
-.. list-table:: SSRC Processor Usage per channel (MHz)
+
+.. _fig_src_filters:
+.. list-table:: SRC Filter Specifications
      :header-rows: 2
 
      * - Filter

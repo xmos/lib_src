@@ -7,9 +7,8 @@ build/*
 *.md
 **/*.md
 
-# Do not build the app docs
-# app_xvf3800/*
-# tools/*
-
-# Don't include libraries in user docs
-# lib_sw_pll/*
+# We need to ensure these are not processed twice which breaks figure numbering. They are included via index.rst.
+**/multi_rate_hifi_src.rst
+**/fixed_ratio_src.rst
+**/resource_usage_asrc.rst
+**/resource_usage_ssrc.rst

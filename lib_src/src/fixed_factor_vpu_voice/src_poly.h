@@ -37,7 +37,7 @@ static inline void src_ff3_72t_ds(int32_t samp_in[3], int32_t samp_out[1], const
  * @param samp_in       Value to be upsampled
  * @param samp_out      Upsampled output
  * @param coefs_ff3     Three-phase FIR coefficients array with [3][24] dimentions
- * @param state_ds      FIR state array with 24 elements in it
+ * @param state_us      FIR state array with 24 elements in it
  * @note samp_in and samp_out have to be different memory locations
  */
 static inline void src_ff3_72t_us(int32_t samp_in[1], int32_t samp_out[3], const int32_t coefs_ff3[3][24], int32_t state_us[24])
@@ -88,7 +88,7 @@ static inline void src_ff3_96t_ds(int32_t samp_in[3], int32_t samp_out[1], const
  * @param samp_in       Value to be upsampled
  * @param samp_out      Upsampled output
  * @param coefs_ff3     Three-phase FIR coefficients array with [3][32] dimentions
- * @param state_ds      FIR state array with 32 elements in it
+ * @param state_us      FIR state array with 32 elements in it
  * @note samp_in and samp_out have to be different memory locations
  */
 static inline void src_ff3_96t_us(int32_t samp_in[1], int32_t samp_out[3], const int32_t coefs_ff3[3][32], int32_t state_us[32])
@@ -113,7 +113,7 @@ static inline void src_ff3_96t_us(int32_t samp_in[1], int32_t samp_out[3], const
  * 
  * @param samp_in       Values to be downsampled
  * @param samp_out      Downsampled output
- * @param coefs_ff3     Two-phase FIR coefficients array with [2][48] dimentions
+ * @param coefs_ds     Two-phase FIR coefficients array with [2][48] dimentions
  * @param state_ds      FIR state array with 48 lements in it
  */
 static inline void src_rat_2_3_96t_ds(int32_t samp_in[3], int32_t samp_out[2], const int32_t coefs_ds[2][48], int32_t state_ds[48])
@@ -138,8 +138,8 @@ static inline void src_rat_2_3_96t_ds(int32_t samp_in[3], int32_t samp_out[2], c
  * 
  * @param samp_in       Values to be upsampled
  * @param samp_out      Upsampled output
- * @param coefs_ff3     Three-phase FIR coefficients array with [3][32] dimentions
- * @param state_ds      FIR state array with 32 lements in it
+ * @param coefs_us     Three-phase FIR coefficients array with [3][32] dimentions
+ * @param state_us      FIR state array with 32 lements in it
  * @note samp_in and samp_out have to be different memory locations
  */
 static inline void src_rat_3_2_96t_us(int32_t samp_in[2], int32_t samp_out[3], const int32_t coefs_us[3][32], int32_t state_us[32])

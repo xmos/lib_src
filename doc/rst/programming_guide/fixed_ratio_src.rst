@@ -1,5 +1,5 @@
-Fixed factor of 3 functions
-===========================
+Fixed factor of 3 HiFi functions
+================================
 
 Overview
 --------
@@ -83,7 +83,7 @@ A pair of SRC components supporting upconversion and downconversion by a factor 
 
 
 .. warning::
-    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimised components which provide both much better performance and use approximately half of the MIPS.
+    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimised components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -106,8 +106,8 @@ Voice US3 API
 .. doxygenfunction:: src_us3_voice_get_next_sample
 
 
-Fixed factor of 3 and 3/2 functions optimised for XS3 (xCORE-AI) and for use in voice applications
-==================================================================================================
+Fixed factor of 3 and 3/2 voice functions optimised for XS3
+===========================================================
 
 Overview
 --------
@@ -119,16 +119,17 @@ They have been designed for voice applications and, in particular, conformance t
 
 
 .. note::
-    These filters will only run on xCORE-AI due to the inner dot product calculation employing the XS3 VPU.
+    These filters will only run on xcore-ai due to the inner dot product calculation employing the XS3 VPU.
 
-
+.. _ff3_voice_vpu_hdr:
 Fixed factor of 3 VPU
 ---------------------
 
 The filters use less than half of the cycles of the previous fixed factor of 3 functions but at the same time offer a much improved
 filter response thanks to an increased filter length of 96 taps (compared with 72 taps) and use of a Kaiser window with a beta of 4.0.
+The filter specification is shown in :numref:`src_ff3_vpu_filter`.
 
-
+.. _src_ff3_vpu_filter:
 .. list-table:: Fixed Factor of 3 Voice VPU SRC characteristics
      :header-rows: 1
 
@@ -155,14 +156,15 @@ filter response thanks to an increased filter length of 96 taps (compared with 7
       - 96
 
 The fixed factor of three components produce three samples for each call passing one sample in the case of upsampling and produce a single sample for each call passing three samples in the case of downsampling.
-All input and output samples are signed 32 bit integers.
+All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_vpu` and :numref:`src_ff3_vpu_pb`.
 
-
+.. _src_ff3_vpu:
 .. figure:: images/src_ff3_vpu.png
    :width: 80%
 
    Fixed Factor of 3 Voice VPU SRC filter response
 
+.. _src_ff3_vpu_pb:
 .. figure:: images/src_ff3_vpu_pb.png
   :width: 80%
 
@@ -185,11 +187,11 @@ Voice US3 API
 Fixed factor of 3/2 VPU
 -----------------------
 
-The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase architecture to achieve the non-integer rate ratio. Downsampling takes two phases while upsampling takes three. The filters have been designed with a Kaiser window with a beta of 3.2.
+The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase architecture to achieve the non-integer rate ratio. Downsampling takes two phases while upsampling takes three. The filters have been designed with a Kaiser window with a beta of 3.2. The filter specification is shown in :numref:`src_ff3_2_vpu_filter`.
 
-
+.. _src_ff3_2_vpu_filter:
 .. list-table:: Fixed Factor of 3/2 Voice VPU SRC characteristics
-     :header-rows: 1
+    :header-rows: 1
 
     * - Filter
       - CPU cycles
@@ -214,14 +216,16 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
       - 96
 
 The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce a two samples for each call passing three samples in the case of downsampling. 
-All input and output samples are signed 32 bit integers.
+All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_2_vpu` and :numref:`src_ff3_2_vpu_pb`.
 
 
+.. _src_ff3_2_vpu:
 .. figure:: images/src_rat_vpu.png
    :width: 80%
 
    Fixed Factor of 3/2 Voice VPU SRC filter response
 
+.. _src_ff3_2_vpu_pb:
 .. figure:: images/src_rat_vpu_pb.png
   :width: 80%
 
@@ -229,13 +233,13 @@ All input and output samples are signed 32 bit integers.
 
 
 Voice DS3/2 API
--------------
+---------------
 
 .. doxygengroup:: src_rat_2_3_96t_ds
    :content-only:
 
 Voice US3/2 API
--------------
+---------------
 
 .. doxygengroup:: src_rat_3_2_96t_us
    :content-only:
