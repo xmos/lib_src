@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _SRC_H_
 #define _SRC_H_
@@ -7,6 +7,9 @@
 #include "src_ff3_ds3.h"
 #include "src_ff3_os3.h"
 #include "src_ff3v_fir.h"
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
+#include "src_poly.h"
+#endif // __XS3A__
 #include <stdint.h>
 
 #if defined(__cplusplus) || defined(__XC__)
@@ -29,7 +32,14 @@ typedef enum dither_flag_t {
     ON = 1
 } dither_flag_t;
 
-/** Initialises synchronous sample rate conversion instance.
+/**
+ * \addtogroup src_ssrc src_ssrc
+ *
+ * The public API for using SSRC.
+ * @{
+ */
+
+/** initializes synchronous sample rate conversion instance.
  *  \param   sr_in                    Nominal sample rate code of input stream
  *  \param   sr_out                   Nominal sample rate code of output stream
  *  \param   ssrc_ctrl                Reference to array of SSRC control stuctures
@@ -50,7 +60,16 @@ void ssrc_init(const fs_code_t sr_in, const fs_code_t sr_out, ssrc_ctrl_t ssrc_c
  */
 unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
 
-/** Initialises asynchronous sample rate conversion instance.
+/**@}*/ // END: addtogroup src_ssrc
+
+/**
+ * \addtogroup src_asrc src_asrc
+ *
+ * The public API for using ASRC.
+ * @{
+ */
+
+/** initializes asynchronous sample rate conversion instance.
  *
  *  \param   sr_in           Nominal sample rate code of input stream
  *  \param   sr_out          Nominal sample rate code of output stream
@@ -58,9 +77,9 @@ unsigned ssrc_process(int in_buff[], int out_buff[], ssrc_ctrl_t ssrc_ctrl[]);
  *  \param   n_channels_per_instance  Number of channels handled by this instance of SSRC
  *  \param   n_in_samples             Number of input samples per SSRC call
  *  \param   dither_on_off            Dither to 24b on/off
- *  \returns The nominal sample rate ratio of in to out in Q4.28 format
+ *  \returns The nominal sample rate ratio of in to out in Q4.60 format
  */
-unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
+uint64_t asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
                    asrc_ctrl_t asrc_ctrl[], const unsigned n_channels_per_instance,
                    const unsigned n_in_samples, const dither_flag_t dither_on_off);
 
@@ -68,12 +87,15 @@ unsigned asrc_init(const fs_code_t sr_in, const fs_code_t sr_out,
  *
  *  \param   in_buff          Reference to input sample buffer array
  *  \param   out_buff         Reference to output sample buffer array
- *  \param   fs_ratio         Fixed point ratio of in/out sample rates in Q4.28 format
+ *  \param   fs_ratio         Fixed point ratio of in/out sample rates in Q4.60 format
  *  \param   asrc_ctrl        Reference to array of ASRC control structures
  *  \returns The number of output samples produced by the SRC operation.
  */
-unsigned asrc_process(int in_buff[], int out_buff[], unsigned fs_ratio,
+unsigned asrc_process(int in_buff[], int out_buff[], uint64_t fs_ratio,
                       asrc_ctrl_t asrc_ctrl[]);
+
+/**@}*/ // END: addtogroup src_asrc
+
 
 // To avoid C type definitions when including this file from assembler
 #ifndef INCLUDE_FROM_ASM
@@ -104,7 +126,7 @@ typedef struct src_ds3_ctrl_t
     int*         coeffs;       //!< Pointer to coefficients
 } src_ds3_ctrl_t;
 
-/** This function initialises the decimate by 3 function for a given instance
+/** This function initializes the decimate by 3 function for a given instance
  *
  *  \param      src_ds3_ctrl   DS3 control structure
  *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
@@ -118,7 +140,7 @@ src_ff3_return_code_t src_ds3_init(src_ds3_ctrl_t* src_ds3_ctrl);
  */
 src_ff3_return_code_t src_ds3_sync(src_ds3_ctrl_t* src_ds3_ctrl);
 
-/** This function performs the decimation on three input samples and outputs one sample
+/** This function performs the decimation on three input samples and outputs one sample.
  *  The input and output buffers are pointed to by members of the src_ds3_ctrl structure
  *
  *  \param      src_ds3_ctrl   DS3 control structure
@@ -142,7 +164,7 @@ typedef struct src_os3_ctrl_t
     int*         coeffs;       //!< Pointer to coefficients
 } src_os3_ctrl_t;
 
-/** This function initialises the oversample by 3 function for a given instance
+/** This function initializes the oversample by 3 function for a given instance
  *
  *  \param      src_os3_ctrl   OS3 control structure
  *  \returns    SRC_FF3_NO_ERROR on success, SRC_FF3_ERROR on failure
@@ -156,7 +178,7 @@ src_ff3_return_code_t src_os3_init(src_os3_ctrl_t* src_os3_ctrl);
  */
 src_ff3_return_code_t src_os3_sync(src_os3_ctrl_t* src_os3_ctrl);
 
-/** This function pushes a single input sample into the filter
+/** This function pushes a single input sample into the filter.
  *  It should be called three times for each FIROS3_proc call
  *
  *  \param      src_os3_ctrl   OS3 control structure
@@ -164,7 +186,7 @@ src_ff3_return_code_t src_os3_sync(src_os3_ctrl_t* src_os3_ctrl);
  */
 src_ff3_return_code_t src_os3_input(src_os3_ctrl_t* src_os3_ctrl);
 
-/** This function performs the oversampling by 3 and outputs one sample
+/** This function performs the oversampling by 3 and outputs one sample.
  *  The input and output buffers are pointed to by members of the src_os3_ctrl structure
  *
  *  \param      src_os3_ctrl   OS3 control structure

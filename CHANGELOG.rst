@@ -1,6 +1,28 @@
 lib_src change log
 ==================
 
+2.3.0
+-----
+
+  * ADDED: XS3 VPU optimised voice fixed factor of 3 upsampling/downsampling
+  * ADDED: XS3 VPU optimised voice fixed factor of 3/2 upsampling/downsampling
+  * CHANGED: OS3 uses firos3_144.dat coefficients by default inline with model
+  * CHANGED: Replaced xmostest with pytest for all SRC automated tests
+  * CHANGED: Used XMOS doc builder for documentation
+  * CHANGED: Golden reference test signals now generated automatically by CI
+  * RESOLVED: Linker warning on channel ends
+  * REMOVED: AN00231 ASRC App Note. See github.com/xmos/sln_voice/examples
+  * CHANGED: Increased precision of the fFsRatioDeviation used in the C emulator
+    from float to double
+  * CHANGED: Allow for 64 bits in the rate ratio passed to asrc_process() for
+    extra precision
+
+  * Changes to dependencies:
+
+    - lib_logging: 2.0.1 -> 3.1.1
+
+    - lib_xassert: 2.0.1 -> 4.1.0
+
 2.2.0
 -----
 
@@ -11,6 +33,7 @@ lib_src change log
     ensures that the voice fixed factor of 3 up and down sampling functions do
     not crash with a LOAD_STORE exception.
   * ADDED: Missing device attributes to the .xn file of the AN00231 app note.
+  * ADDED: Minimal cmake support.
 
   * Changes to dependencies:
 
@@ -21,7 +44,7 @@ lib_src change log
 2.1.0
 -----
 
-  * CHANGED: Use XMOS Public Licence Version 1
+  * CHANGED: Use XMOS Public License Version 1
 
 2.0.1
 -----
@@ -32,7 +55,7 @@ lib_src change log
 2.0.0
 -----
 
-  * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
+  * CHANGED: Build files updated to support new "xcommon" behavior in xwaf.
 
 1.1.2
 -----
