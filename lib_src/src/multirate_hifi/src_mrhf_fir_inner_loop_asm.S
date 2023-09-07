@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
     .section    .dp.data,"awd",@progbits
     .text
@@ -45,8 +45,8 @@ src_mrhf_fir_inner_loop_asm:
     {ldc Acc0_h, 0; ldc Acc0_l, 0}
 
 
-    bf counter, done
-main_loop:
+    bf counter, src_mrhf_fir_done
+src_mrhf_fir_main_loop:
     sub counter, counter, 1
 
     ldd iData0, iData1, piData_p[0]
@@ -92,9 +92,9 @@ main_loop:
     //Decrement loop counter and increment pointers and branch if still running
     {add piData_p, piData_p, step; add piCoefs_p, piCoefs_p, step}
 
-    bt counter, main_loop
+    bt counter, src_mrhf_fir_main_loop
 
-done:
+src_mrhf_fir_done:
     //pop return value pointer from stack so we can use it to write back
     //Write back the two return values
     {ldw iDataRet_p, sp[6];     ldc counter, 31}                        //Reuse counter (r3)
@@ -121,10 +121,10 @@ done:
     .set    src_mrhf_fir_inner_loop_asm.maxtimers,0
     .globl    src_mrhf_fir_inner_loop_asm.maxtimers
     .set    src_mrhf_fir_inner_loop_asm.maxchanends,0
-    .globl     .maxchanends
+    .globl     src_mrhf_fir_inner_loop_asm.maxchanends
 
 
-        .section    .dp.data,"awd",@progbits
+    .section    .dp.data,"awd",@progbits
     .text
 
     .cc_top src_mrhf_fir_inner_loop_asm_odd.function
@@ -165,8 +165,8 @@ src_mrhf_fir_inner_loop_asm_odd:
     //Initilise MACC regsiters to zero
     {ldc Acc0_h, 0; ldc Acc0_l, 0}
 
-    bf counter, done
-main_loop_odd:
+    bf counter, src_mrhf_fir_done
+src_mrhf_fir_main_loop_odd:
 
     {sub counter, counter, 1; ldc step, 0x38}
 
@@ -219,9 +219,9 @@ main_loop_odd:
     //Increment pointers and branch if still running
 
     ldc step, 0x40
-    {bt counter, main_loop_odd; add piCoefs_p, piCoefs_p, step}
+    {bt counter, src_mrhf_fir_main_loop_odd; add piCoefs_p, piCoefs_p, step}
 
-done_odd:
+src_mrhf_fir_done_odd:
     //pop return value pointer from stack so we can use it to write back
     {ldw iDataRet_p, sp[6]; ldc counter, 31}                        //Reuse counter (r3)
 
@@ -237,7 +237,7 @@ done_odd:
   retsp stack_size
 
 .atmp_odd:
-    .size    src_mrhf_fir_inner_loop_asm_odd, .atmp-src_mrhf_fir_inner_loop_asm_odd
+    .size    src_mrhf_fir_inner_loop_asm_odd, .atmp_odd-src_mrhf_fir_inner_loop_asm_odd
     .align    8
     .cc_bottom src_mrhf_fir_inner_loop_asm_odd.function
 
@@ -248,4 +248,4 @@ done_odd:
     .set    src_mrhf_fir_inner_loop_asm_odd.maxtimers,0
     .globl    src_mrhf_fir_inner_loop_asm_odd.maxtimers
     .set    src_mrhf_fir_inner_loop_asm_odd.maxchanends,0
-    .globl     .maxchanends
+    .globl     src_mrhf_fir_inner_loop_asm_odd.maxchanends
