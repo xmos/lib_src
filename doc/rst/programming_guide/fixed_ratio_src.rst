@@ -83,7 +83,7 @@ A pair of SRC components supporting upconversion and downconversion by a factor 
 
 
 .. warning::
-    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
+    These SRC components have been deprecated. For new designs using XCORE-AI, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -119,7 +119,7 @@ They have been designed for voice applications and, in particular, conformance t
 
 
 .. note::
-    These filters will only run on xcore-ai due to the inner dot product calculation employing the XS3 VPU.
+    These filters will only run on XCORE-AI due to the inner dot product calculation employing the XS3 VPU.
 
 .. _ff3_voice_vpu_hdr:
 Fixed factor of 3 VPU

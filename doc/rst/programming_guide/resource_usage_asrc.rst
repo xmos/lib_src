@@ -75,7 +75,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
        - 109 MHz
        - 115 MHz
 
-.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an xcore-ai device running at 600 MHz can provide 120 MHz logical cores.
+.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an XCORE-AI device running at 600 MHz can provide 120 MHz logical cores.
 
 .. _fig_asrc_mhz2:
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
