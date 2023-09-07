@@ -1,5 +1,5 @@
-Programmer Guide
-################
+Programming Guide
+#################
 
 .. include:: ../../../README.rst
 
