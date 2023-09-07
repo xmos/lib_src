@@ -27,7 +27,7 @@ lib_src change log
 -----
 
   * CHANGED: Made the FIR coefficient array that is used with the voice fixed
-    factor of 3 up and downsampling functions usable from within C files as
+    factor of 3 up and down sampling functions usable from within C files as
     well as XC files.
   * CHANGED: Aligned the FIR coefficient array to an 8-byte boundary. This
     ensures that the voice fixed factor of 3 up and down sampling functions do
