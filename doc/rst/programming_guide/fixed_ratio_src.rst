@@ -200,14 +200,14 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
       - Ripple
       - Attenuation
       - Taps
-    * - src_ff3_96t_ds
+    * - src_rat_2_3_96t_ds
       - 112
       - 0.46875
       - 0.53125
       - 0.03 dB
       - 70 dB
       - 96
-    * - src_ff3_96t_us
+    * - src_rat_3_2_96t_us
       - 95
       - 0.46875
       - 0.53125
