@@ -280,7 +280,7 @@ class asrc_util:
         plotFile = "{}/{}.png".format(self.outputFolder, filename)
         plt.savefig(plotFile, dpi=100)
         plt.close()
-        return "{}.png".format(filename) #local filename only as rst file that uses it already in same folder
+        return "{}.png".format(filename)
 
 
     def opFileName(self, fin, label, fDev, opRate):
@@ -482,13 +482,14 @@ class asrc_util:
     
     
     def makeRST(self, file, ipRate, opRate, fDev, sims):
+        relFile = os.path.relpath(self.outputFolder, self.rstFolder) + "/" + file
         fsi = "{:,d}Hz".format(self.sampleRates[ipRate])
         fso = "{:,d}Hz".format(self.sampleRates[opRate])
         ferr = "{:f}".format(fDev)
         plots = ", ".join(sims)
-        self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(file)
+        self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(relFile)
         self.rstFile = self.rstFile + "\n"     + "   :scale: {}".format("90%")
-        self.rstFile = self.rstFile + "\n\n"   + "   Input sample rate: {}, Output sample rate: {}, Sample rate error: {}, Results for: {}".format(fsi, fso, ferr, plots)
+        self.rstFile = self.rstFile + "\n\n"   + "   Input Fs: {}, Output Fs: {}, Fs error: {}, Results for: {}".format(fsi, fso, ferr, plots)
   
 
     def addRSTHeader(self, title, level):
@@ -501,9 +502,10 @@ class asrc_util:
 
 
     def addLog2RST(self):
+        relFile = os.path.relpath(self.outputFolder, self.rstFolder) + self.logFile
         # source	ipRate(Hz)	opRate(Hz)	fDev	ch	signals(Hz)  	SNR(dB)	THD(dB)  Total MIPS	MIPS(ch0)	MIPS(ch1) Text
         self.rstFile = self.rstFile + "\n\n\n" + ".. csv-table:: Data table"
-        self.rstFile = self.rstFile + "\n"     + "  :file: .{}".format(self.logFile)
+        self.rstFile = self.rstFile + "\n"     + "  :file: {}".format(relFile)
         self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 14, 9, 9, 9, 9, 9"
         self.rstFile = self.rstFile + "\n"     + "  :header-rows: 1"
         self.rstFile = self.rstFile + "\n"

@@ -32,7 +32,7 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
     U.addRSTHeader("Frequency error: {:.6f}Hz".format(fDev), 3) #add a title to the RST for the freq deviation
 
     for opRate in U.allRates: # for each of the possible output sample rates
-        U.addRSTHeader("Output sample frequency : {:,d}".format(U.sampleRates[opRate]), 4) # add a subtitle to RST for the opRate
+        U.addRSTHeader("Output Fs : {:,d}Hz".format(U.sampleRates[opRate]), 4) # add a subtitle to RST for the opRate
 
         # Choose the o/p rate and freq deviation
         U.setOpRate(opRate, fDev)
