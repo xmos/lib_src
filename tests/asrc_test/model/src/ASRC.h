@@ -21,6 +21,7 @@
 	// ===========================================================================
 	#include "FIR.h"
 	#include "FilterDefs.h"
+	#include "ASRC_wrapper.h"
 
 	// ===========================================================================
 	//
@@ -158,10 +159,10 @@
 			int*									piStack;							// Pointer to stack buffer
 			int*									piADCoefs;							// Pointer to AD coefficients
 
-			float									fCycleCountF1F2;					// Variable to hold cycle count for MIPS estimations for F1 and F2 stages
-			float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation
-			float									fCycleCountF3;						// Variable to hold cycle count for MIPS estimations for F3 computation
-			float									fCycleCountDither;					// Variable to hold cycle count for MIPS estimations for dither computation
+			unsigned int 							uiInStep;
+			unsigned int							uiOutStep;
+
+			ASRCCtrl_profile_only_t					sProfilingInfo;
 		} ASRCCtrl_t;
 
 

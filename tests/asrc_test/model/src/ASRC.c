@@ -487,10 +487,10 @@ ASRCReturnCodes_t				ASRC_sync(ASRCCtrl_t* psASRCCtrl)
 		return ASRC_ERROR;
 
 	// Reset cycle counters
-	psASRCCtrl->fCycleCountF1F2				= 0;
-	psASRCCtrl->fCycleCountF3AdaptiveCoefs	= 0;
-	psASRCCtrl->fCycleCountF3				= 0;
-	psASRCCtrl->fCycleCountDither			= 0;
+	psASRCCtrl->sProfilingInfo.fCycleCountF1F2				= 0;
+	psASRCCtrl->sProfilingInfo.fCycleCountF3AdaptiveCoefs	= 0;
+	psASRCCtrl->sProfilingInfo.fCycleCountF3				= 0;
+	psASRCCtrl->sProfilingInfo.fCycleCountDither			= 0;
 
 	return ASRC_NO_ERROR;
 }
@@ -519,15 +519,15 @@ ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
 
 	// Cycle counter estimation
 	if(psASRCCtrl->sFIRF1Ctrl.pvProc == FIR_proc_os2)
-		psASRCCtrl->fCycleCountF1F2	+= psASRCCtrl->uiNInSamples * ( ASRC_FIR_OS2_OVERHEAD_CYCLE_COUNT +
+		psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= psASRCCtrl->uiNInSamples * ( ASRC_FIR_OS2_OVERHEAD_CYCLE_COUNT +
 										(psASRCCtrl->sFIRF1Ctrl.uiNCoefs * ASRC_FIR_OS2_TAP_CYCLE_COUNT) );
 
 	if(psASRCCtrl->sFIRF1Ctrl.pvProc == FIR_proc_ds2)
-		psASRCCtrl->fCycleCountF1F2	+= (psASRCCtrl->uiNInSamples>>1) * ( ASRC_FIR_DS2_OVERHEAD_CYCLE_COUNT +
+		psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= (psASRCCtrl->uiNInSamples>>1) * ( ASRC_FIR_DS2_OVERHEAD_CYCLE_COUNT +
 										 (psASRCCtrl->sFIRF1Ctrl.uiNCoefs * ASRC_FIR_DS2_TAP_CYCLE_COUNT) );
 
 	if(psASRCCtrl->sFIRF1Ctrl.pvProc == FIR_proc_sync)
-		psASRCCtrl->fCycleCountF1F2	+= psASRCCtrl->uiNInSamples * ( ASRC_FIR_SYNC_OVERHEAD_CYCLE_COUNT +
+		psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= psASRCCtrl->uiNInSamples * ( ASRC_FIR_SYNC_OVERHEAD_CYCLE_COUNT +
 										 (psASRCCtrl->sFIRF1Ctrl.uiNCoefs * ASRC_FIR_SYNC_TAP_CYCLE_COUNT) );
 
 
@@ -540,15 +540,15 @@ ASRCReturnCodes_t				ASRC_proc_F1_F2(ASRCCtrl_t* psASRCCtrl)
 
 		// Cycle counter estimation
 		if(psASRCCtrl->sFIRF2Ctrl.pvProc == FIR_proc_os2)
-			psASRCCtrl->fCycleCountF1F2	+= psASRCCtrl->sFIRF2Ctrl.uiNInSamples * ( ASRC_FIR_OS2_OVERHEAD_CYCLE_COUNT +
+			psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= psASRCCtrl->sFIRF2Ctrl.uiNInSamples * ( ASRC_FIR_OS2_OVERHEAD_CYCLE_COUNT +
 											 (psASRCCtrl->sFIRF2Ctrl.uiNCoefs * ASRC_FIR_OS2_TAP_CYCLE_COUNT) );
 
 		if(psASRCCtrl->sFIRF2Ctrl.pvProc == FIR_proc_ds2)
-			psASRCCtrl->fCycleCountF1F2	+= (psASRCCtrl->sFIRF2Ctrl.uiNInSamples>>1) * ( ASRC_FIR_DS2_OVERHEAD_CYCLE_COUNT +
+			psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= (psASRCCtrl->sFIRF2Ctrl.uiNInSamples>>1) * ( ASRC_FIR_DS2_OVERHEAD_CYCLE_COUNT +
 											 (psASRCCtrl->sFIRF2Ctrl.uiNCoefs * ASRC_FIR_DS2_TAP_CYCLE_COUNT) );
 
 		if(psASRCCtrl->sFIRF2Ctrl.pvProc == FIR_proc_sync)
-			psASRCCtrl->fCycleCountF1F2	+= psASRCCtrl->sFIRF2Ctrl.uiNInSamples * ( ASRC_FIR_SYNC_OVERHEAD_CYCLE_COUNT +
+			psASRCCtrl->sProfilingInfo.fCycleCountF1F2	+= psASRCCtrl->sFIRF2Ctrl.uiNInSamples * ( ASRC_FIR_SYNC_OVERHEAD_CYCLE_COUNT +
 											 (psASRCCtrl->sFIRF2Ctrl.uiNCoefs * ASRC_FIR_SYNC_TAP_CYCLE_COUNT) );
 	}
 
@@ -600,7 +600,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_in_spl(ASRCCtrl_t* psASRCCtrl, int iInSample)
 	psASRCCtrl->iTimeInt	-= FILTER_DEFS_ADFIR_N_PHASES;
 
 	// Update cycle count
-	psASRCCtrl->fCycleCountF3		+= ASRC_ADFIR_IN_SPL_CYCLE_COUNT;
+	psASRCCtrl->sProfilingInfo.fCycleCountF3		+= ASRC_ADFIR_IN_SPL_CYCLE_COUNT;
 
 	return ASRC_NO_ERROR;
 }
@@ -634,7 +634,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	// -----------------------------------------------------------------
 	// if not return value showing that no output sample needs to be produced
 	// Update cycle count
-	psASRCCtrl->fCycleCountF3AdaptiveCoefs	+= ASRC_ADFIR_TIME_CHECK_CYCLE_COUNT;
+	psASRCCtrl->sProfilingInfo.fCycleCountF3AdaptiveCoefs	+= ASRC_ADFIR_TIME_CHECK_CYCLE_COUNT;
 	if(psASRCCtrl->iTimeInt >= FILTER_DEFS_ADFIR_N_PHASES)
 		return ASRC_ERROR;
 
@@ -709,7 +709,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_time(ASRCCtrl_t* psASRCCtrl)
 	//printf("TimeInt = %x  TimeFract = %x", psASRCCtrl->iTimeInt, psASRCCtrl->uiTimeFract);
 
 	// Increase cycle counter
-	psASRCCtrl->fCycleCountF3AdaptiveCoefs		+= ASRC_ADFIR_TIME_SAMPLE_CYCLE_COUNT;
+	psASRCCtrl->sProfilingInfo.fCycleCountF3AdaptiveCoefs		+= ASRC_ADFIR_TIME_SAMPLE_CYCLE_COUNT;
 
 	// Return value showing that an output sample must be produced
 	return ASRC_NO_ERROR;
@@ -734,7 +734,7 @@ ASRCReturnCodes_t				ASRC_proc_F3_macc(ASRCCtrl_t* psASRCCtrl, int* piOutSample)
 	psASRCCtrl->uiNASRCOutSamples++;
 
 	// Cycle counter estimation
-	psASRCCtrl->fCycleCountF3		+= ASRC_ADFIR_MACC_OVERHEAD_CYCLE_COUNT + (psASRCCtrl->sADFIRF3Ctrl.uiNLoops * 2.0 * ASRC_ADFIR_MACC_TAP_CYCLE_COUNT);
+	psASRCCtrl->sProfilingInfo.fCycleCountF3		+= ASRC_ADFIR_MACC_OVERHEAD_CYCLE_COUNT + (psASRCCtrl->sADFIRF3Ctrl.uiNLoops * 2.0 * ASRC_ADFIR_MACC_TAP_CYCLE_COUNT);
 
 	return ASRC_NO_ERROR;
 }
@@ -789,7 +789,7 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 			piData[ui]	&= ASRC_DATA24_MASK;
 
 			// Increase cycle counter
-			psASRCCtrl->fCycleCountDither += ASRC_DITHER_SAMPLE_COUNT;
+			psASRCCtrl->sProfilingInfo.fCycleCountDither += ASRC_DITHER_SAMPLE_COUNT;
 		}
 
 		// Write random seed back
