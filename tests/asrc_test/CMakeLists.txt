@@ -28,7 +28,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     )
 
     set(APP_COMMON_LINK_LIBRARIES
-        lib_src    
+        lib_src
     )
 
     set(APP_LINK_OPTIONS
@@ -57,12 +57,14 @@ else ()
     set(TARGET_NAME asrc_golden)
     project(${TARGET_NAME} C)
 
-    file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/model/*.c
+    file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/model/*.c ${CMAKE_CURRENT_LIST_DIR}/model/src/*.c
     )
 
     set(APP_INCLUDES
          ${CMAKE_CURRENT_LIST_DIR}/../../lib_src/src/multirate_hifi
          ${CMAKE_CURRENT_LIST_DIR}/model
+         ${CMAKE_CURRENT_LIST_DIR}/model/src
+         ${CMAKE_CURRENT_LIST_DIR}/model/api
     )
 
     set(APP_COMPILER_FLAGS
@@ -82,4 +84,3 @@ else ()
     target_link_libraries(${TARGET_NAME} PUBLIC ${APP_COMMON_LINK_LIBRARIES})
     unset(TARGET_NAME)
 endif()
-
