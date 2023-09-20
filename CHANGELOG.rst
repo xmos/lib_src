@@ -89,4 +89,3 @@ lib_src change log
 
     - lib_xassert: Added dependency 2.0.1
 
-
