@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+2.4.0
+-----
+  * ADDED: Support for building the core ASRC code in the C emulator as a
+    library
+
 2.3.0
 -----
 
@@ -82,4 +87,3 @@ lib_src change log
     - lib_logging: Added dependency 2.0.1
 
     - lib_xassert: Added dependency 2.0.1
-
