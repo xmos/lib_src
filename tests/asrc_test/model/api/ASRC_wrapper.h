@@ -9,6 +9,28 @@
 
 #define         MAX_ASRC_N_IO_CHANNELS                          (2)
 
+// Sampling rate codes
+// -------------------
+typedef enum _ASRCFs
+{
+    ASRC_FS_44								= 0,								// Fs = 44.1kHz code
+    ASRC_FS_48								= 1,								// Fs = 48kHz code
+    ASRC_FS_88								= 2,								// Fs = 88.2kHz code
+    ASRC_FS_96								= 3,								// Fs = 96kHz code
+    ASRC_FS_176								= 4,								// Fs = 176.4kHz code
+    ASRC_FS_192								= 5,								// Fs = 192kHz code
+} ASRCFs_t;
+#define		ASRC_N_FS						(ASRC_FS_192 + 1)
+#define		ASRC_FS_MIN						ASRC_FS_44
+#define		ASRC_FS_MAX						ASRC_FS_192
+
+// Parameter values
+// ----------------
+#define		ASRC_ON								1
+#define		ASRC_OFF							0
+#define		ASRC_DITHER_OFF						ASRC_OFF
+#define		ASRC_DITHER_ON						ASRC_ON
+
 typedef struct {
 		float									fCycleCountF1F2;					// Variable to hold cycle count for MIPS estimations for F1 and F2 stages
 		float									fCycleCountF3AdaptiveCoefs;			// Variable to hold cycle count for MIPS estimations for F3 adaptive filters computation

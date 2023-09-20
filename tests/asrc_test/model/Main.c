@@ -25,11 +25,18 @@
 #include <math.h>
 
 // ASRC includes
-#include "ASRC.h"
 #include "ASRC_wrapper.h"
 
 // Main file includes
 #include "Main.h"
+
+#define		ASRC_N_CHANNELS						1									// Number of channels processed by ASRC instance
+#define		ASRC_N_IO_CHANNELS					2									// Number of input / output channels in I/O streams
+#define		ASRC_N_IN_OUT_RATIO_MAX				5									// Maximum ratio (as integer) between input and output number of samples
+// Parameter values
+// ----------------
+#define		ASRC_DITHER_ON_OFF_MIN				ASRC_DITHER_OFF
+#define		ASRC_DITHER_ON_OFF_MAX				ASRC_DITHER_ON
 
 // ===========================================================================
 //

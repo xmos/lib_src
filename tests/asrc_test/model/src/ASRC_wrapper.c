@@ -58,6 +58,7 @@ uint64_t wrapper_asrc_init(
 		unsigned *rand_seed)
 {
     assert(num_io_channels <= MAX_ASRC_N_IO_CHANNELS);
+	assert(num_channels_per_asrc_instance <= MAX_ASRC_N_IO_CHANNELS);
 
 	g_num_io_channels = num_io_channels;
 	g_num_channels_per_asrc_instance = num_channels_per_asrc_instance;

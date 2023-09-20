@@ -388,14 +388,14 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	psFIRDescriptor							= &sFirDescriptor[psFiltersID->uiFID[ASRC_F1_INDEX]];
 	// Set number of input samples and input samples step
 	psASRCCtrl->sFIRF1Ctrl.uiNInSamples		= psASRCCtrl->uiNInSamples;
-	psASRCCtrl->sFIRF1Ctrl.uiInStep			= ASRC_N_IO_CHANNELS;
+	psASRCCtrl->sFIRF1Ctrl.uiInStep			= psASRCCtrl->uiInStep;
 	// Set delay line base pointer
 	if( psFiltersID->uiFID[ASRC_F1_INDEX] == FILTER_DEFS_FIR_DS_ID )
 		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRShort;
 	else
 		psASRCCtrl->sFIRF1Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRLong;
 	// Set output buffer step
-	psASRCCtrl->sFIRF1Ctrl.uiOutStep		= ASRC_N_CHANNELS;
+	psASRCCtrl->sFIRF1Ctrl.uiOutStep		= psASRCCtrl->uiOutStep;
 
 	// Call init for FIR F1
 	if(FIR_init_from_desc(&psASRCCtrl->sFIRF1Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
@@ -415,7 +415,7 @@ ASRCReturnCodes_t				ASRC_init(ASRCCtrl_t* psASRCCtrl)
 	// Set delay line base pointer (second filter is always long with ASRC)
 	psASRCCtrl->sFIRF2Ctrl.piDelayB			= psASRCCtrl->psState->iDelayFIRLong;
 	// Set output buffer step
-	psASRCCtrl->sFIRF2Ctrl.uiOutStep		= ASRC_N_CHANNELS;
+	psASRCCtrl->sFIRF2Ctrl.uiOutStep		= psASRCCtrl->uiOutStep;
 
 	// Call init for FIR F2
 	if(FIR_init_from_desc(&psASRCCtrl->sFIRF2Ctrl, psFIRDescriptor) != FIR_NO_ERROR)
@@ -765,7 +765,7 @@ ASRCReturnCodes_t				ASRC_proc_dither(ASRCCtrl_t* psASRCCtrl)
 		uiR		= psASRCCtrl->psState->uiRndSeed;
 
 		// Loop through samples
-		for(ui = 0; ui < psASRCCtrl->uiNASRCOutSamples * ASRC_N_IO_CHANNELS; ui += ASRC_N_IO_CHANNELS)
+		for(ui = 0; ui < psASRCCtrl->uiNASRCOutSamples * psASRCCtrl->uiInStep; ui += psASRCCtrl->uiInStep)
 		{
 			// Compute dither sample (TPDF)
 			iDither		= ASRC_DITHER_BIAS;
