@@ -28,6 +28,7 @@ pipeline {
   }
   options {
     skipDefaultCheckout()
+    timestamps()
   }
   parameters {
     string(
@@ -37,110 +38,136 @@ pipeline {
     )
   }
   stages {
-    stage('Get repo') {
-      steps {
-        sh "mkdir ${REPO}"
-        // source checks require the directory
-        // name to be the same as the repo name
-        dir("${REPO}") {
-          // checkout repo
-          checkout scm
-          sh 'git submodule update --init --recursive --depth 1'
-        }
-      }
-    }
-    stage ("Create Python environment")
-    {
-      steps {
-        dir("${REPO}") {
-          createVenv('requirements.txt')
-          withVenv {
-            sh 'pip install -r requirements.txt'
-          }
-        }
-      }
-    }
-    stage('Library checks') {
-      steps {
-        dir("${REPO}") {
-          sh 'git clone git@github.com:xmos/infr_apps.git'
-          sh 'git clone git@github.com:xmos/infr_scripts_py.git'
-          // These are needed for xmake legacy build and also changelog check
-          sh 'git clone git@github.com:xmos/lib_logging.git'
-          sh 'git clone git@github.com:xmos/lib_xassert.git'
-          withVenv {
-            sh 'pip install -e infr_scripts_py'
-            sh 'pip install -e infr_apps'
-            dir("tests") {
-              withEnv(["XMOS_ROOT=.."]) {
-                localRunPytest('-s test_lib_checks.py -vv')
+    stage('Build and Docs') {
+      parallel {
+        stage('Build and Test') {
+          stages {
+            stage('Get repo') {
+              steps {
+                sh "mkdir ${REPO}"
+                // source checks require the directory
+                // name to be the same as the repo name
+                dir("${REPO}") {
+                  // checkout repo
+                  checkout scm
+                  sh 'git submodule update --init --recursive --depth 1'
+                }
+              }
+            }
+            stage ("Create Python environment") {
+              steps {
+                dir("${REPO}") {
+                  createVenv('requirements.txt')
+                  withVenv {
+                    sh 'pip install -r requirements.txt'
+                  }
+                }
+              }
+            }
+            stage('Library checks') {
+              steps {
+                dir("${REPO}") {
+                  sh 'git clone git@github.com:xmos/infr_apps.git'
+                  sh 'git clone git@github.com:xmos/infr_scripts_py.git'
+                  // These are needed for xmake legacy build and also changelog check
+                  sh 'git clone git@github.com:xmos/lib_logging.git'
+                  sh 'git clone git@github.com:xmos/lib_xassert.git'
+                  withVenv {
+                    sh 'pip install -e infr_scripts_py'
+                    sh 'pip install -e infr_apps'
+                    dir("tests") {
+                      withEnv(["XMOS_ROOT=.."]) {
+                        localRunPytest('-s test_lib_checks.py -vv')
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            stage('Test xmake build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                dir("${REPO}") {
+                  withTools(params.TOOLS_VERSION) {
+                    withVenv {
+                      dir("tests") {
+                        localRunPytest('-k "legacy" -vv')
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            stage('Tests XS2') {
+              steps {
+                runningOn(env.NODE_NAME)
+                dir("${REPO}") {
+                  withTools(params.TOOLS_VERSION) {
+                    withVenv {
+                      sh 'mkdir build'
+                      dir("build") {
+                        sh 'rm -rf'
+                        sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
+                        sh 'make test_ds3_voice test_us3_voice test_unity_gain_voice -j'
+                      }
+                      dir("tests") {
+                        localRunPytest('-n auto -k "xs2" -vv')
+                      }
+                      dir("build") {
+                        sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            stage('Tests XS3') {
+              steps {
+                runningOn(env.NODE_NAME)
+                dir("${REPO}") {
+                  withTools(params.TOOLS_VERSION) {
+                    withVenv {
+                      dir("tests") {
+                        localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
+
+                        // FF3 HiFi tests for OS3 and DS3
+                        localRunPytest('-m main -n auto -k "hifi_ff3" -vv')
+
+                        // ASRC and SSRC tests across all in/out freqs and deviations (asrc only)
+                        localRunPytest('-m main -n auto -k "mrhf" -vv')
+                        archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+
+                        // VPU enabled ff3 and rat tests
+                        localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
+
+                        // Profile the ASRC
+                        localRunPytest('-m main -k "profile_asrc" -vv')
+                        sh 'tree'
+                        archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
+                      }
+                    }
+                  }
+                }
               }
             }
           }
         }
-      }
-    }
-    stage('Test xmake build') {
-      steps {
-        runningOn(env.NODE_NAME)
-        dir("${REPO}") {
-          withTools(params.TOOLS_VERSION) {
-            withVenv {
-              dir("tests") {
-                localRunPytest('-k "legacy" -vv')
-              }
-            }
+        stage('Build Docs') {
+          agent { label "docker" }
+          environment { XMOSDOC_VERSION = "pr-67" }
+          steps {
+            checkout scm
+            sh 'git submodule update --init --recursive --depth 1'
+            sh "docker pull ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"
+            sh """docker run -u "\$(id -u):\$(id -g)" \
+                  --rm \
+                  -v ${WORKSPACE}:/build \
+                  ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"""
+            archiveArtifacts artifacts: "doc/_build/**", allowEmptyArchive: true
           }
-        }
-      }
-    }
-    stage('Tests XS2') {
-      steps {
-        runningOn(env.NODE_NAME)
-        dir("${REPO}") {
-          withTools(params.TOOLS_VERSION) {
-            withVenv {
-              sh 'mkdir build'
-              dir("build") {
-                sh 'rm -rf'
-                sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
-                sh 'make test_ds3_voice test_us3_voice test_unity_gain_voice -j'
-              }
-              dir("tests") {
-                localRunPytest('-n auto -k "xs2" -vv')
-              }
-              dir("build") {
-                sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
-              }
-            }
-          }
-        }
-      }
-    }
-    stage('Tests XS3') {
-      steps {
-        runningOn(env.NODE_NAME)
-        dir("${REPO}") {
-          withTools(params.TOOLS_VERSION) {
-            withVenv {
-              dir("tests") {
-                localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
-
-                // FF3 HiFi tests for OS3 and DS3
-                localRunPytest('-m main -n auto -k "hifi_ff3" -vv')
-
-                // ASRC and SSRC tests across all in/out freqs and deviations (asrc only)
-                localRunPytest('-m main -n auto -k "mrhf" -vv')
-                archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
-
-                // VPU enabled ff3 and rat tests
-                localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
-
-                // Profile the ASRC
-                localRunPytest('-m main -k "profile_asrc" -vv')
-                sh 'tree'
-                archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
-              }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
             }
           }
         }
