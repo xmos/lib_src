@@ -25,12 +25,18 @@
 #include <math.h>
 
 // ASRC includes
-#include "ASRC.h"
+#include "ASRC_wrapper.h"
 
 // Main file includes
 #include "Main.h"
 
-
+#define		ASRC_N_CHANNELS						1									// Number of channels processed by ASRC instance
+#define		ASRC_N_IO_CHANNELS					2									// Number of input / output channels in I/O streams
+#define		ASRC_N_IN_OUT_RATIO_MAX				5									// Maximum ratio (as integer) between input and output number of samples
+// Parameter values
+// ----------------
+#define		ASRC_DITHER_ON_OFF_MIN				ASRC_DITHER_OFF
+#define		ASRC_DITHER_ON_OFF_MAX				ASRC_DITHER_ON
 
 // ===========================================================================
 //
@@ -85,15 +91,6 @@ unsigned int	uiNInSamples;									// Number of input sample pairs (L/R) to proc
 
 unsigned int	uiASRCDitherOnOff;								// ASRC Dither on/off flag
 unsigned int	uiASRCRandSeed[ASRC_N_IO_CHANNELS];				// ASRC channel 0/1 random seeds for dither
-
-
-// ASRC instances variables
-// ------------------------
-// State, Stack, Coefs and Control structures (one for each channel)
-ASRCState_t		sASRCState[ASRC_N_IO_CHANNELS];
-int				iASRCStack[ASRC_N_IO_CHANNELS][ASRC_STACK_LENGTH_MULT * N_IN_SAMPLES_MAX];
-ASRCCtrl_t		sASRCCtrl[ASRC_N_IO_CHANNELS];
-int				iASRCADFIRCoefs[ASRC_ADFIR_COEFS_LENGTH];
 
 
 // Data I/O
@@ -155,6 +152,8 @@ int main(int argc, char *argv[])
 	uiASRCRandSeed[0]	= ASRC_RAND_SEED_CHANNEL_0_DEFAULT;		// Random seed for channel 0
 	uiASRCRandSeed[1]	= ASRC_RAND_SEED_CHANNEL_1_DEFAULT;		// Random seed for channel 1
 
+	ASRCCtrl_profile_only_t *profile_info_ptr[MAX_ASRC_N_IO_CHANNELS]; // Array of pointers
+
 	//	Parse command line arguments
 	for (ui = 1; ui < (unsigned int)argc; ui++)
 	{
@@ -213,38 +212,16 @@ int main(int argc, char *argv[])
 
 	// Process init
 	// ------------
-	// Prepare the ASRC coefficients
-	if(ASRC_prepare_coefs() != ASRC_NO_ERROR)
-	{
-		sprintf(pzError, "Error at ASRC coefficients preparation");
-		HandleError(pzError, FATAL);
-	}
-
-	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-	{
-		// Set state, stack and coefs into ctrl structure
-		sASRCCtrl[ui].psState					= &sASRCState[ui];
-		sASRCCtrl[ui].piStack					= iASRCStack[ui];
-		sASRCCtrl[ui].piADCoefs					= iASRCADFIRCoefs;
-
-		// Set input/output sampling rate codes
-		sASRCCtrl[ui].eInFs						= uiInFs;
-		sASRCCtrl[ui].eOutFs					= uiOutFs;
-
-		// Set number of samples
-		sASRCCtrl[ui].uiNInSamples				= uiNInSamples;
-
-		// Set dither flag and random seeds
-		sASRCCtrl[ui].uiDitherOnOff				= uiASRCDitherOnOff;
-		sASRCCtrl[ui].uiRndSeedInit				= uiASRCRandSeed[ui];
-
-		// Init ASRC instances
-		if(ASRC_init(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
-		{
-			sprintf(pzError, "Error at ASRC initialization");
-			HandleError(pzError, FATAL);
-		}
-	}
+	uint64_t nominal_fs_ratio = wrapper_asrc_init(
+										&profile_info_ptr, // Pointer to array of pointers
+										uiFsTable[uiInFs],
+										uiFsTable[uiOutFs],
+										uiNInSamples,
+										ASRC_N_IO_CHANNELS,
+										ASRC_N_CHANNELS,
+										uiASRCDitherOnOff,
+										uiASRCRandSeed
+									);
 
 
 	// Load input data from files
@@ -266,18 +243,6 @@ int main(int argc, char *argv[])
 	//iIn[1] = 1000000000;
 
 
-	// Sync
-	// ----
-	// Sync ASRC. This is just to show that the function works and returns success
-	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-	{
-		if(ASRC_sync(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
-		{
-			sprintf(pzError, "Error at ASRC sync");
-			HandleError(pzError, FATAL);
-		}
-	}
-
 	// Process data
 	// ------------
 	// Initialize remaing number of samples to total number of input samples,
@@ -289,134 +254,59 @@ int main(int argc, char *argv[])
 
 
 	// Update Fs Ratio
-	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-	{
-		// Make Fs Ratio deviate
-		unsigned long long fs_ratio_full = ((unsigned long long)sASRCCtrl[ui].uiFsRatio << 32) | ((unsigned long long)sASRCCtrl[ui].uiFsRatio_lo);
-		fs_ratio_full = (unsigned long long)(fs_ratio_full * fFsRatioDeviation);
-		sASRCCtrl[ui].uiFsRatio = (uint32_t)(fs_ratio_full >> 32);
-		sASRCCtrl[ui].uiFsRatio_lo = (uint32_t)fs_ratio_full;
-		if(ASRC_update_fs_ratio(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
-		{
-			sprintf(pzError, "Error at ASRC update fs ratio");
-			HandleError(pzError, FATAL);
-		}
-	}
+	uint64_t actual_fs_ratio = (unsigned long long)(nominal_fs_ratio * fFsRatioDeviation);
+
 
 	// Loop through input samples, block by block
-	while(iNRemainingSamples >= (int)sASRCCtrl[0].uiNInSamples)
+	while(iNRemainingSamples >= (int)uiNInSamples)
 	{
 		// Setup
 		// -----
 		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 		{
 			// Reset cycle counts for MIPS estimations
-			sASRCCtrl[ui].fCycleCountF1F2				= 0;
-			sASRCCtrl[ui].fCycleCountF3AdaptiveCoefs	= 0;
-			sASRCCtrl[ui].fCycleCountF3					= 0;
-			sASRCCtrl[ui].fCycleCountDither				= 0;
-
-			// Set input and output data pointers
-			sASRCCtrl[ui].piIn			= piIn + ui;
-			sASRCCtrl[ui].piOut			= piOut + ui;
+			profile_info_ptr[ui]->fCycleCountF1F2				= 0;
+			profile_info_ptr[ui]->fCycleCountF3AdaptiveCoefs	= 0;
+			profile_info_ptr[ui]->fCycleCountF3					= 0;
+			profile_info_ptr[ui]->fCycleCountDither				= 0;
 		}
 
-		// Process synchronous part (F1 + F2)
-		// ==================================
-		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-			// Note: this is block based similar to SSRC, output will be on stack
-			// and there will be sASRCCtrl[0].uiNSyncSamples samples per channel produced
-			if(ASRC_proc_F1_F2(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
-			{
-				sprintf(pzError, "Error at ASRC F1 F2 process");
-				HandleError(pzError, FATAL);
-			}
-
-
-		// Run the asynchronous part (F3)
-		// ==============================
-		// Clear number of output samples (note that this sample counter would actually not be needed if all was sample by sampe)
-		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-			sASRCCtrl[ui].uiNASRCOutSamples = 0;
-
-		uiSplCntr = 0; // This is actually only used because of the bizarre mix of block and sample based processing
-
-		// Driven by samples produced during the synchronous phase
-		for(ui = 0; ui < sASRCCtrl[0].uiNSyncSamples; ui++)
-		{
-			// Push new samples into F3 delay line (input from stack) for each new "synchronous" sample (i.e. output of F1, respectively F2)
-			for(uj = 0; uj < ASRC_N_IO_CHANNELS; uj++)
-				if(ASRC_proc_F3_in_spl(&sASRCCtrl[uj], sASRCCtrl[uj].piStack[ui]) != ASRC_NO_ERROR)
-				{
-					sprintf(pzError, "Error at ASRC F3 in sample process");
-					HandleError(pzError, FATAL);
-				}
-
-			// Run macc loop for F3
-			// Check if a new output sample needs to be produced
-			// Note that this will also update the adaptive filter coefficients
-			// These must be computed for one channel only and reused in the macc loop of other channels
-			while(ASRC_proc_F3_time(&sASRCCtrl[0]) == ASRC_NO_ERROR)
-			{
-				// Not really needed, just for the beauty of it...
-				sASRCCtrl[1].iTimeInt		= sASRCCtrl[0].iTimeInt;
-				sASRCCtrl[1].uiTimeFract	= sASRCCtrl[0].uiTimeFract;
-
-				// Apply filter F3 with just computed adaptive coefficients
-				for(uj = 0; uj < ASRC_N_IO_CHANNELS; uj++)
-					if(ASRC_proc_F3_macc(&sASRCCtrl[uj], sASRCCtrl[uj].piOut + ASRC_N_IO_CHANNELS * uiSplCntr) != ASRC_NO_ERROR)
-					{
-						sprintf(pzError, "Error at ASRC F3 in sample process");
-						HandleError(pzError, FATAL);
-					}
-
-				uiSplCntr++; // This is actually only used because of the bizarre mix of block and sample based processing
-			}
-		}
-
-
-		// Process dither part
-		// ===================
-		// We are back to block based processing. This is where the number of ASRC output samples is required again
-		// (would not be used if sample by sample based (on output samples))
-		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-			// Note: this is block based similar to SSRC
-			if(ASRC_proc_dither(&sASRCCtrl[ui]) != ASRC_NO_ERROR)
-			{
-				sprintf(pzError, "Error at ASRC F1 F2 process");
-				HandleError(pzError, FATAL);
-			}
-
+		unsigned num_output_samples = wrapper_asrc_process(piIn, piOut, actual_fs_ratio);
 
 		// Write output data to files
 		// --------------------------
 		for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
-			for(uj = 0; uj < sASRCCtrl[0].uiNASRCOutSamples; uj++)
-				if(fprintf(OutFileDat[ui], "%i\n", *(sASRCCtrl[ui].piOut + ASRC_N_IO_CHANNELS * uj) ) < 0)
+		{
+			int *piOut_ch = piOut + ui;
+			for(uj = 0; uj < num_output_samples; uj++)
+			{
+				if(fprintf(OutFileDat[ui], "%i\n", *(piOut_ch + ASRC_N_IO_CHANNELS * uj) ) < 0)
 				{
 					sprintf(pzError, "Error while writing to output file, %s", pzOutFileName[ui]);
 					HandleError(pzError, FATAL);
 				}
+			}
+		}
 
 
 		// Update input and outut data pointers for next round
-		piIn					+= (sASRCCtrl[0].uiNInSamples * ASRC_N_IO_CHANNELS);
-		piOut					+= sASRCCtrl[0].uiNASRCOutSamples * ASRC_N_IO_CHANNELS;
-		iNRemainingSamples		-= (int)sASRCCtrl[0].uiNInSamples;
+		piIn					+= (uiNInSamples * ASRC_N_IO_CHANNELS);
+		piOut					+= num_output_samples * ASRC_N_IO_CHANNELS;
+		iNRemainingSamples		-= (int)uiNInSamples;
 
 		// Update total output sample counter
-		uiNTotalOutSamples		+= sASRCCtrl[0].uiNASRCOutSamples;
+		uiNTotalOutSamples		+= num_output_samples;
 	}
 
 
 	// Report MIPS
 	for(ui = 0; ui < ASRC_N_IO_CHANNELS; ui++)
 	{
-		printf("MIPS total load channel %i: %f\n", ui, (sASRCCtrl[ui].fCycleCountF1F2 + sASRCCtrl[ui].fCycleCountF3AdaptiveCoefs + sASRCCtrl[ui].fCycleCountF3 + sASRCCtrl[ui].fCycleCountDither) / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
-		printf("MIPS F1+F2 load channel %i: %f\n", ui, sASRCCtrl[ui].fCycleCountF1F2 / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
-		printf("MIPS F3 Adaptive Coefs computation load channel %i: %f\n", ui, sASRCCtrl[ui].fCycleCountF3AdaptiveCoefs / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
-		printf("MIPS F3 load channel %i: %f\n", ui, sASRCCtrl[ui].fCycleCountF3 / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
-		printf("MIPS Dither load channel %i: %f\n\n", ui, sASRCCtrl[ui].fCycleCountDither / (float)(sASRCCtrl[ui].uiNInSamples) * (float)uiFsTable[sASRCCtrl[ui].eInFs]/ 1000000.0);
+		printf("MIPS total load channel %i: %f\n", ui, (profile_info_ptr[ui]->fCycleCountF1F2 + profile_info_ptr[ui]->fCycleCountF3AdaptiveCoefs + profile_info_ptr[ui]->fCycleCountF3 + profile_info_ptr[ui]->fCycleCountDither) / (float)(uiNInSamples) * (float)uiFsTable[uiInFs]/ 1000000.0);
+		printf("MIPS F1+F2 load channel %i: %f\n", ui, profile_info_ptr[ui]->fCycleCountF1F2 / (float)(uiNInSamples) * (float)uiFsTable[uiInFs]/ 1000000.0);
+		printf("MIPS F3 Adaptive Coefs computation load channel %i: %f\n", ui, profile_info_ptr[ui]->fCycleCountF3AdaptiveCoefs / (float)(uiNInSamples) * (float)uiFsTable[uiInFs]/ 1000000.0);
+		printf("MIPS F3 load channel %i: %f\n", ui, profile_info_ptr[ui]->fCycleCountF3 / (float)(uiNInSamples) * (float)uiFsTable[uiInFs]/ 1000000.0);
+		printf("MIPS Dither load channel %i: %f\n\n", ui, profile_info_ptr[ui]->fCycleCountDither / (float)(uiNInSamples) * (float)uiFsTable[uiInFs]/ 1000000.0);
 
 	}
 	// Report number of output samples produced
