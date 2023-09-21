@@ -17,9 +17,7 @@ def localRunPytest(String extra_args="") {
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64&&macOS' // These agents have 24 cores so good for parallel xsim runs
-  }
+  agent none
   environment {
     REPO = 'lib_src'
     VIEW = getViewName(REPO)
@@ -43,6 +41,9 @@ pipeline {
         stage('Build and Test') {
           when {
             expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
+          }
+          agent {
+            label 'x86_64&&macOS' // These agents have 24 cores so good for parallel xsim runs
           }
           stages {
             stage('Get repo') {
