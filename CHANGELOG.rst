@@ -1,6 +1,12 @@
 lib_src change log
 ==================
 
+2.4.0
+-----
+
+  * ADDED: Support for building the core ASRC code in the C emulator as a
+    library
+
 2.3.0
 -----
 
