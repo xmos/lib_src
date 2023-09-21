@@ -41,6 +41,9 @@ pipeline {
     stage('Build and Docs') {
       parallel {
         stage('Build and Test') {
+          when {
+            expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
+          }
           stages {
             stage('Get repo') {
               steps {
