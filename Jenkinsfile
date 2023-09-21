@@ -165,7 +165,7 @@ pipeline {
             sh """docker run -u "\$(id -u):\$(id -g)" \
                   --rm \
                   -v ${WORKSPACE}:/build \
-                  ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"""
+                  ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
             archiveArtifacts artifacts: "doc/_build/**", allowEmptyArchive: true
           }
           post {
