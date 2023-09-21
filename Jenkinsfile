@@ -155,6 +155,11 @@ pipeline {
               }
             }
           }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
         }
         stage('Build Docs') {
           agent { label "docker" }
@@ -176,11 +181,6 @@ pipeline {
           }
         }
       }
-    }
-  }
-  post {
-    cleanup {
-      xcoreCleanSandbox()
     }
   }
 }
