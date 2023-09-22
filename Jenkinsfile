@@ -103,7 +103,8 @@ pipeline {
               dir("doc/python") {
                 sh "python -m doc_asrc.py"
                 sh "ls -lrt _build/*"
-                archiveArtifacts artifacts: "_build/**/*", allowEmptyArchive: true
+                archiveArtifacts artifacts: "_build/output/*", allowEmptyArchive: true
+                archiveArtifacts artifacts: "_build/rst/*", allowEmptyArchive: true
               }
             }
           }
