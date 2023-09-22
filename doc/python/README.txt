@@ -15,17 +15,13 @@ incorporating a full set of charts and summary table.
 
 
 
-HOW TO
-======
+REQUIREMENTS
+============
 
-This has been developed and tested under WSL2 linux for Windows.
-In a WSL2 command window (e.g., Ubuntu20.04):
+Python 3.9 or above. Make sure the dependencies listed in lib_src/requirements.txt are installed.
 
-
-To create and setup the conda environment to run the asrc_test.py script
-
-	conda env create -f condaEnv.yml
-	conda activate .conda-env
+	cd ../../
+	pip install -r requirements.txt
 
 
 

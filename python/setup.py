@@ -18,7 +18,7 @@ setuptools.setup(
         'numpy',
         'soundfile',
         'pytest-xdist',
-        'scipy'
+        'scipy',
         'mpmath'
     ],
     dependency_links=[
