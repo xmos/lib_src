@@ -2,7 +2,7 @@ INTRODUCTION
 ============
 
 This folder includes a python script which runs the C emulators for the ASRC, SSRC, OS3 and DS3 modules.
-For each model we present test signals - both a single tone to test the THD performance and a range of tones to 
+For each model we present test signals - both a single tone to test the THD performance and a range of tones to
 observe roll-off at the top of the band.
 Using an un-windowed FFT we calculate the SNR.
 We scrape the logs to extract MIPS/Utilization where supported.
@@ -26,14 +26,14 @@ To create and setup the conda environment to run the asrc_test.py script
 
 	conda env create -f condaEnv.yml
 	conda activate .conda-env
-	
+
 
 
 To run the script:
 
 	python3 doc_asrc.py
-	
-	
+
+
 By default, this will create a "_build" folder, containing sub-folders:
 	./input		all generated test files
 	./expected	simulation output from the models
