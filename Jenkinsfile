@@ -80,6 +80,21 @@ pipeline {
         }
       }
     }
+    stage('Run doc python') {
+      steps {
+        runningOn(env.NODE_NAME)
+        dir("${REPO}") {
+          withTools(params.TOOLS_VERSION) {
+            withVenv {
+              dir("doc/python") {
+                sh "python -m doc_asrc.py"
+                archiveArtifacts artifacts: "_build/*", allowEmptyArchive: true
+              }
+            }
+          }
+        }
+      }
+    }
     stage('Test xmake build') {
       steps {
         runningOn(env.NODE_NAME)

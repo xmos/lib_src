@@ -11,6 +11,8 @@ import re
 from math import gcd
 from mpmath import mp
 from scipy.io.wavfile import write as writewav
+from pathlib import Path
+import subprocess
 
 
 class asrc_util:
@@ -28,11 +30,10 @@ class asrc_util:
         self.logFile = "/log.csv" # tabulated results
 
         # the C-models and XSIM models which get run
-        self.asrc_model ="{}/../../build/tests/asrc_test/asrc_golden".format(self.path) # path and file of the reference c model executable
-        self.ssrc_model ="{}/../../build/tests/ssrc_test/ssrc_golden".format(self.path) # path and file of the reference c model executable
-        self.ds3_model  ="{}/../../build/tests/ds3_test/ds3_golden".format(self.path) # path and file of the reference c model executable
-        self.os3_model  ="{}/../../build/tests/os3_test/os3_golden".format(self.path) # path and file of the reference c model executable
-        self.xePath = "{}/XSIM/ASRC/asrc_test.xe".format(self.path) # path and file of the xe xsim executable
+        self.asrc_model = self.build_model_exe("asrc")
+        self.ssrc_model = self.build_model_exe("ssrc")
+        self.ds3_model = self.build_model_exe("ds3")
+        self.os3_model = self.build_model_exe("os3")
 
         # definitions of sample ratea
         self.allRates =["16", "32", "44", "48", "88", "96", "176", "192"]
@@ -55,6 +56,18 @@ class asrc_util:
         self.plot_text = []
         self.skip_xsim = True # FIX THIS LATER
         self.rstFile = ""
+
+    def build_model_exe(self, target):
+        file_dir = Path(__file__).resolve().parent
+        build_path = file_dir / "../../build"
+        build_path.mkdir(exist_ok=True)
+        subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
+        subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
+        bin_path = file_dir / f"{target}_/model"
+        subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
+
+        return f"{build_path}/tests/{target}_test/{target}_golden"
+
 
 
     # update the input frequencies
@@ -372,37 +385,8 @@ class asrc_util:
                 os.remove("./input.dat")
                 os.remove("./output.dat")
 
-            # ASRC XSIM Model
-            # ---------------
-            if ipFile[2] in self.srcRates and self.opRate in self.srcRates and not self.skip_xsim:
-                xsimFiles = self.run_xsim(ipFiles, opRate, fDev, simLog)
-                opFiles  = np.append(opFiles, xsimFiles, axis=0)
-
 
         return opFiles, simLog
-
-
-    def run_xsim(self, ipFiles, opRate, fDev, simLog):
-        if os.path.isfile("./asrc_test.lnk"):
-            os.remove("./asrc_test.lnk")
-        os.link(self.xePath, "./asrc_test.lnk")
-        opFiles=np.empty((0,6), str)
-        for ipFile in ipFiles:
-            ch0 = self.opFileName(ipFile[0], 'x-asrc', fDev, opRate)
-            ch1 = self.opFileName(ipFile[1], 'x-asrc', fDev, opRate)
-
-            cmd0 = "cd {}".format(self.path)
-            cmd1 = "xsim --args asrc_test.lnk -i {} {} -o {} {} -f {} -g {} -n {} -e {}".format(
-                ipFile[0], ipFile[1], ch0, ch1, self.sampleRates[ipFile[2]], self.sampleRates[opRate], self.numSamples[ipFile[2]], fDev)
-            cmd = cmd0 + ";pwd;" + cmd1
-            p = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-            output, error = p.communicate(input=b'\n')
-            p.wait()
-            opFiles = np.append(opFiles, np.array([[ch0, ch1, opRate, str(fDev), output, "x-asrc"]]), axis=0)
-            simLog[ipFile[0]]['xsim-asrc']=[str(ch0), 0, opRate, str(fDev), output, "x-asrc"]
-            simLog[ipFile[1]]['xsim-asrc']=[str(ch1), 1, opRate, str(fDev), output, "x-asrc"]
-        return opFiles
-
 
     def scrapeXsimLog(self, data):
         # This bit scrapes the output of xsim and takes the average of all reported CPU utilization
