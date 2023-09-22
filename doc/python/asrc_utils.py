@@ -15,7 +15,7 @@ from scipy.io.wavfile import write as writewav
 
 class asrc_util:
     def __init__(self, path, relative, fftPoints, ch0_bins, ch1_bins):
-        self.path = path
+        self.path = str(path)
         self.relative = relative
 
         # locations for results - note they are purged every time this is run
@@ -24,14 +24,14 @@ class asrc_util:
         self.inputFolder = self.cleanFolder("_build/input") # put any input test files here
         self.expectedFolder = self.cleanFolder("_build/expected") # put C ref model o/p here
         self.rstFolder = self.cleanFolder("_build/rst") # put RST o/p here
-        
+
         self.logFile = "/log.csv" # tabulated results
 
         # the C-models and XSIM models which get run
-        self.asrc_model ="{}/../tmp_models/asrc_demo".format(self.path) # path and file of the reference c model executable
-        self.ssrc_model ="{}/../tmp_models/ssrc_demo".format(self.path) # path and file of the reference c model executable
-        self.ds3_model  ="{}/../tmp_models/ds3_demo".format(self.path) # path and file of the reference c model executable
-        self.os3_model  ="{}/../tmp_models/os3_demo".format(self.path) # path and file of the reference c model executable
+        self.asrc_model ="{}/../../build/tests/asrc_test/asrc_golden".format(self.path) # path and file of the reference c model executable
+        self.ssrc_model ="{}/../../build/tests/ssrc_test/ssrc_golden".format(self.path) # path and file of the reference c model executable
+        self.ds3_model  ="{}/../../build/tests/ds3_test/ds3_golden".format(self.path) # path and file of the reference c model executable
+        self.os3_model  ="{}/../../build/tests/os3_test/os3_golden".format(self.path) # path and file of the reference c model executable
         self.xePath = "{}/XSIM/ASRC/asrc_test.xe".format(self.path) # path and file of the xe xsim executable
 
         # definitions of sample ratea
@@ -40,7 +40,7 @@ class asrc_util:
         self.factors = {"44":0, "48":1, "88":2, "96":3, "176":4, "192":5} # look up to convert rate to the filter bank id needed by the ASRC
         self.sampleRates = {"16":16000, "32":32000, "44":44100, "48":48000, "88":88200, "96":96000, "176":176400, "192":192000} #convinience to save typing out sample rates in full
         self.sigMax = {"16":7300, "32":14600, "44":20200, "48":21800, "88":40000, "96":47990, "176":80000, "192":85000} # upper limit on input freq for given sample rate
-        
+
         self.numSamples = {} #populated later based on oprate to ensure sufficient samples for fft
         self.ignoreSamples = 2000 #worst case for high up-sampling
         self.fftPoints = fftPoints
@@ -56,7 +56,7 @@ class asrc_util:
         self.skip_xsim = True # FIX THIS LATER
         self.rstFile = ""
 
-    
+
     # update the input frequencies
     # allows input of frequencies as a list for each channel, or use the autoFill which
     # populates channel 1 with mutiple tones, spaced logrithmically, most dense at higher freq, and ch0 is always 10% in
@@ -65,7 +65,7 @@ class asrc_util:
         # this manipultaes the fft size to attempt to force any reflections around the ip sample rate nyquist also ending up
         # in an integer fft bin
         self.fftPoints = int(10000 *(self.sampleRates[ipRate] * self.fDev) / self.sampleRates[self.opRate])
-        print("Over-wrote the fft sive to {} points".format(self.fftPoints))
+        print(f"Over-wrote the fft size to {self.fftPoints} points. ipRate = {ipRate}")
 
         #for channel 0
         ch0_ratio = 0.05 # 5% of the way into the fft bins, so 10% on the plot
@@ -110,13 +110,13 @@ class asrc_util:
 
     def logResults(self, source, ipRate, opRate, fDev, ch, SNR, THD, totalmips, ch0mips=None, ch1mips=None, txt=None, snr2=None, mips2=None):
         # simple function to append information to a log, which is kept as an array of dictionaries
-        realRate = self.sampleRates[opRate] / self.fDev 
+        realRate = self.sampleRates[opRate] / self.fDev
         sigList = []
         for s in self.sig[ch]:
             sigList.append("{:.3f}".format(float(mp.fmul(realRate ,mp.fdiv(s, self.fftPoints)))))
         signals = ";".join(sigList)
         #info = {"source":source, "ipRate(Hz)":self.sampleRates[ipRate], "opRate(Hz)":self.sampleRates[opRate], "fDev":fDev, "ch":ch, "signals(Hz)":signals, "SNR(dB)":SNR, "THD(dB)":THD,"Total MIPS":totalmips, "MIPS(ch0)":ch0mips, "MIPS(ch1)":ch1mips, "Text":txt}
-        info = {"source":source, "ipRate(Hz)":str(self.sampleRates[ipRate]), "opRate(Hz)":str(self.sampleRates[opRate]), "fDev":str(fDev), "ch":str(ch), "signals(Hz)":signals, "SNR(dB)":"{:.1f}".format(SNR), "THD(dB)":THD,"Total MIPS":"{:.0f}".format(totalmips), "MIPS(ch0)":"{:.0f}".format(ch0mips), "MIPS(ch1)":"{:.0f}".format(ch1mips)}
+        info = {"source":source, "ipRate(Hz)":str(self.sampleRates[ipRate]), "opRate(Hz)":str(self.sampleRates[opRate]), "fDev":str(fDev), "ch":str(ch), "signals(Hz)":signals, "SNR(dB)":"{:.1f}".format(SNR), "THD(dB)":THD}
         self.log.append(info)
 
 
@@ -125,7 +125,7 @@ class asrc_util:
         logfile = open(self.outputFolder + self.logFile, "w")
         logfile.write(",".join(self.log[0].keys()) + "\n") # write headings
         for i in self.log:
-            logfile.write((','.join(i.values())).replace("\n", ";") + "\n") # write data         
+            logfile.write((','.join(i.values())).replace("\n", ";") + "\n") # write data
         logfile.close()
 
 
@@ -142,7 +142,7 @@ class asrc_util:
         if self.relative:
             p = p.replace(self.path, ".")
         return p
-        
+
     def listFactors(self, x):
         factors=[]
         for i in range(1,x+1):
@@ -161,9 +161,9 @@ class asrc_util:
         print("Make signal: {:.2f}".format(float(fsig)))
         a = asig * 2**31
         x = np.linspace(0, float(2*mp.pi*f*(l-1)), l)
-        ipdata = a * np.sin(x) 
+        ipdata = a * np.sin(x)
         return ipdata
-    
+
 
     def saveInputFile(self, signals, fileName):
         # sums the signals into one signal and saves as a file
@@ -174,9 +174,9 @@ class asrc_util:
         np.savetxt(file, data, fmt='%d', delimiter='\n')
         #writewav("/mnt/c/Users/andrewdewhurst/OneDrive - Xmos/Temp/rawdata/test.wav", 44100, (data[0]/2**16).astype(np.int16))
         return file, data
-    
+
     def makeInputFiles(self, test_rates, ferr=1.0):
-        # create two channels of input 
+        # create two channels of input
         # define some test signal frequencies w.r.t. op rate
         realRate = self.sampleRates[self.opRate] # mp.fdiv(self.sampleRates[self.opRate], self.fDev)
         #
@@ -211,7 +211,7 @@ class asrc_util:
 
 
     def doFFT(self, data, window=False):
-        # convinient way to select between fft styles.  Note that the periodic one will need a lot more samples, so 
+        # convinient way to select between fft styles.  Note that the periodic one will need a lot more samples, so
         # use window=True for debuging.
         if window:
             return self.winFFT(data)
@@ -262,7 +262,7 @@ class asrc_util:
             ax.plot(xy[0], xy[1] if log else xy[2], linestyle=slut[i%len(slut)], color=clut[i%len(clut)], linewidth=1, label=subtitles[i])
             ax.set_xlabel("Frequency (KHz)")
             ax.set_ylabel("dB")
-            ax.set_ylim(-200,0)
+            ax.set_ylim(-250,0)
             ax.grid()
             if text != None:
                 tl = np.sum([text[x].count("\n") + 1 for x in range(i)]) if combine else 0 # this stacks up the text comments in the case of combined plots
@@ -292,7 +292,7 @@ class asrc_util:
         #a simple utility to convert an input file pat+name to an output version, appending the frequency deviation
         newName = fin.replace(self.inputFolder, self.expectedFolder).replace(".dat", "_fso{}_fdev{:f}_{}.dat".format(opRate, fDev, label))
         return newName
-    
+
 
     def run_c_model(self, ipFiles, opRate, blocksize, fDev):
         # Runs the various simulators across the input files, for the provided opRate and frequency deviation
@@ -314,12 +314,13 @@ class asrc_util:
                 ch1 = self.exFileName(ipFile[1], 'c-asrc', fDev, opRate)
 
                 cmd = "{} -i{} -j{} -k{} -o{} -p{} -q{} -d{} -l{} -n{} -e{}".format(
-                    self.asrc_model, ipFile[0], ipFile[1] , self.factors[ipFile[2]], ch0, ch1, self.factors[opRate], dither, self.numSamples[ipFile[2]], blocksize, fDev) 
+                    self.asrc_model, ipFile[0], ipFile[1] , self.factors[ipFile[2]], ch0, ch1, self.factors[opRate], dither, self.numSamples[ipFile[2]], blocksize, fDev)
                 p = Popen([cmd], stdin=PIPE, stdout=PIPE, shell=True)
                 output, error = p.communicate(input=b'\n')
                 opFiles = np.append(opFiles, np.array([[ch0, ch1, opRate, str(fDev), output, "c-asrc"]]), axis=0)
                 simLog[ipFile[0]]['asrc']=[str(ch0), 0, opRate, str(fDev), output, "c-asrc"]
                 simLog[ipFile[1]]['asrc']=[str(ch1), 1, opRate, str(fDev), output, "c-asrc"]
+
 
             # SSRC C Model
             # ------------
@@ -328,7 +329,7 @@ class asrc_util:
                 ch1 = self.exFileName(ipFile[1], 'c-ssrc', fDev, opRate)
 
                 cmd = "{} -i{} -j{} -k{} -o{} -p{} -q{} -d{} -l{} -n{}".format(
-                    self.ssrc_model, ipFile[0], ipFile[1] , self.factors[ipFile[2]], ch0, ch1, self.factors[opRate], dither, self.numSamples[ipFile[2]], blocksize) 
+                    self.ssrc_model, ipFile[0], ipFile[1] , self.factors[ipFile[2]], ch0, ch1, self.factors[opRate], dither, self.numSamples[ipFile[2]], blocksize)
                 p = Popen([cmd], stdin=PIPE, stdout=PIPE, shell=True)
                 output, error = p.communicate(input=b'\n')
                 opFiles = np.append(opFiles, np.array([[ch0, ch1, opRate, "1.0", output, "c-ssrc"]]), axis=0)
@@ -372,13 +373,14 @@ class asrc_util:
                 os.remove("./output.dat")
 
             # ASRC XSIM Model
-            # ---------------        
+            # ---------------
             if ipFile[2] in self.srcRates and self.opRate in self.srcRates and not self.skip_xsim:
                 xsimFiles = self.run_xsim(ipFiles, opRate, fDev, simLog)
                 opFiles  = np.append(opFiles, xsimFiles, axis=0)
 
+
         return opFiles, simLog
-    
+
 
     def run_xsim(self, ipFiles, opRate, fDev, simLog):
         if os.path.isfile("./asrc_test.lnk"):
@@ -388,10 +390,10 @@ class asrc_util:
         for ipFile in ipFiles:
             ch0 = self.opFileName(ipFile[0], 'x-asrc', fDev, opRate)
             ch1 = self.opFileName(ipFile[1], 'x-asrc', fDev, opRate)
-            
+
             cmd0 = "cd {}".format(self.path)
             cmd1 = "xsim --args asrc_test.lnk -i {} {} -o {} {} -f {} -g {} -n {} -e {}".format(
-                ipFile[0], ipFile[1], ch0, ch1, self.sampleRates[ipFile[2]], self.sampleRates[opRate], self.numSamples[ipFile[2]], fDev) 
+                ipFile[0], ipFile[1], ch0, ch1, self.sampleRates[ipFile[2]], self.sampleRates[opRate], self.numSamples[ipFile[2]], fDev)
             cmd = cmd0 + ";pwd;" + cmd1
             p = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
             output, error = p.communicate(input=b'\n')
@@ -427,16 +429,16 @@ class asrc_util:
             ch0mips = float(m[0].replace("\\n", "").split(":")[1].strip())
             ch1mips = float(m[5].replace("\\n", "").split(":")[1].strip())
             totalmips = ch0mips + ch1mips
-            txtmips = "\n".join(m)     
+            txtmips = "\n".join(m)
         if data['src'] == "c-ssrc":
             p = re.compile("MIPS.*?\n")
             m = re.findall(p, str(data['log']).replace("\\n","\n"))
             if len(m) > 0:
-                totalmips = float(m[0].split(":")[1].strip())  
+                totalmips = float(m[0].split(":")[1].strip())
 
-        return {"log":txtmips, "total_mips":totalmips, "ch0_mips":ch0mips, "ch1_mips":ch1mips} 
-    
-    
+        return {"log":txtmips, "total_mips":totalmips, "ch0_mips":ch0mips, "ch1_mips":ch1mips}
+
+
     def makeLabel(self, item):
         #utility to generate a title / filename to use in plots from an item from a file list which is in the foramt [file1, file2, rate as str]
         #and should work for ipFiles and opFiles
@@ -448,7 +450,7 @@ class asrc_util:
     def loadDataFromOutputFile(self, file):
         #loads an array of files in the format returned by running 'run_c_model' and returns an array of elements, each of which is a dictionary of [ 2 channels of samples], [2 channels of labels], o/p rate
         ch0 = np.loadtxt(file[0]).astype("int32")
-        label = self.makeLabel(file)    
+        label = self.makeLabel(file)
         return {'samples':ch0, 'labels':label, 'chan':file[-5], 'rate':file[-4], 'fdev':file[-3], 'log':file[-2], 'src':file[-1]}
 
 
@@ -479,8 +481,8 @@ class asrc_util:
             thd = 10*np.log10((noise/signal))
             thd="{:.1f}dB".format(thd) #returned as string so we can pass the "NA" for muti-tone cases
         return thd
-    
-    
+
+
     def makeRST(self, file, ipRate, opRate, fDev, sims):
         relFile = os.path.relpath(self.outputFolder, self.rstFolder) + "/" + file
         fsi = "{:,d}Hz".format(self.sampleRates[ipRate])
@@ -490,7 +492,7 @@ class asrc_util:
         self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(relFile)
         self.rstFile = self.rstFile + "\n"     + "   :scale: {}".format("90%")
         self.rstFile = self.rstFile + "\n\n"   + "   Input Fs: {}, Output Fs: {}, Fs error: {}, Results for: {}".format(fsi, fso, ferr, plots)
-  
+
 
     def addRSTHeader(self, title, level):
         underline=["=", "+", "-", "."]

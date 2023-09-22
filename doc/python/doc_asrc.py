@@ -1,7 +1,7 @@
 from asrc_utils import asrc_util
 import numpy as np
 import matplotlib.pyplot as plt
-from mpmath import mp
+from pathlib import Path
 
 ################################################################################################################
 # OVERVIEW
@@ -19,12 +19,12 @@ from mpmath import mp
 
 
 # Setup some basics
-path = '.'
+pkg_dir = Path(__file__).parent
 xsim = False
 fftPoints=1024 # note when updating the test tones with "updateSig" this is overwritten
 FERR = 1.0  #this is an additional sample rate deviation applied to the inpt signal to test effect of errors
 
-U = asrc_util(path, True, fftPoints,[200], [500]) # create the util object
+U = asrc_util(pkg_dir, True, fftPoints,[200], [500]) # create the util object
 U.addRSTHeader("Performance information", 1) # start the RST it generates with a title
 U.addRSTHeader("Chart data", 2) # start the RST it generates with a title
 
@@ -44,15 +44,15 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
 
             # Make a set of input files based on range of sample rates supported
             ipFiles, sig = U.makeInputFiles([ipRate], FERR)   # makes the signals, saves data as files and returns some info about them
-            
+
             # Put the input data through the golden "C" emulators
-            opFiles, simLog = U.run_c_model(ipFiles, opRate, 4, fDev)  
+            opFiles, simLog = U.run_c_model(ipFiles, opRate, 4, fDev)
 
             # Itterate over all the input data files and channels
             for channels in ipFiles: # For each input sata set there will be an output one for each channel
                 for channel in channels[0:2]:
                     print(channel)
-                    
+
                     if len(simLog[channel]) > 0: #at least one simulation ran for this combination of iprate, oprate and fdev
                         no_results = False
                         for sim in simLog[channel]:
@@ -72,11 +72,11 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
                             opTHD = U.calcTHD(opfft, opData['chan'])
 
                             # Keep the results to plot later
-                            text="SNR:{:.1f}dB\nTHD:{}dB\nMIPS:{}\n{}".format(opSNR, opTHD, info['total_mips'], info['log'])
+                            text="SNR:{:.1f}dB\nTHD:{}dB\n".format(opSNR, opTHD)
                             U.pushPlotInfo(opfft, oplabel, text)
 
                             # Update log with these results
-                            U.logResults(sim, ipRate, opRate, fDev, opData['chan'], opSNR, opTHD, info['total_mips'], info['ch0_mips'], info['ch1_mips'], info['log'])           
+                            U.logResults(sim, ipRate, opRate, fDev, opData['chan'], opSNR, opTHD, info['total_mips'], info['ch0_mips'], info['ch1_mips'], info['log'])
 
 
                         #Plot the results
@@ -104,7 +104,7 @@ quit()
                     # xsim model fft data
                     xfft = U.doFFT(xdata[r], ch)
                     xlabel = xdata[r]['labels'][ch]
-                
+
                     # Get MHz utilization info from the log
                     util = U.scrapeXsimLog(xdata[r])
 
@@ -118,12 +118,12 @@ quit()
 
                     # Plot the result, and save the chart - just the "C" results here
                     text=["C SNR:{:.1f}dB\nMIPS:{:.1f}".format(opSNR, ch0mips + ch1mips),
-                          "XSIM SNR:{:.1f}dB\nMIPS:2Ch CPU:{:.1f}\nPass/Fail:{}".format(xSNR, util, match)] 
+                          "XSIM SNR:{:.1f}dB\nMIPS:2Ch CPU:{:.1f}\nPass/Fail:{}".format(xSNR, util, match)]
                     title = "Channel={}, IP={}, OP={}, FDEV={}, XSIM".format(ch,ipdata[r]['rate'], opRate, fDev)
                     U.plotFFT([opfft, xfft], combine=False, title=title, subtitles=["FIX ME", xlabel], log=True, text=text)
 
                     # Update log with these results
-                    U.logResults("XSIM", ipdata[r]['rate'], opRate, fDev, ch, xSNR, util, txt=match)   
+                    U.logResults("XSIM", ipdata[r]['rate'], opRate, fDev, ch, xSNR, util, txt=match)
 
 '''
 
@@ -137,5 +137,3 @@ quit()
 # tidy up call to fft to make windowing a default off option
 # go through the functions to use self.opRate, self.fDev everywhere
 # legacy "list-factors" code can be removed
-
-
