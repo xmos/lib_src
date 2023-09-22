@@ -102,7 +102,8 @@ pipeline {
             withVenv {
               dir("doc/python") {
                 sh "python -m doc_asrc.py"
-                archiveArtifacts artifacts: "_build", allowEmptyArchive: true
+                sh "ls -lrt _build/*"
+                archiveArtifacts artifacts: "_build/**/*", allowEmptyArchive: true
               }
             }
           }
