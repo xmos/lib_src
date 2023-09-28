@@ -124,7 +124,7 @@ pipeline {
                 dir("${REPO}") {
                   withTools(params.TOOLS_VERSION) {
                     withVenv {
-                      sh 'mkdir build'
+                      sh 'mkdir -p build'
                       dir("build") {
                         sh 'rm CMakeCache.txt'
                         sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
