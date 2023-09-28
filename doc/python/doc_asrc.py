@@ -9,11 +9,11 @@ from pathlib import Path
 # OVERVIEW
 #
 # This script generates a set of test files for the supported input and output rates.
-# It passes these through the golden reference "C" models and xsim, and
-# Plots the FFTs, extracts the SNR, THD, and extracts MIPS estimate.
-# All this info is annotated on the Plot which is saved to the otput folder.
+# It passes these through the golden reference "C" models, and
+# Plots the FFTs, and extracts the SNR and THD.
+# All this info is annotated on the Plot which is saved to the output folder.
 #
-# Note that both the C model is a dual-channel iplementations, so we pass them a pair of source files
+# Note that both the C model is a dual-channel implementations, so we pass them a pair of source files
 # and since this is ASRC, we vary the frequency deviation parameter fDev.
 # But, OS3 and DS3 are single channel apps - which is dealt with!
 #
@@ -42,7 +42,7 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
         no_results = True # the RST contains headings for all fDev, opRate and ipRate - so if this is an unsupported combination, add a warning to thr RST.
         for ipRate in U.allRates:# for each of the possible input sample rates
             # opportunity to choose different test freq, which also sets a safer fft size
-            U.updateSig(ipRate, [int(fftPoints/5)], [int(fftPoints/4),int(fftPoints/6)], True) # specified in temrs of FFT o/p bin, when flag set true it auto-fills a logrithmic range for ch1 and 5% in for ch0
+            U.updateSig(ipRate, [int(fftPoints/5)], [int(fftPoints/4),int(fftPoints/6)], True) # specified in terms of FFT o/p bin, when flag set true it auto-fills a logarithmic range for ch1 and 5% in for ch0
 
             # Make a set of input files based on range of sample rates supported
             ipFiles, sig = U.makeInputFiles([ipRate], FERR)   # makes the signals, saves data as files and returns some info about them
@@ -50,7 +50,7 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
             # Put the input data through the golden "C" emulators
             opFiles, simLog = U.run_c_model(ipFiles, opRate, 4, fDev)
 
-            # Itterate over all the input data files and channels
+            # Iterate over all the input data files and channels
             for channels in ipFiles: # For each input sata set there will be an output one for each channel
                 for channel in channels[0:2]:
                     print(channel)
@@ -82,9 +82,9 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
 
 
                         #Plot the results
-                        plotFile = U.plotFFT(U.plot_data, combine=False, title=U.makePlotTitle(simLog, channel), subtitles=U.plot_label, log=True, text=U.plot_text) # plots a grid of charts, one per cimulation model
+                        plotFile = U.plotFFT(U.plot_data, combine=False, title=U.makePlotTitle(simLog, channel), subtitles=U.plot_label, log=True, text=U.plot_text) # plots a grid of charts, one per simulation model
                         U.makeRST(plotFile, ipRate, opRate, fDev, simLog[channel].keys()) # add this plot to a list to save as an RST file later
-                        U.resetPlotInfo() # otherwise the next itteration of rates etc will add more plots to this instead of starting a new plot.
+                        U.resetPlotInfo() # otherwise the next iteration of rates etc will add more plots to this instead of starting a new plot.
         if no_results:
             U.addRSTText("No SRC available for this scenario.")
 

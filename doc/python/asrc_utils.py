@@ -39,16 +39,16 @@ class asrc_util:
 
         # definitions of sample ratea
         self.allRates =["16", "32", "44", "48", "88", "96", "176", "192"]
-        self.srcRates =["44", "48", "88", "96", "176", "192"] # supported by the aasrc and ssrc
+        self.srcRates =["44", "48", "88", "96", "176", "192"] # supported by the asrc and ssrc
         self.factors = {"44":0, "48":1, "88":2, "96":3, "176":4, "192":5} # look up to convert rate to the filter bank id needed by the ASRC
-        self.sampleRates = {"16":16000, "32":32000, "44":44100, "48":48000, "88":88200, "96":96000, "176":176400, "192":192000} #convinience to save typing out sample rates in full
+        self.sampleRates = {"16":16000, "32":32000, "44":44100, "48":48000, "88":88200, "96":96000, "176":176400, "192":192000} #convenience to save typing out sample rates in full
         self.sigMax = {"16":7300, "32":14600, "44":20200, "48":21800, "88":40000, "96":47990, "176":80000, "192":85000} # upper limit on input freq for given sample rate
 
-        self.numSamples = {} #populated later based on oprate to ensure sufficient samples for fft
+        self.numSamples = {} #populated later based on op-rate to ensure sufficient samples for fft
         self.ignoreSamples = 2000 #worst case for high up-sampling
         self.fftPoints = fftPoints
 
-        self.sig = [ch0_bins, ch1_bins] # defines the test signals for each of 2 channels, each is a list so more than one tine can be genertaed and combined
+        self.sig = [ch0_bins, ch1_bins] # defines the test signals for each of 2 channels, each is a list so more than one tone can be generated and combined
         self.log=[]
         self.plots=[]
         mp.prec = 1024
@@ -77,7 +77,7 @@ class asrc_util:
     # populates channel 1 with mutiple tones, spaced logrithmically, most dense at higher freq, and ch0 is always 10% in
     # set in 'sigMax' beyond which reflections degrade the SNR.
     def updateSig(self, ipRate, ch0_bins, ch1_bins, autoFill=False):
-        # this manipultaes the fft size to attempt to force any reflections around the ip sample rate nyquist also ending up
+        # this manipulates the fft size to attempt to force any reflections around the ip sample rate nyquist also ending up
         # in an integer fft bin
         self.fftPoints = int(10000 *(self.sampleRates[ipRate] * self.fDev) / self.sampleRates[self.opRate])
         print(f"Over-wrote the fft size to {self.fftPoints} points. ipRate = {ipRate}")
@@ -167,7 +167,7 @@ class asrc_util:
 
     def makeSignal(self, fsamp, fsig, asig, l, ferr=1.0):
         # populates ipdata with sinewave
-        # fsamp: sample rate, as abbevaited string (e.g., "48", interpreted as 48,000Hz)
+        # fsamp: sample rate, as abbreviated string (e.g., "48", interpreted as 48,000Hz)
         # fsig: signal freq, in Hz
         # asig: amplitude, in range 0-1
         # l: number of samples
@@ -201,7 +201,7 @@ class asrc_util:
             chan=[]
             chanSigData=[]
             i=0
-            for ch in self.sig: #itterates over channels
+            for ch in self.sig: #iterates over channels
                 sig=[]
                 for s in ch:
                     f = mp.fmul(realRate ,mp.fdiv(s, self.fftPoints))
@@ -226,7 +226,7 @@ class asrc_util:
 
 
     def doFFT(self, data, window=False):
-        # convinient way to select between fft styles.  Note that the periodic one will need a lot more samples, so
+        # convenient way to select between fft styles.  Note that the periodic one will need a lot more samples, so
         # use window=True for debuging.
         if window:
             return self.winFFT(data)
@@ -256,7 +256,7 @@ class asrc_util:
     def plotFFT(self, xydata, combine=False, title=None, subtitles=None, log=True, text=None):
         # Plot style setup for the FFT plots, labels x asis as KHz and y axis as dB.
         # xydata: an array of datasets, each dataset is a 3 element array containing the xdata array and ydata_dB array and ydata_lin array
-        # combine: (optional) forces all plots ontot the same chart, otherwise it will create a grid of plots
+        # combine: (optional) forces all plots onto the same chart, otherwise it will create a grid of plots
         # title: (optional) the chart title at the top, common to any subplots
         # subtitles: (optional) an array of subtitles, used for each subplot.
         # log: plots the dB data in the input
@@ -299,12 +299,12 @@ class asrc_util:
 
 
     def opFileName(self, fin, label, fDev, opRate):
-        #a simple utility to convert an input file pat+name to an output version, appending the frequency deviation
+        #a simple utility to convert an input file path+name to an output version, appending the frequency deviation
         newName = fin.replace(self.inputFolder, self.outputFolder).replace(".dat", "_fso{}_fdev{:f}_{}.dat".format(opRate, fDev, label))
         return newName
 
     def exFileName(self, fin, label, fDev, opRate):
-        #a simple utility to convert an input file pat+name to an output version, appending the frequency deviation
+        #a simple utility to convert an input file path+name to an output version, appending the frequency deviation
         newName = fin.replace(self.inputFolder, self.expectedFolder).replace(".dat", "_fso{}_fdev{:f}_{}.dat".format(opRate, fDev, label))
         return newName
 
