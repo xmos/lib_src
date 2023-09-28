@@ -118,9 +118,6 @@ pipeline {
                         -v ${WORKSPACE}/${REPO}:/build \
                         ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
                   archiveArtifacts artifacts: "doc/_build/**", allowEmptyArchive: true
-
-
-                  }
                 }
               }
             }
