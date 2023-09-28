@@ -10,7 +10,7 @@ We scrape the logs to extract MIPS/Utilization where supported.
 Tests are run for all suported input and output sample freqencies, and for worst case frequency deviation.
 Note that not all modules support all input scenarios - these are ignored.
 
-The result of this script is the generation an rst file which is inclorporated into the documentation,
+The result of this script is the generation an rst file which is included into the documentation,
 incorporating a full set of charts and summary table.
 
 
