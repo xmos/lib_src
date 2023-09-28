@@ -94,15 +94,31 @@ pipeline {
         }
       }
     }
+    stage('Run doc python') {
+      steps {
+        runningOn(env.NODE_NAME)
+        dir("${REPO}") {
+          withTools(params.TOOLS_VERSION) {
+            withVenv {
+              dir("doc/python") {
+                sh "python -m doc_asrc.py"
+                sh "zip -r snr_build.zip _build"
+                archiveArtifacts artifacts: "snr_build.zip"
+              }
+            }
+          }
+        }
+      }
+    }
     stage('Tests XS2') {
       steps {
         runningOn(env.NODE_NAME)
         dir("${REPO}") {
           withTools(params.TOOLS_VERSION) {
             withVenv {
-              sh 'mkdir build'
+              sh 'mkdir -p build'
               dir("build") {
-                sh 'rm -rf'
+                sh 'rm CMakeCache.txt'
                 sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
                 sh 'make test_ds3_voice test_us3_voice test_unity_gain_voice -j'
               }
@@ -110,7 +126,7 @@ pipeline {
                 localRunPytest('-n auto -k "xs2" -vv')
               }
               dir("build") {
-                sh 'rm -rf' // Cleanup XS2 cmake cache for next stage
+                sh 'rm CMakeCache.txt' // Cleanup XS2 cmake cache for next stage
               }
             }
           }
