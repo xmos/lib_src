@@ -109,14 +109,17 @@ pipeline {
                 withVenv {
                   dir("doc/python") {
                     sh "python -m doc_asrc.py"
-                    sh "docker pull ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"
-                    sh """docker run -u "\$(id -u):\$(id -g)" \
-                          --rm \
-                          -v ${WORKSPACE}:/build \
-                          ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
-                    archiveArtifacts artifacts: "doc/_build/**", allowEmptyArchive: true
                     sh "zip -r snr_build.zip _build"
                     archiveArtifacts artifacts: "snr_build.zip"
+                  }
+                  sh "docker pull ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"
+                  sh """docker run -u "\$(id -u):\$(id -g)" \
+                        --rm \
+                        -v ${WORKSPACE}/${REPO}:/build \
+                        ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
+                  archiveArtifacts artifacts: "doc/_build/**", allowEmptyArchive: true
+
+
                   }
                 }
               }
