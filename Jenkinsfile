@@ -115,7 +115,7 @@ pipeline {
                         --rm \
                         -v ${WORKSPACE}/${REPO}:/build \
                         ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
-                  sh "zip -r doc/_build doc_build.zip"
+                  sh "zip -r doc_build.zip doc/_build"
                   archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
                 }
               }
