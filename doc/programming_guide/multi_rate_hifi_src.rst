@@ -46,11 +46,11 @@ There is an initialization call which sets up the variables within the structure
 Initialization ensures the correct selection, ordering and configuration of the filtering stages, be they decimators, interpolators or pass-through blocks. 
 This initialization call contains arguments defining selected input and output nominal sample rates as well as settings for the sample rate converter:
 
-.. doxygenfunction:: ssrc_init
+:c:func:`ssrc_init`
 
 The initialization call is the same for ASRC:
 
-.. doxygenfunction:: asrc_init
+:c:func:`asrc_init`
 
 The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of 
 input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``.
@@ -75,11 +75,11 @@ The logic is designed so that the final filtering stage always receives a sample
 
 The processing function call is passed the input and output buffers and a reference to the control structure:
 
-.. doxygenfunction:: ssrc_process
+:c:func:`ssrc_process`
 
 In the case of ASRC a fractional frequency ratio argument is also supplied:
 
-.. doxygenfunction:: asrc_process
+:c:func:`asrc_process`
 
 The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1 kHz and the output rate is 192 kHz then a sample rate conversion of one sample input may produce up to 5 output samples.
 

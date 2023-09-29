@@ -1,10 +1,10 @@
 ######################
-SAMPLE RATE CONVERSION 
+SAMPLE RATE CONVERSION
 ######################
 
 
 .. toctree::
    :maxdepth: 5
 
-   ./doc/rst/programming_guide/index.rst
+   ./doc/programming_guide/index.rst
    ./doc/python/_build/rst/allPlots.rst

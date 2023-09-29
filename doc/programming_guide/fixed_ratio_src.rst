@@ -121,7 +121,9 @@ They have been designed for voice applications and, in particular, conformance t
 .. note::
     These filters will only run on XCORE-AI due to the inner dot product calculation employing the XS3 VPU.
 
+
 .. _ff3_voice_vpu_hdr:
+
 Fixed factor of 3 VPU
 ---------------------
 
