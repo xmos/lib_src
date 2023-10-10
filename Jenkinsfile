@@ -110,11 +110,11 @@ pipeline {
                   dir("doc/python") {
                     sh "python -m doc_asrc.py"
                   }
-                  sh "docker pull ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION"
+                  sh "docker pull ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION"
                   sh """docker run -u "\$(id -u):\$(id -g)" \
                         --rm \
                         -v ${WORKSPACE}/${REPO}:/build \
-                        ghcr.io/xmos/doc_builder:$XMOSDOC_VERSION -v"""
+                        ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
                   sh "zip -r doc_build.zip doc/_build"
                   archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
                 }
