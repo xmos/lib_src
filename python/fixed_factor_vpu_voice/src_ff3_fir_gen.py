@@ -12,14 +12,15 @@ from pathlib import Path
 fs = 48000.0
 NUM_PHASES = 3
 NUM_TAPS_PER_PHASE = 32
+HEADROOM_DB = 3.5
 
 def test_bounds(Y, F, freq, min, max):
     # This will find the closest frequency we can get and test the responce
     idx = (np.abs(F - freq)).argmin()
     #print(f"{Y[idx]} dB at {F[idx]}")
-    assert Y[idx] < max
+    assert Y[idx] < (max - HEADROOM_DB)
     if min != None:
-        assert Y[idx] > min
+        assert Y[idx] > (min - HEADROOM_DB)
 
 
 def test_filter(taps_fl):
@@ -36,6 +37,15 @@ def test_filter(taps_fl):
     test_bounds(Y, F, 180,   -0.05, 0.05)
     test_bounds(Y, F, 100,   -0.05, 0.05)
 
+    # check for clipping when downsampling 0dBFS white noise
+    x = 2.0*(np.random.rand(int(fs*100)) - 0.5)
+    y = signal.resample_poly(x, 1, 3, window=taps_fl)
+    assert np.max(np.abs(y)) < 1
+
+    x = np.array([1, 1, -1, -1])
+    y = signal.resample_poly(x, 3, 1, window=taps_fl)
+    assert np.max(np.abs(y)) < 1
+
 def gen_coefs(num_taps_per_phase = NUM_TAPS_PER_PHASE, num_phases = NUM_PHASES):
     """
     Get 8 kHz low pass filter coefficients for the 48 - 16 kHz fixed-factor-of-3 polyphase filtering
@@ -48,6 +58,9 @@ def gen_coefs(num_taps_per_phase = NUM_TAPS_PER_PHASE, num_phases = NUM_PHASES):
         taps[num_phases][num_taps_per_phase]  in int32 for polyphase implementation
     """
     taps_fl = signal.firwin2((num_phases * num_taps_per_phase), [0, 7600, 8400, 0.5 * fs], [1, 1, 0, 0], window=("kaiser", 4), fs=fs)
+
+    # scale taps down by 3.5dB to avoid intersample overs
+    taps_fl *= 10**(-HEADROOM_DB/20)
 
     test_filter(taps_fl)
 
@@ -137,6 +150,8 @@ extern const int32_t %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TAPS_PER
 """
     filename = "src_ff3_fir_coefs.h" if name is None else name + "_coefs.h"
     header_path = Path(output_path) / filename
+    name = "src_ff3_fir" if name is None else name
+
     with open(header_path, "w") as header_file:
         header_file.writelines(header_template % {  'name_up': name.upper(),
                                                     'name': name.rstrip(".h"),
@@ -190,6 +205,8 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
     filename = "src_ff3_fir_coefs.c" if name is None else name + "_coefs.c"
     c_path = Path(output_path) / filename
     
+    name = "src_ff3_fir" if name is None else name
+
     with open(c_path, "w") as c_file:
         c_file.writelines(c_template % {    'name_up': name.upper(),
                                             'name': name,
@@ -208,8 +225,8 @@ if __name__ == "__main__":
     taps_fl, taps, mixed_taps = gen_coefs(args.num_taps_per_phase, args.num_phases)
 
     if args.gen_c_files:
-        generate_header_file(args.out_dir, args.num_taps_per_phase, args.num_phases)
-        generate_c_file(args.out_dir, taps, mixed_taps, args.num_taps_per_phase, args.num_phases)
+        generate_header_file(args.output_dir, args.num_taps_per_phase, args.num_phases)
+        generate_c_file(args.output_dir, taps, mixed_taps, args.num_taps_per_phase, args.num_phases)
     if args.gen_plots:
         plot_response(taps_fl, False)
         plot_response(taps_fl, True)
