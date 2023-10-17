@@ -27,7 +27,8 @@ fftPoints=1024 # note when updating the test tones with "updateSig" this is over
 FERR = 1.0  #this is an additional sample rate deviation applied to the inpt signal to test effect of errors
 
 U = asrc_util(pkg_dir, True, fftPoints,[200], [500]) # create the util object
-U.addRSTHeader("Performance Characterisation for SSRC, ASRC, DS3 and OS3", 1) # start the RST it generates with a title
+U.addRSTText(".. _performance-plots:")
+U.addRSTHeader("Performance Characterisation for SSRC ASRC DS3 and OS3", 1) # start the RST it generates with a title
 IntroText = """
 The FFT plots in this section provide a visual guide to the performance of the SSRC, ASRC, DS3 and OS3 sample rate converters.
 A pure tone was played through the sample rate converters configured for a range of input and output rates.
