@@ -35,7 +35,7 @@ A pure tone was played through the sample rate converters configured for a range
 The resulting frequency plot output shows the noise floor relative to the sample rate converted injected tone.
 The plots are annotated with an estimate of the Signal to Noise Ratio (SNR) as well as Total Harmonic Distortion (THD).
 
-For the case of the ASRC, in addition to the nominal input frequency of 0 PPM deviation the +/-100 PPM deviation cases are also shown.
+For the case of the ASRC, in addition to the nominal input frequency of 0 PPM deviation, the +/-100 PPM frequency deviation cases are also shown.
 """
 U.addRSTText(IntroText)
 U.addRSTHeader("Pure Tone FFT SRC Plots Across Sample Rate Combinations", 2) # start the RST it generates with a title
