@@ -107,15 +107,7 @@ pipeline {
             dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
                 withVenv {
-                  dir("doc/python") {
-                    sh "python -m doc_asrc.py"
-                  }
-                  sh "docker pull ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION"
-                  sh """docker run -u "\$(id -u):\$(id -g)" \
-                        --rm \
-                        -v ${WORKSPACE}/${REPO}:/build \
-                        ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-                  sh "zip -r doc_build.zip doc/_build"
+                  sh "doc/build_docs_ci.sh"
                   archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
                 }
               }
