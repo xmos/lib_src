@@ -42,7 +42,7 @@ class asrc_util:
         self.srcRates =["44", "48", "88", "96", "176", "192"] # supported by the asrc and ssrc
         self.factors = {"44":0, "48":1, "88":2, "96":3, "176":4, "192":5} # look up to convert rate to the filter bank id needed by the ASRC
         self.sampleRates = {"16":16000, "32":32000, "44":44100, "48":48000, "88":88200, "96":96000, "176":176400, "192":192000} #convenience to save typing out sample rates in full
-        self.sigMax = {"16":7300, "32":14600, "44":20200, "48":21800, "88":40000, "96":47990, "176":80000, "192":85000} # upper limit on input freq for given sample rate
+        self.sigMax = {"16":7300, "32":14600, "44":18000, "48":21800, "88":40000, "96":42000, "176":80000, "192":85000} # upper limit on input freq for given sample rate. Note that these need to be well within Nyquist point to prevent aliasing.
 
         self.numSamples = {} #populated later based on op-rate to ensure sufficient samples for fft
         self.ignoreSamples = 2000 #worst case for high up-sampling
