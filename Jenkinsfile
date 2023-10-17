@@ -107,7 +107,7 @@ pipeline {
             dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
                 withVenv {
-                  sh "doc/build_docs_ci.sh"
+                  sh "sh doc/build_docs_ci.sh"
                   archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
                 }
               }
