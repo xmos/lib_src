@@ -31,8 +31,13 @@ U.addRSTText(".. _performance-plots:")
 U.addRSTHeader("Performance Characterisation for SSRC ASRC DS3 and OS3", 1) # start the RST it generates with a title
 IntroText = """
 The FFT plots in this section provide a visual guide to the performance of the SSRC, ASRC, DS3 and OS3 sample rate converters.
-A pure tone was played through the sample rate converters configured for a range of input and output rates.
-The resulting frequency plot output shows the noise floor relative to the sample rate converted injected tone.
+Test signals were created allowing analysis of the sample rate converter output across different scenarios.
+
+Two input signals were played through a stereo sample rate converter across a range of input and output sample rates.
+For Channel 0, a single pure tone was generated ensuring its frequency was well within the overall nyquist rate.
+For Channel 1, multiple tones spaced logarithmically were generated with the spacing most dense at higher frequencies.
+
+The resulting frequency plot output clearly shows the noise floor relative to the sample rate converted injected tone(s).
 The plots are annotated with an estimate of the Signal to Noise Ratio (SNR) as well as Total Harmonic Distortion (THD).
 
 For the case of the ASRC, in addition to the nominal input frequency of 0 PPM deviation, the +/-100 PPM frequency deviation cases are also shown.

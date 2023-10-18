@@ -13,5 +13,5 @@ documentation:
       pdf_title: "{{title}} - Programming Guide"
       pdf_filename: "{{project}}_programming_guide_v{{version}}"
     doc/python/_build/rst/allPlots:
-      pdf_title: "{{title}} - Performance Characterisation for SSRC ASRC DS3 and OS3"
+      pdf_title: "{{title}} - \\\\ Performance Characterisation for SSRC ASRC DS3 and OS3"
       pdf_filename: "{{project}}_performance_characterisation_v{{version}}"
