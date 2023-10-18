@@ -60,6 +60,12 @@ There are three different component options that support fixed factor of 3 up/do
  #. If voice quality (65 dB SNR) is required running on xCORE-200, use ds3_voice or us3_voice.
  #. If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us.
 
+.. warning::
+    Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
+    currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
+    To avoid this scenario, please ensure that the input amplitude is always 3.5dB below full scale.
+    The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
+
 
 Related Application Notes
 .........................
