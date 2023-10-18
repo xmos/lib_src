@@ -144,28 +144,7 @@ The performance of the SSRC library is as follows:
  * SNR: 140 dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
 
-The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
-
-Figures :numref:`fig_fft_44_192`, :numref:`fig_fft_176_48` and :numref:`fig_fft_96_88` are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
-
-.. _fig_fft_44_192:
-.. figure:: images/ssrc_fft_44_192.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
-
-.. _fig_fft_176_48:
-.. figure:: images/ssrc_fft_176_48.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
-
-.. _fig_fft_96_88:
-.. figure:: images/ssrc_fft_96_88.pdf
-   :width: 90%
-
-   FFT of 10 kHz + 11 kHz sines, -6 dB, 96 kHz to 88.2 kHz
-
+To see frequency plots illustrating the noise floor with respect to a sample rate converted tone please refer to the :ref:`performance-plots` section of this document.
 
 
 SSRC Resource utilization
@@ -185,28 +164,7 @@ The performance of the ASRC library is as follows:
  * THD+N: (1 kHz, 0 dBFs): better than -130 dB
  * SNR:   135 dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
-The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
-
-Figures :numref:`fig_fft_44_192_a`, :numref:`fig_fft_176_48_a` and :numref:`fig_fft_96_88_a` are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
-
-.. _fig_fft_44_192_a:
-.. figure:: images/asrc_fft_44_192.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
-
-.. _fig_fft_176_48_a:
-.. figure:: images/asrc_fft_176_48.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
-
-.. _fig_fft_96_88_a:
-.. figure:: images/asrc_fft_96_88.pdf
-   :width: 90%
-
-   FFT of 10 kHz + 11 kHz sines, -6 dB, 96 kHz to 88.2 kHz
-
+To see frequency plots illustrating the noise floor with respect to a sample rate converted tone please refer to the :ref:`performance-plots` section of this document.
 
 
 ASRC Resource utilization

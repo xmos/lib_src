@@ -6,6 +6,8 @@ lib_src change log
 
   * ADDED: Support for building the core ASRC code in the C emulator as a
     library
+  * ADDED: Auto-generated ASRC and SSRC performance plots in documentation
+  * CHANGED: Documents built under Jenkins instead of Github Actions
 
 2.3.0
 -----
