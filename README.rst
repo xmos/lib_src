@@ -63,7 +63,7 @@ There are three different component options that support fixed factor of 3 up/do
 .. warning::
     Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
     currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
-    To avoid this scenario, please ensure that the input amplitude is always 3.5dB below full scale.
+    To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
     The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
 
 
