@@ -121,6 +121,12 @@ They have been designed for voice applications and, in particular, conformance t
 .. note::
     These filters will only run on XCORE-AI due to the inner dot product calculation employing the XS3 VPU.
 
+.. warning::
+    Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
+    currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
+    To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
+    The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
+
 
 .. _ff3_voice_vpu_hdr:
 

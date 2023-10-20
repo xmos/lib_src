@@ -8,6 +8,7 @@ lib_src change log
     library
   * ADDED: Auto-generated ASRC and SSRC performance plots in documentation
   * CHANGED: Documents built under Jenkins instead of Github Actions
+  * ADDED: Documentation warning about overflow in XS3 optimized SRC components
 
 2.3.0
 -----
