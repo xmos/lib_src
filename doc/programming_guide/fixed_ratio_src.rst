@@ -121,7 +121,15 @@ They have been designed for voice applications and, in particular, conformance t
 .. note::
     These filters will only run on XCORE-AI due to the inner dot product calculation employing the XS3 VPU.
 
+.. warning::
+    Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
+    currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
+    To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
+    The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
+
+
 .. _ff3_voice_vpu_hdr:
+
 Fixed factor of 3 VPU
 ---------------------
 
@@ -200,14 +208,14 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
       - Ripple
       - Attenuation
       - Taps
-    * - src_ff3_96t_ds
+    * - src_rat_2_3_96t_ds
       - 112
       - 0.46875
       - 0.53125
       - 0.03 dB
       - 70 dB
       - 96
-    * - src_ff3_96t_us
+    * - src_rat_3_2_96t_us
       - 95
       - 0.46875
       - 0.53125

@@ -46,11 +46,11 @@ There is an initialization call which sets up the variables within the structure
 Initialization ensures the correct selection, ordering and configuration of the filtering stages, be they decimators, interpolators or pass-through blocks. 
 This initialization call contains arguments defining selected input and output nominal sample rates as well as settings for the sample rate converter:
 
-.. doxygenfunction:: ssrc_init
+:c:func:`ssrc_init`
 
 The initialization call is the same for ASRC:
 
-.. doxygenfunction:: asrc_init
+:c:func:`asrc_init`
 
 The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of 
 input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``.
@@ -75,11 +75,11 @@ The logic is designed so that the final filtering stage always receives a sample
 
 The processing function call is passed the input and output buffers and a reference to the control structure:
 
-.. doxygenfunction:: ssrc_process
+:c:func:`ssrc_process`
 
 In the case of ASRC a fractional frequency ratio argument is also supplied:
 
-.. doxygenfunction:: asrc_process
+:c:func:`asrc_process`
 
 The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1 kHz and the output rate is 192 kHz then a sample rate conversion of one sample input may produce up to 5 output samples.
 
@@ -144,28 +144,7 @@ The performance of the SSRC library is as follows:
  * SNR: 140 dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
 
-The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
-
-Figures :numref:`fig_fft_44_192`, :numref:`fig_fft_176_48` and :numref:`fig_fft_96_88` are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
-
-.. _fig_fft_44_192:
-.. figure:: images/ssrc_fft_44_192.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
-
-.. _fig_fft_176_48:
-.. figure:: images/ssrc_fft_176_48.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
-
-.. _fig_fft_96_88:
-.. figure:: images/ssrc_fft_96_88.pdf
-   :width: 90%
-
-   FFT of 10 kHz + 11 kHz sines, -6 dB, 96 kHz to 88.2 kHz
-
+To see frequency plots illustrating the noise floor with respect to a sample rate converted tone please refer to the :ref:`performance-plots` section of this document.
 
 
 SSRC Resource utilization
@@ -185,28 +164,7 @@ The performance of the ASRC library is as follows:
  * THD+N: (1 kHz, 0 dBFs): better than -130 dB
  * SNR:   135 dB (or better). Note that when dither is not used, SNR is infinite as output from a zero input signal is zero.
 
-The performance was analyzed by converting output test files to 32 bit integer ``wav`` files. These files were then run through an audio analysis tool (WinAudio MLS: http://www.dr-jordan-design.de/Winaudiomls.htm).
-
-Figures :numref:`fig_fft_44_192_a`, :numref:`fig_fft_176_48_a` and :numref:`fig_fft_96_88_a` are a series of FFT plots showing the most demanding rate conversion case. These clearly show that the above targets are comfortably exceeded. All outputs have been generated using 8192 samples at input sampling rate. A Kaiser-Bessel window with alpha=7 has been used.
-
-.. _fig_fft_44_192_a:
-.. figure:: images/asrc_fft_44_192.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 44.1 kHz to 192 kHz
-
-.. _fig_fft_176_48_a:
-.. figure:: images/asrc_fft_176_48.pdf
-   :width: 90%
-
-   FFT of 1 kHz sine, 0 dB, 176.4 kHz to 48 kHz
-
-.. _fig_fft_96_88_a:
-.. figure:: images/asrc_fft_96_88.pdf
-   :width: 90%
-
-   FFT of 10 kHz + 11 kHz sines, -6 dB, 96 kHz to 88.2 kHz
-
+To see frequency plots illustrating the noise floor with respect to a sample rate converted tone please refer to the :ref:`performance-plots` section of this document.
 
 
 ASRC Resource utilization
