@@ -10,7 +10,6 @@ lib_src change log
   * CHANGED: Documents built under Jenkins instead of Github Actions
   * ADDED: Documentation warning about overflow in XS3 optimized SRC components
 
-
 2.3.0
 -----
 
