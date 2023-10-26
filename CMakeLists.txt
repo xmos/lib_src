@@ -7,7 +7,7 @@ if(PROJECT_IS_TOP_LEVEL)
     FetchContent_Declare(
       fwk_core
       GIT_REPOSITORY https://github.com/xmos/fwk_core.git
-      GIT_TAG        v1.0.0
+      GIT_TAG        v1.0.2
     )
     FetchContent_MakeAvailable(fwk_core)
 endif()

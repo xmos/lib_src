@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+2.4.1
+-----
+
+  * CHANGED: CI build updated to use fwk_core v1.0.2 from v1.0.0
+
 2.4.0
 -----
 
