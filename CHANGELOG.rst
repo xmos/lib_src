@@ -1,11 +1,6 @@
 lib_src change log
 ==================
 
-2.4.1
------
-
-  * CHANGED: CI build updated to use fwk_core v1.0.2 from v1.0.0
-
 2.4.0
 -----
 
@@ -14,6 +9,7 @@ lib_src change log
   * ADDED: Auto-generated ASRC and SSRC performance plots in documentation
   * CHANGED: Documents built under Jenkins instead of Github Actions
   * ADDED: Documentation warning about overflow in XS3 optimized SRC components
+  * CHANGED: CI build updated to use fwk_core v1.0.2 from v1.0.0
 
 2.3.0
 -----
