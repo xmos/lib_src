@@ -28,7 +28,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     )
 
     set(APP_COMMON_LINK_LIBRARIES
-        lib_src    
+        lib_src
     )
 
     set(APP_LINK_OPTIONS
@@ -54,14 +54,14 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
 else ()
 
 # Golden ref app
+    include(${CMAKE_CURRENT_LIST_DIR}/asrc_c_emulator.cmake)
     set(TARGET_NAME asrc_golden)
     project(${TARGET_NAME} C)
 
-    file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/model/*.c
+    file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/model/Main.c
     )
 
     set(APP_INCLUDES
-         ${CMAKE_CURRENT_LIST_DIR}/../../lib_src/src/multirate_hifi
          ${CMAKE_CURRENT_LIST_DIR}/model
     )
 
@@ -79,7 +79,6 @@ else ()
     target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
     target_compile_definitions(${TARGET_NAME} PUBLIC ${APP_COMPILE_DEFINITIONS})
     target_compile_options(${TARGET_NAME} PRIVATE ${APP_COMPILER_FLAGS})
-    target_link_libraries(${TARGET_NAME} PUBLIC ${APP_COMMON_LINK_LIBRARIES})
+    target_link_libraries(${TARGET_NAME} PUBLIC asrc_c_emulator_lib)
     unset(TARGET_NAME)
 endif()
-

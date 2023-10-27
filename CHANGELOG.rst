@@ -1,6 +1,16 @@
 lib_src change log
 ==================
 
+2.4.0
+-----
+
+  * ADDED: Support for building the core ASRC code in the C emulator as a
+    library
+  * ADDED: Auto-generated ASRC and SSRC performance plots in documentation
+  * CHANGED: Documents built under Jenkins instead of Github Actions
+  * ADDED: Documentation warning about overflow in XS3 optimized SRC components
+  * CHANGED: Tested against fwk_core v1.0.2 updated from v1.0.0
+
 2.3.0
 -----
 

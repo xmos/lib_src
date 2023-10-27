@@ -36,9 +36,9 @@ def test_version_matches():
     """
     Check docs version vs changelog
     """
-    with open(Path(__file__).resolve().parent / "../settings.json") as sj:
+    with open(Path(__file__).resolve().parent / "../settings.yml") as sy:
         with open(Path(__file__).resolve().parent / "../CHANGELOG.rst") as cl:
             re_string = r"([0-9]*)\.([0-9]*)\.([0-9]*)"
-            sj_ver = re.search(re_string, sj.readlines()[3]).groups()
+            sy_ver = re.search(re_string, sy.readlines()[3]).groups()
             cl_ver = re.search(re_string, cl.readlines()[3]).groups()
-            assert sj_ver == cl_ver, f"Version match issue between settings.json and CHANGELOG.rst: {sj_ver} {cl_ver}"
+            assert sy_ver == cl_ver, f"Version match issue between settings.yml and CHANGELOG.rst: {sy_ver} {cl_ver}"

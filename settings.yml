@@ -1,0 +1,17 @@
+---
+project: lib_src
+title: SAMPLE RATE CONVERSION
+version: 2.4.0
+
+documentation:
+  exclude_patterns_path: doc/exclude_patterns.inc
+  doxygen_projects:
+    lib_xcore_math:
+      doxyfile_path: doc/Doxyfile.inc
+  pdfs:
+    doc/programming_guide/index:
+      pdf_title: "{{title}} - Programming Guide"
+      pdf_filename: "{{project}}_programming_guide_v{{version}}"
+    doc/python/_build/rst/allPlots:
+      pdf_title: "{{title}} - \\\\ Performance Characterisation for SSRC ASRC DS3 and OS3"
+      pdf_filename: "{{project}}_performance_characterisation_v{{version}}"

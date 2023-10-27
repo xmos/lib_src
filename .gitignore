@@ -29,3 +29,6 @@ tests/vpu_ff3_test/autogen
 tests/vpu_rat_test/autogen
 *.csv
 python/lib_src.egg-info
+**/tmp_models/
+*.bak
+make_docs.sh
