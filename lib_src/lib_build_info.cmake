@@ -8,7 +8,7 @@ set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3)
 
 set(LIB_OPTIONAL_HEADERS src_conf.h)
 
-set(LIB_INCLUDES = api
+set(LIB_INCLUDES   api
                    src/fixed_factor_of_3
                    src/fixed_factor_of_3/ds3
                    src/fixed_factor_of_3/os3
