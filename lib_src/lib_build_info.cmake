@@ -1,8 +1,8 @@
 set(LIB_NAME lib_src)
 set(LIB_VERSION 2.4.0)
 
-set(LIB_DEPENDENT_MODULES "lib_logging(3.1.1)"
-                          "lib_xassert(4.1.0)")
+set(LIB_DEPENDENT_MODULES "lib_logging"
+                          "lib_xassert")
 
 set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3)
 
