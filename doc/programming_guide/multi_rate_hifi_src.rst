@@ -16,8 +16,8 @@ All public ASRC and SSRC functions are declared within the ``src.h`` header::
 
   #include "src.h"
 
-There are a number of arrays of structures that must be declared from the application which contain the buffers between the FIR stages, state and adapted coefficients (ASRC only). 
-There must be one element of each structure declared for each channel handled by the SRC instance. 
+There are a number of arrays of structures that must be declared from the application which contain the buffers between the FIR stages, state and adapted coefficients (ASRC only).
+There must be one element of each structure declared for each channel handled by the SRC instance.
 The structures are then all linked into a single control structure, allowing a single reference to be passed each time a call to the SRC is made.
 
 For SSRC, the following state structures are required::
@@ -30,7 +30,8 @@ For SSRC, the following state structures are required::
     ssrc_ctrl_t      ssrc_ctrl[SSRC_CHANNELS_PER_INSTANCE];
 
 
-For ASRC, the following state structures are required. Note that only one instance of the filter coefficients need be declared because these are shared amongst channels within the instance::
+For ASRC, the following state structures are required. Note that only one instance of the filter
+coefficients need be declared because these are shared amongst channels within the instance::
 
     //ASRC state
     asrc_state_t       asrc_state[ASRC_CHANNELS_PER_INSTANCE];
@@ -40,24 +41,25 @@ For ASRC, the following state structures are required. Note that only one instan
     //Adaptive filter coefficients
     asrc_adfir_coefs_t asrc_adfir_coefs;
 
+.. note:: ``lib_src`` expects ``SSRC_N_CHANNELS``/``ASRC_N_CHANNELS`` and
+   ``SSRC_N_IN_SAMPLES``/``ASRC_N_IN_SAMPLES`` to be defined by the user. It will define
+   ``SSRC_STACK_LENGTH_MULT``/``ASRC_STACK_LENGTH_MULT`` based on these values.
+   ``SSRC_N_CHANNELS``/``ASRC_N_CHANNELS`` values are expected to match the ``n_in_samples``
+   parameter to the initialisation functions.
 
-
-There is an initialization call which sets up the variables within the structures associated with the SRC instance and clears the inter-stage buffers. 
-Initialization ensures the correct selection, ordering and configuration of the filtering stages, be they decimators, interpolators or pass-through blocks. 
+There is an initialization call which sets up the variables within the structures associated with the SRC instance and clears the inter-stage buffers.
+Initialization ensures the correct selection, ordering and configuration of the filtering stages, be they decimators, interpolators or pass-through blocks.
 This initialization call contains arguments defining selected input and output nominal sample rates as well as settings for the sample rate converter:
 
 :c:func:`ssrc_init`
 
-The initialization call is the same for ASRC:
+The initialization call is similar for ASRC:
 
 :c:func:`asrc_init`
 
-The input block size must be a power of 2 and is set by the ``n_in_samples`` argument. In the case where more than one channel is to be processed per SRC instance, the total number of 
-input samples expected for each processing call is ``n_in_samples * n_channels_per_instance``.
-
-Please ensure the settings within ``src_config.h`` are correct for the application. The default settings allow for any input/output ratio between 44.1 kHz and 192 kHz.
-
-
+The input block size must be a power of 2 and is function of the ``n_in_samples`` and
+``n_channels_per_instance`` arguments - the total number of input samples  expected for each
+processing call is ``n_in_samples * n_channels_per_instance``.
 
 Processing
 ..........
@@ -70,18 +72,18 @@ Following initialization, the processing API is called for each block of input s
 
    SRC Operation
 
-The logic is designed so that the final filtering stage always receives a sample to process. The sample rate converters have been designed to handle a maximum decimation of factor four from the first two stages. This architecture requires a minimum input block size of 4 to operate.
+The logic is designed so that the final filtering stage always receives a sample to process. The
+sample rate converters have been designed to handle a maximum decimation of factor four from the
+first two stages. This architecture requires a minimum input block size of 4 to operate.
 
-
-The processing function call is passed the input and output buffers and a reference to the control structure:
+The processing function call takes the the input and output buffers and a reference to the control
+structure as parameters. In the case of ASRC a fractional frequency ratio parameter must also be
+supplied. The processing functions are as follows:
 
 :c:func:`ssrc_process`
-
-In the case of ASRC a fractional frequency ratio argument is also supplied:
-
 :c:func:`asrc_process`
 
-The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1 kHz and the output rate is 192 kHz then a sample rate conversion of one sample input may produce up to 5 output samples.
+The SRC processing call always returns a whole number of output samples produced by the sample rate conversion. Depending on the sample ratios selected, this number may be between zero and ``(n_in_samples * n_channels_per_instance * SRC_N_OUT_IN_RATIO_MAX)``. Where ``SRC_N_OUT_IN_RATIO_MAX`` is the maximum number of output samples for a single input sample. For example, if the input frequency is 44.1 kHz and the output rate is 192 kHz then a sample rate conversion of one sample input may produce up to 5 output samples.
 
 The fractional number of samples produced to be carried to the next operation is stored inside the control structure, and additional whole samples are added during subsequent calls to the sample rate converter as necessary.
 
@@ -89,9 +91,13 @@ For example, a sample rate conversion from 44.1 kHz to 48 kHz with a input block
 
 Each SRC processing call returns the integer number of samples produced during the sample rate conversion.
 
-The SSRC is synchronous in nature and assumes that the ratio is equal to the nominal sample rate ratio. For example, to convert from 44.1 kHz to 48 kHz, it is assumed that the word clocks of the input and output stream are derived from the same master clock and have an exact ratio of 147:160.
+The SSRC is synchronous in nature and assumes that the ratio is equal to the nominal sample rate
+ratio. For example, to convert from 44.1 kHz to 48 kHz, it is assumed that the sample clocks of the
+input and output stream are derived from the same master-clock and have an exact ratio of 147:160.
 
-If the word clocks are derived from separate oscillators, or are not synchronous (for example are derived from each other using a fractional PLL), the ASRC must be used.
+If the sample clocks are derived from separate master-clocks, different oscillators for example, or
+are not synchronous (for example are derived from each other using a fractional PLL), ASRC must be
+used rather than SSRC.
 
 Buffer Formats
 ..............
