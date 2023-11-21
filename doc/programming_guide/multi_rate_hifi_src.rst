@@ -126,7 +126,7 @@ In the case where four channels are processed by two instances, channels 0 & 1 a
 
    Buffer Format for Dual Stereo SRC instances (4 channels total)
 
-In addition to the above arguments the ``asrc_process()`` call also requires an unsigned Q4.28 fixed point ratio value specifying the actual input to output ratio for the next calculated block of samples. This allows the input and output rates to be fully asynchronous by allowing rate changes on each call to the ASRC. The converter dynamically computes coefficients using a spline interpolation within the last filter stage. It is up to the callee to maintain the input and output sample rate ratio difference.
+In addition to the above arguments the ``asrc_process()`` call also requires an unsigned Q4.60 fixed point ratio value specifying the actual input to output ratio for the next calculated block of samples. This allows the input and output rates to be fully asynchronous by allowing rate changes on each call to the ASRC. The converter dynamically computes coefficients using a spline interpolation within the last filter stage. It is up to the callee to maintain the input and output sample rate ratio difference.
 
 Further details about these function arguments are contained here: `SSRC API`_.
 
