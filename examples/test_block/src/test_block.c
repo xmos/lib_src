@@ -2,6 +2,8 @@
 #include <xcore/hwtimer.h>
 #include <stdio.h>
 #include <print.h>
+#include <platform.h>
+#include <xscope.h>
 #include "asrc_block.h"
 
 
@@ -59,6 +61,8 @@ int32_t input_data[48] = {
     -70075715,
 };
 
+#define seconds 10
+
 void producer(asrc_block_t *a) {
     hwtimer_t tmr = hwtimer_alloc();
     int now = hwtimer_get_time(tmr);
@@ -68,7 +72,7 @@ void producer(asrc_block_t *a) {
     int mod_acc = 0;
     int cntr = 0;
     
-    while(1) {
+    for(int i = 0; i < 12000 * seconds; i++) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -79,13 +83,6 @@ void producer(asrc_block_t *a) {
         (void) hwtimer_get_time(tmr);
         asrc_add_quad_input(a, &input_data[cntr]);
         cntr = (cntr + 4) % 48;
-        if(0) {     // TODO: this can all go.
-            int read_ptr = a->read_ptr;
-            int write_ptr = a->write_ptr;
-            int max_fifo_depth = a->max_fifo_depth;
-            int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
-            printintln(len);
-        }
     }
     hwtimer_free(tmr);
 }
@@ -93,13 +90,13 @@ void producer(asrc_block_t *a) {
 void consumer(asrc_block_t *a) {
     hwtimer_t tmr = hwtimer_alloc();
     int now = hwtimer_get_time(tmr);
-    int freq = 47993;
+    int freq = 48012;
     int step = 100000000 / freq;
     int mod = 100000000 % freq;
     int mod_acc = 0;
     int32_t output_data;
     
-    while(1) {
+    for(int i = 0; i < 48000 * seconds; i++) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -109,7 +106,13 @@ void consumer(asrc_block_t *a) {
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
         asrc_get_single_output(a, &output_data);
+        xscope_int(0, output_data);
 //        printintln(output_data>>20);
+        if (i == 24000) {
+            freq = 47993;
+            step = 100000000 / freq;
+            mod = 100000000 % freq;
+        }
     }
     hwtimer_free(tmr);
 }
