@@ -1,4 +1,4 @@
-Controlling Asycnhronous Sample Rate Conversion by Measuring the Phase Error
+Controlling Asynchronous Sample Rate Conversion by Measuring the Phase Error
 ============================================================================
 
 An Asynchronous Sample Rate Converter needs to estimate the rate difference
@@ -12,7 +12,7 @@ different. ASRCs may also be able to, at the same time, convert different
 base frequencies, for example 192,000 to 44,100. We start by just looking
 at a conversion factor that is very close to 1.
 
-In a typical ASRC we need a short FIFO of input samples that is used to
+In a typical ASRC we need a short FIFO of samples that is used to
 rate-match at a coarse level. We will get back to the length of the FIFO at
 a later stage, but for now lets assume that the FIFO has 10 elements and is
 ideally half-full, then in the normal operating sequence the length of the
@@ -37,23 +37,32 @@ Estimating the rate difference in the simple case: one sample in one sample out
 -------------------------------------------------------------------------------
 
 Our algorithm looks at a block that comprises a FIFO, an ASRC, and a rate
-estimator, shown in :ref:`xxx`. The order of the FIFO and ASRC is
-arbitrary. The way it is shown, the FIFO will receive samples from the
-input, pass 1, or 2 samples into the ASRC on each beat (typically 1),
-and produce 1, or 2 samples on each beat (typically 1). When upsampling it
-may produce 2 samples occasionally; when downsampling it may consume 2
-samples occasionally.
+estimator, shown in
+:ref:`controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_block_diagram`. The order of the FIFO and ASRC is
+arbitrary. The way it is shown, the ASRC will receive samples (in our case
+four samples each beat), the FIFO will receive samples from the ASRC pass
+(3, 4, or 5 if matching similar input and output speeds), and samples are
+removed from the FIFO one sample at a time. If the ASRC is set to upsample
+it may push as many as 17 samples at a time. If the ASRC is set to
+downsample it may push as little as 1 sample at a time.
 
-xxx:
+
+.. _controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_block_diagram:
+
+.. figure:: images/block-diagram.*
+            :width: 75%
+
+            Block diagram:
 
 What we are going to measure is the phase-difference between samples going
 into the FIFO and samples going out of the FIFO. In an ideal world, sample X
-sample enters the FIFO at exactly the same time as sample X-N leaving the
-FIFO. N is the ideal fill-level of the FIFO (for example 5). If the
+sample enters the FIFO at exactly the same time as sample X-N/2 leaving the
+FIFO. N/2 is the ideal fill-level of the FIFO that is N items long. For
+example, for a FIFO of 10 elements the ideal fill level is 5. If the
 output is running slightly too fast then sample X will enter the FIFO just
-after X-N leaves the FIFO; if the output is running slightly too slow than
-sample X will enter the FIFO just before X-N leaves the FIFO. We will be
-using the time between sample X entering and sample X-N leaving the FIFO as
+after X-N/2 leaves the FIFO; if the output is running slightly too slow than
+sample X will enter the FIFO just before X-N/2 leaves the FIFO. We will be
+using the time between sample X entering and sample X-N/2 leaving the FIFO as
 the guidance for our rate matching algorithm; this is the phase difference.
 
 The phase difference is notionally a continuous value (a time stamp)
@@ -66,7 +75,7 @@ it rather than 5), then the phase difference will account for the 4 extra
 items in the FIFO, and the fractional item, somewhere between 4 and 4.999...
 
 Note that the phase difference itself is an integral value; it is the
-number of samples since time 0 that the converter is out by. The goal of
+number of samples since the beginning of time that the ASRC is out by. The goal of
 the rate converter is to make the phase difference stable (ie, it does not
 move between subsequent samples), and zero (ie, the FIFO is exactly mid
 level). Hence, we can see the differential of the phase error as a
@@ -79,7 +88,7 @@ The ASRC setting needs a ratio between the two clocks. This number is
 calculated by correcting it with two constants depending on the phase and
 proportional errors::
 
-   F = F - Kp * proportional_error - Ki * integral_error
+   fs_ratio = fs_ratio - Kp * proportional_error - Ki * integral_error
 
 
 Calculating a phase error in a discrete world
@@ -88,9 +97,9 @@ Calculating a phase error in a discrete world
 The above phase error works on a theoretical FIFO where the input and
 output side of a FIFO have to match the speed (as the FIFO would otherwise
 overflow or underflow). However, in real life the FIFO has the occasional
-double sample taken out. If we look at the block comprising both the FIFO
-and the ASRC, then we do have an ideal system, but here the sample rates
-are systematically different.
+extra sample pushed in. If we look at the block comprising both the ASRC
+and the FIFO, then we do have an ideal system, but here the sample rates
+are systematically different on both sides.
 
 In order to make this work we need to use precise knowledge of the ASRC;
 even though the ASRC produces and consumes discrete samples, it progresses
@@ -99,14 +108,17 @@ mechanism to estimate the phase error.
 
 We assume that the FIFO is behind the ASRC::
 
-    Producer (clock domain A)  -> ASRC ->  FIFO ->  Consumer (clock domain B)
+    Producer -> ASRC ->  FIFO ->  Consumer
+    Domain A              ||      Domain B
 
+The left half of the system is one clock domain, the right half the other
+clock domain. The FIFO holds it all together
 On each iteration, the ASRC will consume a fixed number of samples (say 4),
 and for each *F* samples it will produce an output sample, where *F*
 is a precise fractional number. In other words, for a large enough number
-of samples::
-  
-  the number of output samples times F is the number of input samples.
+of samples the number of output samples times F is the number of input
+samples. More precisely (given that F changes), the sum of all F values is
+the number of samples that have been produced.
 
 We calculate a fractional credit that the ASRC has built-up, this is the
 number of fractional samples that the ASRC has consumed. As an example we
@@ -204,7 +216,8 @@ sample Y that is pulled out, and we calculate::
 The sample rate should be the actual sample rate on the output side but it
 is fine if it is one or two time ticks off. At 48 kHz the sample rate is
 2083 timer ticks, so a single timer tick off is a 500 ppm error. Hence, we
-may as well use the ideal sample rate
+may as well use the ideal sample rate. We can improve this by using an
+actual measured number here.
 
 The three degrees of freedom
 ----------------------------
@@ -229,15 +242,15 @@ characteristics and the time-constant the FIFO length follows.
 Alternatively, given the jitter characteristics and the FIFO length the
 maximum time constant for the loop-filter follows.
 
-IMplementing the FIFO
+Implementing the FIFO
 ---------------------
 
-The ASRC block needs a FIFO after it. The FIFO fullfills two purposes:
+The ASRC block needs a FIFO after it. The FIFO fulfils three purposes:
 
 * When rates change, the loop filter will spread this rate change out over
   time. During this time, samples will accumulate in the FIFO, or the FIFO
   will be depleted to cope with a mismatch in rate. Over time, the FIFO
-  will balance back to it's mid-point.
+  will balance back to its mid-point.
 
 * The ASRC operates on blocks of four samples; and produces blocks of
   between three and five samples. the FIFO smoothes these
@@ -248,17 +261,17 @@ The ASRC block needs a FIFO after it. The FIFO fullfills two purposes:
   clock B. Each of these halves can operate synchronously, but between the
   two an asynchronous handover is necessary
 
-For this reason, a FIFO of N x 2 elements is created; where N is the ideal
+For this reason, a FIFO of N elements is created; where N/2 is the ideal
 number of elements in the FIFO (the mid point). Each element in the FIFO is
 capable of holding a frame of data; one value for each channel. The FIFO
 notionally operates on the output frequency.
 
 The FIFO straddles two threads; this is essential as the two threads
 operate on different heart-beats. Hence, the FIFO is a shared-memory
-element between those two threads, with a bi-directional channel providing
-some loose synchronisation between the two threads. A readpointer (managed
-by the outgoing thread) and a writepointer (managed by the incoming thread)
-are maintained independently
+element between those two threads. A readpointer (managed
+by the outgoing thread) and a write-pointer (managed by the incoming thread)
+are maintained independently. The read-pointer and write-pointer are
+normally N/2 elements apart.
 
 During normal operation the FIFO is not managed. Incoming and outgoing
 traffic are rate-matched, and the read-pointer and write-pointer will be on
@@ -270,13 +283,11 @@ operation may be abnormal:
 * Where the producer is no longer producing samples
 
 * Where a larger than expected change in the sample rates has caused the
-  loop filter to require more than N spaces in the FIFO.
-
-These three cases may require different management.
+  loop filter to require more than N/2 spaces away from the mid-point.
 
 In the simplest case, we can treat all three as fatal, and restart the FIFO
-freshly. That is, we fade out, set the fifo to all zeroes, set the pointers
-on opposite ends of the FIFO, reset the phase-error, reset the fsratio to
+freshly. That is, set the fifo to all zeroes, set the pointers
+on opposite ends of the FIFO, reset the phase-error, reset the fs_ratio to
 1.0, and fade in. If one side has permanently stopped this will just cause
 the system to go quiet on the outside.
 
@@ -288,7 +299,7 @@ loop filter, FIFO length, and expected jitter are matched.
 
 Detecting these cases requires us to calculate the modulo difference
 between the write-pointer and read-pointer; if that difference is close to
-zero we're about to underflow; if it is close to Nx2 we're about to
+zero we're about to underflow; if it is close to N we're about to
 overflow. The notion "close to" is used since the read- and write-pointer
 are updated independently by different threads, so the pointer may be one
 less than anticipated, and we may miss an update. Underflow is detected by
@@ -304,30 +315,30 @@ On the thread on the input side:
 
   * If the RESET flag is set or there is no room left in the FIFO:
     
-    * Set the write-pointer to half-way from the read-pointer
+    #. Set the write-pointer to half-way from the read-pointer
 
-    * Set fsratio to 1
+    #. Set fs_ratio to 1
 
-    * Clear the phase error and reset all other PID state.
+    #. Clear the phase error and reset all other PID state.
 
-    * Clear the RESET flag (this is ok - it may go around the loop twice but
-      never three times)
+    #. Clear the RESET flag (this is ok - it may go around the loop twice but
+       never three times)
     
   * else there is room and no RESET:
 
-    * Copy one frame into the FIFO
+    #. Copy one frame into the FIFO
 
-    * Increase the write-pointer
+    #. Increase the write-pointer
 
-    * Mark the time-stamp of the last one  (HOW??)
+    #. Mark the time-stamp of the last one  (HOW??)
 
-    * If the sample_time_valid is True then:
+    #. If the sample_time_valid is True then:
 
-      * Obtain values
+       * Obtain values
 
-      * Run PID.
+       * Run PID.
 
-      * Set sample_time_valid to False
+       * Set sample_time_valid to False
 
 On the thread on the output side:
 
@@ -335,27 +346,27 @@ On the thread on the output side:
     
   * If there is a sample left:
 
-    * Copy it out
+    #. Copy it out
 
-    * Increase the read-pointer.
+    #. Increase the read-pointer.
 
-    * Increase the output sample number
+    #. Increase the output sample number
 
-    * If sample_time_valid is False:
+    #. If sample_time_valid is False:
       
-      * Write the output sample number
+       * Write the output sample number
 
-      * Write the sampled time
+       * Write the sampled time
 
-      * Set the sample_time_valid to True
+       * Set the sample_time_valid to True
 
   * If there is no sample left
 
-    * set the RESET flag
+    #. Set the RESET flag
 
-    * copy out the previous sample
+    #. Copy out the previous sample
 
-    * Reset output sample number to zero.
+    #. Reset output sample number to zero.
 
 Measuring ASRC performance
 --------------------------
@@ -412,7 +423,7 @@ ratio never settles but is noisy.
 :ref:`controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_after_change`
 shows the FFT of the sine-wave post ASRC right at the end of the test. At
 this point we expect the sine wave to be stable; and the signal we see is a
-product of the windowing function (a Hann window over 
+product of the windowing function and the ASRC process.
 
 .. _controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_after_change:
 
@@ -421,5 +432,30 @@ product of the windowing function (a Hann window over
 
             FFT after change
 
+
+:ref:`controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_on_change`
+shows the FFT of the sine-wave post ASRC during the change. Half the window
+is before the change, half is when the frequency is moving. The error shown
+here is the maximum error we can get.
+
+.. _controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_on_change:
+
+.. figure:: images/fft-on-change.*
+            :width: 75%
+
+            FFT during change
+
+
+Finally,
+:ref:`controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_medium_pid`
+shows the FFT output of the medium PID before, during, and well after the
+change. This shows how the harmonic distortion progresses over time.
+
+.. _controlling_asycnhronous_sample_rate_conversion_by_measuring_the_phase_error_fft_medium_pid:
+
+.. figure:: images/fft-medium-pid.*
+            :width: 75%
+
+            FFT of medium PID
 
 

@@ -81,7 +81,9 @@ void producer(asrc_block_t *a) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-        asrc_add_quad_input(a, &input_data[cntr]);
+        int timestamp;
+        asm volatile("gettime %0" : "=r" (timestamp));
+        asrc_add_quad_input(a, &input_data[cntr], timestamp);
         cntr = (cntr + 4) % 48;
     }
     hwtimer_free(tmr);
@@ -105,7 +107,9 @@ void consumer(asrc_block_t *a) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-        asrc_get_single_output(a, &output_data);
+        int timestamp;
+        asm volatile("gettime %0" : "=r" (timestamp));
+        asrc_get_single_output(a, &output_data, timestamp);
         xscope_int(0, output_data);
 //        printintln(output_data>>20);
         if (i == 24000) {
