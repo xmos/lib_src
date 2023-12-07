@@ -11,6 +11,18 @@
 #include <xscope.h>
 #include "src.h"
 
+
+// TODO: Make it work for sample rates other than 48/48
+// TODO: Make it work on overflow beyond 20 seconds
+// TODO: Implement RESET
+// TODO: Verify that RESET never leaves it at 75% thinking its in the middle
+// TODO: Make fifo offset from N/2 a very small component in PID, 
+
+// Software engineering TODOs
+// TODO: Make sample rate changeable
+// TODO: extract ASRC parameters from this file
+
+
 #define REAL_ASRC
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
@@ -48,11 +60,13 @@ void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int
     asrc_data_buffer->marked_converted_sample_number = 0;
     asrc_data_buffer->marked_converted_sample_time = 0;
     asrc_data_buffer->channel_count = channel_count;
-    asrc_data_buffer->fs_ratio = (uint64_t)(0x1000000000000000ULL);// * 1.0003958911); // TODO
+    asrc_data_buffer->fs_ratio = (uint64_t)(0x1000000000000000ULL);
     memset(asrc_data_buffer->buffer, 0, channel_count * max_fifo_depth * sizeof(int));
+    // TODO: parameter
+    asrc_data_buffer->ideal_freq_input = 44100;
 #ifdef REAL_ASRC
     int inputFsCode = FS_CODE_48;
-    int outputFsCode = FS_CODE_48;
+    int outputFsCode = FS_CODE_44;
 
     for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
     {
@@ -63,6 +77,7 @@ void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int
     }
 
     asrc_data_buffer->fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
+    printf("%016llx\n",  asrc_data_buffer->fs_ratio);
 #endif
     asrc_data_buffer->fractional_credit = 0;
 }
@@ -78,7 +93,7 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
 
 #ifdef REAL_ASRC
     /* Run ASRC from input buffer into output buffer */
-    sampsOut = asrc_process(samples, outputBuff, asrc_data_buffer->fs_ratio, sASRCCtrl);
+    sampsOut = asrc_process((int *)samples, outputBuff, asrc_data_buffer->fs_ratio, sASRCCtrl);
 #else
     static uint64_t remn = 0;
     for(int i = 0; i < 4; i++) {
@@ -106,8 +121,6 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
             memcpy(asrc_data_buffer->buffer + write_ptr * channel_count, outputBuff + i, size);
             write_ptr = (write_ptr + 1) % asrc_data_buffer->max_fifo_depth;
         }
-            int ideal_freq_input = 48000;
-            int ideal_freq_output = 48000;
         asrc_data_buffer->write_ptr = write_ptr;
         // fractional_credit is the number of samples that are unprocessed in the input.
         asrc_data_buffer->fractional_credit += 0x4000000000000000LL;
@@ -115,11 +128,11 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
             asrc_data_buffer->fractional_credit -= asrc_data_buffer->fs_ratio;
             asrc_data_buffer->converted_sample_number += 1;
         }
-        int64_t converted_sample_time = timestamp*(int64_t) ideal_freq_input + (((0x1000000000000000LL - asrc_data_buffer->fractional_credit) >> 32) * 100000000) / 0x10000000;
+        int64_t converted_sample_time = timestamp*(int64_t) asrc_data_buffer->ideal_freq_input + (((asrc_data_buffer->fs_ratio - asrc_data_buffer->fractional_credit) >> 32) * 100000000) / (int) (asrc_data_buffer->fs_ratio >> 32);
         
         if (asrc_data_buffer->sample_valid) {
-            // TODO: this phase-error should be modulo (ideal_freq_input << 32)
-            int64_t phase_error = asrc_data_buffer->sample_timestamp*(int64_t)ideal_freq_input - asrc_data_buffer->marked_converted_sample_time;
+            // TODO: this phase-error should be modulo (asrc_data_buffer->ideal_freq_input << 32)
+            int64_t phase_error = asrc_data_buffer->sample_timestamp*(int64_t)asrc_data_buffer->ideal_freq_input - asrc_data_buffer->marked_converted_sample_time;
             phase_error -= ((asrc_data_buffer->sample_number - asrc_data_buffer->marked_converted_sample_number) * 100000000LL );
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
@@ -127,27 +140,24 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
                 asrc_data_buffer->skip_ctr--;
             } else {
             int32_t diff_error = phase_error - asrc_data_buffer->last_phase_error;
-            static int printcnt = 0;
-            printcnt++;
-//            if (printcnt >= 100) {
-                xscope_int(1, phase_error);
-                xscope_int(2, diff_error);
-                xscope_int(3, len);
-                xscope_int(4, asrc_data_buffer->fs_ratio >> 32);
-//            }
+            xscope_int(1, phase_error);
+            xscope_int(2, diff_error);
+            xscope_int(3, len);
+            xscope_int(4, asrc_data_buffer->fs_ratio >> 32);
             int32_t diff_time = timestamp - asrc_data_buffer->last_timestamp;
-            if (diff_time == 0) diff_time = 0x7fffffff;
+            if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
 
-            // TODO: set SPEEDUP to 1 and measure
-            float SPEEDUP = 400;
-            float Kp = 0.0001 * SPEEDUP / ideal_freq_input;
+            // TODO: Move this up to the init code and make them int32_t that are clamped to [MAXINT,1]
+            float SPEEDUP = 1;
+            float Kp = 0.0001 * SPEEDUP / asrc_data_buffer->ideal_freq_input;
             int64_t Kp_i = Kp * 0x1000000000000000LL;
             float Ki = 0.000025 * 1e-8 * SPEEDUP;
             int64_t Ki_i = Ki * 0x1000000000000000LL;
             // TODO: verify that this won't overflow in an ugly way with various clock frequencies
+            // TODO: move the division by ideal_freq_input to be precomputed with Ki - it will just fit in Q64.60.
             asrc_data_buffer->fs_ratio +=
                 diff_error * Kp_i / diff_time +
-                phase_error / ideal_freq_input * Ki_i;
+                phase_error / asrc_data_buffer->ideal_freq_input * Ki_i;
             }
             asrc_data_buffer->last_phase_error = phase_error;
             asrc_data_buffer->last_timestamp = timestamp;
@@ -167,6 +177,9 @@ void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples
     int size = channel_count * sizeof(int);
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
     memcpy(samples, asrc_data_buffer->buffer + read_ptr * channel_count, size);
+    if (asrc_data_buffer->reset) {
+        return;
+    }
     if (len > 2) {
         read_ptr = (read_ptr + 1) % asrc_data_buffer->max_fifo_depth;
         asrc_data_buffer->read_ptr = read_ptr;
@@ -178,7 +191,7 @@ void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples
             asrc_data_buffer->sample_valid = 1;
         }
     } else {
-        asrc_data_buffer->sample_number = 0; // This must happen in this thread
-        asrc_data_buffer->reset = 1;         // The rest must happen in the other thread
+        asrc_data_buffer->output_sample_number = 0; // This must happen in this thread
+        asrc_data_buffer->reset = 1;                // The rest must happen in the other thread
     }
 }

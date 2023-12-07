@@ -4,11 +4,11 @@
 #include <print.h>
 #include <platform.h>
 #include <xscope.h>
-#include "asrc_block.h"
+#include "asrc_interface.h"
 
 
-DECLARE_JOB(producer, (asrc_block_t *));
-DECLARE_JOB(consumer, (asrc_block_t *));
+DECLARE_JOB(producer, (asrc_interface_t *));
+DECLARE_JOB(consumer, (asrc_interface_t *));
 
 int32_t input_data[48] = {
     0,
@@ -63,7 +63,7 @@ int32_t input_data[48] = {
 
 #define seconds 10
 
-void producer(asrc_block_t *a) {
+void producer(asrc_interface_t *a) {
     hwtimer_t tmr = hwtimer_alloc();
     int now = hwtimer_get_time(tmr);
     int freq = 48012 / 4;
@@ -89,16 +89,16 @@ void producer(asrc_block_t *a) {
     hwtimer_free(tmr);
 }
 
-void consumer(asrc_block_t *a) {
+void consumer(asrc_interface_t *a) {
     hwtimer_t tmr = hwtimer_alloc();
     int now = hwtimer_get_time(tmr);
-    int freq = 48012;
+    int freq = 44111;                  // Very close to 48012
     int step = 100000000 / freq;
     int mod = 100000000 % freq;
     int mod_acc = 0;
     int32_t output_data;
     
-    for(int i = 0; i < 48000 * seconds; i++) {
+    for(int i = 0; i < 44100 * seconds; i++) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -111,9 +111,8 @@ void consumer(asrc_block_t *a) {
         asm volatile("gettime %0" : "=r" (timestamp));
         asrc_get_single_output(a, &output_data, timestamp);
         xscope_int(0, output_data);
-//        printintln(output_data>>20);
-        if (i == 24000) {
-            freq = 47993;
+        if (i == 22050) {
+            freq = 44093;
             step = 100000000 / freq;
             mod = 100000000 % freq;
         }
@@ -124,14 +123,14 @@ void consumer(asrc_block_t *a) {
 #define FIFO_LENGTH   100
 
 int main(void) {
-    int32_t array[sizeof(asrc_block_t)/sizeof(int) + FIFO_LENGTH];
-    asrc_block_t *block = (asrc_block_t *)array;
+    int32_t array[sizeof(asrc_interface_t)/sizeof(int) + FIFO_LENGTH];
+    asrc_interface_t *asrc_interface_state = (asrc_interface_t *)array;
 
-    asrc_init_buffer(block, 1, FIFO_LENGTH);
+    asrc_init_buffer(asrc_interface_state, 1, FIFO_LENGTH);
     PAR_JOBS(
-        PJOB(producer, (block)),
-        PJOB(consumer, (block))
+        PJOB(producer, (asrc_interface_state)),
+        PJOB(consumer, (asrc_interface_state))
         );
-    asrc_exit_buffer(block);
+    asrc_exit_buffer(asrc_interface_state);
 
 }
