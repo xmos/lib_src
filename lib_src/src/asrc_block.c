@@ -1,5 +1,5 @@
 #include <string.h>
-#include "asrc_block.h"
+#include "asrc_interface.h"
 
 #include <xcore/chanend.h>
 #include <platform.h>
@@ -8,7 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <xscope.h>
 #include "src.h"
+
+#define REAL_ASRC
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
 #define     SRC_N_INSTANCES               (1)   // Number of instances (each usually run a logical core) used to process audio (minimum 1)
@@ -31,11 +34,12 @@ int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMP
 asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
 asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
 
-void asrc_init_buffer(asrc_block_t *asrc_data_buffer, int channel_count, int max_fifo_depth) {
+void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int max_fifo_depth) {
     asrc_data_buffer->sample_valid = 0;
     asrc_data_buffer->reset = 0;
     asrc_data_buffer->max_fifo_depth = max_fifo_depth;
     asrc_data_buffer->write_ptr = max_fifo_depth/2;
+    asrc_data_buffer->skip_ctr = 2;
     asrc_data_buffer->read_ptr = 0;
     asrc_data_buffer->last_phase_error = 0;
     asrc_data_buffer->last_timestamp = 0;
@@ -44,7 +48,7 @@ void asrc_init_buffer(asrc_block_t *asrc_data_buffer, int channel_count, int max
     asrc_data_buffer->marked_converted_sample_number = 0;
     asrc_data_buffer->marked_converted_sample_time = 0;
     asrc_data_buffer->channel_count = channel_count;
-    asrc_data_buffer->fs_ratio = 0x1000000000000000ULL;
+    asrc_data_buffer->fs_ratio = (uint64_t)(0x1000000000000000ULL);// * 1.0003958911); // TODO
     memset(asrc_data_buffer->buffer, 0, channel_count * max_fifo_depth * sizeof(int));
 #ifdef REAL_ASRC
     int inputFsCode = FS_CODE_48;
@@ -59,17 +63,14 @@ void asrc_init_buffer(asrc_block_t *asrc_data_buffer, int channel_count, int max
     }
 
     asrc_data_buffer->fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
-    printf("%08llx\n", asrc_data_buffer->fs_ratio);
 #endif
     asrc_data_buffer->fractional_credit = 0;
 }
 
-void asrc_exit_buffer(asrc_block_t *asrc_data_buffer) {
+void asrc_exit_buffer(asrc_interface_t *asrc_data_buffer) {
 }
     
-void asrc_add_quad_input(asrc_block_t *asrc_data_buffer, int32_t *samples) {
-    int timestamp;
-    asm volatile("gettime %0" : "=r" (timestamp));
+void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, int32_t timestamp) {
     int outputBuff[SRC_OUT_BUFF_SIZE];
     int sampsOut = 0;
 
@@ -114,36 +115,40 @@ void asrc_add_quad_input(asrc_block_t *asrc_data_buffer, int32_t *samples) {
             asrc_data_buffer->fractional_credit -= asrc_data_buffer->fs_ratio;
             asrc_data_buffer->converted_sample_number += 1;
         }
-        int converted_sample_time = timestamp + (((0x1000000000000000LL - asrc_data_buffer->fractional_credit) >> 32) * 100000000/ideal_freq_input) / 0x10000000;
+        int64_t converted_sample_time = timestamp*(int64_t) ideal_freq_input + (((0x1000000000000000LL - asrc_data_buffer->fractional_credit) >> 32) * 100000000) / 0x10000000;
         
         if (asrc_data_buffer->sample_valid) {
-            int32_t phase_error = asrc_data_buffer->sample_timestamp - asrc_data_buffer->marked_converted_sample_time;
-            phase_error -= ((asrc_data_buffer->sample_number - asrc_data_buffer->marked_converted_sample_number) * 100000000LL / ideal_freq_input);
+            // TODO: this phase-error should be modulo (ideal_freq_input << 32)
+            int64_t phase_error = asrc_data_buffer->sample_timestamp*(int64_t)ideal_freq_input - asrc_data_buffer->marked_converted_sample_time;
+            phase_error -= ((asrc_data_buffer->sample_number - asrc_data_buffer->marked_converted_sample_number) * 100000000LL );
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
+            if (asrc_data_buffer->skip_ctr != 0) {
+                asrc_data_buffer->skip_ctr--;
+            } else {
             int32_t diff_error = phase_error - asrc_data_buffer->last_phase_error;
             static int printcnt = 0;
             printcnt++;
-            if (printcnt > 10) {
-                printint((asrc_data_buffer->sample_number - asrc_data_buffer->marked_converted_sample_number));printchar(' ');
-                printint(phase_error); printchar(' ');
-                printint(diff_error); printchar(' ');
-                printintln(len);
-                printcnt = 0;
-            }
+//            if (printcnt >= 100) {
+                xscope_int(1, phase_error);
+                xscope_int(2, diff_error);
+                xscope_int(3, len);
+                xscope_int(4, asrc_data_buffer->fs_ratio >> 32);
+//            }
             int32_t diff_time = timestamp - asrc_data_buffer->last_timestamp;
             if (diff_time == 0) diff_time = 0x7fffffff;
 
             // TODO: set SPEEDUP to 1 and measure
-            float SPEEDUP = 4;
-            float Kp = 0.0001 * SPEEDUP;
+            float SPEEDUP = 400;
+            float Kp = 0.0001 * SPEEDUP / ideal_freq_input;
             int64_t Kp_i = Kp * 0x1000000000000000LL;
             float Ki = 0.000025 * 1e-8 * SPEEDUP;
             int64_t Ki_i = Ki * 0x1000000000000000LL;
             // TODO: verify that this won't overflow in an ugly way with various clock frequencies
             asrc_data_buffer->fs_ratio +=
                 diff_error * Kp_i / diff_time +
-                phase_error * Ki_i;
+                phase_error / ideal_freq_input * Ki_i;
+            }
             asrc_data_buffer->last_phase_error = phase_error;
             asrc_data_buffer->last_timestamp = timestamp;
 
@@ -154,9 +159,7 @@ void asrc_add_quad_input(asrc_block_t *asrc_data_buffer, int32_t *samples) {
     }
 }
 
-void asrc_get_single_output(asrc_block_t *asrc_data_buffer, int32_t *samples) {
-    int timestamp;
-    asm volatile("gettime %0" : "=r" (timestamp));
+void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples, int32_t timestamp) {
     int read_ptr = asrc_data_buffer->read_ptr;
     int write_ptr = asrc_data_buffer->write_ptr;
     int max_fifo_depth = asrc_data_buffer->max_fifo_depth;
