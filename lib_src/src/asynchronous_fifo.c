@@ -109,6 +109,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
         state->converted_sample_number++;
         if (timestamp_valid && state->sample_valid) {
             int32_t phase_error = state->sample_timestamp - state->marked_converted_sample_time;
+                xscope_int(1, phase_error);
             phase_error -= (state->sample_number - state->marked_converted_sample_number) * state->ticks_between_samples;
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
@@ -117,18 +118,17 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
             } else {
                 int32_t diff_error = phase_error - state->last_phase_error;
 #if 1
-                xscope_int(1, phase_error);
-                xscope_int(2, diff_error);
+                xscope_int(2, state->sample_number - state->marked_converted_sample_number);//diff_error);
                 xscope_int(3, len);
-                xscope_int(4, state->frequency_ratio);
+                xscope_int(4, state->frequency_ratio >> 32);
 #endif
 
                 int32_t diff_time = timestamp - state->last_timestamp;
                 if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
                 
                 state->frequency_ratio +=
-                    diff_error  * (int64_t) state->Kp / diff_time +
-                    ((phase_error * (int64_t) state->Ki) >> KI_SHIFT);
+                    diff_error  * (int64_t) state->Kp * (1LL << 32) / diff_time +
+                    ((phase_error * (int64_t) state->Ki) << (32-KI_SHIFT));
             }
             state->last_phase_error = phase_error;
             state->last_timestamp = timestamp;
@@ -137,7 +137,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
             state->sample_valid = 0;  // Do this last - permits other side to refill
         }
     }
-    return state->frequency_ratio;
+    return state->frequency_ratio >> 32;
 }
 
 /**

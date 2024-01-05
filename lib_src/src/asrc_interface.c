@@ -12,11 +12,11 @@
 #include "src.h"
 
 
-// TODO: Make it work for sample rates other than 48/48
 // TODO: Make it work on overflow beyond 20 seconds
 // TODO: Implement RESET
 // TODO: Verify that RESET never leaves it at 75% thinking its in the middle
 // TODO: Make fifo offset from N/2 a very small component in PID, 
+// TODO: Check it works on 192/48.
 
 // Software engineering TODOs
 // TODO: Make sample rate changeable
@@ -46,24 +46,66 @@ int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMP
 asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
 asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
 
-void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int max_fifo_depth) {
-    asrc_data_buffer->sample_valid = 0;
-    asrc_data_buffer->reset = 0;
-    asrc_data_buffer->max_fifo_depth = max_fifo_depth;
-    asrc_data_buffer->write_ptr = max_fifo_depth/2;
+/**
+ * Function that resets the producing side of the ASRC; called on initialisation, and
+ * and called during reset by the producer after the consumer is known to have thrown
+ * in the towel
+ */
+static void asrc_init_producing_side(asrc_interface_t *asrc_data_buffer) {
     asrc_data_buffer->skip_ctr = 2;
-    asrc_data_buffer->read_ptr = 0;
-    asrc_data_buffer->last_phase_error = 0;
-    asrc_data_buffer->last_timestamp = 0;
-    asrc_data_buffer->output_sample_number = 0;
+    asrc_data_buffer->write_ptr = (asrc_data_buffer->read_ptr + asrc_data_buffer->max_fifo_depth/2) % asrc_data_buffer->max_fifo_depth;
     asrc_data_buffer->converted_sample_number = 0;
     asrc_data_buffer->marked_converted_sample_number = 0;
     asrc_data_buffer->marked_converted_sample_time = 0;
+    asrc_data_buffer->last_phase_error = 0;
+    asrc_data_buffer->last_timestamp = 0;
+    asrc_data_buffer->fs_ratio = (uint64_t)(0x1000000000000000ULL); // TODO, right value
+    asrc_data_buffer->fractional_credit = 0;
+    asrc_data_buffer->stop_producing = 0;
+}
+
+/**
+ * Function that resets the consuming side of the ASRC; called on initialisation, and
+ * and called during reset by the consumer before it notifies the producer that a reset
+ * is needed.
+ */
+static void asrc_init_consuming_side(asrc_interface_t *asrc_data_buffer) {
+    asrc_data_buffer->output_sample_number = 0;
+    asrc_data_buffer->sample_timestamp = 0;
+    asrc_data_buffer->sample_number = 0;
+}
+
+static void asrc_reset_consumer_flags(asrc_interface_t *asrc_data_buffer) {
+    asrc_data_buffer->sample_valid = 0;
+    asrc_data_buffer->reset = 0;        // This has to be the last one
+}
+
+void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int max_fifo_depth) {
+    asrc_data_buffer->max_fifo_depth = max_fifo_depth;
     asrc_data_buffer->channel_count = channel_count;
-    asrc_data_buffer->fs_ratio = (uint64_t)(0x1000000000000000ULL);
-    memset(asrc_data_buffer->buffer, 0, channel_count * max_fifo_depth * sizeof(int));
     // TODO: parameter
     asrc_data_buffer->ideal_freq_input = 44100;
+    // TODO: make Kp int32_t clamped to MAXINT
+    // All this maths shall be compiled out to just one LDIVU each
+    float SPEEDUP = 400;
+    float Kp = 0.0001 * SPEEDUP;
+    float Ki = 0.000025 * 1e-8 * SPEEDUP;
+    asrc_data_buffer->Kp = ((uint64_t)(Kp * 0x1000000000000000LL)) / asrc_data_buffer->ideal_freq_input;
+    asrc_data_buffer->Ki = ((uint64_t)(Ki * 0x1000000000000000LL)) / asrc_data_buffer->ideal_freq_input;
+    if (asrc_data_buffer->Ki < 1) {
+        asrc_data_buffer->Ki = 1;       // Avoid underflow.
+    }
+    printf("Kp %016llx   Ki %08lx\n", asrc_data_buffer->Kp, asrc_data_buffer->Ki);
+
+    // First initialise shared variables, or those that shouldn't reset on a RESET.
+    asrc_data_buffer->read_ptr = 0;
+    // Now clear the buffer.
+    memset(asrc_data_buffer->buffer, 0, channel_count * max_fifo_depth * sizeof(int));
+    // Finally initialise those parts that are reset on a RESET
+    asrc_init_consuming_side(asrc_data_buffer);    // Does not reset read_ptr
+    asrc_init_producing_side(asrc_data_buffer);    // uses read_ptr
+    asrc_reset_consumer_flags(asrc_data_buffer);
+    
 #ifdef REAL_ASRC
     int inputFsCode = FS_CODE_48;
     int outputFsCode = FS_CODE_44;
@@ -79,7 +121,6 @@ void asrc_init_buffer(asrc_interface_t *asrc_data_buffer, int channel_count, int
     asrc_data_buffer->fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
     printf("%016llx\n",  asrc_data_buffer->fs_ratio);
 #endif
-    asrc_data_buffer->fractional_credit = 0;
 }
 
 void asrc_exit_buffer(asrc_interface_t *asrc_data_buffer) {
@@ -110,12 +151,13 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
     int max_fifo_depth = asrc_data_buffer->max_fifo_depth;
     int channel_count = asrc_data_buffer->channel_count;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
-    if ( asrc_data_buffer->reset || len >= max_fifo_depth - 6) {
+    if ( asrc_data_buffer->reset) {
         printf("@@@@@@@@@@@@ RESET @@@@@@@@@@ %lu len %d\n", asrc_data_buffer->reset, len );    
-        asrc_data_buffer->write_ptr = (read_ptr + asrc_data_buffer->max_fifo_depth/2) % asrc_data_buffer->max_fifo_depth;
-        // TODO: reset all ASRC values, indices, etc.
-        asrc_data_buffer->reset= 0;
-    } else  {
+        asrc_init_producing_side(asrc_data_buffer);    // uses read_ptr
+        asrc_reset_consumer_flags(asrc_data_buffer);   // Last step - clears reset
+    } else if (len >= max_fifo_depth - 6) {
+        asrc_data_buffer->stop_producing = 1;
+    } else  if (!asrc_data_buffer->stop_producing) {
         for(int i = 0; i < sampsOut; i++) {
             int size = channel_count * sizeof(int);
             memcpy(asrc_data_buffer->buffer + write_ptr * channel_count, outputBuff + i, size);
@@ -128,36 +170,43 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
             asrc_data_buffer->fractional_credit -= asrc_data_buffer->fs_ratio;
             asrc_data_buffer->converted_sample_number += 1;
         }
-        int64_t converted_sample_time = timestamp*(int64_t) asrc_data_buffer->ideal_freq_input + (((asrc_data_buffer->fs_ratio - asrc_data_buffer->fractional_credit) >> 32) * 100000000) / (int) (asrc_data_buffer->fs_ratio >> 32);
+        // fractional_credit is now less than fs_ratio, so we can compute an unsigned diff
+        // A single SUB
+        uint32_t left_over_upper_32_bits = (asrc_data_buffer->fs_ratio >> 32) - (asrc_data_buffer->fractional_credit >> 32);
+        // The unsigned diff just needs a single LMUL to become a 64 bit diff in 10ns TICKS
+        uint64_t left_over_ticks = left_over_upper_32_bits * 100000000ULL;
+        int64_t converted_sample_time = timestamp*(int64_t) asrc_data_buffer->ideal_freq_input + left_over_ticks / (int) (asrc_data_buffer->fs_ratio >> 32);
         
         if (asrc_data_buffer->sample_valid) {
-            // TODO: this phase-error should be modulo (asrc_data_buffer->ideal_freq_input << 32)
+            // a time-stamp is a number in the range [-0x80000000..0x7fffffff] and wraps
+            // The computation may wrap as either F*MININT - F*MAXINT or F*MAXINT - F*MININT
+            // This ends up as 2*F*MININT or 2*F*MAXINT.
+            // Normal values are close to 0
+            // Hence - we need to add or subtract (F<<32) when we hit this case.
+            int64_t max_val = ((int64_t)asrc_data_buffer->ideal_freq_input) << 32;
             int64_t phase_error = asrc_data_buffer->sample_timestamp*(int64_t)asrc_data_buffer->ideal_freq_input - asrc_data_buffer->marked_converted_sample_time;
+            if (phase_error > max_val/2) {
+                phase_error -= max_val;
+            } else if (phase_error < -max_val/2) {
+                phase_error += max_val;
+            }
             phase_error -= ((asrc_data_buffer->sample_number - asrc_data_buffer->marked_converted_sample_number) * 100000000LL );
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
             if (asrc_data_buffer->skip_ctr != 0) {
                 asrc_data_buffer->skip_ctr--;
             } else {
-            int32_t diff_error = phase_error - asrc_data_buffer->last_phase_error;
-            xscope_int(1, phase_error);
-            xscope_int(2, diff_error);
-            xscope_int(3, len);
-            xscope_int(4, asrc_data_buffer->fs_ratio >> 32);
-            int32_t diff_time = timestamp - asrc_data_buffer->last_timestamp;
-            if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
+                int32_t diff_error = phase_error - asrc_data_buffer->last_phase_error;
+                xscope_int(1, phase_error);
+                xscope_int(2, diff_error);
+                xscope_int(3, len);
+                xscope_int(4, asrc_data_buffer->fs_ratio >> 32);
+                int32_t diff_time = timestamp - asrc_data_buffer->last_timestamp;
+                if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
 
-            // TODO: Move this up to the init code and make them int32_t that are clamped to [MAXINT,1]
-            float SPEEDUP = 1;
-            float Kp = 0.0001 * SPEEDUP / asrc_data_buffer->ideal_freq_input;
-            int64_t Kp_i = Kp * 0x1000000000000000LL;
-            float Ki = 0.000025 * 1e-8 * SPEEDUP;
-            int64_t Ki_i = Ki * 0x1000000000000000LL;
-            // TODO: verify that this won't overflow in an ugly way with various clock frequencies
-            // TODO: move the division by ideal_freq_input to be precomputed with Ki - it will just fit in Q64.60.
-            asrc_data_buffer->fs_ratio +=
-                diff_error * Kp_i / diff_time +
-                phase_error / asrc_data_buffer->ideal_freq_input * Ki_i;
+                asrc_data_buffer->fs_ratio +=
+                    diff_error  * asrc_data_buffer->Kp / diff_time +
+                    phase_error * asrc_data_buffer->Ki;
             }
             asrc_data_buffer->last_phase_error = phase_error;
             asrc_data_buffer->last_timestamp = timestamp;
@@ -169,6 +218,16 @@ void asrc_add_quad_input(asrc_interface_t *asrc_data_buffer, int32_t *samples, i
     }
 }
 
+/**
+ * Function that implements the consumer interface. Contorl communication
+ * happens through two variables: reset and sample_data_valid. These shall
+ * only be set as the last action, as they signify to the production side
+ * that the datastructure can now be read on that side.
+ *
+ * Note that the samples are filled in regardless of whether the FIFO is
+ * operating or not; the consumer will repeatedly get the same sample if
+ * the producer fails. The producer side is reset exactly once on reset.
+ */
 void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples, int32_t timestamp) {
     int read_ptr = asrc_data_buffer->read_ptr;
     int write_ptr = asrc_data_buffer->write_ptr;
@@ -191,7 +250,7 @@ void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples
             asrc_data_buffer->sample_valid = 1;
         }
     } else {
-        asrc_data_buffer->output_sample_number = 0; // This must happen in this thread
+        asrc_init_consuming_side(asrc_data_buffer); // This must happen in this thread        
         asrc_data_buffer->reset = 1;                // The rest must happen in the other thread
     }
 }
