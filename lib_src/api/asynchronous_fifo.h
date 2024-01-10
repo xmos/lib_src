@@ -2,6 +2,7 @@
 #define _asynchronous_fifo_h__
 
 #include <stdint.h>
+#include <xccompat.h>
 
 #define FREQUENCY_RATIO_EXPONENT     (32)
 
@@ -75,7 +76,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *          eg, multiplied into an ASRC ratio, or multiplied into a PLL timing.
  */
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
-                                  int32_t *samples,
+                                  REFERENCE_PARAM(int32_t, samples),
                                   int32_t timestamp,
                                   int timestamp_valid);
 
@@ -94,7 +95,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
  *                              ``asynchronous_fifo_produce`` for requirements.
  */
 void asynchronous_fifo_consume(asynchronous_fifo_t * UNSAFE state,
-                               int32_t *samples,
+                               REFERENCE_PARAM(int32_t, samples),
                                int32_t timestamp);
 
 
