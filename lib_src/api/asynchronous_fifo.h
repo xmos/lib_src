@@ -113,7 +113,7 @@ struct asynchronous_fifo_t {
     int32_t   marked_converted_sample_number; /* Sample number that the sample time relates to  */
     int64_t   last_phase_error;               /* previous error, used for proportional */
     uint32_t  last_timestamp;                 /* Last time stamp, used for proportional */
-    int32_t   frequency_ratio;                /* Current ratio of frequencies in 0.32 */
+    int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
 
     // Updated on the consumer side only

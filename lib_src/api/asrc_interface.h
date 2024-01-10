@@ -85,6 +85,8 @@ struct asrc_interface_t {
     uint32_t  channel_count;                  /* Number of audio channels */
     uint32_t  max_fifo_depth;                 /* Length of buffer[] in channel_counts */
     uint32_t  ideal_freq_input;               /* Ideal producer freq in Hz */
+    int32_t   Ki;                             /* Ki PID coefficient */
+    int64_t   Kp;                             /* Kp PID coefficient */
     
     // Updated on the producer side only
     int       skip_ctr;                       /* Set to indicate initialisation runs */
@@ -96,6 +98,7 @@ struct asrc_interface_t {
     uint32_t  last_timestamp;                 /* Last time stamp, used for proportional */
     uint64_t  fs_ratio;                       /* Current ratio of frequencies */
     int64_t   fractional_credit;              /* Estimate of fractional samples held by ASRC */
+    int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */
