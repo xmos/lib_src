@@ -109,8 +109,6 @@ struct asynchronous_fifo_t {
     int       skip_ctr;                       /* Set to indicate initialisation runs */
     int32_t   write_ptr;                      /* Write index in the buffer */
     int32_t   converted_sample_number;        /* Sample number counter of producer */
-    int64_t   marked_converted_sample_time;   /* Sample time calculated by producer */
-    int32_t   marked_converted_sample_number; /* Sample number that the sample time relates to  */
     int64_t   last_phase_error;               /* previous error, used for proportional */
     uint32_t  last_timestamp;                 /* Last time stamp, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
@@ -127,7 +125,9 @@ struct asynchronous_fifo_t {
     uint32_t  sample_valid;                   /* Set to 1 if consumer has made a timestamp */
 
     // Updated from both sides
+    uint32_t  *timestamps;                    /* Timestamps of samples */
     int32_t   buffer[0];                      /* Buffer of data */
 };
 
+#define TIME_Q_VALUE    8
 #endif

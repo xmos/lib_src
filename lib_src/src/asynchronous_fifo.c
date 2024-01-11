@@ -20,11 +20,9 @@
  * in the towel
  */
 static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
-    state->skip_ctr = 2;
+    state->skip_ctr = state->max_fifo_depth / 2 + 2;
     state->write_ptr = (state->read_ptr + state->max_fifo_depth/2) % state->max_fifo_depth;
-    state->converted_sample_number = 0;
-    state->marked_converted_sample_number = 0;
-    state->marked_converted_sample_time = 0;
+    state->converted_sample_number = state->max_fifo_depth/2;
     state->last_phase_error = 0;
     state->last_timestamp = 0;
     state->frequency_ratio = 0;   // Assume perfect match
@@ -52,6 +50,7 @@ static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
 void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                             int max_fifo_depth, int ticks_between_samples) {
     state->max_fifo_depth = max_fifo_depth;
+    state->timestamps = (uint32_t *)state->buffer + max_fifo_depth * channel_count;
     state->channel_count = channel_count;
     state->ticks_between_samples = ticks_between_samples;
 
@@ -106,10 +105,14 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
         memcpy(state->buffer + write_ptr * channel_count, sample, channel_count * sizeof(int));
         write_ptr = (write_ptr + 1) % state->max_fifo_depth;
         state->write_ptr = write_ptr;
-        state->converted_sample_number++;
-        if (timestamp_valid && state->sample_valid) {
-            int32_t phase_error = state->sample_timestamp - state->marked_converted_sample_time;
-            phase_error -= (state->sample_number - state->marked_converted_sample_number) * state->ticks_between_samples;
+        int converted_sample_number = state->converted_sample_number+1;
+        if (converted_sample_number >= max_fifo_depth) {
+            converted_sample_number = 0;
+        }
+        state->converted_sample_number = converted_sample_number;
+        if (timestamp_valid) {
+            int32_t phase_error = (state->timestamps[converted_sample_number] << TIME_Q_VALUE) - (timestamp << TIME_Q_VALUE);
+            phase_error += state->ticks_between_samples * (state->max_fifo_depth/2 + 1);
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
             if (state->skip_ctr != 0) {
@@ -119,7 +122,6 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
 #if 1
                 xscope_int(1, phase_error);
                 xscope_int(2, diff_error);
-                xscope_int(6, state->sample_number - state->marked_converted_sample_number);//diff_error);
                 xscope_int(3, len);
                 xscope_int(4, state->frequency_ratio >> 32);
 #endif
@@ -128,13 +130,11 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
                 if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
                 
                 state->frequency_ratio +=
-                    diff_error  * (int64_t) state->Kp * (1LL << 32) / diff_time +
-                    ((phase_error * (int64_t) state->Ki) << (32-KI_SHIFT));
+                    diff_error  * (int64_t) state->Kp * (1LL << (32 - TIME_Q_VALUE)) / diff_time +
+                    ((phase_error * (int64_t) state->Ki) << (32-KI_SHIFT - TIME_Q_VALUE));
             }
             state->last_phase_error = phase_error;
             state->last_timestamp = timestamp;
-            state->marked_converted_sample_number = state->converted_sample_number;
-            state->marked_converted_sample_time   = timestamp;
             state->sample_valid = 0;  // Do this last - permits other side to refill
         }
     }
@@ -166,12 +166,12 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
         read_ptr = (read_ptr + 1) % state->max_fifo_depth;
         state->read_ptr = read_ptr;
         int output_sample_number = state->output_sample_number;
-        state->output_sample_number = output_sample_number + 1;
-        if (!state->sample_valid) {
-            state->sample_number = output_sample_number;
-            state->sample_timestamp = timestamp;
-            state->sample_valid = 1;  // Do this last, permits other side to use it
+        output_sample_number++;
+        if (output_sample_number >= max_fifo_depth) {
+            output_sample_number = 0;
         }
+        state->output_sample_number = output_sample_number;
+        state->timestamps[output_sample_number] = timestamp;
     } else {
         asynchronous_fifo_init_consuming_side(state); // This must happen in this thread
         state->reset = 1;                // The rest must happen in the other thread

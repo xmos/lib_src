@@ -73,11 +73,11 @@ void consumer(asynchronous_fifo_t *a) {
 #define FIFO_LENGTH   100
 
 int main(void) {
-    int64_t array[sizeof(asynchronous_fifo_t)/sizeof(int64_t) + FIFO_LENGTH/2+1];
+    int64_t array[sizeof(asynchronous_fifo_t)/sizeof(int64_t) + FIFO_LENGTH/2+1 + FIFO_LENGTH/2];
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
     asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/47993);
+                           100000000LL*(1<<TIME_Q_VALUE)/47993);
     PAR_JOBS(
         PJOB(producer, (asynchronous_fifo_state)),
         PJOB(consumer, (asynchronous_fifo_state))
