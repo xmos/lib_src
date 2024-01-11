@@ -68,9 +68,9 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                 // Old maths: 32.32 +  KiNi * 10ns  +  KpNi * ratio
                 // KpNi should be 48000 * Kpi = Kp * (1<<32).
                 // KiNi should be 48000 * Kpi = Kp * (1<<32).
-    float SPEEDUP = 4;
+    float SPEEDUP = 1;
     float Kp = 0.0001 * SPEEDUP;
-    float Ki = 0.00025 * 1e-8 * SPEEDUP;
+    float Ki = 0.0001 * 1e-8 * SPEEDUP;
     state->Kp = Kp * (1LL<<32);
     double Ki_d = Ki * (1LL << 32) * (1LL << KI_SHIFT);
     state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
@@ -109,7 +109,6 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
         state->converted_sample_number++;
         if (timestamp_valid && state->sample_valid) {
             int32_t phase_error = state->sample_timestamp - state->marked_converted_sample_time;
-                xscope_int(1, phase_error);
             phase_error -= (state->sample_number - state->marked_converted_sample_number) * state->ticks_between_samples;
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
@@ -118,7 +117,9 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
             } else {
                 int32_t diff_error = phase_error - state->last_phase_error;
 #if 1
-                xscope_int(2, state->sample_number - state->marked_converted_sample_number);//diff_error);
+                xscope_int(1, phase_error);
+                xscope_int(2, diff_error);
+                xscope_int(6, state->sample_number - state->marked_converted_sample_number);//diff_error);
                 xscope_int(3, len);
                 xscope_int(4, state->frequency_ratio >> 32);
 #endif
