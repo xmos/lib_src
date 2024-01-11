@@ -101,7 +101,7 @@ struct asynchronous_fifo_t {
     // Updated on initialisation only
     int32_t   channel_count;                  /* Number of audio channels */
     int32_t   max_fifo_depth;                 /* Length of buffer[] in channel_counts */
-    int32_t   ticks_between_samples;           /* Ideal ticks between samples */
+    int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
     int32_t   Ki;                             /* Ki PID coefficient */
     int32_t   Kp;                             /* Kp PID coefficient */
     
@@ -110,7 +110,6 @@ struct asynchronous_fifo_t {
     int32_t   write_ptr;                      /* Write index in the buffer */
     int32_t   converted_sample_number;        /* Sample number counter of producer */
     int64_t   last_phase_error;               /* previous error, used for proportional */
-    uint32_t  last_timestamp;                 /* Last time stamp, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
 
@@ -122,12 +121,15 @@ struct asynchronous_fifo_t {
 
     // Set by producer, reset by consumer
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
-    uint32_t  sample_valid;                   /* Set to 1 if consumer has made a timestamp */
 
     // Updated from both sides
     uint32_t  *timestamps;                    /* Timestamps of samples */
     int32_t   buffer[0];                      /* Buffer of data */
 };
 
-#define TIME_Q_VALUE    8
+/**
+ * macro that calculates the number of int64_t to be allocated for the fifo
+ * for a FIFO of N elements and C channels
+ */
+#define ASYNCHRONOUS_FIFO_INT64_ELEMENTS(N, C) (sizeof(asynchronous_fifo_t)/sizeof(int64_t) + (N*(C+1))/2+1)
 #endif

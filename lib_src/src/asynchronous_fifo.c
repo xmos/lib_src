@@ -24,7 +24,6 @@ static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
     state->write_ptr = (state->read_ptr + state->max_fifo_depth/2) % state->max_fifo_depth;
     state->converted_sample_number = state->max_fifo_depth/2;
     state->last_phase_error = 0;
-    state->last_timestamp = 0;
     state->frequency_ratio = 0;   // Assume perfect match
     state->stop_producing = 0;
 }
@@ -41,18 +40,17 @@ static void asynchronous_fifo_init_consuming_side(asynchronous_fifo_t *state) {
 }
 
 static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
-    state->sample_valid = 0;
     state->reset = 0;        // This has to be the last one
 }
 
-#define KI_SHIFT 16
+#define K_SHIFT 16
 
 void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                             int max_fifo_depth, int ticks_between_samples) {
     state->max_fifo_depth = max_fifo_depth;
     state->timestamps = (uint32_t *)state->buffer + max_fifo_depth * channel_count;
     state->channel_count = channel_count;
-    state->ticks_between_samples = ticks_between_samples;
+    state->ideal_phase_error_ticks = ticks_between_samples * (max_fifo_depth/2 + 1);
 
     // All this maths shall be compiled out to leave nothing.
 
@@ -68,10 +66,10 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                 // KpNi should be 48000 * Kpi = Kp * (1<<32).
                 // KiNi should be 48000 * Kpi = Kp * (1<<32).
     float SPEEDUP = 1;
-    float Kp = 0.0001 * SPEEDUP;
+    float Kp = 0.0001 / 2083 * SPEEDUP;
     float Ki = 0.0001 * 1e-8 * SPEEDUP;
-    state->Kp = Kp * (1LL<<32);
-    double Ki_d = Ki * (1LL << 32) * (1LL << KI_SHIFT);
+    state->Kp = Kp * (1LL<<32) * (1LL << K_SHIFT);
+    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT);
     state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
     printf("Kp %08lx   Ki %08lx\n", state->Kp, state->Ki);
 
@@ -95,7 +93,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
     int max_fifo_depth = state->max_fifo_depth;
     int channel_count = state->channel_count;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
-    if ( state->reset) {
+    if (state->reset) {
         printf("@@@@@@@@@@@@ RESET @@@@@@@@@@ %lu len %d\n", state->reset, len );    
         asynchronous_fifo_init_producing_side(state);    // uses read_ptr
         asynchronous_fifo_reset_consumer_flags(state);   // Last step - clears reset
@@ -105,14 +103,15 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
         memcpy(state->buffer + write_ptr * channel_count, sample, channel_count * sizeof(int));
         write_ptr = (write_ptr + 1) % state->max_fifo_depth;
         state->write_ptr = write_ptr;
+        // Todo: converted_sample_number is always 180 degree out of phase with write_ptr.
         int converted_sample_number = state->converted_sample_number+1;
         if (converted_sample_number >= max_fifo_depth) {
             converted_sample_number = 0;
         }
         state->converted_sample_number = converted_sample_number;
         if (timestamp_valid) {
-            int32_t phase_error = (state->timestamps[converted_sample_number] << TIME_Q_VALUE) - (timestamp << TIME_Q_VALUE);
-            phase_error += state->ticks_between_samples * (state->max_fifo_depth/2 + 1);
+            int32_t phase_error = state->timestamps[converted_sample_number] - timestamp;
+            phase_error += state->ideal_phase_error_ticks;
             // Now that we have a phase error, calculate the proportional error
             // and use that and the integral error to correct the ASRC factor
             if (state->skip_ctr != 0) {
@@ -123,22 +122,17 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
                 xscope_int(1, phase_error);
                 xscope_int(2, diff_error);
                 xscope_int(3, len);
-                xscope_int(4, state->frequency_ratio >> 32);
+                xscope_int(4, state->frequency_ratio >> K_SHIFT);
 #endif
 
-                int32_t diff_time = timestamp - state->last_timestamp;
-                if (diff_time == 0) diff_time = 0x7fffffff; // Avoid bad stuff.
-                
                 state->frequency_ratio +=
-                    diff_error  * (int64_t) state->Kp * (1LL << (32 - TIME_Q_VALUE)) / diff_time +
-                    ((phase_error * (int64_t) state->Ki) << (32-KI_SHIFT - TIME_Q_VALUE));
+                    (diff_error  * (int64_t) state->Kp)+
+                    (phase_error * (int64_t) state->Ki);
             }
             state->last_phase_error = phase_error;
-            state->last_timestamp = timestamp;
-            state->sample_valid = 0;  // Do this last - permits other side to refill
         }
     }
-    return state->frequency_ratio >> 32;
+    return state->frequency_ratio >> K_SHIFT;
 }
 
 /**
@@ -163,8 +157,10 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
         return;
     }
     if (len > 2) {
+        // TODO: use IF not %
         read_ptr = (read_ptr + 1) % state->max_fifo_depth;
         state->read_ptr = read_ptr;
+        // TODO: output_sample_number equals read_ptr ?
         int output_sample_number = state->output_sample_number;
         output_sample_number++;
         if (output_sample_number >= max_fifo_depth) {
