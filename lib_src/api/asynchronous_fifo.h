@@ -130,7 +130,7 @@ struct asynchronous_fifo_t {
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
 
     // Updated from both sides
-    uint32_t  *timestamps;                    /* Timestamps of samples */
+    uint32_t  * UNSAFE timestamps;            /* Timestamps of samples */
     int32_t   buffer[0];                      /* Buffer of data */
 };
 
