@@ -26,6 +26,7 @@ static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
     state->last_phase_error = 0;
     state->frequency_ratio = 0;   // Assume perfect match
     state->stop_producing = 0;
+    state->diff_error_samples = 1;
 }
 
 /**
@@ -126,10 +127,13 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
 #endif
 
                 state->frequency_ratio +=
-                    (diff_error  * (int64_t) state->Kp)+
+                    (diff_error  * (int64_t) state->Kp) / state->diff_error_samples +
                     (phase_error * (int64_t) state->Ki);
             }
             state->last_phase_error = phase_error;
+            state->diff_error_samples = 1;
+        } else {
+            state->diff_error_samples++;
         }
     }
     return state->frequency_ratio >> K_SHIFT;

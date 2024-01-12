@@ -85,6 +85,8 @@ int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, in
     // The unsigned diff just needs a single LMUL to become a 64 bit diff in 10ns TICKS
     uint64_t left_over_ticks = left_over_upper_32_bits * 100000000ULL;
     *timestamp_out = timestamp + left_over_ticks / (int) (fs_ratio >> 32) / ideal_freq;
+    printintln(*timestamp_out);
+    xscope_int(5, sampsOut);
     return sampsOut;
 }
 
@@ -92,7 +94,7 @@ int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, in
 DECLARE_JOB(producer, (asynchronous_fifo_t *));
 DECLARE_JOB(consumer, (asynchronous_fifo_t *));
 
-#define seconds 10
+#define seconds 1
 #define OFFSET 0 // 0x70000000
 
 int32_t input_data[48] = {
@@ -160,7 +162,7 @@ void producer(asynchronous_fifo_t *a) {
     int out_samples[5];
     
     for(int32_t i = 0; i < 48000 * seconds; i+=4) {
-        xscope_int(5, fs_ratio);
+//        xscope_int(5, (fs_ratio >> 32) - ideal_fs_ratio);
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {

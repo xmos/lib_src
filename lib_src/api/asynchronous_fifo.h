@@ -112,6 +112,7 @@ struct asynchronous_fifo_t {
     int64_t   last_phase_error;               /* previous error, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
+    int32_t   diff_error_samples;             /* Number of samples over which the last timestamp was measured */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */
