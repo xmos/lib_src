@@ -121,9 +121,9 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
                 int32_t diff_error = phase_error - state->last_phase_error;
 #if 1
                 xscope_int(1, phase_error);
-                xscope_int(2, diff_error);
+//                xscope_int(2, state->timestamps[converted_sample_number]);
                 xscope_int(3, len);
-                xscope_int(4, state->frequency_ratio >> K_SHIFT);
+//                xscope_int(4, asrc_ctrl[0].uiTimeFract);
 #endif
 
                 state->frequency_ratio +=

@@ -61,7 +61,7 @@ void my_init() {
 
     fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
     ideal_fs_ratio = fs_ratio >> 32;
-    fractional_credit = 0;
+    fractional_credit = 0x0000000000000000LL;
 }
     
 int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, int32_t timestamp, int32_t *timestamp_out) {
@@ -71,6 +71,8 @@ int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, in
 
     /* Run ASRC from input buffer into output buffer */
     sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
+    xscope_int(4, (sASRCCtrl[0].iTimeInt));
+    xscope_int(2, (fractional_credit >> 50));
 
     int ideal_freq = 48000;
 
@@ -81,10 +83,11 @@ int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, in
     }
     // fractional_credit is now less than fs_ratio, so we can compute an unsigned diff
     // A single SUB
-    uint32_t left_over_upper_32_bits = (fs_ratio >> 32) - (fractional_credit >> 32);
+    uint32_t fraction_away_from_final_ts = (sASRCCtrl[0].iTimeInt - 128) << 8  | ((sASRCCtrl[0].uiTimeFract >> 24) & 0xff);
+    
     // The unsigned diff just needs a single LMUL to become a 64 bit diff in 10ns TICKS
-    uint64_t left_over_ticks = left_over_upper_32_bits * 100000000ULL;
-    *timestamp_out = timestamp + left_over_ticks / (int) (fs_ratio >> 32) / ideal_freq;
+    int32_t left_over_ticks = (fraction_away_from_final_ts * (100000000/ideal_freq)) >> 16;
+    *timestamp_out = timestamp + left_over_ticks;
     printintln(*timestamp_out);
     xscope_int(5, sampsOut);
     return sampsOut;
@@ -94,7 +97,7 @@ int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, in
 DECLARE_JOB(producer, (asynchronous_fifo_t *));
 DECLARE_JOB(consumer, (asynchronous_fifo_t *));
 
-#define seconds 1
+#define seconds 10
 #define OFFSET 0 // 0x70000000
 
 int32_t input_data[48] = {
