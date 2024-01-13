@@ -19,6 +19,8 @@
 #include <xscope.h>
 #include "src.h"
 
+
+#define INPUT_FREQUENCY     44100
 #define REAL_ASRC
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
@@ -46,8 +48,13 @@ uint64_t fs_ratio = 0;
 int ideal_fs_ratio = 0;
 
 void my_init() {
-
-    int inputFsCode = FS_CODE_48;
+#if INPUT_FREQUENCY == 44100
+    int inputFsCode = FS_CODE_44;
+#elif INPUT_FREQUENCY == 48000
+    int inputFsCode = FS_CODE_44;
+#else
+#error "Unknown input frequency"
+#endif
     int outputFsCode = FS_CODE_48;
 
     for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
@@ -64,7 +71,7 @@ void my_init() {
     
 int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, int32_t timestamp, int32_t *timestamp_out) {
     int sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
-    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], 48000);
+    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], INPUT_FREQUENCY);
     return sampsOut;
 }
 
@@ -130,7 +137,7 @@ int32_t input_data[48] = {
 void producer(asynchronous_fifo_t *a) {
     hwtimer_t tmr = hwtimer_alloc();
     uint64_t now = hwtimer_get_time(tmr);
-    int freq = 48012/4;
+    int freq = (INPUT_FREQUENCY + 12)/4;
     int step = 100000000 / freq;
     int mod  = 100000000 % freq;
     int mod_acc = 0;
@@ -139,8 +146,7 @@ void producer(asynchronous_fifo_t *a) {
     int in_samples[4];
     int out_samples[5];
     
-    for(int32_t i = 0; i < 48000 * seconds; i+=4) {
-        xscope_int(5, (fs_ratio >> 32) - ideal_fs_ratio);
+    for(int32_t i = 0; i < INPUT_FREQUENCY * seconds; i+=4) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -156,6 +162,7 @@ void producer(asynchronous_fifo_t *a) {
         int32_t ts;
         (void) hwtimer_get_time(tmr);
         int num_samples = asrc_convert_quad_input(out_samples, in_samples, now, &ts);
+        xscope_int(5, fs_ratio >> 32);
         int32_t error;
         for(int j = 0; j < num_samples; j++) {
             error = asynchronous_fifo_produce(a, (int32_t *)&out_samples[j], ts+OFFSET,
