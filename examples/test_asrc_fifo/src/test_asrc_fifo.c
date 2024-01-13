@@ -5,7 +5,7 @@
 #include <platform.h>
 #include <xscope.h>
 #include "asynchronous_fifo.h"
-
+#include "asrc_timestamp_interpolation.h"
 
 #include <string.h>
 
@@ -42,7 +42,6 @@ int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMP
 asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
 asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
 
-uint64_t fractional_credit = 0;
 uint64_t fs_ratio = 0;
 int ideal_fs_ratio = 0;
 
@@ -61,35 +60,11 @@ void my_init() {
 
     fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
     ideal_fs_ratio = fs_ratio >> 32;
-    fractional_credit = 0x0000000000000000LL;
 }
     
 int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, int32_t timestamp, int32_t *timestamp_out) {
-    int sampsOut = 0;
-
-//    fs_ratio = 0x1000000000000000ULL; // todo: delete
-
-    /* Run ASRC from input buffer into output buffer */
-    sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
-    xscope_int(4, (sASRCCtrl[0].iTimeInt));
-    xscope_int(2, (fractional_credit >> 50));
-
-    int ideal_freq = 48000;
-
-    // fractional_credit is the number of samples that are unprocessed in the input.
-    fractional_credit += 0x4000000000000000LL;
-    while (fractional_credit >= fs_ratio) {
-        fractional_credit -= fs_ratio;
-    }
-    // fractional_credit is now less than fs_ratio, so we can compute an unsigned diff
-    // A single SUB
-    uint32_t fraction_away_from_final_ts = (sASRCCtrl[0].iTimeInt - 128) << 8  | ((sASRCCtrl[0].uiTimeFract >> 24) & 0xff);
-    
-    // The unsigned diff just needs a single LMUL to become a 64 bit diff in 10ns TICKS
-    int32_t left_over_ticks = (fraction_away_from_final_ts * (100000000/ideal_freq)) >> 16;
-    *timestamp_out = timestamp + left_over_ticks;
-    printintln(*timestamp_out);
-    xscope_int(5, sampsOut);
+    int sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
+    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], 48000);
     return sampsOut;
 }
 
@@ -165,7 +140,7 @@ void producer(asynchronous_fifo_t *a) {
     int out_samples[5];
     
     for(int32_t i = 0; i < 48000 * seconds; i+=4) {
-//        xscope_int(5, (fs_ratio >> 32) - ideal_fs_ratio);
+        xscope_int(5, (fs_ratio >> 32) - ideal_fs_ratio);
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -212,7 +187,7 @@ void consumer(asynchronous_fifo_t *a) {
 //        printchar('*');
         asynchronous_fifo_consume(a, &output_data, now + OFFSET);
         xscope_int(0, output_data);
-        if (i == 2205) {
+        if (i == 24000) {
             freq = 47993;
             step = 100000000 / freq;
             mod = 100000000 % freq;
@@ -228,7 +203,7 @@ int main(void) {
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
     asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/48000);
+                           100000000/48000, 4);
     PAR_JOBS(
         PJOB(producer, (asynchronous_fifo_state)),
         PJOB(consumer, (asynchronous_fifo_state))
