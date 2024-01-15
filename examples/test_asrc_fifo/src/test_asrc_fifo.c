@@ -20,8 +20,24 @@
 #include "src.h"
 
 
-#define INPUT_FREQUENCY     44100
-#define REAL_ASRC
+#define INPUT_FREQUENCY     192000
+
+#if INPUT_FREQUENCY == 44100
+    #define BASE_FREQUENCY 44100
+    #define INPUT_CODE     FS_CODE_44
+#elif INPUT_FREQUENCY == 48000
+    #define BASE_FREQUENCY 48000
+    #define INPUT_CODE     FS_CODE_48
+#elif INPUT_FREQUENCY == 96000
+    #define BASE_FREQUENCY 48000
+    #define INPUT_CODE     FS_CODE_96
+#elif INPUT_FREQUENCY == 192000
+    #define BASE_FREQUENCY 48000
+    #define INPUT_CODE     FS_CODE_192
+#else
+#error "Unknown input frequency"
+#endif
+
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
 #define     SRC_N_INSTANCES               (1)   // Number of instances (each usually run a logical core) used to process audio (minimum 1)
@@ -48,13 +64,7 @@ uint64_t fs_ratio = 0;
 int ideal_fs_ratio = 0;
 
 void my_init() {
-#if INPUT_FREQUENCY == 44100
-    int inputFsCode = FS_CODE_44;
-#elif INPUT_FREQUENCY == 48000
-    int inputFsCode = FS_CODE_44;
-#else
-#error "Unknown input frequency"
-#endif
+    int inputFsCode = INPUT_CODE
     int outputFsCode = FS_CODE_48;
 
     for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
@@ -71,7 +81,7 @@ void my_init() {
     
 int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, int32_t timestamp, int32_t *timestamp_out) {
     int sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
-    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], INPUT_FREQUENCY);
+    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], BASE_FREQUENCY);
     return sampsOut;
 }
 
