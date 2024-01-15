@@ -13,16 +13,16 @@
 #endif
 
 /**
- * Data structure that holds the status of an ASRC interface
+ * Data structure that holds the status of an asynchronous FIFO
  */
 typedef struct asynchronous_fifo_t asynchronous_fifo_t;
 
 /**
- * Function that must be called to initialise the ASRC. You must pass in an array
- * of ``int [sizeof(asynchronous_fifo_t)/sizeof(int) + channel_count * fifo_max_depth]``
- * The same pointer must be used on both sides of the ASRC interface.
+ * Function that must be called to initialise the asynchronous FIFO. You must pass in an array
+ * of ``int64_t [ASYNCHRONOUS_FIFO_INT64_ELEMENTS(fifo_max_depth, channel_count)]``
+ * The same pointer must be used on both sides of the asynchronous FIFO.
  *
- * @param   state                   ASRC structure to be initialised
+ * @param   state               Asynchronous FIFO to be initialised
  *
  * @param   channel_count       Number of audio channels
  *
@@ -30,40 +30,48 @@ typedef struct asynchronous_fifo_t asynchronous_fifo_t;
  *
  * @param   ticks_between_samples  Expected number of ticks between two subsequent samples
  *                                 Round this number to the nearest tick, eg, 2083 for 48 kHz.
+ *
+ * @param   invalid_time_stamp_rate  Expected number of number of calls to producer over
+ *                                   which a one valid timestamp will be given. Typically
+ *                                   1 if all calls will have a valid timestamp or 4 if one
+ *                                   in four calls will have a valid timestamp. Used to tune
+ *                                   the PID filter.
  */
 void asynchronous_fifo_init(asynchronous_fifo_t * UNSAFE state,
                             int channel_count,
                             int max_fifo_depth,
-                            int ticks_between_samples);
+                            int ticks_between_samples,
+                            int invalid_time_stamp_rate);
 
 /**
- * Function that must be called to deinitalise the ASRC
+ * Function that must be called to deinitalise the asynchronous FIFO
  *
  * @param   state                   ASRC structure to be de-initialised
  */
 void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
 
 /**
- * Function that provides the next four (multi-channel) samples to the ASRC.
- * This function must be called at exactly the input frequency divided by four.
+ * Function that provides the next sample to the asynchronous FIFO.
  *
- * This function and the single_output function both need a timestamp,
+ * This function and the consume function both need a timestamp,
  * which is the time that the last sample was input (this function) or
- * output (``asrc_get_single_output``). The timestamps will be compared to
- * each other, and attempted to be equalised. Therefore, the timestamps
+ * output (``asynchronous_fifo_consume``). The asynchronous FIFO will hand the
+ * samples across from producer to consumer through an elastic queue, and run
+ * a PID algorithm to calculate the best way to equalise the input clock relative
+ * to the output clock. Therefore, the timestamps
  * have to be measured on either the same clock or two very similar clocks.
  * It is probably fine to use the reference clocks on two tiles, provided
  * the tiles came out of reset at more or less the same time. Using the
  * clocks from two different chips would require the two chips to share an
  * oscillator, and for them to come out of reset simultaneously.
  *
- * @param   state                   ASRC structure to push the samples into
+ * @param   state               ASRC structure to push the sample into
  *
- * @param   samples             The samples stored as an 2D array of four frames
- *                              each frame containing channel_count samples.
+ * @param   samples             The sample values.
  *
- * @param   timestamp           A timestamp taken at the time that the last sample
- *                              was input.
+ * @param   timestamp           The number of ticks when this sample was input.
+ *
+ * @param   timestamp_valid     States whether the timestamp is valid.
  *
  * @returns The current estimate of the mismatch of input and output frequencies.
  *          This is represented as a 32-bit signed number. Zero means no mismatch,
@@ -82,8 +90,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
 
 
 /**
- * Function that extracts an output sample from the ASRC.
- * This function must be called at exactly the output frequency.
+ * Function that extracts an output sample from the asynchronous FIFO
  *
  * @param   state               ASRC structure to pull a sample out off.
  *
@@ -119,6 +126,7 @@ struct asynchronous_fifo_t {
     int64_t   last_phase_error;               /* previous error, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
+    int32_t   diff_error_samples;             /* Number of samples over which the last timestamp was measured */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */

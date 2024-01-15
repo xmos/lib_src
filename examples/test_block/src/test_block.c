@@ -77,7 +77,7 @@ int main(void) {
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
     asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/48000);
+                           100000000/48000, 1);
     PAR_JOBS(
         PJOB(producer, (asynchronous_fifo_state)),
         PJOB(consumer, (asynchronous_fifo_state))

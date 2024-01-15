@@ -1,3 +1,5 @@
+#if 0
+
 #include <string.h>
 #include "asrc_interface.h"
 
@@ -254,3 +256,4 @@ void asrc_get_single_output(asrc_interface_t *asrc_data_buffer, int32_t *samples
         asrc_data_buffer->reset = 1;                // The rest must happen in the other thread
     }
 }
+#endif
