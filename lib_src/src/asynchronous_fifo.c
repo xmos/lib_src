@@ -48,7 +48,7 @@ static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
 
 void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                             int max_fifo_depth, int ticks_between_samples,
-                            int invalid_time_stamp_rate) {
+                            float speedup_p, float speedup_i) {
     state->max_fifo_depth = max_fifo_depth;
     state->timestamps = (uint32_t *)state->buffer + max_fifo_depth * channel_count;
     state->channel_count = channel_count;
@@ -67,11 +67,10 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                 // Old maths: 32.32 +  KiNi * 10ns  +  KpNi * ratio
                 // KpNi should be 48000 * Kpi = Kp * (1<<32).
                 // KiNi should be 48000 * Kpi = Kp * (1<<32).
-    float SPEEDUP = 2;
-    float Kp = 0.0001 / 2083 * SPEEDUP;
-    float Ki = 0.0001 * 1e-8 * SPEEDUP * SPEEDUP;
+    float Kp = 0.0001 * 1e-3 * speedup_p;
+    float Ki = 0.0001 * 1e-8 * speedup_i;
     state->Kp = Kp * (1LL<<32) * (1LL << K_SHIFT);
-    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT) / invalid_time_stamp_rate;
+    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT);
     state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
     printf("Kp %08lx   Ki %08lx\n", state->Kp, state->Ki);
 
@@ -87,16 +86,19 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
 
 void asynchronous_fifo_exit(asynchronous_fifo_t *state) {
 }
-    
+
+int async_resets = 0;
+
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
-                                  int32_t timestamp, int timestamp_valid) {
+                                  int32_t timestamp, int timestamp_valid,
+                                  int xscope_used) {
     int read_ptr = state->read_ptr;
     int write_ptr = state->write_ptr;
     int max_fifo_depth = state->max_fifo_depth;
     int channel_count = state->channel_count;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
     if (state->reset) {
-        printf("@@@@@@@@@@@@ RESET @@@@@@@@@@ %lu len %d\n", state->reset, len );    
+        async_resets++;
         asynchronous_fifo_init_producing_side(state);    // uses read_ptr
         asynchronous_fifo_reset_consumer_flags(state);   // Last step - clears reset
     } else if (len >= max_fifo_depth - 2) {
@@ -124,18 +126,20 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
                 state->frequency_ratio +=
                     (diff_error  * (int64_t) state->Kp) / state->diff_error_samples +
                     (phase_error * (int64_t) state->Ki);
-#if 1
-                xscope_int(1, phase_error);
-                xscope_int(2, diff_error);
-                xscope_int(3, len);
-                xscope_int(4, state->frequency_ratio >> K_SHIFT);
-#endif
+                if (xscope_used) {
+                    xscope_int(1, phase_error);
+                    xscope_int(2, diff_error);
+                }
             }
             state->last_phase_error = phase_error;
             state->diff_error_samples = 1;
         } else {
             state->diff_error_samples++;
         }
+    }
+    if (xscope_used) {
+        xscope_int(3, len);
+        xscope_int(4, state->frequency_ratio >> K_SHIFT);
     }
     return state->frequency_ratio >> K_SHIFT;
 }

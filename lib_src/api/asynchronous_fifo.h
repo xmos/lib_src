@@ -23,18 +23,12 @@ typedef struct asynchronous_fifo_t asynchronous_fifo_t;
  *
  * @param   ticks_between_samples  Expected number of ticks between two subsequent samples
  *                                 Round this number to the nearest tick, eg, 2083 for 48 kHz.
- *
- * @param   invalid_time_stamp_rate  Expected number of number of calls to producer over
- *                                   which a one valid timestamp will be given. Typically
- *                                   1 if all calls will have a valid timestamp or 4 if one
- *                                   in four calls will have a valid timestamp. Used to tune
- *                                   the PID filter.
  */
 void asynchronous_fifo_init(asynchronous_fifo_t *state,
                             int channel_count,
                             int max_fifo_depth,
                             int ticks_between_samples,
-                            int invalid_time_stamp_rate);
+                            float speedup_p, float speedup_i);
 
 /**
  * Function that must be called to deinitalise the asynchronous FIFO
@@ -79,7 +73,8 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state,
                                   int32_t *samples,
                                   int32_t timestamp,
-                                  int timestamp_valid);
+                                  int timestamp_valid,
+                                  int xscope_used);
 
 
 /**

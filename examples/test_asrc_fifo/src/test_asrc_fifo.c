@@ -1,5 +1,7 @@
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
+#include <xs1.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <print.h>
 #include <platform.h>
@@ -9,35 +11,62 @@
 
 #include <string.h>
 
-#include <xcore/chanend.h>
-#include <platform.h>
-#include <xs1.h>
-#include <print.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <xscope.h>
 #include "src.h"
 
 
-#define INPUT_FREQUENCY     192000
+int fs_code(int frequency) {
+    if(frequency == 44100) {
+        return  FS_CODE_44;
+    } else if(frequency == 48000) {
+        return  FS_CODE_48;
+    } else if(frequency == 88200) {
+        return  FS_CODE_88;
+    } else if(frequency == 96000) {
+        return  FS_CODE_96;
+    } else if(frequency == 176400) {
+        return  FS_CODE_176;
+    } else if(frequency == 192000) {
+        return  FS_CODE_192;
+    } else {
+        exit(1);
+    }
+}
 
-#if INPUT_FREQUENCY == 44100
-    #define BASE_FREQUENCY 44100
-    #define INPUT_CODE     FS_CODE_44
-#elif INPUT_FREQUENCY == 48000
-    #define BASE_FREQUENCY 48000
-    #define INPUT_CODE     FS_CODE_48
-#elif INPUT_FREQUENCY == 96000
-    #define BASE_FREQUENCY 48000
-    #define INPUT_CODE     FS_CODE_96
-#elif INPUT_FREQUENCY == 192000
-    #define BASE_FREQUENCY 48000
-    #define INPUT_CODE     FS_CODE_192
-#else
-#error "Unknown input frequency"
-#endif
+int base_frequency(int frequency) {
+    if(frequency == 44100) {
+        return 44100;
+    } else if(frequency == 48000) {
+        return 48000;
+    } else if(frequency == 88200) {
+        return 44100;
+    } else if(frequency == 96000) {
+        return 48000;
+    } else if(frequency == 176400) {
+        return 44100;
+    } else if(frequency == 192000) {
+        return 48000;
+    } else {
+        exit(1);
+    }
+}
 
+int base_frequency_multiplier(int frequency) {
+    if(frequency == 44100) {
+        return 1;
+    } else if(frequency == 48000) {
+        return 1;
+    } else if(frequency == 88200) {
+        return 2;
+    } else if(frequency == 96000) {
+        return 2;
+    } else if(frequency == 176400) {
+        return 4;
+    } else if(frequency == 192000) {
+        return 4;
+    } else {
+        exit(1);
+    }
+}
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
 #define     SRC_N_INSTANCES               (1)   // Number of instances (each usually run a logical core) used to process audio (minimum 1)
@@ -55,39 +84,14 @@
 #define ASRC_N_CHANNELS                   (SRC_CHANNELS_PER_INSTANCE) /* Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h */
 
 
-asrc_state_t sASRCState[SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
-int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES * 100]; // Buffer between filter stages
-asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
-asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
+#define POSITIVE_DEVIATION(F)    ((F) + ((F)*12)/48000)
+#define NEGATIVE_DEVIATION(F)    ((F) - ((F)* 8)/48000)
 
-uint64_t fs_ratio = 0;
-int ideal_fs_ratio = 0;
+extern int async_resets;
 
-void my_init() {
-    int inputFsCode = INPUT_CODE
-    int outputFsCode = FS_CODE_48;
-
-    for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
-    {
-            // Set state, stack and coefs into ctrl structure
-            sASRCCtrl[ui].psState                   = &sASRCState[ui];
-            sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-            sASRCCtrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
-    }
-
-    fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
-    ideal_fs_ratio = fs_ratio >> 32;
-}
-    
-int asrc_convert_quad_input(int out_samples[SRC_OUT_BUFF_SIZE], int *samples, int32_t timestamp, int32_t *timestamp_out) {
-    int sampsOut = asrc_process(samples, out_samples, fs_ratio, sASRCCtrl);
-    *timestamp_out = asrc_timestamp_interpolation(timestamp, &sASRCCtrl[0], BASE_FREQUENCY);
-    return sampsOut;
-}
-
-
-DECLARE_JOB(producer, (asynchronous_fifo_t *));
-DECLARE_JOB(consumer, (asynchronous_fifo_t *));
+DECLARE_JOB(producer,   (asynchronous_fifo_t *, int, int, int, int));
+DECLARE_JOB(consumer,   (asynchronous_fifo_t *, int, int));
+DECLARE_JOB(test_async, (int, int, int, float, float, int));
 
 #define seconds 10
 #define OFFSET 0 // 0x70000000
@@ -144,19 +148,48 @@ int32_t input_data[48] = {
 };
 
 
-void producer(asynchronous_fifo_t *a) {
-    hwtimer_t tmr = hwtimer_alloc();
-    uint64_t now = hwtimer_get_time(tmr);
-    int freq = (INPUT_FREQUENCY + 12)/4;
+void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int xscope_used, int interpolation_ticks) {
+    asrc_state_t sASRCState[SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
+    int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES * 100]; // Buffer between filter stages
+    asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
+    asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
+
+    uint64_t fs_ratio = 0;
+    int ideal_fs_ratio = 0;
+
+    int freq = POSITIVE_DEVIATION(input_frequency)/4;
     int step = 100000000 / freq;
     int mod  = 100000000 % freq;
     int mod_acc = 0;
     int sine_cnt = 0;
-    my_init();
+
+    int inputFsCode = fs_code(input_frequency);
+    int outputFsCode = fs_code(output_frequency);
+
+    for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
+    {
+            // Set state, stack and coefs into ctrl structure
+            sASRCCtrl[ui].psState                   = &sASRCState[ui];
+            sASRCCtrl[ui].piStack                   = iASRCStack[ui];
+            sASRCCtrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
+    }
+
+    fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
+    ideal_fs_ratio = fs_ratio >> 32;
+
     int in_samples[4];
     int out_samples[5];
-    
-    for(int32_t i = 0; i < INPUT_FREQUENCY * seconds; i+=4) {
+    int expected_error = (POSITIVE_DEVIATION(1LL<<32) - NEGATIVE_DEVIATION(1LL<<32));
+    int expected_error_high = expected_error * 101/100;
+    int expected_error_low  = expected_error *  99/100;
+    hwtimer_t tmr = hwtimer_alloc();
+    uint64_t now = hwtimer_get_time(tmr);
+    int start = now;
+    int good_error_count = 0;
+    int stable_time = now;
+    int32_t error;
+//    printhexln(ideal_fs_ratio);
+    for(int32_t i = 0; i < input_frequency * seconds; i+=4) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -169,30 +202,38 @@ void producer(asynchronous_fifo_t *a) {
             if (sine_cnt == 48) sine_cnt = 0;
         }
         hwtimer_set_trigger_time(tmr, now);
-        int32_t ts;
         (void) hwtimer_get_time(tmr);
-        int num_samples = asrc_convert_quad_input(out_samples, in_samples, now, &ts);
-        xscope_int(5, fs_ratio >> 32);
-        int32_t error;
+        int num_samples = asrc_process(in_samples, out_samples, fs_ratio, sASRCCtrl);
+        int ts = asrc_timestamp_interpolation(now, &sASRCCtrl[0], interpolation_ticks);
+        if (xscope_used) xscope_int(5, fs_ratio >> 32);
         for(int j = 0; j < num_samples; j++) {
             error = asynchronous_fifo_produce(a, (int32_t *)&out_samples[j], ts+OFFSET,
-                                                      j == num_samples - 1);
+                                              j == num_samples - 1, xscope_used);
+        }
+        if (error > expected_error_low && error < expected_error_high) {
+            good_error_count++;
+        } else {
+            stable_time = now;
+            good_error_count = 0;
         }
         fs_ratio = (((int64_t)ideal_fs_ratio) << 32) + (error * (int64_t) ideal_fs_ratio);
     }
+    printf("Error %08lx low %08x high %08x\n", error, expected_error_low, expected_error_high);
+    printf("Stable counter %d from %d ms input %6d output %6d total resets %d\n",
+           good_error_count, (stable_time - start)/100000, input_frequency, output_frequency, async_resets);
     hwtimer_free(tmr);
 }
 
-void consumer(asynchronous_fifo_t *a) {
+void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
     hwtimer_t tmr = hwtimer_alloc();
     uint64_t now = hwtimer_get_time(tmr);
-    int freq = 48012;                  // Very close to 48012
+    int freq = POSITIVE_DEVIATION(output_frequency);
     int step = 100000000 / freq;
     int mod = 100000000 % freq;
     int mod_acc = 0;
     int32_t output_data;
-    
-    for(int i = 0; i < 48000 * seconds; i++) {
+
+    for(int i = 0; i < output_frequency * seconds; i++) {
         now += step;
         mod_acc += mod;
         if (mod_acc >= freq) {
@@ -201,11 +242,10 @@ void consumer(asynchronous_fifo_t *a) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-//        printchar('*');
         asynchronous_fifo_consume(a, &output_data, now + OFFSET);
-        xscope_int(0, output_data);
-        if (i == 24000) {
-            freq = 47993;
+        if (xscope_used) xscope_int(0, output_data);
+        if (i == output_frequency/2) {
+            freq = NEGATIVE_DEVIATION(output_frequency);
             step = 100000000 / freq;
             mod = 100000000 % freq;
         }
@@ -215,18 +255,43 @@ void consumer(asynchronous_fifo_t *a) {
 
 #define FIFO_LENGTH   100
 
-int main(void) {
+void test_async(int input_frequency, int output_frequency, int xscope_used,
+                float speedup_p, float speedup_i, int interpolation_ticks) {
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, 1)];
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
     asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/48000, 4);
+                           100000000/output_frequency,
+                           speedup_p, speedup_i);
     PAR_JOBS(
-        PJOB(producer, (asynchronous_fifo_state)),
-        PJOB(consumer, (asynchronous_fifo_state))
+        PJOB(producer, (asynchronous_fifo_state, input_frequency, output_frequency, xscope_used, interpolation_ticks)),
+        PJOB(consumer, (asynchronous_fifo_state, output_frequency, xscope_used))
         );
     asynchronous_fifo_exit(asynchronous_fifo_state);
 
+}
+
+int main(void) {
+    hwtimer_free_xc_timer();
+    PAR_JOBS(
+//        PJOB(test_async, (44100, 44100, 1, 1.0, 2.0, 2268)), // OK, 4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (44100, 48000, 1, 1.0, 2.0, 2268)), // OK, 4 sec or so, but test harness does not detect stability. Slight overshoot
+//        PJOB(test_async, (44100, 88200, 1, 2.0, 2.0, 2268)), // OK, 4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (44100, 96000, 1, 2.0, 2.0, 2268)), // OK  4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (48000, 44100, 1, 1.0, 2.0, 2083)), // OK, 4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (48000, 48000, 1, 1.0, 2.0, 2083)), // OK  4.16 s stable slight overshoot
+//        PJOB(test_async, (48000, 88200, 1, 2.0, 2.0, 2083)), // OK, 4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (48000, 96000, 1, 2.0, 2.0, 2083)), // OK  4.16 s stable
+//        PJOB(test_async, (88200, 44100, 1, 0.5, 1.0, 2268)), // OK, 4 sec or so, but test harness does not detect stability.
+//        PJOB(test_async, (88200, 48000, 1, 0.5, 1.0, 2268)), // OK, 4 sec or so, but test harness does not detect stability. Slight overshoot, phase error not zero at the end?
+//        PJOB(test_async, (88200, 88200, 1, 1.0, 1.0, 1134)), // OK, 4 sec or so, but test harness does not detect stability. Slight overshoot
+//        PJOB(test_async, (88200, 96000, 1, 1.0, 1.0, 1134)), // OK  4 sec or so, but test harness does not detect stability. Slight overshoot
+//        PJOB(test_async, (96000, 44100, 1, 0.5, 1.0, 2083)), // OK, 4 sec or so, but test harness does not detect stability. Non zero phase difference
+//        PJOB(test_async, (96000, 48000, 1, 0.5, 1.0, 2083)), // OK  4.16 s stable slight overshoot
+//        PJOB(test_async, (96000, 88200, 1, 1.0, 1.0, 1042)), // OK, 4 sec or so, but test harness does not detect stability. Phase error not zero.
+//        PJOB(test_async, (96000, 96000, 1, 1.0, 1.0, 1042)), // OK  4.14 s stable
+        );
+    hwtimer_realloc_xc_timer();
 }
 
 
