@@ -78,7 +78,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *          eg, multiplied into an ASRC ratio, or multiplied into a PLL timing.
  */
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
-                                  REFERENCE_PARAM(int32_t, samples),
+                                  int32_t * UNSAFE samples,
                                   int n,
                                   int32_t timestamp,
                                   int xscope_used);
@@ -97,7 +97,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
  *                              ``asynchronous_fifo_produce`` for requirements.
  */
 void asynchronous_fifo_consume(asynchronous_fifo_t * UNSAFE state,
-                               REFERENCE_PARAM(int32_t, samples),
+                               int32_t * UNSAFE samples,
                                int32_t timestamp);
 
 
