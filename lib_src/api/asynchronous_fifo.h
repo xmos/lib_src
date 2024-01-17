@@ -56,9 +56,9 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
  *
  * @param   samples             The sample values.
  *
- * @param   timestamp           The number of ticks when this sample was input.
+ * @param   n                   The number of samples
  *
- * @param   timestamp_valid     States whether the timestamp is valid.
+ * @param   timestamp           The number of ticks when this sample was input.
  *
  * @returns The current estimate of the mismatch of input and output frequencies.
  *          This is represented as a 32-bit signed number. Zero means no mismatch,
@@ -72,8 +72,8 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
  */
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state,
                                   int32_t *samples,
+                                  int n,
                                   int32_t timestamp,
-                                  int timestamp_valid,
                                   int xscope_used);
 
 
@@ -114,7 +114,6 @@ struct asynchronous_fifo_t {
     int64_t   last_phase_error;               /* previous error, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
-    int32_t   diff_error_samples;             /* Number of samples over which the last timestamp was measured */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */

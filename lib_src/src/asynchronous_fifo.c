@@ -26,7 +26,6 @@ static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
     state->last_phase_error = 0;
     state->frequency_ratio = 0;   // Assume perfect match
     state->stop_producing = 0;
-    state->diff_error_samples = 1;
 }
 
 /**
@@ -68,11 +67,10 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                 // KpNi should be 48000 * Kpi = Kp * (1<<32).
                 // KiNi should be 48000 * Kpi = Kp * (1<<32).
     float Kp = 0.0001 * 1e-3 * speedup_p;
-    float Ki = 0.0001 * 1e-8 * speedup_i;
+    float Ki = 0.000075 * 1e-8 * speedup_i;
     state->Kp = Kp * (1LL<<32) * (1LL << K_SHIFT);
     double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT);
     state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
-    printf("Kp %08lx   Ki %08lx\n", state->Kp, state->Ki);
 
     // First initialise shared variables, or those that shouldn't reset on a RESET.
     state->read_ptr = 0;
@@ -89,8 +87,9 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state) {
 
 int async_resets = 0;
 
-int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
-                                  int32_t timestamp, int timestamp_valid,
+int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
+                                  int n, 
+                                  int32_t timestamp,
                                   int xscope_used) {
     int read_ptr = state->read_ptr;
     int write_ptr = state->write_ptr;
@@ -101,51 +100,53 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
         async_resets++;
         asynchronous_fifo_init_producing_side(state);    // uses read_ptr
         asynchronous_fifo_reset_consumer_flags(state);   // Last step - clears reset
-    } else if (len >= max_fifo_depth - 2) {
+    } else if (len >= max_fifo_depth - 2 - n) {
         state->stop_producing = 1;
     } else if (!state->stop_producing) {
-        memcpy(state->buffer + write_ptr * channel_count, sample, channel_count * sizeof(int));
-        write_ptr = (write_ptr + 1) % state->max_fifo_depth;
-        state->write_ptr = write_ptr;
-        // Todo: converted_sample_number is always 180 degree out of phase with write_ptr.
-        int converted_sample_number = state->converted_sample_number+1;
-        if (converted_sample_number >= max_fifo_depth) {
-            converted_sample_number = 0;
-        }
-        state->converted_sample_number = converted_sample_number;
-        if (timestamp_valid) {
-            int32_t phase_error = state->timestamps[converted_sample_number] - timestamp;
-            phase_error += state->ideal_phase_error_ticks;
-            // Now that we have a phase error, calculate the proportional error
-            // and use that and the integral error to correct the ASRC factor
-            if (state->skip_ctr != 0) {
-                state->skip_ctr--;
-            } else {
-                int32_t diff_error = phase_error - state->last_phase_error;
-
-                state->frequency_ratio +=
-                    (diff_error  * (int64_t) state->Kp) / state->diff_error_samples +
-                    (phase_error * (int64_t) state->Ki);
-                if (xscope_used) {
-                    xscope_int(1, phase_error);
-                    xscope_int(2, diff_error);
-                }
+        int converted_sample_number = state->converted_sample_number;
+        for(int j = 0; j < n; j++) {
+            memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+            samples += channel_count;
+            write_ptr = (write_ptr + 1);
+            if (write_ptr >= max_fifo_depth) {
+                write_ptr = 0;
             }
-            state->last_phase_error = phase_error;
-            state->diff_error_samples = 1;
-        } else {
-            state->diff_error_samples++;
+            // Todo: converted_sample_number is always 180 degree out of phase with write_ptr.
+            converted_sample_number = converted_sample_number+1;
+            if (converted_sample_number >= max_fifo_depth) {
+                converted_sample_number = 0;
+            }
         }
+        state->write_ptr = write_ptr;
+        state->converted_sample_number = converted_sample_number;
+        int32_t phase_error = state->timestamps[converted_sample_number] - timestamp;
+        phase_error += state->ideal_phase_error_ticks;
+        // Now that we have a phase error, calculate the proportional error
+        // and use that and the integral error to correct the ASRC factor
+        if (state->skip_ctr != 0) {
+            state->skip_ctr--;
+        } else {
+            int32_t diff_error = phase_error - state->last_phase_error;
+
+            state->frequency_ratio +=
+                (diff_error  * (int64_t) state->Kp) / n +  // TODO: make this lookup table
+                (phase_error * (int64_t) state->Ki);
+            if (xscope_used) {
+                xscope_int(1, phase_error);
+                xscope_int(2, diff_error);
+            }
+        }
+        state->last_phase_error = phase_error;
     }
     if (xscope_used) {
         xscope_int(3, len);
         xscope_int(4, state->frequency_ratio >> K_SHIFT);
     }
-    return state->frequency_ratio >> K_SHIFT;
+    return (state->frequency_ratio + (1<<(K_SHIFT-1))) >> K_SHIFT;
 }
 
 /**
- * Function that implements the consumer interface. Contorl communication
+ * Function that implements the consumer interface. Control communication
  * happens through two variables: reset and sample_data_valid. These shall
  * only be set as the last action, as they signify to the production side
  * that the datastructure can now be read on that side.

@@ -3,8 +3,6 @@
 
 // TODO: replace TODO with BASE and 8/24 with division with MAX
 
-// TODO: replace 10000000/ideal_freq with precalculated constant
-
 // TODO: check with 88200 and other input frequencies
 
 int asrc_timestamp_interpolation(int timestamp, asrc_ctrl_t *asrc_ctrl, int interpolation_ticks) {
