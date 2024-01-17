@@ -102,6 +102,7 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state,
 struct asynchronous_fifo_t {
     // Updated on initialisation only
     int32_t   channel_count;                  /* Number of audio channels */
+    int32_t   copy_mask;                      /* Number of audio channels */
     int32_t   max_fifo_depth;                 /* Length of buffer[] in channel_counts */
     int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
     int32_t   Ki;                             /* Ki PID coefficient */
@@ -110,16 +111,13 @@ struct asynchronous_fifo_t {
     // Updated on the producer side only
     int       skip_ctr;                       /* Set to indicate initialisation runs */
     int32_t   write_ptr;                      /* Write index in the buffer */
-    int32_t   converted_sample_number;        /* Sample number counter of producer */
     int64_t   last_phase_error;               /* previous error, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */
-    uint32_t  output_sample_number;           /* Current consumer output sample */
     uint32_t  sample_timestamp;               /* Timestamp calculated by consumer */
-    int32_t   sample_number;                  /* Sample number of the timestamp */
 
     // Set by producer, reset by consumer
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */

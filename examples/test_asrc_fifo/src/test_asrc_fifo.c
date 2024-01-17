@@ -217,7 +217,7 @@ void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency,
                                               xscope_used);
             asm volatile("gettime %0" : "=r" (t3));
             if (i == 48008) {
-//                printf("%d %d %d %d  %d\n", t1-t0, t2-t1, t3-t2, t3-t0);
+//                printf("%d %d %d %d\n", t1-t0, t2-t1, t3-t2, t3-t0);
             }
             
             fs_ratio = (((int64_t)ideal_fs_ratio) << 32) + (error * (int64_t) ideal_fs_ratio);
@@ -366,10 +366,10 @@ int test_176400_low() {
     int e0, e1, e2, e3;
     printf("Testing 176400 low\n");
     PAR_JOBS(
-        PJOB(test_async, (176400, 44100, 0, 0.5, 1.0, 2268, &e0)), // FAIL too fast
-        PJOB(test_async, (176400, 48000, 0, 0.5, 1.0, 2268, &e1)), // FAIL too fast
-        PJOB(test_async, (176400, 88200, 0, 1.0, 1.0, 1134, &e2)), // FAIL too fast
-        PJOB(test_async, (176400, 96000, 0, 1.0, 1.0, 1134, &e3))  // FAIL too fast
+        PJOB(test_async, (176400, 44100, 0, 0.25, 0.50, 2268, &e0)),
+        PJOB(test_async, (176400, 48000, 0, 0.25, 0.50, 2268, &e1)),
+        PJOB(test_async, (176400, 88200, 0, 0.50, 0.50, 1134, &e2)),
+        PJOB(test_async, (176400, 96000, 0, 0.50, 0.50, 1134, &e3)) // phase != 0?
         );
     return e0 + e1 + e2 + e3;
 }
@@ -378,10 +378,10 @@ int test_192000_low() {
     int e0, e1, e2, e3;
     printf("Testing 192000 low\n");
     PAR_JOBS(
-        PJOB(test_async, (192000, 44100, 0, 0.25, 0.5, 2083, &e0)),
-        PJOB(test_async, (192000, 48000, 0, 0.25, 0.5, 2083, &e1)),
-        PJOB(test_async, (192000, 88200, 0, 0.50, 0.5, 1042, &e2)), // FAIL - too slow.
-        PJOB(test_async, (192000, 96000, 0, 0.50, 0.5, 1042, &e3)) 
+        PJOB(test_async, (192000, 44100, 0, 0.25, 0.50, 2083, &e0)),
+        PJOB(test_async, (192000, 48000, 0, 0.25, 0.50, 2083, &e1)),
+        PJOB(test_async, (192000, 88200, 0, 0.50, 0.50, 1042, &e2)), // FAIL - too slow.
+        PJOB(test_async, (192000, 96000, 0, 0.50, 0.50, 1042, &e3)) 
         );
     return e0 + e1 + e2 + e3;
 }
@@ -390,10 +390,10 @@ int test_1xxx00_high() {
     int e0, e1, e2, e3;
     printf("Testing 176400/192000 high\n");
     PAR_JOBS(
-        PJOB(test_async, (176400, 176400, 0, 1.0, 0.5, 567, &e2)), // FAIL
-        PJOB(test_async, (176400, 192000, 0, 1.0, 0.5, 567, &e3)), // FAIL
-        PJOB(test_async, (192000, 176400, 0, 1.0, 0.5, 521, &e0)), // FAIL
-        PJOB(test_async, (192000, 192000, 0, 1.0, 0.5, 521, &e1))  // FAIL
+        PJOB(test_async, (176400, 176400, 1, 1.0, 0.5, 567, &e2)), // FAIL needs opt
+        PJOB(test_async, (176400, 192000, 1, 1.0, 0.5, 567, &e3)), // FAIL needs opt
+        PJOB(test_async, (192000, 176400, 1, 1.0, 0.5, 521, &e0)), // FAIL needs opt
+        PJOB(test_async, (192000, 192000, 1, 1.0, 0.5, 521, &e1))  // FAIL needs opt
         );
     return e0 + e1 + e2 + e3;
 }
@@ -402,6 +402,9 @@ int test_1xxx00_high() {
 
 int main(void) {
     int errors = 0;
+//    errors += test_48000_low();
+//    test_async(48000, 48000, 1, 1.0, 2.0, 2083, &errors);
+//    return 0;
 //    errors += test_1xxx00_high();
 //    return errors;
     hwtimer_free_xc_timer();
@@ -417,7 +420,7 @@ int main(void) {
     if (errors == 0) {
         printf("PASS\n");
     } else {
-        printf("FAIL\n");
+        printf("FAIL: %d errors\n", errors);
     }
     hwtimer_realloc_xc_timer();
 }
