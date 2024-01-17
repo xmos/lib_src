@@ -30,18 +30,12 @@ typedef struct asynchronous_fifo_t asynchronous_fifo_t;
  *
  * @param   ticks_between_samples  Expected number of ticks between two subsequent samples
  *                                 Round this number to the nearest tick, eg, 2083 for 48 kHz.
- *
- * @param   invalid_time_stamp_rate  Expected number of number of calls to producer over
- *                                   which a one valid timestamp will be given. Typically
- *                                   1 if all calls will have a valid timestamp or 4 if one
- *                                   in four calls will have a valid timestamp. Used to tune
- *                                   the PID filter.
  */
 void asynchronous_fifo_init(asynchronous_fifo_t * UNSAFE state,
                             int channel_count,
                             int max_fifo_depth,
                             int ticks_between_samples,
-                            int invalid_time_stamp_rate);
+                            float speedup_p, float speedup_i);
 
 /**
  * Function that must be called to deinitalise the asynchronous FIFO
@@ -69,9 +63,9 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *
  * @param   samples             The sample values.
  *
- * @param   timestamp           The number of ticks when this sample was input.
+ * @param   n                   The number of samples
  *
- * @param   timestamp_valid     States whether the timestamp is valid.
+ * @param   timestamp           The number of ticks when this sample was input.
  *
  * @returns The current estimate of the mismatch of input and output frequencies.
  *          This is represented as a 32-bit signed number. Zero means no mismatch,
@@ -85,8 +79,9 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  */
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
                                   REFERENCE_PARAM(int32_t, samples),
+                                  int n,
                                   int32_t timestamp,
-                                  int timestamp_valid);
+                                  int xscope_used);
 
 
 /**
@@ -114,6 +109,7 @@ void asynchronous_fifo_consume(asynchronous_fifo_t * UNSAFE state,
 struct asynchronous_fifo_t {
     // Updated on initialisation only
     int32_t   channel_count;                  /* Number of audio channels */
+    int32_t   copy_mask;                      /* Number of audio channels */
     int32_t   max_fifo_depth;                 /* Length of buffer[] in channel_counts */
     int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
     int32_t   Ki;                             /* Ki PID coefficient */
@@ -122,17 +118,13 @@ struct asynchronous_fifo_t {
     // Updated on the producer side only
     int       skip_ctr;                       /* Set to indicate initialisation runs */
     int32_t   write_ptr;                      /* Write index in the buffer */
-    int32_t   converted_sample_number;        /* Sample number counter of producer */
     int64_t   last_phase_error;               /* previous error, used for proportional */
     int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
     int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
-    int32_t   diff_error_samples;             /* Number of samples over which the last timestamp was measured */
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */
-    uint32_t  output_sample_number;           /* Current consumer output sample */
     uint32_t  sample_timestamp;               /* Timestamp calculated by consumer */
-    int32_t   sample_number;                  /* Sample number of the timestamp */
 
     // Set by producer, reset by consumer
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */

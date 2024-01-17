@@ -22,11 +22,9 @@
 static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
     state->skip_ctr = state->max_fifo_depth / 2 + 2;
     state->write_ptr = (state->read_ptr + state->max_fifo_depth/2) % state->max_fifo_depth;
-    state->converted_sample_number = state->max_fifo_depth/2;
     state->last_phase_error = 0;
     state->frequency_ratio = 0;   // Assume perfect match
     state->stop_producing = 0;
-    state->diff_error_samples = 1;
 }
 
 /**
@@ -35,9 +33,7 @@ static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
  * is needed.
  */
 static void asynchronous_fifo_init_consuming_side(asynchronous_fifo_t *state) {
-    state->output_sample_number = 1;
     state->sample_timestamp = 0;
-    state->sample_number = 0;
 }
 
 static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
@@ -48,10 +44,11 @@ static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
 
 void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                             int max_fifo_depth, int ticks_between_samples,
-                            int invalid_time_stamp_rate) {
+                            float speedup_p, float speedup_i) {
     state->max_fifo_depth = max_fifo_depth;
     state->timestamps = (uint32_t *)state->buffer + max_fifo_depth * channel_count;
     state->channel_count = channel_count;
+    state->copy_mask     = (1 << (4*channel_count)) - 1;
     state->ideal_phase_error_ticks = ticks_between_samples * (max_fifo_depth/2 + 1);
 
     // All this maths shall be compiled out to leave nothing.
@@ -67,13 +64,11 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
                 // Old maths: 32.32 +  KiNi * 10ns  +  KpNi * ratio
                 // KpNi should be 48000 * Kpi = Kp * (1<<32).
                 // KiNi should be 48000 * Kpi = Kp * (1<<32).
-    float SPEEDUP = 2;
-    float Kp = 0.0001 / 2083 * SPEEDUP;
-    float Ki = 0.0001 * 1e-8 * SPEEDUP * SPEEDUP;
+    float Kp = 0.0001 * 1e-3 * speedup_p;
+    float Ki = 0.000075 * 1e-8 * speedup_i;
     state->Kp = Kp * (1LL<<32) * (1LL << K_SHIFT);
-    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT) / invalid_time_stamp_rate;
+    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT);
     state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
-    printf("Kp %08lx   Ki %08lx\n", state->Kp, state->Ki);
 
     // First initialise shared variables, or those that shouldn't reset on a RESET.
     state->read_ptr = 0;
@@ -87,61 +82,66 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
 
 void asynchronous_fifo_exit(asynchronous_fifo_t *state) {
 }
-    
-int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *sample,
-                                  int32_t timestamp, int timestamp_valid) {
+
+int async_resets = 0;
+
+int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
+                                  int n, 
+                                  int32_t timestamp,
+                                  int xscope_used) {
     int read_ptr = state->read_ptr;
     int write_ptr = state->write_ptr;
     int max_fifo_depth = state->max_fifo_depth;
     int channel_count = state->channel_count;
+    int copy_mask = state->copy_mask;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
     if (state->reset) {
-        printf("@@@@@@@@@@@@ RESET @@@@@@@@@@ %lu len %d\n", state->reset, len );    
+        async_resets++;
         asynchronous_fifo_init_producing_side(state);    // uses read_ptr
         asynchronous_fifo_reset_consumer_flags(state);   // Last step - clears reset
-    } else if (len >= max_fifo_depth - 2) {
+    } else if (len >= max_fifo_depth - 2 - n) {
         state->stop_producing = 1;
     } else if (!state->stop_producing) {
-        memcpy(state->buffer + write_ptr * channel_count, sample, channel_count * sizeof(int));
-        write_ptr = (write_ptr + 1) % state->max_fifo_depth;
-        state->write_ptr = write_ptr;
-        // Todo: converted_sample_number is always 180 degree out of phase with write_ptr.
-        int converted_sample_number = state->converted_sample_number+1;
-        if (converted_sample_number >= max_fifo_depth) {
-            converted_sample_number = 0;
+        for(int j = 0; j < n; j++) {
+            register int32_t *ptr asm("r11") = samples;
+            asm("vldr %0[0]" :: "r" (ptr));
+            asm("vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
+//            memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+            samples += channel_count;
+            write_ptr = (write_ptr + 1);
+            if (write_ptr >= max_fifo_depth) {
+                write_ptr = 0;
+            }
         }
-        state->converted_sample_number = converted_sample_number;
-        if (timestamp_valid) {
-            int32_t phase_error = state->timestamps[converted_sample_number] - timestamp;
-            phase_error += state->ideal_phase_error_ticks;
-            // Now that we have a phase error, calculate the proportional error
-            // and use that and the integral error to correct the ASRC factor
-            if (state->skip_ctr != 0) {
-                state->skip_ctr--;
-            } else {
-                int32_t diff_error = phase_error - state->last_phase_error;
+        state->write_ptr = write_ptr;
+        int32_t phase_error = state->timestamps[write_ptr] - timestamp;
+        phase_error += state->ideal_phase_error_ticks;
+        // Now that we have a phase error, calculate the proportional error
+        // and use that and the integral error to correct the ASRC factor
+        if (state->skip_ctr != 0) {
+            state->skip_ctr--;
+        } else {
+            int32_t diff_error = phase_error - state->last_phase_error;
 
-                state->frequency_ratio +=
-                    (diff_error  * (int64_t) state->Kp) / state->diff_error_samples +
-                    (phase_error * (int64_t) state->Ki);
-#if 1
+            state->frequency_ratio +=
+                (diff_error  * (int64_t) (state->Kp / n)) +  // TODO: make this lookup table
+                (phase_error * (int64_t) state->Ki);
+            if (xscope_used) {
                 xscope_int(1, phase_error);
                 xscope_int(2, diff_error);
-                xscope_int(3, len);
-                xscope_int(4, state->frequency_ratio >> K_SHIFT);
-#endif
             }
-            state->last_phase_error = phase_error;
-            state->diff_error_samples = 1;
-        } else {
-            state->diff_error_samples++;
         }
+        state->last_phase_error = phase_error;
     }
-    return state->frequency_ratio >> K_SHIFT;
+    if (xscope_used) {
+        xscope_int(3, len);
+        xscope_int(4, state->frequency_ratio >> K_SHIFT);
+    }
+    return (state->frequency_ratio + (1<<(K_SHIFT-1))) >> K_SHIFT;
 }
 
 /**
- * Function that implements the consumer interface. Contorl communication
+ * Function that implements the consumer interface. Control communication
  * happens through two variables: reset and sample_data_valid. These shall
  * only be set as the last action, as they signify to the production side
  * that the datastructure can now be read on that side.
@@ -155,9 +155,12 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
     int write_ptr = state->write_ptr;
     int max_fifo_depth = state->max_fifo_depth;
     int channel_count = state->channel_count;
+    int copy_mask = state->copy_mask;
     int size = channel_count * sizeof(int);
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
-    memcpy(samples, state->buffer + read_ptr * channel_count, size);
+    register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
+    asm("vldr %0[0]" :: "r" (ptr));
+    asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
     if (state->reset) {
         return;
     }
@@ -165,14 +168,7 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
         // TODO: use IF not %
         read_ptr = (read_ptr + 1) % state->max_fifo_depth;
         state->read_ptr = read_ptr;
-        // TODO: output_sample_number equals read_ptr ?
-        int output_sample_number = state->output_sample_number;
-        output_sample_number++;
-        if (output_sample_number >= max_fifo_depth) {
-            output_sample_number = 0;
-        }
-        state->output_sample_number = output_sample_number;
-        state->timestamps[output_sample_number] = timestamp;
+        state->timestamps[read_ptr] = timestamp;
     } else {
         asynchronous_fifo_init_consuming_side(state); // This must happen in this thread
         state->reset = 1;                // The rest must happen in the other thread
