@@ -42,33 +42,50 @@ static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
 
 #define K_SHIFT 16
 
+static int ticks_between_samples_1D[6] = {
+    2268,2083,1134,1042, 567, 521
+};
+
+static int Ki_2D[6][6] = {
+    {  422,  422,  422,  422,  422,  422 },
+    {  422,  422,  422,  422,  422,  422 },
+    {  211,  211,  211,  211,  211,  211 },
+    {  211,  211,  211,  211,  211,  211 },
+    {  105,  105,  105,  105,  105,  105 },
+    {  105,  105,  105,  105,  105,  105 }
+};
+
+static int Kp_2D[6][6] = {
+    {  28147498,  28147498,  56294996,  56294996, 112589992, 112589992 },
+    {  28147498,  28147498,  56294996,  56294996, 112589992, 112589992 },
+    {  14073749,  14073749,  28147498,  28147498,  56294996,  56294996 },
+    {  14073749,  14073749,  28147498,  28147498,  56294996,  56294996 },
+    {   7036874,   7036874,  14073749,  14073749,  28147498,  28147498 },
+    {   7036874,   7036874,  14073749,  14073749,  28147498,  28147498 }
+};
+
+void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
+                                         int fs_input, int fs_output) {
+    int max_fifo_depth = state->max_fifo_depth;
+    state->Kp = Kp_2D[fs_input][fs_output];
+    state->Ki = Ki_2D[fs_input][fs_output];
+    state->ideal_phase_error_ticks = ticks_between_samples_1D[fs_output] * (max_fifo_depth/2 + 1);
+}
+
+void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t *state,
+                                    int Kp, int Ki, int ticks_between_samples) {
+    int max_fifo_depth = state->max_fifo_depth;
+    state->Kp = Kp;
+    state->Ki = Ki;
+    state->ideal_phase_error_ticks = ticks_between_samples * (max_fifo_depth/2 + 1);
+}
+
 void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
-                            int max_fifo_depth, int ticks_between_samples,
-                            float speedup_p, float speedup_i) {
+                            int max_fifo_depth) {
     state->max_fifo_depth = max_fifo_depth;
     state->timestamps = (uint32_t *)state->buffer + max_fifo_depth * channel_count;
     state->channel_count = channel_count;
     state->copy_mask     = (1 << (4*channel_count)) - 1;
-    state->ideal_phase_error_ticks = ticks_between_samples * (max_fifo_depth/2 + 1);
-
-    // All this maths shall be compiled out to leave nothing.
-
-                // frequency ratio measured in 32.32 used to be in 64.60
-                // So Kp/Ki should be (1<<28) higher
-                // Phase error measured in 10ns not 10ns/48000
-                // Ratio is 48000 times smaller
-                // So Kp/Ki should be 48000 times lower
-                // Old maths: Kp * (1<<60) / 48000
-                // Old maths: Ki * (1<<60) / 48000
-                // Old maths: 64.60 +  Kii * 10ns/48000  +  Kpi * ratio/480000
-                // Old maths: 32.32 +  KiNi * 10ns  +  KpNi * ratio
-                // KpNi should be 48000 * Kpi = Kp * (1<<32).
-                // KiNi should be 48000 * Kpi = Kp * (1<<32).
-    float Kp = 0.0001 * 1e-3 * speedup_p;
-    float Ki = 0.000075 * 1e-8 * speedup_i;
-    state->Kp = Kp * (1LL<<32) * (1LL << K_SHIFT);
-    double Ki_d = Ki * (1LL << 32) * (1LL << K_SHIFT);
-    state->Ki = Ki_d < 1 ? 1 : Ki_d > 0x7fffffff ? 0x7fffffff : (int32_t) Ki_d;
 
     // First initialise shared variables, or those that shouldn't reset on a RESET.
     state->read_ptr = 0;
@@ -84,6 +101,14 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state) {
 }
 
 int async_resets = 0;
+
+void asynchronous_fifo_init_reset_producer(asynchronous_fifo_t *state) {
+    state->stop_producing = 1;
+}
+
+void asynchronous_fifo_init_reset_consumer(asynchronous_fifo_t *state) {
+    state->reset = 1;
+}
 
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
                                   int n, 
@@ -156,7 +181,6 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
     int max_fifo_depth = state->max_fifo_depth;
     int channel_count = state->channel_count;
     int copy_mask = state->copy_mask;
-    int size = channel_count * sizeof(int);
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
     register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
     asm("vldr %0[0]" :: "r" (ptr));

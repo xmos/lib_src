@@ -15,20 +15,83 @@ typedef struct asynchronous_fifo_t asynchronous_fifo_t;
  * of ``int64_t [ASYNCHRONOUS_FIFO_INT64_ELEMENTS(fifo_max_depth, channel_count)]``
  * The same pointer must be used on both sides of the asynchronous FIFO.
  *
+ * After initialising, you must initialise the PID by calling one of
+ * ``asynchronous_fifo_init_PID_fs_codes()`` or
+ * ``asynchronous_fifo_init_PID_raw()``
+ *
  * @param   state               Asynchronous FIFO to be initialised
  *
  * @param   channel_count       Number of audio channels
  *
  * @param   max_fifo_depth      Length of the FIFO, delay when stable will be max_fifo_depth/2
- *
- * @param   ticks_between_samples  Expected number of ticks between two subsequent samples
- *                                 Round this number to the nearest tick, eg, 2083 for 48 kHz.
  */
 void asynchronous_fifo_init(asynchronous_fifo_t *state,
                             int channel_count,
-                            int max_fifo_depth,
-                            int ticks_between_samples,
-                            float speedup_p, float speedup_i);
+                            int max_fifo_depth);
+
+/**
+ * Function that that initialises the PID of a FIFO. Either this function
+ * or ``asynchronous_fifo_init_PID_raw()`` should be called. This function
+ * uses frequency codes as defined in the ASRC for a quick default setup,
+ * the raw function allows full control
+ *
+ * @param   state               Asynchronous FIFO to be initialised
+ *
+ * @param   fs_input            Input FS ratio, used to pick appropriate Kp, Ki
+ *
+ * @param   fs_output           Input FS ratio, used to pick appropriate Kp, Ki, ideal phase
+ */
+void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
+                                         int fs_input, int fs_output);
+
+/**
+ * Function that that initialises the PID of a FIFO. Either this function
+ * or ``asynchronous_fifo_init_PID_raw()`` should be called. This function
+ * uses frequency codes as defined in the ASRC for a quick default setup,
+ * the raw function allows full control.
+ *
+ * This function may be called at any time by the producer in order to alter the PID
+ * and midpoint settings. It does not reset the error;  one of the
+ * ``asynchronous_fifo_init_reset()`` functions should be called for that.
+ *
+ * @param   state               Asynchronous FIFO to be initialised
+ *
+ * @param   Kp                  Proportional constant for the FIFO.
+ *                              This gets multiplied by the differential
+ *                              error measured in ticks (typically -2..2)
+ *                              and added to the ratio_error. A typical
+ *                              value is 30,000,000 - 60,000,000.
+ *
+ * @param   Ki                  Integral constant for the FIFO.
+ *                              This gets multiplied by the phase error
+ *                              measured in ticks (typically -20,000 - 20,000)
+ *                              and added to the ratio_error.
+ *                              A typical value is 200 - 300.
+ *
+ * @param  ticks_between_samples The number of ticks between samples is used to
+ *                              estimate the expected phase error halfway down
+ *                              the FIFO.
+ */
+void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t *state,
+                                    int Kp, int Ki, int ticks_between_samples);
+
+/**
+ * Function that that resets the FIFO from the producer side. Either this function should
+ * be called on the producing side, or ``asynchronous_fifo_init_reset_consumer()``
+ * should be called on the consumer side. In both cases the whole FIFO will be reset back
+ *
+ * @param   state               Asynchronous FIFO to be initialised
+ */
+void asynchronous_fifo_init_reset_producer(asynchronous_fifo_t *state);
+
+/**
+ * Function that that resets the FIFO from the consumer side. Either this function should
+ * be called on the consuming side, or ``asynchronous_fifo_init_reset_producer()``
+ * should be called on the producer side. In both cases the whole FIFO will be reset back
+ *
+ * @param   state               Asynchronous FIFO to be initialised
+ */
+void asynchronous_fifo_init_reset_consumer(asynchronous_fifo_t *state);
 
 /**
  * Function that must be called to deinitalise the asynchronous FIFO
