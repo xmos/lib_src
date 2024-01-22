@@ -102,11 +102,11 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state) {
 
 int async_resets = 0;
 
-void asynchronous_fifo_init_reset_producer(asynchronous_fifo_t *state) {
+void asynchronous_fifo_reset_producer(asynchronous_fifo_t *state) {
     state->stop_producing = 1;
 }
 
-void asynchronous_fifo_init_reset_consumer(asynchronous_fifo_t *state) {
+void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state) {
     state->reset = 1;
 }
 

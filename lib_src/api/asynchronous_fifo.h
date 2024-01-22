@@ -77,21 +77,21 @@ void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t *state,
 
 /**
  * Function that that resets the FIFO from the producer side. Either this function should
- * be called on the producing side, or ``asynchronous_fifo_init_reset_consumer()``
+ * be called on the producing side, or ``asynchronous_fifo_reset_consumer()``
  * should be called on the consumer side. In both cases the whole FIFO will be reset back
  *
  * @param   state               Asynchronous FIFO to be initialised
  */
-void asynchronous_fifo_init_reset_producer(asynchronous_fifo_t *state);
+void asynchronous_fifo_reset_producer(asynchronous_fifo_t *state);
 
 /**
  * Function that that resets the FIFO from the consumer side. Either this function should
- * be called on the consuming side, or ``asynchronous_fifo_init_reset_producer()``
+ * be called on the consuming side, or ``asynchronous_fifo_reset_producer()``
  * should be called on the producer side. In both cases the whole FIFO will be reset back
  *
  * @param   state               Asynchronous FIFO to be initialised
  */
-void asynchronous_fifo_init_reset_consumer(asynchronous_fifo_t *state);
+void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state);
 
 /**
  * Function that must be called to deinitalise the asynchronous FIFO
