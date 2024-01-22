@@ -89,9 +89,9 @@ int base_frequency_multiplier(int frequency) {
 
 extern int async_resets;
 
-DECLARE_JOB(producer,   (asynchronous_fifo_t *, int, int, int, int, int *));
+DECLARE_JOB(producer,   (asynchronous_fifo_t *, int, int, int, int *));
 DECLARE_JOB(consumer,   (asynchronous_fifo_t *, int, int));
-DECLARE_JOB(test_async, (int, int, int, float, float, int, int *));
+DECLARE_JOB(test_async, (int, int, int, int *));
 
 #define seconds 10
 #define OFFSET 0 // 0x70000000
@@ -148,7 +148,17 @@ int32_t input_data[48] = {
 };
 
 
-void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int xscope_used, int interpolation_ticks, int *errors) {
+static int interpolation_ticks_2D[6][6] = {
+    {  2268, 2268, 2268, 2268, 2268, 2268},
+    {  2083, 2083, 2083, 2083, 2083, 2083},
+    {  2268, 2268, 1134, 1134, 1134, 1134},
+    {  2083, 2083, 1042, 1042, 1042, 1042},
+    {  2268, 2268, 1134, 1134,  567,  567},
+    {  2083, 2083, 1042, 1042,  521,  521}
+};
+
+void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int xscope_used, int *errors) {
+    int interpolation_ticks = interpolation_ticks_2D[fs_code(input_frequency)][fs_code(output_frequency)];
     asrc_state_t sASRCState[SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
     int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES * 100]; // Buffer between filter stages
     asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
@@ -274,16 +284,18 @@ void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
 #define FIFO_LENGTH   100
 
 void test_async(int input_frequency, int output_frequency, int xscope_used,
-                float speedup_p, float speedup_i, int interpolation_ticks,
                 int *errors) {
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, 1)];
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
-    asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/output_frequency,
-                           speedup_p, speedup_i);
+    *errors = 1;
+    asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH);
+    asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_state,
+                                        fs_code(input_frequency),
+                                        fs_code(output_frequency));
+
     PAR_JOBS(
-        PJOB(producer, (asynchronous_fifo_state, input_frequency, output_frequency, xscope_used, interpolation_ticks, errors)),
+        PJOB(producer, (asynchronous_fifo_state, input_frequency, output_frequency, xscope_used, errors)),
         PJOB(consumer, (asynchronous_fifo_state, output_frequency, xscope_used))
         );
     asynchronous_fifo_exit(asynchronous_fifo_state);
@@ -294,10 +306,10 @@ int test_44100_low() {
     int e0, e1, e2, e3;
     printf("Testing 44100 low\n");
     PAR_JOBS(
-        PJOB(test_async, (44100, 44100, 0, 1.0, 2.0, 2268, &e0)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 48000, 0, 1.0, 2.0, 2268, &e1)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (44100, 88200, 0, 2.0, 2.0, 2268, &e2)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 96000, 0, 2.0, 2.0, 2268, &e3)) // OK  4 sec or so.
+        PJOB(test_async, (44100, 44100, 0, &e0)), // OK, 4 sec or so.
+        PJOB(test_async, (44100, 48000, 0, &e1)), // OK, 4 sec or so. Slight overshoot
+        PJOB(test_async, (44100, 88200, 0, &e2)), // OK, 4 sec or so.
+        PJOB(test_async, (44100, 96000, 0, &e3)) // OK  4 sec or so.
         );
     return e0 + e1 + e2 + e3;
 }
@@ -306,10 +318,10 @@ int test_48000_low() {
     int e0, e1, e2, e3;
     printf("Testing 48000 low\n");
     PAR_JOBS(
-        PJOB(test_async, (48000, 44100, 0, 1.0, 2.0, 2083, &e0)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 48000, 0, 1.0, 2.0, 2083, &e1)), // OK  4.16 s stable slight overshoot
-        PJOB(test_async, (48000, 88200, 0, 2.0, 2.0, 2083, &e2)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 96000, 0, 2.0, 2.0, 2083, &e3)) // OK  4.16 s stable
+        PJOB(test_async, (48000, 44100, 0, &e0)), // OK, 4 sec or so
+        PJOB(test_async, (48000, 48000, 0, &e1)), // OK  4.16 s stable slight overshoot
+        PJOB(test_async, (48000, 88200, 0, &e2)), // OK, 4 sec or so
+        PJOB(test_async, (48000, 96000, 0, &e3)) // OK  4.16 s stable
         );
     return e0 + e1 + e2 + e3;
 }
@@ -318,10 +330,10 @@ int test_4xx00_high() {
     int e0, e1, e2, e3;
     printf("Testing 44100/48000 high\n");
     PAR_JOBS(
-        PJOB(test_async, (44100, 176400, 0, 4.0, 2.0, 2268, &e2)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 192000, 0, 4.0, 2.0, 2268, &e3)), // OK  4 sec or so.
-        PJOB(test_async, (48000, 176400, 0, 4.0, 2.0, 2083, &e0)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 192000, 0, 4.0, 2.0, 2083, &e1)) // OK  4.16 s stable
+        PJOB(test_async, (44100, 176400, 0, &e2)), // OK, 4 sec or so.
+        PJOB(test_async, (44100, 192000, 0, &e3)), // OK  4 sec or so.
+        PJOB(test_async, (48000, 176400, 0, &e0)), // OK, 4 sec or so
+        PJOB(test_async, (48000, 192000, 0, &e1)) // OK  4.16 s stable
         );
     return e0 + e1 + e2 + e3;
 }
@@ -330,10 +342,10 @@ int test_88200_low() {
     int e0, e1, e2, e3;
     printf("Testing 88200 low\n");
     PAR_JOBS(
-        PJOB(test_async, (88200, 44100, 0, 0.5, 1.0, 2268, &e0)), // OK, 4 sec or so
-        PJOB(test_async, (88200, 48000, 0, 0.5, 1.0, 2268, &e1)), // OK, 4 sec or so. Slight overshoot, phase error not zero at the end?
-        PJOB(test_async, (88200, 88200, 0, 1.0, 1.0, 1134, &e2)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (88200, 96000, 0, 1.0, 1.0, 1134, &e3))  // OK  4 sec or so. Slight overshoot
+        PJOB(test_async, (88200, 44100, 0, &e0)), // OK, 4 sec or so
+        PJOB(test_async, (88200, 48000, 0, &e1)), // OK, 4 sec or so. Slight overshoot, phase error not zero at the end?
+        PJOB(test_async, (88200, 88200, 0, &e2)), // OK, 4 sec or so. Slight overshoot
+        PJOB(test_async, (88200, 96000, 0, &e3))  // OK  4 sec or so. Slight overshoot
         );
     return e0 + e1 + e2 + e3;
 }
@@ -342,10 +354,10 @@ int test_96000_low() {
     int e0, e1, e2, e3;
     printf("Testing 96000 low\n");
     PAR_JOBS(
-        PJOB(test_async, (96000, 44100, 0, 0.5, 1.0, 2083, &e0)), // OK, 4 sec or so. Non zero phase difference
-        PJOB(test_async, (96000, 48000, 0, 0.5, 1.0, 2083, &e1)), // OK  4.16 s stable slight overshoot
-        PJOB(test_async, (96000, 88200, 0, 1.0, 1.0, 1042, &e2)), // OK, 4 sec or so. Phase error not zero
-        PJOB(test_async, (96000, 96000, 0, 1.0, 1.0, 1042, &e3)) // OK  4.14 s stable
+        PJOB(test_async, (96000, 44100, 0, &e0)), // OK, 4 sec or so. Non zero phase difference
+        PJOB(test_async, (96000, 48000, 0, &e1)), // OK  4.16 s stable slight overshoot
+        PJOB(test_async, (96000, 88200, 0, &e2)), // OK, 4 sec or so. Phase error not zero
+        PJOB(test_async, (96000, 96000, 0, &e3)) // OK  4.14 s stable
         );
     return e0 + e1 + e2 + e3;
 }
@@ -354,10 +366,10 @@ int test_9xx00_high() {
     int e0, e1, e2, e3;
     printf("Testing 44100/48000 high\n");
     PAR_JOBS(
-        PJOB(test_async, (88200, 176400, 0, 2.0, 1.0, 1134, &e2)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (88200, 192000, 0, 2.0, 1.0, 1134, &e3)), // OK  4 sec or so. Slight overshoot
-        PJOB(test_async, (96000, 176400, 0, 2.0, 1.0, 1042, &e0)), // OK, 4 sec or so. Phase error not zero
-        PJOB(test_async, (96000, 192000, 0, 2.0, 1.0, 1042, &e1)) // OK  4.14 s stable
+        PJOB(test_async, (88200, 176400, 0, &e2)), // OK, 4 sec or so. Slight overshoot
+        PJOB(test_async, (88200, 192000, 0, &e3)), // OK  4 sec or so. Slight overshoot
+        PJOB(test_async, (96000, 176400, 0, &e0)), // OK, 4 sec or so. Phase error not zero
+        PJOB(test_async, (96000, 192000, 0, &e1)) // OK  4.14 s stable
         );
     return e0 + e1 + e2 + e3;
 }
@@ -366,10 +378,10 @@ int test_176400_low() {
     int e0, e1, e2, e3;
     printf("Testing 176400 low\n");
     PAR_JOBS(
-        PJOB(test_async, (176400, 44100, 0, 0.25, 0.50, 2268, &e0)),
-        PJOB(test_async, (176400, 48000, 0, 0.25, 0.50, 2268, &e1)),
-        PJOB(test_async, (176400, 88200, 0, 0.50, 0.50, 1134, &e2)),
-        PJOB(test_async, (176400, 96000, 0, 0.50, 0.50, 1134, &e3)) // phase != 0?
+        PJOB(test_async, (176400, 44100, 0, &e0)),
+        PJOB(test_async, (176400, 48000, 0, &e1)),
+        PJOB(test_async, (176400, 88200, 0, &e2)),
+        PJOB(test_async, (176400, 96000, 0, &e3)) // phase != 0?
         );
     return e0 + e1 + e2 + e3;
 }
@@ -378,10 +390,10 @@ int test_192000_low() {
     int e0, e1, e2, e3;
     printf("Testing 192000 low\n");
     PAR_JOBS(
-        PJOB(test_async, (192000, 44100, 0, 0.25, 0.50, 2083, &e0)),
-        PJOB(test_async, (192000, 48000, 0, 0.25, 0.50, 2083, &e1)),
-        PJOB(test_async, (192000, 88200, 0, 0.50, 0.50, 1042, &e2)), // FAIL - too slow.
-        PJOB(test_async, (192000, 96000, 0, 0.50, 0.50, 1042, &e3)) 
+        PJOB(test_async, (192000, 44100, 0, &e0)),
+        PJOB(test_async, (192000, 48000, 0, &e1)),
+        PJOB(test_async, (192000, 88200, 0, &e2)), // FAIL - too slow.
+        PJOB(test_async, (192000, 96000, 0, &e3)) 
         );
     return e0 + e1 + e2 + e3;
 }
@@ -390,10 +402,10 @@ int test_1xxx00_high() {
     int e0, e1, e2, e3;
     printf("Testing 176400/192000 high\n");
     PAR_JOBS(
-        PJOB(test_async, (176400, 176400, 1, 1.0, 0.5, 567, &e2)), // FAIL needs opt
-        PJOB(test_async, (176400, 192000, 1, 1.0, 0.5, 567, &e3)), // FAIL needs opt
-        PJOB(test_async, (192000, 176400, 1, 1.0, 0.5, 521, &e0)), // FAIL needs opt
-        PJOB(test_async, (192000, 192000, 1, 1.0, 0.5, 521, &e1))  // FAIL needs opt
+        PJOB(test_async, (176400, 176400, 1, &e2)), // FAIL needs opt
+        PJOB(test_async, (176400, 192000, 1, &e3)), // FAIL needs opt
+        PJOB(test_async, (192000, 176400, 1, &e0)), // FAIL needs opt
+        PJOB(test_async, (192000, 192000, 1, &e1))  // FAIL needs opt
         );
     return e0 + e1 + e2 + e3;
 }
@@ -422,6 +434,7 @@ int main(void) {
     } else {
         printf("FAIL: %d errors\n", errors);
     }
+
     hwtimer_realloc_xc_timer();
 }
 
