@@ -48,7 +48,7 @@ void asynchronous_fifo_init(asynchronous_fifo_t * UNSAFE state,
  *
  * @param   fs_output           Input FS ratio, used to pick appropriate Kp, Ki, ideal phase
  */
-void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
+void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t * UNSAFE state,
                                          int fs_input, int fs_output);
 
 /**
@@ -79,7 +79,7 @@ void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
  *                              estimate the expected phase error halfway down
  *                              the FIFO.
  */
-void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t *state,
+void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t * UNSAFE state,
                                     int Kp, int Ki, int ticks_between_samples);
 
 /**
