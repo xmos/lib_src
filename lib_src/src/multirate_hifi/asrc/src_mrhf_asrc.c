@@ -282,6 +282,11 @@ ASRCFsRatioConfigs_t		sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS] =				// Fs ratio con
 //
 // ===========================================================================
 
+#ifdef __XS3A__
+#define xs3_index_shuffle(a,b) [(b)^7][a]
+#else
+#define xs3_index_shuffle(a,b) [a][b]
+#endif
 
 // ==================================================================== //
 // Function:        ASRC_prepare_coefs                                    //
@@ -301,19 +306,19 @@ ASRCReturnCodes_t                ASRC_prepare_coefs(void)
     {
         // Copy phase information
         for(uj = 0; uj < FILTER_DEFS_ADFIR_PHASE_N_TAPS - 1; uj++)
-            iADFirCoefs[ui][uj] = *(piPrototypeCoefs + ui - uj * FILTER_DEFS_ADFIR_N_PHASES);
+            iADFirCoefs xs3_index_shuffle(ui, uj) = *(piPrototypeCoefs + ui - uj * FILTER_DEFS_ADFIR_N_PHASES);
         // Zero fill last coefficient
-        iADFirCoefs[ui][FILTER_DEFS_ADFIR_PHASE_N_TAPS - 1]    = 0;
+        iADFirCoefs xs3_index_shuffle(ui, FILTER_DEFS_ADFIR_PHASE_N_TAPS - 1)    = 0;
     }
 
     // Then fill in the two phases which start delayed
     for(ui = 0; ui < 2; ui++)
     {
         // Zero fill first coefficient
-        iADFirCoefs[FILTER_DEFS_ADFIR_N_PHASES + ui][0]    = 0;
+        iADFirCoefs xs3_index_shuffle(FILTER_DEFS_ADFIR_N_PHASES + ui, 0)    = 0;
         // Copy phase informaiton
         for(uj = 0; uj < FILTER_DEFS_ADFIR_PHASE_N_TAPS - 1; uj++)
-            iADFirCoefs[FILTER_DEFS_ADFIR_N_PHASES + ui][uj + 1] = *(piPrototypeCoefs + ui - uj * FILTER_DEFS_ADFIR_N_PHASES);
+            iADFirCoefs xs3_index_shuffle(FILTER_DEFS_ADFIR_N_PHASES + ui,uj + 1) = *(piPrototypeCoefs + ui - uj * FILTER_DEFS_ADFIR_N_PHASES);
     }
 
     return ASRC_NO_ERROR;
@@ -564,8 +569,6 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     int                iZero;
     __int64_t            i64Acc0;
     int*            piPhase0;
-    int*            piPhase1;
-    int*            piPhase2;
     int*            piADCoefs;
 
     // Check if the next output time instant is in the current time slot
@@ -590,6 +593,21 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     iAlpha        = pasrc_ctrl->uiTimeFract>>1;        // Now alpha can be seen as a signed number
     i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
+
+#if defined(__XS3A__)
+    iH[2]            = (int)(i64Acc0>>32);
+    iH[0]            = 0x40000000;                        // Load H2 with 0.5;
+    iH[1]            = iH[0] - iH[2];                        // H1 = 0.5 - 0.5 * alpha * alpha;
+    iH[1]            = iH[1] - iH[2];                        // H1 = 0.5 - alpha * alpha
+    iH[1]            = iH[1] + iAlpha;                        // H1 = 0.5 + alpha - alpha * alpha;
+    iH[0]            = iH[0] - iAlpha;                        // H2 = 0.5 - alpha
+    iH[0]            = iH[0] + iH[2];                        // H2 = 0.5 - alpha + 0.5 * alpha * alpha
+
+    // The integer part of time gives the phase
+    piPhase0        = &iADFirCoefs[0][pasrc_ctrl->iTimeInt];
+    piADCoefs        = pasrc_ctrl->piADCoefs;        // Given limited number of registers, this should be DP
+    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+#else
     iH[0]            = (int)(i64Acc0>>32);
     iH[2]            = 0x40000000;                        // Load H2 with 0.5;
     iH[1]            = iH[2] - iH[0];                        // H1 = 0.5 - 0.5 * alpha * alpha;
@@ -600,11 +618,10 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
 
     // The integer part of time gives the phase
     piPhase0        = iADFirCoefs[pasrc_ctrl->iTimeInt];
-    piPhase1        = piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
-    piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
     piADCoefs        = pasrc_ctrl->piADCoefs;        // Given limited number of registers, this should be DP
 
     src_mrhf_spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+#endif
 
     // Step time for next output sample
     // --------------------------------

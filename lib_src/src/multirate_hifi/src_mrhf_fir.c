@@ -240,10 +240,14 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
+#if defined(__XS3A__)
+        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
             src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+#endif
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -269,10 +273,14 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
+#if defined(__XS3A__)
+        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
             src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+#endif
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -329,8 +337,12 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
 
+#if defined(__XS3A__)
+        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+#endif
 
         // Write output with step
         *piOut                    = iData0;
@@ -388,8 +400,12 @@ FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
         // Clear accumulator and set access pointers
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
+#if defined(__XS3A__)
+        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+#endif
         // Write output with step
         *piOut                    = iData0;
         piOut                    += uiOutStep;

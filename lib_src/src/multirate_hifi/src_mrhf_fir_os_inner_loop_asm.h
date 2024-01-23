@@ -5,5 +5,6 @@
 
 void src_mrhf_fir_os_inner_loop_asm_odd(int *piData, int *piCoefs, int iData[], int count);
 void src_mrhf_fir_os_inner_loop_asm(int *piData, int *piCoefs, int iData[], int count);
+void src_mrhf_fir_os_inner_loop_asm_xs3(int *piData, int *piCoefs, int iData[], int count);
 
 #endif // SRC_MRHF_FIR_OS_INNER_LOOP_ASM_H_
