@@ -11,6 +11,8 @@
 #ifndef _SRC_MRHF_FILTER_DEFS_H_
 #define _SRC_MRHF_FILTER_DEFS_H_
 
+#include "use_vpu.h"
+
     // ===========================================================================
     //
     // Defines
@@ -69,18 +71,17 @@
     #define        FILTER_DEFS_FIR_MAX_TAPS_SHORT        FILTER_DEFS_FIR_DS_N_TAPS            // Maximum number of taps for short FIR filter
 
     // FIR filter coefficients files
-#if defined(__XS3A__)
-    #define        FILTER_DEFS_FIR_BL_FILE                "FilterData/BL_xs3.dat"            // Coefficients file for BL FIR filter
-    #define        FILTER_DEFS_FIR_BL9644_FILE            "FilterData/BL9644_xs3.dat"        // Coefficients file for BL9644 FIR filter
-    #define        FILTER_DEFS_FIR_BL8848_FILE            "FilterData/BL8848_xs3.dat"        // Coefficients file for BL8848 filter
-    #define        FILTER_DEFS_FIR_BLF_FILE               "FilterData/BLF_xs3.dat"        // Coefficients file for BLF FIR filter
-    #define        FILTER_DEFS_FIR_BL19288_FILE           "FilterData/BL19288_xs3.dat"    // Coefficients file for BL19288 FIR filter
-    #define        FILTER_DEFS_FIR_BL17696_FILE           "FilterData/BL17696_xs3.dat"    // Coefficients file for BL17696 filter
+#if defined(SRC_USE_VPU)
+    #define        FILTER_DEFS_FIR_BL_FILE                "FilterData/BL.dat"            // Coefficients file for BL FIR filter
+    #define        FILTER_DEFS_FIR_BL9644_FILE            "FilterData/BL9644.dat"        // Coefficients file for BL9644 FIR filter
+    #define        FILTER_DEFS_FIR_BL8848_FILE            "FilterData/BL8848.dat"        // Coefficients file for BL8848 filter
+    #define        FILTER_DEFS_FIR_BLF_FILE               "FilterData/BLF.dat"        // Coefficients file for BLF FIR filter
+    #define        FILTER_DEFS_FIR_BL19288_FILE           "FilterData/BL19288.dat"    // Coefficients file for BL19288 FIR filter
+    #define        FILTER_DEFS_FIR_BL17696_FILE           "FilterData/BL17696.dat"    // Coefficients file for BL17696 filter
     #define        FILTER_DEFS_FIR_UP_FILE                "FilterData/UP_xs3.dat"            // Coefficients file for UP filter
     #define        FILTER_DEFS_FIR_UP4844_FILE            "FilterData/UP4844_xs3.dat"        // Coefficients file for UP4844 filter
     #define        FILTER_DEFS_FIR_UPF_FILE               "FilterData/UPF_xs3.dat"        // Coefficients file for UPF filter
     #define        FILTER_DEFS_FIR_UP192176_FILE          "FilterData/UP192176_xs3.dat"    // Coefficients file for UP192176 filter
-    #define        FILTER_DEFS_FIR_DS_FILE                "FilterData/DS_xs3.dat"            // Coefficients file for DS filter
     #define        FILTER_DEFS_FIR_OS_FILE                "FilterData/OS_xs3.dat"            // Coefficients file for OS filter
 #else
     #define        FILTER_DEFS_FIR_BL_FILE                "FilterData/BL.dat"            // Coefficients file for BL FIR filter
@@ -93,9 +94,9 @@
     #define        FILTER_DEFS_FIR_UP4844_FILE            "FilterData/UP4844.dat"        // Coefficients file for UP4844 filter
     #define        FILTER_DEFS_FIR_UPF_FILE            "FilterData/UPF.dat"        // Coefficients file for UPF filter
     #define        FILTER_DEFS_FIR_UP192176_FILE        "FilterData/UP192176.dat"    // Coefficients file for UP192176 filter
-    #define        FILTER_DEFS_FIR_DS_FILE                "FilterData/DS.dat"            // Coefficients file for DS filter
-        #define        FILTER_DEFS_FIR_OS_FILE                "FilterData/OS.dat"            // Coefficients file for OS filter
+    #define        FILTER_DEFS_FIR_OS_FILE                "FilterData/OS.dat"            // Coefficients file for OS filter
 #endif
+    #define        FILTER_DEFS_FIR_DS_FILE                "FilterData/DS.dat"            // Coefficients file for DS filter
 
     // ADFIR filter number of taps and phases
     #define        FILTER_DEFS_ADFIR_PROTOTYPE_N_TAPS    1920                                                                        // Number of taps of ADFIR filter prototype
@@ -162,7 +163,7 @@
     extern        ADFIRDescriptor_t                    sADFirDescriptor;
     // ADFIR filters coefficients
     extern        int                                    iADFirPrototypeCoefs[FILTER_DEFS_ADFIR_PROTOTYPE_N_TAPS];
-#if defined(__XS3A__)
+#if defined(SRC_USE_VPU)
     extern        int                                    iADFirCoefs[FILTER_DEFS_ADFIR_PHASE_N_TAPS][FILTER_DEFS_ADFIR_N_PHASES + 2];
 #else
     extern        int                                    iADFirCoefs[FILTER_DEFS_ADFIR_N_PHASES + 2][FILTER_DEFS_ADFIR_PHASE_N_TAPS];
