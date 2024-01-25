@@ -2,8 +2,15 @@
 #define _asynchronous_fifo_h__
 
 #include <stdint.h>
+#include <xccompat.h>
 
 #define FREQUENCY_RATIO_EXPONENT     (32)
+
+#ifdef __XC__
+#define UNSAFE unsafe
+#else
+#define UNSAFE
+#endif
 
 /**
  * Data structure that holds the status of an asynchronous FIFO
@@ -25,7 +32,7 @@ typedef struct asynchronous_fifo_t asynchronous_fifo_t;
  *
  * @param   max_fifo_depth      Length of the FIFO, delay when stable will be max_fifo_depth/2
  */
-void asynchronous_fifo_init(asynchronous_fifo_t *state,
+void asynchronous_fifo_init(asynchronous_fifo_t * UNSAFE state,
                             int channel_count,
                             int max_fifo_depth);
 
@@ -41,7 +48,7 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state,
  *
  * @param   fs_output           Input FS ratio, used to pick appropriate Kp, Ki, ideal phase
  */
-void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
+void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t * UNSAFE state,
                                          int fs_input, int fs_output);
 
 /**
@@ -72,7 +79,7 @@ void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
  *                              estimate the expected phase error halfway down
  *                              the FIFO.
  */
-void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t *state,
+void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t * UNSAFE state,
                                     int Kp, int Ki, int ticks_between_samples);
 
 /**
@@ -98,7 +105,7 @@ void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state);
  *
  * @param   state                   ASRC structure to be de-initialised
  */
-void asynchronous_fifo_exit(asynchronous_fifo_t *state);
+void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
 
 /**
  * Function that provides the next sample to the asynchronous FIFO.
@@ -106,7 +113,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
  * This function and the consume function both need a timestamp,
  * which is the time that the last sample was input (this function) or
  * output (``asynchronous_fifo_consume``). The asynchronous FIFO will hand the
- * samples across from producer to consumer through an elastic queue, and run 
+ * samples across from producer to consumer through an elastic queue, and run
  * a PID algorithm to calculate the best way to equalise the input clock relative
  * to the output clock. Therefore, the timestamps
  * have to be measured on either the same clock or two very similar clocks.
@@ -115,7 +122,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
  * clocks from two different chips would require the two chips to share an
  * oscillator, and for them to come out of reset simultaneously.
  *
- * @param   state               ASRC structure to push the sample into 
+ * @param   state               ASRC structure to push the sample into
  *
  * @param   samples             The sample values.
  *
@@ -133,8 +140,8 @@ void asynchronous_fifo_exit(asynchronous_fifo_t *state);
  *          The output is filtered and should be applied directly as a correction factor
  *          eg, multiplied into an ASRC ratio, or multiplied into a PLL timing.
  */
-int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state,
-                                  int32_t *samples,
+int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
+                                  int32_t * UNSAFE samples,
                                   int n,
                                   int32_t timestamp,
                                   int xscope_used);
@@ -152,8 +159,8 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state,
  *                              last sample was output. See
  *                              ``asynchronous_fifo_produce`` for requirements.
  */
-void asynchronous_fifo_consume(asynchronous_fifo_t *state,
-                               int32_t *samples,
+void asynchronous_fifo_consume(asynchronous_fifo_t * UNSAFE state,
+                               int32_t * UNSAFE samples,
                                int32_t timestamp);
 
 
@@ -170,7 +177,7 @@ struct asynchronous_fifo_t {
     int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
     int32_t   Ki;                             /* Ki PID coefficient */
     int32_t   Kp;                             /* Kp PID coefficient */
-    
+
     // Updated on the producer side only
     int       skip_ctr;                       /* Set to indicate initialisation runs */
     int32_t   write_ptr;                      /* Write index in the buffer */
@@ -186,7 +193,7 @@ struct asynchronous_fifo_t {
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
 
     // Updated from both sides
-    uint32_t  *timestamps;                    /* Timestamps of samples */
+    uint32_t  * UNSAFE timestamps;            /* Timestamps of samples */
     int32_t   buffer[0];                      /* Buffer of data */
 };
 
