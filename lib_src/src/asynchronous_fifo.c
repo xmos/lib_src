@@ -12,7 +12,7 @@
 #include "src.h"
 
 
-// TODO: Make fifo offset from N/2 a very small component in PID, 
+// TODO: Make fifo offset from N/2 a very small component in PID,
 
 /**
  * Function that resets the producing side of the ASRC; called on initialisation, and
@@ -111,7 +111,7 @@ void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state) {
 }
 
 int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
-                                  int n, 
+                                  int n,
                                   int32_t timestamp,
                                   int xscope_used) {
     int read_ptr = state->read_ptr;
