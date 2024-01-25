@@ -10,6 +10,7 @@
 
 // ASRC includes
 #include "src.h"
+#include "use_vpu.h"
 
 extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
@@ -177,7 +178,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
             iAlpha      = asrc_ctrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
             i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
-#if defined(__XS3A__)
+#if defined(SRC_USE_VPU)
             iH[2]           = (int)(i64Acc0>>32);
             iH[0]           = 0x40000000;                       // Load H2 with 0.5;
             iH[1]           = iH[0] - iH[2];                        // H1 = 0.5 - 0.5 * alpha * alpha;
@@ -243,7 +244,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
                 piCoefs                 = asrc_ctrl[uj].sADFIRF3Ctrl.piADCoefs;
 
                 // Do FIR
-#if defined(__XS3A__)
+#if defined(SRC_USE_VPU)
                 src_mrhf_adfir_inner_loop_asm_xs3(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
 #else
                 if ((unsigned)piData & 0b0100) src_mrhf_adfir_inner_loop_asm_odd(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
