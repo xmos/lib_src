@@ -1,5 +1,6 @@
 // Copyright 2016-2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+#if defined(__XS3A__)
     .section    .dp.data,"awd",@progbits
     .text
 
@@ -62,3 +63,4 @@ src_mrhf_fir_done2:
     .globl     src_mrhf_fir_inner_loop_asm_xs3.maxchanends
 
 
+#endif
