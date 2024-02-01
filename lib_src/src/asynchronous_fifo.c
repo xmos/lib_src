@@ -126,26 +126,32 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
         asynchronous_fifo_reset_consumer_flags(state);   // Last step - clears reset
     } else if (len >= max_fifo_depth - 2 - n) {
         state->stop_producing = 1;
-    } else if (!state->stop_producing) {
+    } else if (!state->stop_producing && n) {
         for(int j = 0; j < n; j++) {
             register int32_t *ptr asm("r11") = samples;
             asm("vldr %0[0]" :: "r" (ptr));
             asm("vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
-//            memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+            //memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
             samples += channel_count;
             write_ptr = (write_ptr + 1);
             if (write_ptr >= max_fifo_depth) {
                 write_ptr = 0;
             }
         }
+
+        /* Difference between timestamp recorded by consumer and current timestamp */
         state->write_ptr = write_ptr;
         int32_t phase_error = state->timestamps[write_ptr] - timestamp;
+
+        /* Ideal phase error is the middle of the fifo measured in ticks */
         phase_error += state->ideal_phase_error_ticks;
-        // Now that we have a phase error, calculate the proportional error
-        // and use that and the integral error to correct the ASRC factor
+
+        /* Don't try and use timestamps that haven't been recorded yet! */
         if (state->skip_ctr != 0) {
             state->skip_ctr--;
         } else {
+            // Now that we have a phase error, calculate the proportional error
+            // and use that and the integral error to correct the ASRC factor
             int32_t diff_error = phase_error - state->last_phase_error;
 
             state->frequency_ratio +=
