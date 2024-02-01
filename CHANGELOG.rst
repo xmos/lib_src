@@ -5,6 +5,7 @@ UNRELEASED
 ----------
 
   * ADDED:     Support for XCommon CMake build system
+  * ADDED:     Asynchronous FIFO
 
 2.4.0
 -----
