@@ -1,3 +1,6 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
 #include <stdio.h>
@@ -21,7 +24,7 @@ void producer(asynchronous_fifo_t *a) {
     int step = 100000000 * (int64_t) FREQ_Q_VALUE / freq;
     int mod = 100000000 * (int64_t) FREQ_Q_VALUE % freq;
     int mod_acc = 0;
-    
+
     for(int32_t i = 0; i < 48000 * seconds; i++) {
         xscope_int(5, freq);
         now += step;
@@ -48,7 +51,7 @@ void consumer(asynchronous_fifo_t *a) {
     int mod = 100000000 % freq;
     int mod_acc = 0;
     int32_t output_data;
-    
+
     for(int i = 0; i < 48000 * seconds; i++) {
         now += step;
         mod_acc += mod;

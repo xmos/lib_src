@@ -1,3 +1,6 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
 #include <xs1.h>
@@ -229,7 +232,7 @@ void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency,
             if (i == 48008) {
 //                printf("%d %d %d %d\n", t1-t0, t2-t1, t3-t2, t3-t0);
             }
-            
+
             fs_ratio = (((int64_t)ideal_fs_ratio) << 32) + (error * (int64_t) ideal_fs_ratio);
         }
         int fs = fs_ratio >> 32;
@@ -393,7 +396,7 @@ int test_192000_low() {
         PJOB(test_async, (192000, 44100, 0, &e0)),
         PJOB(test_async, (192000, 48000, 0, &e1)),
         PJOB(test_async, (192000, 88200, 0, &e2)), // FAIL - too slow.
-        PJOB(test_async, (192000, 96000, 0, &e3)) 
+        PJOB(test_async, (192000, 96000, 0, &e3))
         );
     return e0 + e1 + e2 + e3;
 }
