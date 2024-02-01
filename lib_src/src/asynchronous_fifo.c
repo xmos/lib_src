@@ -201,7 +201,7 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
     register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
     asm("vldr %0[0]" :: "r" (ptr));
     asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
-#else
+#endif
     if (state->reset) {
         return;
     }
