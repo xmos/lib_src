@@ -131,10 +131,14 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
         state->stop_producing = 1;
     } else if (!state->stop_producing && n) {
         for(int j = 0; j < n; j++) {
+
+#ifdef __XS2A__
+            memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+#else
             register int32_t *ptr asm("r11") = samples;
             asm("vldr %0[0]" :: "r" (ptr));
             asm("vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
-            //memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+#endif
             samples += channel_count;
             write_ptr = (write_ptr + 1);
             if (write_ptr >= max_fifo_depth) {
@@ -191,9 +195,13 @@ void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int
     int channel_count = state->channel_count;
     int copy_mask = state->copy_mask;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
+#ifdef __XS2A__
+    memcpy(samples, state->buffer + read_ptr * channel_count, channel_count * sizeof(int));
+#else
     register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
     asm("vldr %0[0]" :: "r" (ptr));
     asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
+#else
     if (state->reset) {
         return;
     }
