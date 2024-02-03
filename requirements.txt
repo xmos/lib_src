@@ -2,5 +2,6 @@
 # pip_version 23.*
 
 -e ./python
+git+ssh://git@github.com/xmos/xscope_fileio@increase_filename_len
 
 # Files are specified in setup.py

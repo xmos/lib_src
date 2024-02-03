@@ -12,9 +12,14 @@ from scipy.io import wavfile
 import re
 from math import gcd
 from mpmath import mp
+import scipy.io.wavfile
 from scipy.io.wavfile import write as writewav
 from pathlib import Path
 import subprocess
+import sys
+pkg_dir = Path(__file__).parent
+sys.path.append(os.path.join(str(pkg_dir), "../../tests/asrc_test/dut/with_xscope_fileio/python"))
+import run_xcoreai
 
 
 class asrc_util:
@@ -36,13 +41,15 @@ class asrc_util:
         self.ssrc_model = self.build_model_exe("ssrc")
         self.ds3_model = self.build_model_exe("ds3")
         self.os3_model = self.build_model_exe("os3")
+        self.xePath = self.build_model_exe("asrc_dut")
 
-        # definitions of sample ratea
+        # definitions of sample rates
         self.allRates =["16", "32", "44", "48", "88", "96", "176", "192"]
         self.srcRates =["44", "48", "88", "96", "176", "192"] # supported by the asrc and ssrc
         self.factors = {"44":0, "48":1, "88":2, "96":3, "176":4, "192":5} # look up to convert rate to the filter bank id needed by the ASRC
         self.sampleRates = {"16":16000, "32":32000, "44":44100, "48":48000, "88":88200, "96":96000, "176":176400, "192":192000} #convenience to save typing out sample rates in full
         self.sigMax = {"16":7300, "32":14600, "44":18000, "48":21800, "88":40000, "96":42000, "176":80000, "192":85000} # upper limit on input freq for given sample rate. Note that these need to be well within Nyquist point to prevent aliasing.
+
 
         self.numSamples = {} #populated later based on op-rate to ensure sufficient samples for fft
         self.ignoreSamples = 2000 #worst case for high up-sampling
@@ -56,19 +63,30 @@ class asrc_util:
         self.plot_data = []
         self.plot_label = []
         self.plot_text = []
-        self.skip_xsim = True # FIX THIS LATER
+        self.skip_xsim = True
         self.rstFile = ""
 
     def build_model_exe(self, target):
         file_dir = Path(__file__).resolve().parent
-        build_path = file_dir / "../../build"
-        build_path.mkdir(exist_ok=True)
-        subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-        subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
-        bin_path = file_dir / f"{target}_/model"
-        subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
+        if target != "asrc_dut":
+            build_path = file_dir / "../../build"
+            build_path.mkdir(exist_ok=True)
+            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
+            subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
+            bin_path = file_dir / f"{target}_/model"
+            subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
+            return f"{build_path}/tests/{target}_test/{target}_golden"
+        else:
+            build_path = file_dir / "../../build_dut"
+            toolchain = build_path / "../xmos_cmake_toolchain/xs3a.cmake"
+            build_path.mkdir(exist_ok=True)
+            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
+            subprocess.run(f"cmake  -S.. -DCMAKE_TOOLCHAIN_FILE={str(toolchain)}", shell=True, cwd=str(build_path))
+            subprocess.run(f"make test_asrc_xscope_fileio",  shell=True, cwd=str(build_path))
+            return f"{build_path}/tests/asrc_test/test_asrc_xscope_fileio.xe"
 
-        return f"{build_path}/tests/{target}_test/{target}_golden"
+
+
 
 
 
@@ -153,7 +171,7 @@ class asrc_util:
         p = "{}/{}".format(self.path, folder)
         if os.path.isdir(p):
             shutil.rmtree(p)
-        os.mkdir(p)
+        os.makedirs(p, exist_ok=False)
         if self.relative:
             p = p.replace(self.path, ".")
         return p
@@ -292,6 +310,7 @@ class asrc_util:
             "-".join(subtitles) + "-combined" if combine else "-".join(subtitles)
         if combine:
             fig.legend(loc='lower left')
+
         plotFile = "{}/{}.png".format(self.outputFolder, filename)
         plt.savefig(plotFile, dpi=100)
         plt.close()
@@ -336,7 +355,7 @@ class asrc_util:
                 simLog[ipFile[0]]['asrc']=[str(ch0), 0, opRate, str(fDev), output, "c-asrc"]
                 simLog[ipFile[1]]['asrc']=[str(ch1), 1, opRate, str(fDev), output, "c-asrc"]
 
-
+            '''
             # SSRC C Model
             # ------------
             if ipFile[2] in self.srcRates and self.opRate in self.srcRates and fDev==1:
@@ -386,9 +405,46 @@ class asrc_util:
                 opFiles = np.append(opFiles, np.array([[opf[0], opf[1], opRate, "1.0", output, "c-os3"]]), axis=0)
                 os.remove("./input.dat")
                 os.remove("./output.dat")
+            '''
+
+            # ASRC XSIM Model
+            # ---------------
+            if ipFile[2] in self.srcRates and self.opRate in self.srcRates and not self.skip_xsim:
+                xsimFiles = self.run_xsim(ipFiles, opRate, fDev, simLog)
+                opFiles  = np.append(opFiles, xsimFiles, axis=0)
 
 
         return opFiles, simLog
+
+    def run_xsim(self, ipFiles, opRate, fDev, simLog):
+        print("In run_xsim!!!\n\n")
+        if os.path.isfile("./asrc_test.lnk"):
+            os.remove("./asrc_test.lnk")
+        os.link(self.xePath, "./asrc_test.lnk")
+        opFiles=np.empty((0,6), str)
+        for ipFile in ipFiles:
+            ch0 = self.opFileName(ipFile[0], 'x-asrc', fDev, opRate)
+            ch1 = self.opFileName(ipFile[1], 'x-asrc', fDev, opRate)
+
+            '''
+            cmd0 = "cd {}".format(self.path)
+            print(f"cmd0 = {cmd0}")
+            cmd1 = "xsim --args asrc_test.lnk -i {} {} -o {} {} -f {} -g {} -n {} -e {}".format(
+                ipFile[0], ipFile[1], op_file_ch0_bin, op_file_ch1_bin, self.sampleRates[ipFile[2]], self.sampleRates[opRate], self.numSamples[ipFile[2]], fDev)
+
+            print(f"ASRC cmd = {cmd1}")
+            cmd = cmd0 + ";pwd;" + cmd1
+            p = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
+            output, error = p.communicate(input=b'\n')
+            p.wait()
+            '''
+            output = " "
+            run_xcoreai.run(self.xePath, [ipFile[0], ipFile[1]], [ch0, ch1], self.sampleRates[ipFile[2]], self.sampleRates[opRate], fDev, self.numSamples[ipFile[2]])
+
+            opFiles = np.append(opFiles, np.array([[ch0, ch1, opRate, str(fDev), output, "x-asrc"]]), axis=0)
+            simLog[ipFile[0]]['xsim-asrc']=[str(ch0), 0, opRate, str(fDev), output, "x-asrc"]
+            simLog[ipFile[1]]['xsim-asrc']=[str(ch1), 1, opRate, str(fDev), output, "x-asrc"]
+        return opFiles
 
     def scrapeXsimLog(self, data):
         # This bit scrapes the output of xsim and takes the average of all reported CPU utilization

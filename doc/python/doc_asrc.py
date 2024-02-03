@@ -22,7 +22,6 @@ from pathlib import Path
 
 # Setup some basics
 pkg_dir = Path(__file__).parent
-xsim = False
 fftPoints=1024 # note when updating the test tones with "updateSig" this is overwritten
 FERR = 1.0  #this is an additional sample rate deviation applied to the inpt signal to test effect of errors
 
