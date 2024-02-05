@@ -92,7 +92,7 @@ void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t * UNSAFE state,
  *
  * @param   state               Asynchronous FIFO to be initialised
  */
-void asynchronous_fifo_reset_producer(asynchronous_fifo_t *state);
+void asynchronous_fifo_reset_producer(asynchronous_fifo_t * UNSAFE state);
 
 /**
  * Function that that resets the FIFO from the consumer side. Either this function should
@@ -101,7 +101,7 @@ void asynchronous_fifo_reset_producer(asynchronous_fifo_t *state);
  *
  * @param   state               Asynchronous FIFO to be initialised
  */
-void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state);
+void asynchronous_fifo_reset_consumer(asynchronous_fifo_t * UNSAFE state);
 
 /**
  * Function that must be called to deinitalise the asynchronous FIFO
