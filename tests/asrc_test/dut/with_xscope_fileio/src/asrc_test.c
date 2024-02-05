@@ -265,52 +265,56 @@ void dsp_mgr(chanend_t c_dsp[], double fFsRatioDeviation){
         }
         printf("Simulator opening output file, %s\n", pzOutFileName[i]);
     }
-    #define FILEREAD_CHUNK_LEN (4096)
-    int32_t input_block[ASRC_N_CHANNELS][FILEREAD_CHUNK_LEN];
-    int32_t output_block[ASRC_N_CHANNELS][FILEREAD_CHUNK_LEN];
+    #define FILEIO_CHUNK_LEN (4096)
+    int32_t input_block[ASRC_N_CHANNELS][FILEIO_CHUNK_LEN];
+    int32_t output_block[ASRC_N_CHANNELS][FILEIO_CHUNK_LEN];
     int output_sample_count[ASRC_N_CHANNELS] = {0};
 
     // Assuming all files are of the same length here
     int file_size = get_file_size(&InFileDat[0]);
     printf("file_size = %d bytes\n", file_size);
     file_size = file_size / sizeof(int32_t);
-    int block_count = file_size / FILEREAD_CHUNK_LEN;
-    bool small_file = false;
-    if(block_count == 0)
+    int block_count = file_size / FILEIO_CHUNK_LEN;
+
+    int last_frame_size = file_size - (block_count*FILEIO_CHUNK_LEN);
+    if(last_frame_size > 0)
     {
-      block_count = 1;
-      small_file = true;
+      block_count += 1;
     }
 
-    // TODO Handle remaining data at the end
+    // Make sure FILEIO_CHUNK_LEN is a multiple of ASRC_N_IN_SAMPLES
+    if(FILEIO_CHUNK_LEN % ASRC_N_IN_SAMPLES)
+    {
+      printf("ERROR: FILEIO_CHUNK_LEN (%d) not a multiple of ASRC_N_IN_SAMPLES (%d)\n", FILEIO_CHUNK_LEN, ASRC_N_IN_SAMPLES);
+    }
 
-    // Find the number of chunks in the file
-    //while(!iEndOfFile)
     for(int blk=0; blk<block_count; blk++)
     {
-        if(small_file == false)
+        if(iEndOfFile)
         {
+          break;
+        }
+        int samples_in_chunk;
+        if((blk == (block_count - 1)) && (last_frame_size > 0))
+        {
+          samples_in_chunk = last_frame_size;
           for(int ch=0; ch<ASRC_N_CHANNELS; ch++)
           {
-              file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], FILEREAD_CHUNK_LEN * sizeof(int32_t));
+            file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], last_frame_size * sizeof(int32_t));
           }
         }
         else
         {
+          samples_in_chunk = FILEIO_CHUNK_LEN;
           for(int ch=0; ch<ASRC_N_CHANNELS; ch++)
           {
-              file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], file_size * sizeof(int32_t));
+            file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], FILEIO_CHUNK_LEN * sizeof(int32_t));
           }
         }
 
         int sample_count[ASRC_N_CHANNELS] = {0};
 
-        if(iEndOfFile)
-        {
-          break;
-        }
-
-        while(sample_count[0] < FILEREAD_CHUNK_LEN)
+        while(sample_count[0] < samples_in_chunk)
         {
           if(iEndOfFile)
           {
@@ -352,12 +356,12 @@ void dsp_mgr(chanend_t c_dsp[], double fFsRatioDeviation){
               {
                   unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
                   // If space in output_block array
-                  if(output_sample_count[file_index] < FILEREAD_CHUNK_LEN)
+                  if(output_sample_count[file_index] < FILEIO_CHUNK_LEN)
                   {
                     output_block[file_index][output_sample_count[file_index]++] = chan_in_word(c_dsp[j]);
-                    if(output_sample_count[file_index] == FILEREAD_CHUNK_LEN)
+                    if(output_sample_count[file_index] == FILEIO_CHUNK_LEN)
                     {
-                      file_write(&OutFileDat[file_index], (uint8_t*)(&output_block[file_index][0]),  FILEREAD_CHUNK_LEN*sizeof(int32_t));
+                      file_write(&OutFileDat[file_index], (uint8_t*)(&output_block[file_index][0]),  FILEIO_CHUNK_LEN*sizeof(int32_t));
                       output_sample_count[file_index] = 0;
                     }
                   }
