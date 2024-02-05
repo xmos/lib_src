@@ -355,7 +355,6 @@ class asrc_util:
                 simLog[ipFile[0]]['asrc']=[str(ch0), 0, opRate, str(fDev), output, "c-asrc"]
                 simLog[ipFile[1]]['asrc']=[str(ch1), 1, opRate, str(fDev), output, "c-asrc"]
 
-            '''
             # SSRC C Model
             # ------------
             if ipFile[2] in self.srcRates and self.opRate in self.srcRates and fDev==1:
@@ -405,7 +404,6 @@ class asrc_util:
                 opFiles = np.append(opFiles, np.array([[opf[0], opf[1], opRate, "1.0", output, "c-os3"]]), axis=0)
                 os.remove("./input.dat")
                 os.remove("./output.dat")
-            '''
 
             # ASRC XSIM Model
             # ---------------
