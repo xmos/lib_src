@@ -223,13 +223,12 @@ void parse_args()
     return;
 }
 
+#include <stdbool.h>
 #include "fileio.h"
 #include <xcore/channel.h>
 #include <xcore/chanend.h>
 
 const int sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
-
-#define FILEREAD_CHUNK_SIZE (1024)
 
 void dsp_mgr(chanend_t c_dsp[], double fFsRatioDeviation){
 
@@ -266,53 +265,123 @@ void dsp_mgr(chanend_t c_dsp[], double fFsRatioDeviation){
         }
         printf("Simulator opening output file, %s\n", pzOutFileName[i]);
     }
+    #define FILEREAD_CHUNK_LEN (4096)
+    int32_t input_block[ASRC_N_CHANNELS][FILEREAD_CHUNK_LEN];
+    int32_t output_block[ASRC_N_CHANNELS][FILEREAD_CHUNK_LEN];
+    int output_sample_count[ASRC_N_CHANNELS] = {0};
 
-
-    while(!iEndOfFile)
+    // Assuming all files are of the same length here
+    int file_size = get_file_size(&InFileDat[0]);
+    printf("file_size = %d bytes\n", file_size);
+    file_size = file_size / sizeof(int32_t);
+    int block_count = file_size / FILEREAD_CHUNK_LEN;
+    bool small_file = false;
+    if(block_count == 0)
     {
-        for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
-            chan_out_word(c_dsp[j], sr_in_out);
-            chan_out_buf_byte(c_dsp[j], (uint8_t*)&FsRatio, sizeof(FsRatio));
-        }
+      block_count = 1;
+      small_file = true;
+    }
 
-        for(unsigned i = 0; i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE; i++) {
-            int32_t samp;
-            for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
-                unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
-                file_read (&InFileDat[file_index], (uint8_t*)&samp, sizeof(samp));
-                if(count_in >= uiNTotalInSamples)
-                {
-                  iEndOfFile = 1;     //We are at the end of the file
-                  printf("EOF\n");
-                }
-                chan_out_word(c_dsp[j], samp);  //Send the sample
-            }
-        }
-        count_in += ASRC_N_IN_SAMPLES;
+    // TODO Handle remaining data at the end
 
-
-        unsigned n_samps;
-        for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
+    // Find the number of chunks in the file
+    //while(!iEndOfFile)
+    for(int blk=0; blk<block_count; blk++)
+    {
+        if(small_file == false)
         {
-            n_samps = chan_in_word(c_dsp[j]); //Get number of samps to receive
+          for(int ch=0; ch<ASRC_N_CHANNELS; ch++)
+          {
+              file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], FILEREAD_CHUNK_LEN * sizeof(int32_t));
+          }
         }
-
-        for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_INSTANCE; i++)
+        else
         {
-            int samp;
-            for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
-            {
-                unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
-                samp = chan_in_word(c_dsp[j]); //Get samples
-
-                file_write(&OutFileDat[file_index], (uint8_t*)(&samp),  sizeof(samp));
-            }
+          for(int ch=0; ch<ASRC_N_CHANNELS; ch++)
+          {
+              file_read(&InFileDat[ch], (uint8_t*)&input_block[ch][0], file_size * sizeof(int32_t));
+          }
         }
 
-        count_out += n_samps;
+        int sample_count[ASRC_N_CHANNELS] = {0};
+
+        if(iEndOfFile)
+        {
+          break;
+        }
+
+        while(sample_count[0] < FILEREAD_CHUNK_LEN)
+        {
+          if(iEndOfFile)
+          {
+            break;
+          }
+
+          for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
+              chan_out_word(c_dsp[j], sr_in_out);
+              chan_out_buf_byte(c_dsp[j], (uint8_t*)&FsRatio, sizeof(FsRatio));
+          }
+
+          for(unsigned i = 0; i < ASRC_N_IN_SAMPLES * ASRC_CHANNELS_PER_INSTANCE; i++) {
+              int32_t samp;
+              for (unsigned j=0; j<ASRC_N_INSTANCES; j++) {
+                  unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
+                  //file_read (&InFileDat[file_index], (uint8_t*)&samp, sizeof(samp));
+                  samp = input_block[file_index][sample_count[file_index]];
+                  sample_count[file_index] = sample_count[file_index] + 1;
+                  if(count_in >= uiNTotalInSamples)
+                  {
+                    iEndOfFile = 1;     //We are at the end of the file
+                    printf("EOF\n");
+                  }
+                  chan_out_word(c_dsp[j], samp);  //Send the sample
+              }
+          }
+          count_in += ASRC_N_IN_SAMPLES;
+
+
+          unsigned n_samps;
+          for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
+          {
+              n_samps = chan_in_word(c_dsp[j]); //Get number of samps to receive
+          }
+
+          for(unsigned i = 0; i < n_samps * ASRC_CHANNELS_PER_INSTANCE; i++)
+          {
+              for (unsigned j=0; j<ASRC_N_INSTANCES; j++)
+              {
+                  unsigned file_index = (i * ASRC_N_INSTANCES + j) % ASRC_N_CHANNELS;
+                  // If space in output_block array
+                  if(output_sample_count[file_index] < FILEREAD_CHUNK_LEN)
+                  {
+                    output_block[file_index][output_sample_count[file_index]++] = chan_in_word(c_dsp[j]);
+                    if(output_sample_count[file_index] == FILEREAD_CHUNK_LEN)
+                    {
+                      file_write(&OutFileDat[file_index], (uint8_t*)(&output_block[file_index][0]),  FILEREAD_CHUNK_LEN*sizeof(int32_t));
+                      output_sample_count[file_index] = 0;
+                    }
+                  }
+                  else
+                  {
+                    printf("ERROR: Unexpected output_sample_count[%d] %d\n", file_index, output_sample_count[file_index]);
+                    assert(0);
+                  }
+              }
+          }
+          count_out += n_samps;
+        }
 
         //Force a sample rate change at a given count
         //if (count_in >= SAMP_IN_CHANGE_SR) sr_in_out = INPUT_FS_DEFAULT << 16 | INPUT_FS_DEFAULT;
+    }
+
+    for (int file_index=0; file_index < ASRC_N_CHANNELS; file_index++)
+    {
+      // write any remaining samples in the output_block array to file
+      if(output_sample_count[file_index] > 0)
+      {
+        file_write(&OutFileDat[file_index], (uint8_t*)(&output_block[file_index][0]),  output_sample_count[file_index]*sizeof(int32_t));
+      }
     }
 
     printf("DSP manager done - %d output samples produced\n", count_out);
@@ -364,9 +433,9 @@ void dsp_slave(chanend_t c_dsp)
         t2 = get_reference_time();  //Grab time at processing finished (t1 set at end of this loop)
         t_dsp = (t2 - t1);
         int sample_time = 100000000 / sample_rates[sr_in_out >> 16];
-        if (n_samps_in_tot) printf("Process time per chan ticks=%d, Tot samp in count=%d\n",
+        /*if (n_samps_in_tot) printf("Process time per chan ticks=%d, Tot samp in count=%d\n",
             (t_dsp / (ASRC_CHANNELS_PER_INSTANCE * ASRC_N_IN_SAMPLES)),
-            n_samps_in_tot);
+            n_samps_in_tot);*/
         sr_in_out_new = chan_in_word(c_dsp);
         chan_in_buf_byte(c_dsp, (uint8_t*)&FsRatio, sizeof(FsRatio));
 

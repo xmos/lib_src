@@ -63,7 +63,7 @@ class asrc_util:
         self.plot_data = []
         self.plot_label = []
         self.plot_text = []
-        self.skip_xsim = True
+        self.skip_xsim = False
         self.rstFile = ""
 
     def build_model_exe(self, target):
