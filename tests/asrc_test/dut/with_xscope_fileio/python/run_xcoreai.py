@@ -120,7 +120,8 @@ def run(xe, input_files, output_files, input_sample_rate, output_sample_rate, fr
 
     # Remove the input binary files
     for f in input_bin_files:
-        Path.unlink(Path(f))
+        if Path(f).is_file():
+            Path.unlink(Path(f))
 
     return stdout
 
