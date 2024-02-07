@@ -2,6 +2,13 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _SRC_H_
 #define _SRC_H_
+
+#include "src_conf_default.h"
+
+#ifdef __src_conf_h_exists__
+    #include "src_conf.h"
+#endif
+
 #include "src_mrhf_ssrc.h"
 #include "src_mrhf_asrc.h"
 #include "src_ff3_ds3.h"
@@ -11,6 +18,7 @@
 #include "src_poly.h"
 #endif // __XS3A__
 #include <stdint.h>
+#include <string.h>
 
 #if defined(__cplusplus) || defined(__XC__)
 extern "C" {
@@ -31,6 +39,8 @@ typedef enum dither_flag_t {
     OFF = 0,
     ON = 1
 } dither_flag_t;
+
+#include "src_task.h"
 
 /**
  * \addtogroup src_ssrc src_ssrc
