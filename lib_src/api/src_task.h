@@ -18,16 +18,19 @@
 
 fs_code_t sr_to_fscode(unsigned sr);
 
-uint64_t trigger_src(streaming chanend c_src[SRC_N_INSTANCES],
+uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
                                 uint64_t fsRatio,
                                 asynchronous_fifo_t * unsafe a,
                                 int32_t now, int xscope_used, int idealFsRatio);
 
+
 #ifdef __XC__
 void src_task(streaming chanend c[numInstances], int numInstances, int inputSr, int outputSr);
+void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr);
 #else
 void src_task(streaming chanend c[], int numInstances, int inputSr, int outputSr);
+void src_change_freqs(streaming chanend c[], unsigned numInstances, int inputSr, int outputSr);
 #endif
 
 #endif

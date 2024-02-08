@@ -31,8 +31,22 @@ fs_code_t sr_to_fscode(unsigned sr)
     return fsCode;
 }
 
+void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
+{
+    for(int i=0; i < numInstances; i++)
+    unsafe
+    {
+        soutct(c[i], XS1_CT_END);
+        schkct(c[i], XS1_CT_END);
+        c[i] <: (int)sr_to_fscode(inputSr);
+        c[i] <: (int)sr_to_fscode(outputSr);
+        soutct(c[i], XS1_CT_END);
+        schkct(c[i], XS1_CT_END);
+    }
+}
+
 #pragma unsafe arrays
-uint64_t trigger_src(streaming chanend c_src[SRC_N_INSTANCES],
+uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
                                 uint64_t fsRatio, asynchronous_fifo_t * unsafe a, int32_t now, int xscope_used, int idealFsRatio)
 {
@@ -158,8 +172,10 @@ void src_process(streaming chanend c, int instance, int inputFsCode, int outputF
         if(stestct(c))
         {
             sinct(c);
+            soutct(c, XS1_CT_END);
             c :> inputFsCode;
             c :> outputFsCode;
+            sinct(c);
 
             interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
 
@@ -209,7 +225,7 @@ void src_process(streaming chanend c, int instance, int inputFsCode, int outputF
 
 void src_task(streaming chanend c[numInstances], int numInstances, int inputSr, int outputSr)
 {
-    par (int i = SRC_N_INSTANCES ; i < 2*SRC_N_INSTANCES; i++)
+    par(int i = SRC_N_INSTANCES ; i < 2*SRC_N_INSTANCES; i++)
     {
         unsafe
         {
