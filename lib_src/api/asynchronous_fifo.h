@@ -143,7 +143,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *          The output is filtered and should be applied directly as a correction factor
  *          eg, multiplied into an ASRC ratio, or multiplied into a PLL timing.
  */
-int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
+int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
                                   int32_t * UNSAFE samples,
                                   int n,
                                   int32_t timestamp,
@@ -151,9 +151,9 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
 
 
 /**
- * Function that extracts an output sample from the asynchronous FIFO
+ * Function that gets an output sample from the asynchronous FIFO
  *
- * @param   state               ASRC structure to pull a sample out off.
+ * @param   state               ASRC structure to read a sample out off.
  *
  * @param   samples             The array where the frame with output
  *                              samples will be stored.
@@ -162,7 +162,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t * UNSAFE state,
  *                              last sample was output. See
  *                              ``asynchronous_fifo_produce`` for requirements.
  */
-void asynchronous_fifo_consume(asynchronous_fifo_t * UNSAFE state,
+void asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
                                int32_t * UNSAFE samples,
                                int32_t timestamp);
 

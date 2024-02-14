@@ -226,7 +226,7 @@ void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency,
             asm volatile("gettime %0" : "=r" (t2));
             int ts = asrc_timestamp_interpolation(now, &sASRCCtrl[0], interpolation_ticks);
             if (xscope_used) xscope_int(5, fs_ratio >> 32);
-            error = asynchronous_fifo_produce(a, (int32_t *)out_samples, num_samples, ts+OFFSET,
+            error = asynchronous_fifo_producer_put(a, (int32_t *)out_samples, num_samples, ts+OFFSET,
                                               xscope_used);
             asm volatile("gettime %0" : "=r" (t3));
             if (i == 48008) {
@@ -273,7 +273,7 @@ void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-        asynchronous_fifo_consume(a, &output_data, now + OFFSET);
+        asynchronous_fifo_consumer_get(a, &output_data, now + OFFSET);
         if (xscope_used) xscope_int(0, output_data);
         if (i == output_frequency/2) {
             freq = NEGATIVE_DEVIATION(output_frequency);

@@ -113,7 +113,7 @@ void asynchronous_fifo_reset_consumer(asynchronous_fifo_t *state) {
     state->reset = 1;
 }
 
-int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
+int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samples,
                                   int n,
                                   int32_t timestamp,
                                   int xscope_used) {
@@ -188,7 +188,7 @@ int32_t asynchronous_fifo_produce(asynchronous_fifo_t *state, int32_t *samples,
  * operating or not; the consumer will repeatedly get the same sample if
  * the producer fails. The producer side is reset exactly once on reset.
  */
-void asynchronous_fifo_consume(asynchronous_fifo_t *state, int32_t *samples, int32_t timestamp) {
+void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples, int32_t timestamp) {
     int read_ptr = state->read_ptr;
     int write_ptr = state->write_ptr;
     int max_fifo_depth = state->max_fifo_depth;
