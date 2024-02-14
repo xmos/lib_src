@@ -31,6 +31,17 @@ fs_code_t sr_to_fscode(unsigned sr)
     return fsCode;
 }
 
+void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed)
+{
+    float floatRatio = (float)inputSr/(float)outputSr;
+    unsafe
+    {
+        srcState->fsRatio = (uint64_t) (floatRatio * (1LL << 60));
+        srcState->idealFsRatio = (srcState->fsRatio + (1<<31)) >> 32;
+        srcState->xscopeUsed = xscopeUsed;
+    }
+}
+
 void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
 {
     for(int i=0; i < numInstances; i++)
@@ -45,10 +56,13 @@ void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, 
     }
 }
 
+/* Send/receive samples from the SRC workers */
 #pragma unsafe arrays
-uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
+void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                uint64_t fsRatio, asynchronous_fifo_t * unsafe a, int32_t now, int xscope_used, int idealFsRatio, src_task_t state)
+                                asynchronous_fifo_t * unsafe a,
+                                int32_t now,
+                                src_task_t * unsafe srcState)
 {
     int32_t error = 0;
     int nSamps = 0;
@@ -57,7 +71,10 @@ uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
 #pragma loop unroll
     for (int i=0; i<SRC_N_INSTANCES; i++)
     {
-        c_src[i] <: (uint64_t) fsRatio;
+        unsafe
+        {
+            c_src[i] <: (uint64_t) srcState->fsRatio;
+        }
 
 #pragma loop unroll
         for (int j=0; j<SRC_N_IN_SAMPLES; j++)
@@ -96,12 +113,13 @@ uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
         }
     }
 
-    error = asynchronous_fifo_produce(a, samples, nSamps, timestamp, xscope_used);
+    unsafe
+    {
+        error = asynchronous_fifo_producer_put(a, samples, nSamps, timestamp, srcState->xscopeUsed);
 
-    /* Produce fsRatio from error */
-    fsRatio = (((int64_t)idealFsRatio) << 32) + (error * (int64_t) idealFsRatio);
-
-    return fsRatio;
+        /* Produce fsRatio from error */
+        srcState->fsRatio = (((int64_t)srcState->idealFsRatio) << 32) + (error * (int64_t) srcState->idealFsRatio);
+    }
 }
 
 static int interpolation_ticks_2D[6][6] =

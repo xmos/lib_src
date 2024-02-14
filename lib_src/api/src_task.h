@@ -20,16 +20,18 @@ typedef struct src_task_t
 {
     uint64_t fsRatio;
     int32_t idealFsRatio;
+    int32_t xscopeUsed;
 } src_task_t;
 
+void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed);
 
 fs_code_t sr_to_fscode(unsigned sr);
 
-uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
+void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                uint64_t fsRatio,
                                 asynchronous_fifo_t * unsafe a,
-                                int32_t now, int xscope_used, int idealFsRatio, src_task_t state);
+                                int32_t now,
+                                src_task_t * unsafe srcState);
 
 
 #ifdef __XC__
