@@ -48,7 +48,7 @@ void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, 
 #pragma unsafe arrays
 uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                uint64_t fsRatio, asynchronous_fifo_t * unsafe a, int32_t now, int xscope_used, int idealFsRatio)
+                                uint64_t fsRatio, asynchronous_fifo_t * unsafe a, int32_t now, int xscope_used, int idealFsRatio, src_task_t state)
 {
     int32_t error = 0;
     int nSamps = 0;

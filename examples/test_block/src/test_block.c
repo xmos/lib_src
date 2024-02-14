@@ -35,7 +35,7 @@ void producer(asynchronous_fifo_t *a) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-        int32_t error = asynchronous_fifo_produce(a, &i, now+OFFSET, 1);
+        int32_t error = asynchronous_fifo_producer_put(a, &i, 1, now+OFFSET, 1);
         freq = 48012 * FREQ_Q_VALUE - ((error * 48012LL * FREQ_Q_VALUE + 0x80000000LL) >> 32) ;
         step = 100000000 * (int64_t) FREQ_Q_VALUE / freq;
         mod = 100000000 * (int64_t) FREQ_Q_VALUE % freq;
@@ -61,8 +61,7 @@ void consumer(asynchronous_fifo_t *a) {
         }
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
-//        printchar('*');
-        asynchronous_fifo_consume(a, &output_data, now + OFFSET);
+        asynchronous_fifo_consumer_get(a, &output_data, now + OFFSET);
         xscope_int(0, output_data);
         if (i == 2205) {
             freq = 47993;
@@ -79,8 +78,8 @@ int main(void) {
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, 1)];
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
-    asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH,
-                           100000000/48000, 1);
+    asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH);
+
     PAR_JOBS(
         PJOB(producer, (asynchronous_fifo_state)),
         PJOB(consumer, (asynchronous_fifo_state))

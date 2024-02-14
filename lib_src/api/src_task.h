@@ -16,13 +16,20 @@
 #define unsafe
 #endif
 
+typedef struct src_task_t
+{
+    uint64_t fsRatio;
+    int32_t idealFsRatio;
+} src_task_t;
+
+
 fs_code_t sr_to_fscode(unsigned sr);
 
 uint64_t src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
                                 uint64_t fsRatio,
                                 asynchronous_fifo_t * unsafe a,
-                                int32_t now, int xscope_used, int idealFsRatio);
+                                int32_t now, int xscope_used, int idealFsRatio, src_task_t state);
 
 
 #ifdef __XC__
