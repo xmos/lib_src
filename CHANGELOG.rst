@@ -1,12 +1,12 @@
 lib_src change log
 ==================
 
-UNRELEASED
-----------
+2.5.0
+-----
 
-  * ADDED:     Support for XCommon CMake build system
-  * FIXED:     Function pointer annotation avoid stack corruption when
-               using multiple instances of SSRC or ASRC.
+  * ADDED: Support for XCommon CMake build system
+  * FIXED: Function pointer annotation avoid stack corruption when using
+    multiple instances of SSRC or ASRC.
 
 2.4.0
 -----
