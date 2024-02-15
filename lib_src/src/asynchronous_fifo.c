@@ -165,15 +165,19 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
                 (diff_error  * (int64_t) (state->Kp / n)) +  // TODO: make this lookup table
                 (phase_error * (int64_t) state->Ki);
             if (xscope_used) {
+#if defined(ASYNC_FIFO_XSCOPE_INSTRUMENTATION)            
                 xscope_int(1, phase_error);
                 xscope_int(2, diff_error);
+#endif
             }
         }
         state->last_phase_error = phase_error;
     }
     if (xscope_used) {
+#if defined(ASYNC_FIFO_XSCOPE_INSTRUMENTATION)            
         xscope_int(3, len);
         xscope_int(4, state->frequency_ratio >> K_SHIFT);
+#endif
     }
     return (state->frequency_ratio + (1<<(K_SHIFT-1))) >> K_SHIFT;
 }
