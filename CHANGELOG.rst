@@ -11,7 +11,7 @@ lib_src change log
   * Changes to dependencies:
 
     - lib_logging: Removed dependency
-    
+
     - lib_xassert: Removed dependency
 
 2.4.0
