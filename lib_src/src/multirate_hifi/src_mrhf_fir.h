@@ -211,7 +211,7 @@
             unsigned int                            uiNOutSamples;    // Number of output samples produced
             unsigned int                            uiOutStep;        // Step between output data samples
 
-__attribute__((fptrgroup("G1")))
+__attribute__((fptrgroup("MRHF_G1")))
             FIRReturnCodes_t                         (*pvProc)(int *);// Processing function address
 
             int*                                    piDelayB;        // Pointer to delay line base

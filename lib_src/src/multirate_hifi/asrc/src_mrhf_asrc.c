@@ -487,7 +487,7 @@ ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
     pasrc_ctrl->sFIRF1Ctrl.piIn            = pasrc_ctrl->piIn;
 
     // F1 is always enabled, so call F1
-    __attribute__((fptrgroup("G1")))
+    __attribute__((fptrgroup("MRHF_G1")))
     FIRReturnCodes_t ret = pasrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF1Ctrl);
     if(ret != FIR_NO_ERROR)
         return ASRC_ERROR; 
@@ -496,7 +496,7 @@ ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
     if(pasrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
     {
         // F2 is enabled, so call F2
-        __attribute__((fptrgroup("G1")))
+        __attribute__((fptrgroup("MRHF_G1")))
         FIRReturnCodes_t ret = pasrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF2Ctrl);
         if(ret != FIR_NO_ERROR)
             return ASRC_ERROR; 
