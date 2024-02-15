@@ -8,6 +8,12 @@ lib_src change log
   * FIXED: Function pointer annotation avoid stack corruption when using
     multiple instances of SSRC or ASRC.
 
+  * Changes to dependencies:
+
+    - lib_logging: Removed dependency
+    
+    - lib_xassert: Removed dependency
+
 2.4.0
 -----
 
