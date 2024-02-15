@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // ===========================================================================
 // ===========================================================================
@@ -204,6 +204,7 @@ FIRReturnCodes_t                FIR_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in over-sample by 2 mode            //
 // ==================================================================== //
+ __attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -295,6 +296,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in asynchronous mode                //
 // ==================================================================== //
+__attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -351,6 +353,7 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in down-sample by 2 mode            //
 // ==================================================================== //
+__attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
