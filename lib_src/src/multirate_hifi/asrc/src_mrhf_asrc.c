@@ -469,6 +469,7 @@ ASRCReturnCodes_t                ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
 }
 
 
+
 // ==================================================================== //
 // Function:        ASRC_proc_F1_F2                                        //
 // Arguments:        asrc_ctrl_t     *pasrc_ctrl: Ctrl strct.                //
@@ -486,15 +487,19 @@ ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
     pasrc_ctrl->sFIRF1Ctrl.piIn            = pasrc_ctrl->piIn;
 
     // F1 is always enabled, so call F1
-    if(pasrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
-        return ASRC_ERROR; //Notice blatant cast to int * - works around no FP support in XC
+    __attribute__((fptrgroup("G1")))
+    FIRReturnCodes_t ret = pasrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF1Ctrl);
+    if(ret != FIR_NO_ERROR)
+        return ASRC_ERROR; 
 
     // Check if F2 is enabled
     if(pasrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
     {
         // F2 is enabled, so call F2
-        if(pasrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
-            return ASRC_ERROR;  //Notice blatant cast to int * - works around no FP support in XC
+        __attribute__((fptrgroup("G1")))
+        FIRReturnCodes_t ret = pasrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pasrc_ctrl->sFIRF2Ctrl);
+        if(ret != FIR_NO_ERROR)
+            return ASRC_ERROR; 
 
     }
 

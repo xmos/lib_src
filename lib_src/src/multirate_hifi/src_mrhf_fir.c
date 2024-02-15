@@ -204,6 +204,7 @@ FIRReturnCodes_t                FIR_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in over-sample by 2 mode            //
 // ==================================================================== //
+ __attribute__((fptrgroup("G1")))
 FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -295,6 +296,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in asynchronous mode                //
 // ==================================================================== //
+__attribute__((fptrgroup("G1")))
 FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -351,6 +353,7 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in down-sample by 2 mode            //
 // ==================================================================== //
+__attribute__((fptrgroup("G1")))
 FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;

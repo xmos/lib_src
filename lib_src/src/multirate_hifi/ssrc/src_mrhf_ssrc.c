@@ -393,16 +393,20 @@ SSRCReturnCodes_t                SSRC_proc_F1_F2(ssrc_ctrl_t* pssrc_ctrl)
     }
 
     // F1 is enabled, so call F1
-    if(pssrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
-        return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
+    __attribute__((fptrgroup("G1")))
+    FIRReturnCodes_t ret = pssrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF1Ctrl);
+    if(ret != FIR_NO_ERROR)
+        return SSRC_ERROR;
 
 
     // Check if F2 is enabled
     if(pssrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
     {
         // F2 is enabled, so call F2
-        if(pssrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
-            return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
+        __attribute__((fptrgroup("G1")))
+        FIRReturnCodes_t ret = pssrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF2Ctrl);
+        if(ret != FIR_NO_ERROR)
+            return SSRC_ERROR;
     }
 
     return SSRC_NO_ERROR;
