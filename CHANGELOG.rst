@@ -5,6 +5,8 @@ UNRELEASED
 ----------
 
   * ADDED:     Support for XCommon CMake build system
+  * FIXED:     Function pointer annotation avoid stack corruption when
+               using multiple instances of SSRC or ASRC.
 
 2.4.0
 -----
