@@ -23,7 +23,6 @@ typedef struct src_task_t
     int32_t xscopeUsed;
 } src_task_t;
 
-void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed);
 
 fs_code_t sr_to_fscode(unsigned sr);
 
@@ -35,11 +34,13 @@ void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
 
 
 #ifdef __XC__
-void src_task(streaming chanend c[numInstances], int numInstances, int inputSr, int outputSr);
-void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr);
+void src_task(streaming chanend c[numInstances], unsigned  numInstances, int i, int o);
+void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed, streaming chanend c[numInstances], unsigned numInstances);
+void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr);
 #else
-void src_task(streaming chanend c[], int numInstances, int inputSr, int outputSr);
-void src_change_freqs(streaming chanend c[], unsigned numInstances, int inputSr, int outputSr);
+void src_task(streaming chanend c[], unsigned numInstances, int i, int o);
+void src_change_worker_freqs(streaming chanend c[], unsigned numInstances, int inputSr, int outputSr);
+void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed, streaming chanend c[], unsigned numInstances);
 #endif
 
 #endif

@@ -1,11 +1,19 @@
 lib_src change log
 ==================
 
-UNRELEASED
-----------
+2.5.0
+-----
 
-  * ADDED:     Support for XCommon CMake build system
-  * ADDED:     Asynchronous FIFO
+  * ADDED:  Support for XCommon CMake build system
+  * ADDED:  Asynchronous FIFO
+  * RESOLVED:  Function pointer annotation avoid stack corruption when using
+    multiple instances of SSRC or ASRC.
+
+  * Changes to dependencies:
+
+    - lib_logging: Removed dependency
+
+    - lib_xassert: Removed dependency
 
 2.4.0
 -----

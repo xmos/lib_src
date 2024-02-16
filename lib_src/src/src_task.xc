@@ -31,18 +31,7 @@ fs_code_t sr_to_fscode(unsigned sr)
     return fsCode;
 }
 
-void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed)
-{
-    float floatRatio = (float)inputSr/(float)outputSr;
-    unsafe
-    {
-        srcState->fsRatio = (uint64_t) (floatRatio * (1LL << 60));
-        srcState->idealFsRatio = (srcState->fsRatio + (1<<31)) >> 32;
-        srcState->xscopeUsed = xscopeUsed;
-    }
-}
-
-void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
+void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
 {
     for(int i=0; i < numInstances; i++)
     unsafe
@@ -55,6 +44,21 @@ void src_change_freqs(streaming chanend c[numInstances], unsigned numInstances, 
         schkct(c[i], XS1_CT_END);
     }
 }
+
+
+void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed, streaming chanend c[numInstances], unsigned numInstances)
+{
+    float floatRatio = (float)inputSr/(float)outputSr;
+    unsafe
+    {
+        srcState->fsRatio = (uint64_t) (floatRatio * (1LL << 60));
+        srcState->idealFsRatio = (srcState->fsRatio + (1<<31)) >> 32;
+        srcState->xscopeUsed = xscopeUsed;
+    }
+
+    src_change_worker_freqs(c, numInstances, inputSr, outputSr);
+}
+
 
 /* Send/receive samples from the SRC workers */
 #pragma unsafe arrays
@@ -199,6 +203,9 @@ void src_process(streaming chanend c, int instance, int inputFsCode, int outputF
 
             fsRatio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
 
+            //printintln(inputFsCode);
+            //printintln(outputFsCode);
+            //printstrln("----");
             /* Handshake back when init complete */
             soutct(c, XS1_CT_END);
             continue;
@@ -241,7 +248,7 @@ void src_process(streaming chanend c, int instance, int inputFsCode, int outputF
     }
 }
 
-void src_task(streaming chanend c[numInstances], int numInstances, int inputSr, int outputSr)
+void src_task(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
 {
     par(int i = SRC_N_INSTANCES ; i < 2*SRC_N_INSTANCES; i++)
     {
