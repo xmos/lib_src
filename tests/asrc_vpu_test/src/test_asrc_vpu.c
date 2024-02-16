@@ -6,9 +6,6 @@
 #include <print.h>
 #include <platform.h>
 #include <xscope.h>
-#include "asynchronous_fifo.h"
-#include "check_freq.h"
-#include "asrc_timestamp_interpolation.h"
 
 #include <string.h>
 
@@ -34,41 +31,6 @@ int fs_code(int frequency) {
     }
 }
 
-int base_frequency(int frequency) {
-    if(frequency == 44100) {
-        return 44100;
-    } else if(frequency == 48000) {
-        return 48000;
-    } else if(frequency == 88200) {
-        return 44100;
-    } else if(frequency == 96000) {
-        return 48000;
-    } else if(frequency == 176400) {
-        return 44100;
-    } else if(frequency == 192000) {
-        return 48000;
-    } else {
-        exit(1);
-    }
-}
-
-int base_frequency_multiplier(int frequency) {
-    if(frequency == 44100) {
-        return 1;
-    } else if(frequency == 48000) {
-        return 1;
-    } else if(frequency == 88200) {
-        return 2;
-    } else if(frequency == 96000) {
-        return 2;
-    } else if(frequency == 176400) {
-        return 4;
-    } else if(frequency == 192000) {
-        return 4;
-    } else {
-        exit(1);
-    }
-}
 
 #define     SRC_N_CHANNELS                (1)   // Total number of audio channels to be processed by SRC (minimum 1)
 #define     SRC_N_INSTANCES               (1)   // Number of instances (each usually run a logical core) used to process audio (minimum 1)
@@ -86,31 +48,6 @@ int base_frequency_multiplier(int frequency) {
 #define ASRC_N_CHANNELS                   (SRC_CHANNELS_PER_INSTANCE) /* Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h */
 
 
-#define POSITIVE_DEVIATION(F, dev)    ((F) + ((F)*dev)/48000)
-#define NEGATIVE_DEVIATION(F, dev)    ((F) + ((F)*dev)/48000)
-
-extern int async_resets;
-
-DECLARE_JOB(producer,   (asynchronous_fifo_t *, int, int, int, int *, int, int));
-DECLARE_JOB(consumer,   (asynchronous_fifo_t *, int, int, int *, int, int));
-DECLARE_JOB(test_async, (int, int, int, int *, int, int));
-
-#define seconds 10
-#define OFFSET 0 // 0x70000000
-
-int32_t sine11[11] = {
-    0,
-    9070447,
-    15261092,
-    16606448,
-    12679373,
-    4726687,
-    -4726687,
-    -12679373,
-    -16606448,
-    -15261092,
-    -9070447,
-};
 
 int32_t sine_wave[16] = {
     0,
@@ -154,360 +91,6 @@ int32_t sine2_wave[19] = {
 };
 
 
-static int interpolation_ticks_2D[6][6] = {
-    {  2268, 2268, 2268, 2268, 2268, 2268},
-    {  2083, 2083, 2083, 2083, 2083, 2083},
-    {  2268, 2268, 1134, 1134, 1134, 1134},
-    {  2083, 2083, 1042, 1042, 1042, 1042},
-    {  2268, 2268, 1134, 1134,  567,  567},
-    {  2083, 2083, 1042, 1042,  521,  521}
-};
-
-void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int xscope_used, int *errors, int pos_deviation, int neg_deviation) {
-    int interpolation_ticks = interpolation_ticks_2D[fs_code(input_frequency)][fs_code(output_frequency)];
-    asrc_state_t sASRCState[SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
-    int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES * 100]; // Buffer between filter stages
-    asrc_ctrl_t sASRCCtrl[SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
-    asrc_adfir_coefs_t asrc_adfir_coefs;                                                  // Adaptive filter coefficients
-
-    uint64_t fs_ratio = 0;
-    int ideal_fs_ratio = 0;
-
-    int freq = POSITIVE_DEVIATION(input_frequency, pos_deviation)/4;
-    int step = 100000000 / freq;
-    int mod  = 100000000 % freq;
-    int mod_acc = 0;
-    int sine_cnt = 0;
-
-    int inputFsCode = fs_code(input_frequency);
-    int outputFsCode = fs_code(output_frequency);
-
-    for(int ui = 0; ui < SRC_CHANNELS_PER_INSTANCE; ui++)
-    {
-            // Set state, stack and coefs into ctrl structure
-            sASRCCtrl[ui].psState                   = &sASRCState[ui];
-            sASRCCtrl[ui].piStack                   = iASRCStack[ui];
-            sASRCCtrl[ui].piADCoefs                 = asrc_adfir_coefs.iASRCADFIRCoefs;
-    }
-
-    fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
-    ideal_fs_ratio = (fs_ratio + (1<<31)) >> 32;
-
-    int in_samples[4];
-    int out_samples[25];
-    int freq1 = NEGATIVE_DEVIATION(output_frequency, neg_deviation);
-    int freq2 = (POSITIVE_DEVIATION(input_frequency, pos_deviation)/4)*4;
-    int expected_ratio = ideal_fs_ratio * (int64_t) freq2 / freq1 * output_frequency / input_frequency;
-    int expected_ratio_high = expected_ratio * 1000005LL/1000000;
-    int expected_ratio_low  = expected_ratio *  999995LL/1000000;
-    hwtimer_t tmr = hwtimer_alloc();
-    uint64_t now = hwtimer_get_time(tmr);
-    int start = now;
-    int good_error_count = 0;
-    int stable_time = now;
-    int32_t error;
-
-    int t0, t1, t2, t3;
-    for(int32_t i = 0; i < input_frequency * seconds; i+=4) {
-        now += step;
-        mod_acc += mod;
-        if (mod_acc >= freq) {
-            mod_acc -= freq;
-            now++;
-        }
-        for(int j = 0; j < 4; j++) {
-            in_samples[j] = sine_wave[sine_cnt];
-            sine_cnt++;
-            if (sine_cnt == 16) sine_cnt = 0;
-        }
-        asm volatile("gettime %0" : "=r" (t0));
-        hwtimer_set_trigger_time(tmr, now);
-        (void) hwtimer_get_time(tmr);
-        asm volatile("gettime %0" : "=r" (t1));
-        int num_samples = asrc_process(in_samples, out_samples, fs_ratio, sASRCCtrl);
-        if (num_samples) {
-            asm volatile("gettime %0" : "=r" (t2));
-            int ts = asrc_timestamp_interpolation(now, &sASRCCtrl[0], interpolation_ticks);
-            if (xscope_used) xscope_int(5, fs_ratio >> 32);
-            error = asynchronous_fifo_produce(a, (int32_t *)out_samples, num_samples, ts+OFFSET,
-                                              xscope_used);
-            asm volatile("gettime %0" : "=r" (t3));
-            if (i == 48008) {
-//                printf("%d %d %d %d\n", t1-t0, t2-t1, t3-t2, t3-t0);
-            }
-            
-            fs_ratio = (((int64_t)ideal_fs_ratio) << 32) + (error * (int64_t) ideal_fs_ratio);
-        }
-        int fs = fs_ratio >> 32;
-        if (fs > expected_ratio_low && fs < expected_ratio_high) {
-            good_error_count++;
-        } else {
-            stable_time = now;
-            good_error_count = 0;
-        }
-    }
-    hwtimer_free(tmr);
-    int ms = (stable_time - start)/100000;
-    if (ms > 3500 && ms < 5400) {
-        *errors = 0;
-    } else {
-        printf("Failure: ratio %08x low %08x high %08x\n", (int)(fs_ratio >> 32), expected_ratio_low, expected_ratio_high);
-        printf("         stable counter %d from %d ms input %6d output %6d total resets %d\n",
-               good_error_count, ms, input_frequency, output_frequency, async_resets);
-        *errors = 1;
-    }
-}
-
-void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used, int *limits, int pos_deviation, int neg_deviation) {
-    hwtimer_t tmr = hwtimer_alloc();
-    uint64_t now = hwtimer_get_time(tmr);
-    int freq = POSITIVE_DEVIATION(output_frequency, pos_deviation);
-    int step = 100000000 / freq;
-    int mod = 100000000 % freq;
-    int mod_acc = 0;
-    int32_t output_data;
-    int check_array[1<<(LOG_FFT_BINS+1)];
-    int check_n = 0;
-
-    for(int i = 0; i < output_frequency * seconds; i++) {
-        now += step;
-        mod_acc += mod;
-        if (mod_acc >= freq) {
-            mod_acc -= freq;
-            now++;
-        }
-        hwtimer_set_trigger_time(tmr, now);
-        (void) hwtimer_get_time(tmr);
-        asynchronous_fifo_consume(a, &output_data, now + OFFSET);
-        if (xscope_used) xscope_int(0, output_data);
-        if (i == output_frequency/2) {
-            freq = NEGATIVE_DEVIATION(output_frequency, neg_deviation);
-            step = 100000000 / freq;
-            mod = 100000000 % freq;
-        }
-        if (i < (output_frequency * seconds)-4000) {
-            check_n = check_freq(check_array, output_data, check_n, limits, i > 4000);
-        }
-    }
-    hwtimer_free(tmr);
-}
-
-
-int energies[6][6][(1<<(LOG_FFT_BINS-1))+1];
-int acceptable_energy_limits[6][6][(1<<(LOG_FFT_BINS-1))+1] =
-{
-    {
-        { 5, 5, 7,30,31,30, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {19,20,25,31,31,28,21,18,15,14,12,11,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 7,29,31,30, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {24,30,31,29,20,17,14,13,11,10, 9, 8, 7, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {31,31,29, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {31,31,29,19,15,13,11,10, 8, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,},
-    },{
-        {17,18,21,28,31,31,25,20,17,15,13,12,11,10, 9, 8, 7, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 5, 5, 8,29,31,30, 8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {22,29,31,30,22,18,15,13,12,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 8,29,31,30, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {31,32,30,20,16,14,12,10, 9, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {31,31,30, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-    },{
-        { 7, 7, 7, 7, 7, 7,10,30,32,30,10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {13,13,14,16,18,21,28,31,31,25,20,17,15,13,12,10, 9, 8, 8, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 5, 5, 8,29,31,30, 8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {19,20,25,31,31,28,21,18,15,14,12,11,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 8,29,31,30, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {24,30,31,29,20,17,14,13,11,10, 9, 8, 7, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-    },{
-        {11,11,12,13,14,16,19,24,31,31,28,21,18,15,13,12,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 7, 7, 7, 7, 7, 7,10,30,32,30,10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {17,18,21,28,31,31,25,20,17,15,13,12,11,10, 9, 8, 7, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 5, 5, 8,29,31,30, 8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        {22,29,31,30,22,18,15,13,12,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 8,29,31,30, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-    },{
-        { 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8,12,30,31,30,12, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        { 6, 6, 7, 7, 8, 8, 9,10,11,13,14,16,19,24,31,31,28,21,18,15,13,12,10, 9, 8, 8, 7, 6, 6, 5, 5, 5, 5,},
-        { 7, 7, 7, 7, 7, 7,10,30,32,30,10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {13,13,14,16,18,21,28,31,31,25,20,17,15,13,12,10, 9, 8, 8, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 7, 7, 8,30,32,30, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {19,20,25,31,31,28,21,18,15,14,12,11,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-    },{
-        { 5, 5, 5, 6, 6, 7, 7, 8, 9,10,11,12,14,15,18,21,27,31,31,26,20,17,15,13,12,11,10, 9, 8, 8, 7, 7, 7,},
-        { 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8,12,30,31,30,12, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {11,11,12,13,14,16,19,24,31,31,28,21,18,15,13,12,10, 9, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 7, 7, 7, 7, 7, 7,10,30,32,30,10, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-        {17,18,21,28,31,31,25,20,17,15,13,12,11,10, 9, 8, 7, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,},
-        { 7, 7, 8,30,32,30, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,},
-    }
-};
-
-void clear_energies() {
-    memset(energies, 0, sizeof(energies));
-}
-
-int verify_energy_limits() {
-    int errors = 0;
-    for(int i = 0; i < 6; i++) {
-        for(int j = 0; j < 6; j++) {
-            int faulty_bin = 0;
-            for(int b = 0; b <= (1<<(LOG_FFT_BINS-1)); b++) {
-                if (energies[i][j][b] > acceptable_energy_limits[i][j][b]) {
-                    faulty_bin = 1;
-                    errors++;
-                }
-            }
-            if (faulty_bin) {
-                printf("Energy limit exceeded, speed code %d, %d\n", i, j);
-                for(int b = 0; b <= (1<<(LOG_FFT_BINS-1)); b++) {
-                    printf("  Bin %d energy %2d acceptable %2d%s\n", b,
-                           energies[i][j][b], acceptable_energy_limits[i][j][b],
-                           energies[i][j][b] > acceptable_energy_limits[i][j][b] ? " Failed" : "");
-                }
-            }
-            if (0) { //  Print acceptable energies table
-                printf("  {");
-                for(int b = 0; b <= (1<<(LOG_FFT_BINS-1)); b++) {
-                    printf("%2d,", energies[i][j][b]);
-                }
-                printf("},\n");
-            }
-        }
-    }
-    return errors;
-}
-
-#define FIFO_LENGTH   100
-
-void test_async(int input_frequency, int output_frequency, int xscope_used,
-                int *errors, int pos_deviation, int neg_deviation) {
-    int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, 1)];
-    asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
-
-    *errors = 1;
-    asynchronous_fifo_init(asynchronous_fifo_state, 1, FIFO_LENGTH);
-    asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_state,
-                                        fs_code(input_frequency),
-                                        fs_code(output_frequency));
-
-    PAR_JOBS(
-        PJOB(producer, (asynchronous_fifo_state, input_frequency,
-                        output_frequency, xscope_used, errors,
-                        pos_deviation, neg_deviation)),
-        PJOB(consumer, (asynchronous_fifo_state, output_frequency, xscope_used,
-                        energies[fs_code(input_frequency)][fs_code(output_frequency)],
-                        pos_deviation, neg_deviation))
-        );
-    asynchronous_fifo_exit(asynchronous_fifo_state);
-
-}
-
-int test_44100_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 44100 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (44100, 44100, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 48000, 0, &e1, pos_deviation, neg_deviation)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (44100, 88200, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 96000, 0, &e3, pos_deviation, neg_deviation)) // OK  4 sec or so.
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_48000_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 48000 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (48000, 44100, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 48000, 0, &e1, pos_deviation, neg_deviation)), // OK  4.16 s stable slight overshoot
-        PJOB(test_async, (48000, 88200, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 96000, 0, &e3, pos_deviation, neg_deviation)) // OK  4.16 s stable
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_4xx00_high(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 44100/48000 high pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (44100, 176400, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so.
-        PJOB(test_async, (44100, 192000, 0, &e3, pos_deviation, neg_deviation)), // OK  4 sec or so.
-        PJOB(test_async, (48000, 176400, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so
-        PJOB(test_async, (48000, 192000, 0, &e1, pos_deviation, neg_deviation)) // OK  4.16 s stable
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_88200_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 88200 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (88200, 44100, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so
-        PJOB(test_async, (88200, 48000, 0, &e1, pos_deviation, neg_deviation)), // OK, 4 sec or so. Slight overshoot, phase error not zero at the end?
-        PJOB(test_async, (88200, 88200, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (88200, 96000, 0, &e3, pos_deviation, neg_deviation))  // OK  4 sec or so. Slight overshoot
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_96000_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 96000 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (96000, 44100, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so. Non zero phase difference
-        PJOB(test_async, (96000, 48000, 0, &e1, pos_deviation, neg_deviation)), // OK  4.16 s stable slight overshoot
-        PJOB(test_async, (96000, 88200, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so. Phase error not zero
-        PJOB(test_async, (96000, 96000, 0, &e3, pos_deviation, neg_deviation)) // OK  4.14 s stable
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_9xx00_high(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 44100/48000 high pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (88200, 176400, 0, &e2, pos_deviation, neg_deviation)), // OK, 4 sec or so. Slight overshoot
-        PJOB(test_async, (88200, 192000, 0, &e3, pos_deviation, neg_deviation)), // OK  4 sec or so. Slight overshoot
-        PJOB(test_async, (96000, 176400, 0, &e0, pos_deviation, neg_deviation)), // OK, 4 sec or so. Phase error not zero
-        PJOB(test_async, (96000, 192000, 0, &e1, pos_deviation, neg_deviation)) // OK  4.14 s stable
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_176400_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 176400 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (176400, 44100, 0, &e0, pos_deviation, neg_deviation)),
-        PJOB(test_async, (176400, 48000, 0, &e1, pos_deviation, neg_deviation)),
-        PJOB(test_async, (176400, 88200, 0, &e2, pos_deviation, neg_deviation)),
-        PJOB(test_async, (176400, 96000, 0, &e3, pos_deviation, neg_deviation)) // phase != 0?
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_192000_low(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 192000 low pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (192000, 44100, 0, &e0, pos_deviation, neg_deviation)),
-        PJOB(test_async, (192000, 48000, 0, &e1, pos_deviation, neg_deviation)),
-        PJOB(test_async, (192000, 88200, 0, &e2, pos_deviation, neg_deviation)),
-        PJOB(test_async, (192000, 96000, 0, &e3, pos_deviation, neg_deviation)) 
-        );
-    return e0 + e1 + e2 + e3;
-}
-
-int test_1xxx00_high(int pos_deviation, int neg_deviation) {
-    int e0, e1, e2, e3;
-    printf("Testing 176400/192000 high pos %d neg %d\n", pos_deviation, neg_deviation);
-    PAR_JOBS(
-        PJOB(test_async, (176400, 176400, 0, &e2, pos_deviation, neg_deviation)),
-        PJOB(test_async, (176400, 192000, 0, &e3, pos_deviation, neg_deviation)),
-        PJOB(test_async, (192000, 176400, 0, &e0, pos_deviation, neg_deviation)),
-        PJOB(test_async, (192000, 192000, 0, &e1, pos_deviation, neg_deviation))
-        );
-    return e0 + e1 + e2 + e3;
-}
 
 int expected_wave_192_176[] = {
     0, 0, -1, 0, 1, -113, -1666, -4125,
@@ -2335,47 +1918,23 @@ int unit_test_fir() {
     return 0;
 }
 
-int run_all_combinations(int pos_deviation, int neg_deviation) {
-    int errors = 0;
-    hwtimer_free_xc_timer();
-    clear_energies();
-    errors += test_44100_low(pos_deviation, neg_deviation);
-    errors += test_48000_low(pos_deviation, neg_deviation);
-    errors += test_4xx00_high(pos_deviation, neg_deviation);
-    errors += test_88200_low(pos_deviation, neg_deviation);
-    errors += test_96000_low(pos_deviation, neg_deviation);
-    errors += test_9xx00_high(pos_deviation, neg_deviation);
-    errors += test_176400_low(pos_deviation, neg_deviation);
-    errors += test_192000_low(pos_deviation, neg_deviation);
-    errors += test_1xxx00_high(pos_deviation, neg_deviation);
-    errors += verify_energy_limits();
-    hwtimer_realloc_xc_timer();
-    return errors;
-}
 
 int main(void) {
     int errors = 0;
-//    errors += unit_test_spline();
-//    errors += unit_test_fir();
-//    errors += unit_test_asrc(0);
-//    errors += unit_test_asrc(1);
-//    errors += unit_test_asrc(2);
-//    errors += unit_test_asrc(3);
-//    errors += unit_test_asrc(4);
-//    errors += unit_test_asrc(5);
-//    errors += unit_test_asrc(6);
-//    errors += unit_test_asrc(7);
-//    errors += unit_test_asrc(8);
-//    errors += unit_test_asrc_stereo(8);
-//    errors += unit_test_asrc_stereo(9);
-//    return errors;
+    errors += unit_test_spline();
+    errors += unit_test_fir();
+    errors += unit_test_asrc(0);
+    errors += unit_test_asrc(1);
+    errors += unit_test_asrc(2);
+    errors += unit_test_asrc(3);
+    errors += unit_test_asrc(4);
+    errors += unit_test_asrc(5);
+    errors += unit_test_asrc(6);
+    errors += unit_test_asrc(7);
+    errors += unit_test_asrc(8);
+    errors += unit_test_asrc_stereo(8);
+    errors += unit_test_asrc_stereo(9);
 
-//    test_async(48000, 192000, 1, &errors, -6, 12);
-    test_async(48000, 192000, 1, &errors, 12, -6);
-//    test_async(192000, 192000, 1, &errors, 12, -6);
-    return errors;
-//    errors += run_all_combinations(+12, -6);
-    errors += run_all_combinations(-6, +12);
     if (errors == 0) {
         printf("PASS\n");
     } else {
