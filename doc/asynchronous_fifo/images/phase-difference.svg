@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="190.50003mm"
+   height="58.208336mm"
+   viewBox="0 0 190.50003 58.208335"
+   version="1.1"
+   id="svg1381"
+   inkscape:version="1.0.2 (e86c8708, 2021-01-15)"
+   sodipodi:docname="phase-error.svg">
+  <defs
+     id="defs1375">
+    <marker
+       style="overflow:visible"
+       id="marker4681"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4679" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4671"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4669" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4571"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4569" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4561"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4559" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4247"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4245" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4237"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4235" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4137"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4135" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4127"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path4125" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3887"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path3885" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3851"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path3849" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2222"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path2220" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : -90.291666 : 1"
+       inkscape:vp_y="0 : 999.99993 : 0"
+       inkscape:vp_z="210 : -90.291666 : 1"
+       inkscape:persp3d-origin="105 : -139.79166 : 1"
+       id="perspective1972" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.97542023"
+     inkscape:cx="367.22669"
+     inkscape:cy="150.92898"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1252"
+     inkscape:window-height="788"
+     inkscape:window-x="85"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1944"
+       originx="-5.2916657"
+       originy="5.2916379" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata1378">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-5.291666,5.2916379)">
+    <rect
+       style="fill:#44bbf1;stroke:#1399db;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4085"
+       width="10.583319"
+       height="39.6875"
+       x="174.62502"
+       y="13.229167" />
+    <rect
+       style="fill:#44bbf1;stroke:#1399db;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4083"
+       width="5.291667"
+       height="39.6875"
+       x="47.625"
+       y="13.229166" />
+    <rect
+       style="fill:#44bbf1;stroke:#1399db;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4005"
+       width="7.9375005"
+       height="39.6875"
+       x="111.125"
+       y="13.229167" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="306.91666"
+       y="84.666664"
+       id="text1970"><tspan
+         sodipodi:role="line"
+         id="tspan1968"
+         x="306.91666"
+         y="84.666664"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="82.618721"
+       y="46.169109"
+       id="text2417"><tspan
+         sodipodi:role="line"
+         x="82.618721"
+         y="46.169109"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan2415">Phase error</tspan></text>
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect2419"
+       width="5.2916665"
+       height="5.2916665"
+       x="5.2916665"
+       y="47.625031" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect2421"
+       width="5.2916665"
+       height="5.2916665"
+       x="5.2916665"
+       y="47.625031" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 31.750004,26.458333 H 47.625003 L 47.625004,15.875"
+       id="path3777"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 47.625003,15.874999 H 79.375002"
+       id="path3779"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 142.875,15.874999 v 10.583334 l 15.87501,1e-6"
+       id="path3783"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 31.75,42.333333 H 52.916668 L 52.916669,31.75"
+       id="path3817"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 52.916668,31.749999 33.072916,0"
+       id="path3819"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 152.13542,31.749999 v 10.583334 l 11.90626,10e-7"
+       id="path3823"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 185.20833,31.75 10.58334,0"
+       id="path3827"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="7.263721"
+       y="22.590078"
+       id="text3831"><tspan
+         sodipodi:role="line"
+         x="7.263721"
+         y="22.590078"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan3829">Producer LRclk</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="7.263721"
+       y="38.46508"
+       id="text3835"><tspan
+         sodipodi:role="line"
+         x="7.263721"
+         y="38.46508"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan3833">Consumer LRclk</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker3851)"
+       d="m 105.83333,44.979164 h 4.7625"
+       id="path3841"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker3887)"
+       d="m 121.62217,44.979164 h -2.11666"
+       id="path3883"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4007"
+       width="5.2916665"
+       height="5.2916665"
+       x="190.50003"
+       y="5.2916961" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4009"
+       width="5.2916665"
+       height="5.2916665"
+       x="190.50003"
+       y="-5.2916374" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 31.749999,10.583333 h 15.875 L 47.625,2e-7"
+       id="path4029"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 47.624999,1.9374999e-7 h 5.291666 L 52.916667,10.583334 H 95.25"
+       id="path4031"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 95.249999,10.583333 H 111.125 V -2.6666667e-7"
+       id="path4033"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 111.125,-2.7291668e-7 119.0625,0 l 1e-5,10.583334 39.68749,0"
+       id="path4035"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 158.75,10.583334 h 15.875 V 2.6666666e-7"
+       id="path4037"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 174.625,2.6041665e-7 10.58332,-1.66666665e-6 1e-5,10.58333440625 10.58334,1e-6"
+       id="path4039"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="7.263721"
+       y="6.7150788"
+       id="text4043"><tspan
+         sodipodi:role="line"
+         x="7.263721"
+         y="6.7150788"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan4041">Queue Len</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;stroke-width:0.264583"
+       x="27.708719"
+       y="12.006745"
+       id="text4047"><tspan
+         sodipodi:role="line"
+         x="27.708719"
+         y="12.006745"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;text-anchor:end;stroke-width:0.264583"
+         id="tspan4045">48</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;stroke-width:0.264583"
+       x="27.708719"
+       y="1.4234122"
+       id="text4051"><tspan
+         sodipodi:role="line"
+         x="27.708719"
+         y="1.4234122"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;text-anchor:end;stroke-width:0.264583"
+         id="tspan4049">49</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="146.11873"
+       y="46.169109"
+       id="text4119"><tspan
+         sodipodi:role="line"
+         x="146.11873"
+         y="46.169109"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan4117">Phase error</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4137)"
+       d="m 169.33337,44.979164 h 4.7625"
+       id="path4121"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4127)"
+       d="M 187.76806,44.979164 H 185.6514"
+       id="path4123"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="19.118723"
+       y="46.169109"
+       id="text4229"><tspan
+         sodipodi:role="line"
+         x="19.118723"
+         y="46.169109"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';stroke-width:0.264583"
+         id="tspan4227">Phase error</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4247)"
+       d="M 42.333323,44.979164 H 47.09582"
+       id="path4231"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4237)"
+       d="M 55.476319,44.979164 H 53.359662"
+       id="path4233"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#1399db;stroke:#1399db;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4353"
+       width="2.6458333"
+       height="39.6875"
+       x="116.41666"
+       y="13.229167" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;stroke-width:0.264583"
+       x="172.78157"
+       y="51.460777"
+       id="text4553"><tspan
+         sodipodi:role="line"
+         x="172.78157"
+         y="51.460777"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;text-anchor:end;stroke-width:0.264583"
+         id="tspan4551">Difference in phase error</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4571)"
+       d="m 173.56671,50.270831 h 8.46666"
+       id="path4555"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4561)"
+       d="M 187.76806,50.270831 H 185.6514"
+       id="path4557"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:8.46667px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="145.52083"
+       y="50.270832"
+       id="text4635"><tspan
+         sodipodi:role="line"
+         id="tspan4633"
+         x="145.52083"
+         y="50.270832"
+         style="stroke-width:0.264583"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:8.46667px;line-height:0;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;stroke-width:0.264583"
+       x="109.28153"
+       y="51.460777"
+       id="text4663"><tspan
+         sodipodi:role="line"
+         x="109.28153"
+         y="51.460777"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:4.23333px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica Light';text-align:end;text-anchor:end;stroke-width:0.264583"
+         id="tspan4661">Difference in phase error</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4681)"
+       d="m 110.06667,50.270831 h 5.82083"
+       id="path4665"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker4671)"
+       d="m 121.62217,50.270831 h -2.11666"
+       id="path4667"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#1399db;stroke:#1399db;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
+       id="rect4813"
+       width="2.6458333"
+       height="39.6875"
+       x="182.56248"
+       y="13.229167" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 79.375002,15.874999 v 10.583334 l 31.750008,1e-6 V 15.875 h 31.75"
+       id="path3781"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 85.989584,31.749999 v 10.583334 l 33.072926,10e-7 V 31.75 l 33.07292,1e-6"
+       id="path3821"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 158.75,26.458333 h 15.875 V 15.875"
+       id="path3813"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 174.625,15.874999 21.16667,10e-7"
+       id="path3815"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 164.04167,42.333333 21.16666,0 V 31.75"
+       id="path3825"
+       sodipodi:nodetypes="ccc" />
+  </g>
+</svg>
