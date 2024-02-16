@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // ===========================================================================
 // ===========================================================================
@@ -211,7 +211,7 @@
             unsigned int                            uiNOutSamples;    // Number of output samples produced
             unsigned int                            uiOutStep;        // Step between output data samples
 
-__attribute__((fptrgroup("G1")))
+__attribute__((fptrgroup("MRHF_G1")))
             FIRReturnCodes_t                         (*pvProc)(int *);// Processing function address
 
             int*                                    piDelayB;        // Pointer to delay line base
