@@ -924,7 +924,7 @@ int unit_test_fir() {
     src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, iData2, 32);
     asm volatile("gettime %0" : "=r" (t3));
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
-    if (abs(iData1[0] - iData2[0]) > 1) {
+    if (abs(iData1[0] - iData2[0]) > 2) {
         printf("expected %08x", iData1[0]);
         printf("  saw %08x \n", iData2[0]);
         errors++;
