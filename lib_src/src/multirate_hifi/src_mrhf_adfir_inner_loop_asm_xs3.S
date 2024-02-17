@@ -8,10 +8,12 @@
     .issue_mode dual
 // TODO: share with others
 ones:
-    .word 0x40000000,  0x40000000, 0x40000000,  0x40000000
-    .word 0x40000000,  0x40000000, 0x40000000,  0x40000000
+    .word 0x7fffffff,  0x7fffffff, 0x7fffffff,  0x7fffffff
+    .word 0x7fffffff,  0x7fffffff, 0x7fffffff,  0x7fffffff
 shifts0:
     .word 0, 0, 0, 0, 0, 0, 0, 0
+shifts1:
+    .word 1, 1, 1, 1, 1, 1, 1, 1
 
     .align    16
 
@@ -34,7 +36,7 @@ src_mrhf_adfir_main_loop2:
     { bt r3, src_mrhf_adfir_main_loop2 ;     sub r3, r3, 1 }
 
 src_mrhf_adfir_done2:
-    ldap      r11, shifts0
+    ldap      r11, shifts1
     { vlsat   r11[0]             ; ldaw    r0, sp[0] }
     vstr      r0[0]
     { vldc    r0[0]              ; ldap    r11, ones }
