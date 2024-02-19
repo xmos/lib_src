@@ -59,6 +59,7 @@ pipeline {
                 withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                   sh "xtagctl reset ${adapterIDs[0]}"
                   dir("doc/python") {
+                    sh "pip install -r requirements_test.txt"
                     sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
                     archiveArtifacts artifacts: "_build/output", allowEmptyArchive: true
                     archiveArtifacts artifacts: "_build/rst", allowEmptyArchive: true

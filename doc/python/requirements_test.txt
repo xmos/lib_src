@@ -1,0 +1,4 @@
+# python_version 3.10
+# pip_version 23.*
+
+git+ssh://git@github.com/xmos/xscope_fileio@develop
