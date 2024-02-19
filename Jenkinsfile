@@ -143,15 +143,11 @@ pipeline {
           steps {
             runningOn(env.NODE_NAME)
             dir("${REPO}/doc/python") {
-              withTools(params.TOOLS_VERSION) {
-                withVenv {
-                  unstash 'doc_asrc_output'
-                }
-              }
+              unstash 'doc_asrc_output'
             }
           }
         }
-        stage('Run doc python') {
+        stage('Build docs') {
           steps {
             runningOn(env.NODE_NAME)
             dir("${REPO}") {
