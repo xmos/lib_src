@@ -47,6 +47,7 @@ pipeline {
           sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
           dir("lib_src") {
             checkout scm
+            sh 'git submodule update --init --recursive'
           }
           createVenv("lib_src/requirements.txt")
 

@@ -67,6 +67,7 @@ class asrc_util:
         self.rstFile = ""
 
     def build_model_exe(self, target):
+        print(f"BUILD_MODEL_EXE: target = {target}")
         file_dir = Path(__file__).resolve().parent
         if target != "asrc_dut":
             build_path = file_dir / "../../build"
@@ -416,9 +417,7 @@ class asrc_util:
 
     def run_xsim(self, ipFiles, opRate, fDev, simLog):
         print("In run_xsim!!!\n\n")
-        if os.path.isfile("./asrc_test.lnk"):
-            os.remove("./asrc_test.lnk")
-        os.link(self.xePath, "./asrc_test.lnk")
+
         opFiles=np.empty((0,6), str)
         for ipFile in ipFiles:
             ch0 = self.opFileName(ipFile[0], 'x-asrc', fDev, opRate)
