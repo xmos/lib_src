@@ -192,7 +192,7 @@ class asrc_util:
         fsamphz = mp.fmul(mp.fmul(float(self.sampleRates[fsamp]), self.fDev), ferr)
         f = mp.fdiv(fsig, fsamphz)
         print("Make signal: {:.2f}".format(float(fsig)))
-        a = asig * 2**31
+        a = asig * ((2**31) - 1)
         x = np.linspace(0, float(2*mp.pi*f*(l-1)), l)
         ipdata = a * np.sin(x)
         return ipdata
@@ -223,7 +223,7 @@ class asrc_util:
                 sig=[]
                 for s in ch:
                     f = mp.fmul(realRate ,mp.fdiv(s, self.fftPoints))
-                    data = self.makeSignal(ipRate, f, 0.98/len(ch), self.numSamples[ipRate], ferr)
+                    data = self.makeSignal(ipRate, f, 1.0/len(ch), self.numSamples[ipRate], ferr)
                     sig.append([data])
                 #freqs = "-".join(str(round(realRate * x / self.fftPoints)) for x in ch)[0:32] #crop filename
                 if len(ch)==1:
@@ -424,20 +424,16 @@ class asrc_util:
             ch0 = self.opFileName(ipFile[0], 'x-asrc', fDev, opRate)
             ch1 = self.opFileName(ipFile[1], 'x-asrc', fDev, opRate)
 
-            '''
-            cmd0 = "cd {}".format(self.path)
-            print(f"cmd0 = {cmd0}")
-            cmd1 = "xsim --args asrc_test.lnk -i {} {} -o {} {} -f {} -g {} -n {} -e {}".format(
-                ipFile[0], ipFile[1], op_file_ch0_bin, op_file_ch1_bin, self.sampleRates[ipFile[2]], self.sampleRates[opRate], self.numSamples[ipFile[2]], fDev)
+            a = np.loadtxt(ipFile[0], dtype=np.int32)
+            a = np.array(a, np.int32)
+            scipy.io.wavfile.write(ipFile[0]+".wav", int(self.sampleRates[ipFile[2]]), a)
 
-            print(f"ASRC cmd = {cmd1}")
-            cmd = cmd0 + ";pwd;" + cmd1
-            p = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-            output, error = p.communicate(input=b'\n')
-            p.wait()
-            '''
             output = " "
             run_xcoreai.run(self.xePath, [ipFile[0], ipFile[1]], [ch0, ch1], self.sampleRates[ipFile[2]], self.sampleRates[opRate], fDev, self.numSamples[ipFile[2]])
+
+            a = np.loadtxt(ch0, dtype=np.int32)
+            a = np.array(a, np.int32)
+            scipy.io.wavfile.write(ch0+".wav", int(opRate), a)
 
             opFiles = np.append(opFiles, np.array([[ch0, ch1, opRate, str(fDev), output, "x-asrc"]]), axis=0)
             simLog[ipFile[0]]['xsim-asrc']=[str(ch0), 0, opRate, str(fDev), output, "x-asrc"]
