@@ -1,4 +1,4 @@
-// Copyright 2016-2021 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // ===========================================================================
 // ===========================================================================
@@ -393,16 +393,20 @@ SSRCReturnCodes_t                SSRC_proc_F1_F2(ssrc_ctrl_t* pssrc_ctrl)
     }
 
     // F1 is enabled, so call F1
-    if(pssrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF1Ctrl) != FIR_NO_ERROR)
-        return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
+    __attribute__((fptrgroup("MRHF_G1")))
+    FIRReturnCodes_t ret = pssrc_ctrl->sFIRF1Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF1Ctrl);
+    if(ret != FIR_NO_ERROR)
+        return SSRC_ERROR;
 
 
     // Check if F2 is enabled
     if(pssrc_ctrl->sFIRF2Ctrl.eEnable == FIR_ON)
     {
         // F2 is enabled, so call F2
-        if(pssrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF2Ctrl) != FIR_NO_ERROR)
-            return SSRC_ERROR; //Note blatant cast to int * to work around no FP support in XC
+        __attribute__((fptrgroup("MRHF_G1")))
+        FIRReturnCodes_t ret = pssrc_ctrl->sFIRF2Ctrl.pvProc((int *)&pssrc_ctrl->sFIRF2Ctrl);
+        if(ret != FIR_NO_ERROR)
+            return SSRC_ERROR;
     }
 
     return SSRC_NO_ERROR;
