@@ -4,6 +4,14 @@ from asrc_utils import asrc_util
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+import argparse
+import run_xcoreai
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--adapter-id', type=str, default=None, help="adapter ID for running on a specific xtag")
+    args = parser.parse_args()
+    return args
 
 ################################################################################################################
 # OVERVIEW
@@ -19,6 +27,9 @@ from pathlib import Path
 #
 ################################################################################################################
 
+args = parse_arguments()
+if args.adapter_id != None:
+    run_xcoreai.FORCE_ADAPTER_ID = args.adapter_id
 
 # Setup some basics
 pkg_dir = Path(__file__).parent

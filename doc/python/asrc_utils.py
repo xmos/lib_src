@@ -223,7 +223,7 @@ class asrc_util:
                 sig=[]
                 for s in ch:
                     f = mp.fmul(realRate ,mp.fdiv(s, self.fftPoints))
-                    data = self.makeSignal(ipRate, f, 1.0/len(ch), self.numSamples[ipRate], ferr)
+                    data = self.makeSignal(ipRate, f, 0.98/len(ch), self.numSamples[ipRate], ferr)
                     sig.append([data])
                 #freqs = "-".join(str(round(realRate * x / self.fftPoints)) for x in ch)[0:32] #crop filename
                 if len(ch)==1:

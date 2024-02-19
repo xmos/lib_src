@@ -4,7 +4,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
 
     if(NOT EXISTS ${XSCOPE_FILEIO_PATH})
         message("Cloning xscope_fileio")
-        execute_process(COMMAND git clone git@github.com:xmos/xscope_fileio -b increase_filename_len ${XSCOPE_FILEIO_PATH} --recurse-submodules)
+        execute_process(COMMAND git clone git@github.com:xmos/xscope_fileio ${XSCOPE_FILEIO_PATH} --recurse-submodules)
     endif()
 
     set(XSCOPE_FILEIO_APP fwk_voice_deps_xscope_fileio)

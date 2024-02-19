@@ -9,7 +9,13 @@ import pathlib
 import numpy as np
 from pathlib import Path
 
+FORCE_ADAPTER_ID = None
+
 def get_adapter_id():
+    # check the --adapter-id option
+    if FORCE_ADAPTER_ID is not None:
+        return FORCE_ADAPTER_ID
+
     try:
         xrun_out = subprocess.check_output(['xrun', '-l'], text=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:

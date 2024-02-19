@@ -37,6 +37,43 @@ pipeline {
     )
   }
   stages {
+      stage ('Generate SNR plots') {
+        agent {
+          label 'xcore.ai && uhubctl'
+        }
+
+        steps {
+          runningOn(env.NODE_NAME)
+          sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+          dir("lib_src") {
+            checkout scm
+          }
+          createVenv("lib_src/requirements.txt")
+
+          dir("lib_src") {
+            withVenv {
+              withTools(params.TOOLS_VERSION) {
+                sh "pip install -r requirements.txt"
+                sh "pip install -e ${WORKSPACE}/xtagctl"
+                withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  sh "xtagctl reset ${adapterIDs[0]}"
+                  dir("doc/python") {
+                    sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
+                    archiveArtifacts artifacts: "_build/output", allowEmptyArchive: true
+                    archiveArtifacts artifacts: "_build/rst", allowEmptyArchive: true
+                  }
+                }
+              }
+            }
+          }
+        }
+        post {
+          cleanup {
+            xcoreCleanSandbox()
+          }
+        }
+      } // Hardware test
+
     stage('Build and Test') {
       when {
         expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
