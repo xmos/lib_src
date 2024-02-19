@@ -61,8 +61,7 @@ pipeline {
                   dir("doc/python") {
                     sh "pip install -r requirements_test.txt"
                     sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
-                    archiveArtifacts artifacts: "_build/output", allowEmptyArchive: true
-                    archiveArtifacts artifacts: "_build/rst", allowEmptyArchive: true
+                    stash name: 'doc_asrc_output', includes: '_build/**'
                   }
                 }
               }
@@ -135,6 +134,18 @@ pipeline {
                   dir("tests") {
                     localRunPytest('-k "legacy" -vv')
                   }
+                }
+              }
+            }
+          }
+        }
+        stage('Unstash doc_asrc.py output') {
+          steps {
+            runningOn(env.NODE_NAME)
+            dir("${REPO}/doc/python") {
+              withTools(params.TOOLS_VERSION) {
+                withVenv {
+                  unstash 'doc_asrc_output'
                 }
               }
             }
