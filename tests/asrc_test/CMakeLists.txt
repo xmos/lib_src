@@ -27,7 +27,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     # Gather Sources
     #**********************
 
-    set(APP_SOURCES_DAT  ${CMAKE_CURRENT_LIST_DIR}/dut/src/asrc_test.xc)
+    set(APP_SOURCES_TEST_XC ${CMAKE_CURRENT_LIST_DIR}/dut/src/asrc_test.xc)
 
     set(APP_SOURCES_XSCOPE_FILEIO
             ${CMAKE_CURRENT_LIST_DIR}/dut/with_xscope_fileio/src/main.xc
@@ -71,7 +71,7 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
     #*************************
     set(TARGET_NAME test_asrc)
     add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
-    target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES_DAT})
+    target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES_TEST_XC})
     target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
     target_compile_definitions(${TARGET_NAME} PUBLIC ${APP_COMPILE_DEFINITIONS})
     target_compile_options(${TARGET_NAME} PRIVATE ${APP_COMPILER_FLAGS})
