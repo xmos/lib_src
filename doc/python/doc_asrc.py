@@ -1,9 +1,17 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2023-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from asrc_utils import asrc_util
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+import argparse
+import run_xcoreai
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--adapter-id', type=str, default=None, help="adapter ID for running on a specific xtag")
+    args = parser.parse_args()
+    return args
 
 ################################################################################################################
 # OVERVIEW
@@ -19,10 +27,12 @@ from pathlib import Path
 #
 ################################################################################################################
 
+args = parse_arguments()
+if args.adapter_id != None:
+    run_xcoreai.FORCE_ADAPTER_ID = args.adapter_id
 
 # Setup some basics
 pkg_dir = Path(__file__).parent
-xsim = False
 fftPoints=1024 # note when updating the test tones with "updateSig" this is overwritten
 FERR = 1.0  #this is an additional sample rate deviation applied to the inpt signal to test effect of errors
 
