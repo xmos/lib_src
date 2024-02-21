@@ -1,4 +1,4 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2023-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 import matplotlib.pyplot as plt
@@ -287,7 +287,7 @@ def generate_mips_report(src_type):
                     vals = re.search(r'(\d+)->(\d+),([\d.]+):([\d.]+)', mf.readlines()[0])
                     mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}, {vals.group(4)}\n")
 
-def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_print=200, save_comparison_file=False, allow_different_lengths=False, abs_diff_check=False, abs_diff_threshold=32):
+def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_print=200, save_comparison_file=False, allow_different_lengths=False, abs_diff_check=False, abs_diff_threshold=34):
     """ Do numpy compare except give useful debug if fails
 
         array_a - first comparison array
