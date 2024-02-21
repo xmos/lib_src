@@ -28,7 +28,7 @@ def test_prepare(src_type):
 @pytest.mark.parametrize("sr_in", SR_LIST)
 def test_ssrc(sr_in, sr_out):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
-    run_dut(sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS)
+    run_dut(sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS, compare_mode='abs_diff')
 
 
 @pytest.mark.main

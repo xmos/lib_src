@@ -287,7 +287,7 @@ def generate_mips_report(src_type):
                     vals = re.search(r'(\d+)->(\d+),([\d.]+):([\d.]+)', mf.readlines()[0])
                     mips_report.write(f"{vals.group(1)}, {vals.group(2)}, {vals.group(3)}, {vals.group(4)}\n")
 
-def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_print=200, save_comparison_file=False, allow_different_lengths=False, abs_diff_check=True, abs_diff_threshold=32):
+def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_print=200, save_comparison_file=False, allow_different_lengths=False, abs_diff_check=False, abs_diff_threshold=32):
     """ Do numpy compare except give useful debug if fails
 
         array_a - first comparison array
@@ -365,7 +365,6 @@ def array_compare_1d(array_a, array_b, rtol=None, atol=None, close=False, max_pr
                         return False
             print("All other values close.")
     elif abs_diff_check == True: # absolute diff check
-        print(f"ERROR: in array_compare_1d (abs_diff_check) abs_diff_threshold: {abs_diff_threshold}")
         diff_count = 0
         max_diff = np.max(np.abs(array_a[:size] - array_b[:size]))
         print("max_diff = ", max_diff)
