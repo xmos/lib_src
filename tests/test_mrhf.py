@@ -21,7 +21,7 @@ def test_prepare(src_type):
     host_app = build_host_app(src_type)
     firmware = build_firmware("test_" + src_type)
     gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, SR_LIST, SR_LIST, ASRC_DEVIATIONS if src_type == "asrc" else None)
-  
+
 
 @pytest.mark.main
 @pytest.mark.parametrize("sr_out", SR_LIST)
@@ -38,4 +38,4 @@ def test_ssrc(sr_in, sr_out):
 def test_asrc(sr_in, sr_out, fs_deviation):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
 
-    run_dut(sr_in, sr_out, "asrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation)
+    run_dut(sr_in, sr_out, "asrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation, compare_mode='abs_diff')
