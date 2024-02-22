@@ -1,7 +1,7 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-#define     MAX_ASRC_CHANNELS_TOTAL             8 // Used for buffer sizing and FIFO sizing (static)
+#define     MAX_ASRC_CHANNELS_TOTAL             4 // Used for buffer sizing and FIFO sizing (static)
 #define     MAX_ASRC_THREADS                    4 // Sets upper limit of worker threads for ASRC task
 #define     SRC_MAX_SRC_CHANNELS_PER_INSTANCE   2 // Sets maximum number of SRC per thread. Allocates all ASRC storage so minimise to save memeory
 

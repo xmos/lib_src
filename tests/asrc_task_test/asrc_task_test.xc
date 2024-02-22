@@ -4,22 +4,67 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <xs1.h>
 #include <math.h>
+
+#include <xs1.h>
+#include <xscope.h>
+#include <platform.h>
 
 #include "asrc_task_config.h"
 #include "asrc_task.h"
 
 
-const unsigned sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
+// const unsigned sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
+const unsigned sample_rates[] = {44100, 48000, 88200, 96000};
 
 
 void test_master(chanend c_control[2]){
+    xscope_mode_lossless();
+
     delay_milliseconds(1); // Test startup safe
-    c_control[0] <: 44100;
-    c_control[0] <: 4;
-    delay_milliseconds(1); // Test startup safe
-    c_control[1] <: 44100;
+
+    const int order = 2;
+
+    // for(int consumer_start_first = 0; consumer_start_first < 2; consumer_start_first++){
+    for(int consumer_start_first = 0; consumer_start_first < 1; consumer_start_first++){
+        // for(int consumer_finish_first = 0; consumer_finish_first < 2; consumer_finish_first++){
+        for(int consumer_finish_first = 0; consumer_finish_first < 1; consumer_finish_first++){
+            // for(unsigned channel_count = 1; channel_count < MAX_ASRC_CHANNELS_TOTAL; channel_count++){
+            for(unsigned channel_count = 1; channel_count < 2; channel_count++){
+                for(int i = 0; i < sizeof(sample_rates) / sizeof(sample_rates[0]); i++){
+                    for(int o = 0; o < sizeof(sample_rates) / sizeof(sample_rates[0]); o++){
+
+                        if(consumer_start_first){
+                            c_control[1] <: sample_rates[o];
+                            delay_milliseconds(1); // Test startup safe
+                            c_control[0] <: sample_rates[i];
+                            c_control[0] <: channel_count;
+                        } else {
+                            c_control[0] <: sample_rates[i];
+                            c_control[0] <: channel_count;
+                            delay_milliseconds(1); // Test startup safe
+                            c_control[1] <: sample_rates[o];
+                        }
+
+                        delay_milliseconds(250); // Run test for a bit
+
+                        if(consumer_finish_first){
+                            c_control[1] <: 0;
+                            delay_milliseconds(1); // Test shutdown safe
+                            c_control[0] <: 0;
+                            c_control[0] <: 0;
+                        } else {
+                            c_control[0] <: 0;
+                            c_control[0] <: 0;
+                            delay_milliseconds(1); // Test shutdown safe
+                            c_control[1] <: 0;
+                        }
+                    }// output F
+                }// input F
+            }// channels
+        }// consumer_finish
+    }//consumer_start
+    _Exit(0);
 }
 
 unsigned receive_asrc_input_samples(chanend c_producer, asrc_in_out_t &asrc_io, unsigned &new_input_rate){
@@ -57,7 +102,7 @@ void producer(chanend c_producer, chanend c_control){
     unsigned channel_count = 0;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
-    #define N_SINE 100
+    #define N_SINE 44       // 1kHz at 44.1k, 4.36kHz at 192k
     #define AMPLITUDE 0.8
     int32_t sine[N_SINE];
     for(int i = 0; i < N_SINE; i++){
@@ -70,17 +115,21 @@ void producer(chanend c_producer, chanend c_control){
     timer t;
     int32_t time_trigger;
     t :> time_trigger;
-    int32_t sample_period = 0;
+    int32_t sample_period = XS1_TIMER_HZ / 192000;
 
     while(1){
         select{
             case c_control :> sample_rate:
                 c_control :> channel_count;
-                sample_period = XS1_TIMER_HZ / sample_rate;
+                if(sample_rate){
+                    sample_period = XS1_TIMER_HZ / sample_rate;
+                } else {
+                    sample_period = XS1_TIMER_HZ / 192000;
+                }
                 printf("Config producer %u %u\n", sample_rate, channel_count);
             break;
 
-            case sample_rate => t when timerafter(time_trigger) :> int32_t time_stamp:
+            case t when timerafter(time_trigger) :> int32_t time_stamp:
                 for(int ch = 0; ch < channel_count; ch++){
                     samples[ch] = sine[sine_counter];
                 }
@@ -91,7 +140,6 @@ void producer(chanend c_producer, chanend c_control){
 
                 send_asrc_input_samples(c_producer, samples, channel_count, sample_rate, time_stamp);
                 time_trigger += sample_period;
-                printf("PUSH: %ld\n", samples[0]);
             break;
         }
     }
@@ -104,19 +152,23 @@ void consumer(chanend c_control){
     timer t;
     int32_t time_trigger;
     t :> time_trigger;
-    int32_t sample_period = 0;
+    int32_t sample_period = XS1_TIMER_HZ / 192000;
 
     while(1){
         select{
             case c_control :> sample_rate:
-                sample_period = XS1_TIMER_HZ / sample_rate;
-                printf("Config producer %u\n", sample_rate);
+                if(sample_rate){
+                    sample_period = XS1_TIMER_HZ / sample_rate;
+                } else {
+                    sample_period = XS1_TIMER_HZ / 192000;
+                }
+                printf("Config consumer %u\n", sample_rate);
             break;
 
-            case sample_rate => t when timerafter(time_trigger) :> int32_t time_stamp:
+            case t when timerafter(time_trigger) :> int32_t time_stamp:
                 pull_samples(samples, sample_rate, time_stamp);
                 time_trigger += sample_period;
-                printf("PULL: %ld\n", samples[0]);
+                xscope_int(0, samples[0]);
             break;
         }
     }
