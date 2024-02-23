@@ -7,29 +7,30 @@ Test verify the operation of both SSRC and ASRC (which belong to the multi-rate 
 
 import pytest
 import subprocess
-from src_test_utils import vcd2wav
+from src_test_utils import vcd2wav, build_firmware
 import numpy as np
 from scipy.io import wavfile
-from scipy.signal import stft
+from scipy.signal import stft, get_window, find_peaks
+from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
+import itertools
+import re
+from thdncalculator import THDN_and_freq
 
-def run_dut(bin_name, timeout=60):
-    cmd = f"xrun --xscope-file trace {bin_name}"
+SR_LIST = (44100, 48000, 88200, 96000)
+
+
+def run_dut(bin_name, cmds, timeout=60):
+    print("Running DUT")
+
+    flattend_cmds = ' '.join(str(x)for x in list(itertools.chain(*cmds)))
+
+    cmd = f"xrun --xscope-file trace --args {bin_name} {flattend_cmds}"
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
 
+    return output.stderr #xrun puts output on err for some reason
 
-@pytest.mark.prepare
-def test_prepare():
-    """ ......... """
-    print("Building DUT")
-    cmd = f"cd asrc_task_test && xmake -j"
-    output = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
-
-@pytest.mark.main
-def test_asrc_task():
-    """ .... """
-    print("Running DUT")
-    run_dut("./asrc_task_test/bin/asrc_task_test.xe", timeout=60)
+def analyse_wav(expected_freqs):
     print("Extracting WAV")
     vcd2wav("trace.vcd", 0, 1, 44100)
 
@@ -38,21 +39,6 @@ def test_asrc_task():
 
     # Perform STFT
     frequencies, times, Zxx = stft(data, nperseg=4096, fs=sample_rate)
-
-    SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
-    SR_LIST = (44100, 48000, 88200, 96000)
-    input_freq = 1000
-    expected_freqs = []
-    for i in SR_LIST:
-        for o in SR_LIST:
-            freq = input_freq * i / o
-            expected_freqs.append(freq)
-
-    print(expected_freqs)
-
-    # expected_freqs = expected_freqs * 2 * 2 * 7 # order * order * chans
-    # expected_freqs = expected_freqs * 7
-    expected_freqs = expected_freqs
 
     peaks = []
     for time in range(len(times)):
@@ -82,4 +68,119 @@ def test_asrc_task():
     plt.xlabel('Time [sec]')
     plt.yscale('log')
     plt.ylim(500, 5000)
-    plt.show()
+    plt.savefig("asrc_task_freq_plot.png")
+
+    return True if expected_idx == len(expected_freqs) else False
+
+def build_cmd_list_expected_f(input_srs, output_srs, chans, delay_ms, input_freq = (44100 / 44)):
+    cmd_list = []
+    expected_freqs = []
+
+    for i in input_srs:
+        for o in output_srs:
+            cmd_list.append([i, chans, o, delay_ms])
+            freq = input_freq * i / o
+            expected_freqs.append(freq)
+
+    return cmd_list, expected_freqs
+
+@pytest.fixture(scope="module")
+def build_xe():
+    print("Building DUT")
+    xe = build_firmware("test_asrc_task")
+    xe_path = f"../../lib_src/build/tests/asrc_task_test/{xe}"
+
+    return xe_path
+
+def test_asrc_task_freq_matrix(build_xe):
+    """ This checks all combinations of valid inputs """
+
+    cmd_list, expected_freqs = build_cmd_list_expected_f(SR_LIST, SR_LIST, 4, 100)
+    output = run_dut(build_xe, cmd_list, timeout=60)
+    vcd2wav("trace.vcd", 0, 1, 44100)
+    assert analyse_wav(expected_freqs)
+
+
+def parse_output_for_changes(output, cmds):
+    num_valid_configs = 0
+    num_found_configs = 0
+    for cmd in cmds:
+        output_list = iter(output.split("\n"))
+        i_sr = cmd[0]
+        n_ch = cmd[1]
+        o_sr = cmd[2]
+        if i_sr == 0 or n_ch == 0 or o_sr == 0:
+            continue
+        num_valid_configs += 1
+
+        found_sr = False
+        found_ch = False
+        while not found_sr or not found_ch:
+            try:
+                line = next(output_list)
+            except StopIteration:
+                break
+
+            res = re.search(r'Input fs: (\d+) Output fs: (\d+)', line)
+            if res:
+                found_sr = True
+                f_i_sr = int(res.group(1))
+                f_o_sr = int(res.group(2))
+
+            res = re.search(r'FIFO init channels: (\d+)', line)
+            if res:
+                found_ch = True
+                f_n_ch = int(res.group(1))
+
+        print(f"Found successful config: input_sr {f_i_sr} ({i_sr}), n_chan: {f_n_ch} ({n_ch}), output_sr {f_o_sr} ({o_sr})") 
+        num_found_configs += 1
+
+        assert i_sr == f_i_sr
+        assert n_ch == f_n_ch
+        assert o_sr == f_o_sr
+
+    assert num_valid_configs == num_found_configs
+
+def test_asrc_task_zero_transition(build_xe):
+    """ This checks transitions through invalid ones (something is zero) """
+
+    delay_ms = 10
+    cmd_list = [
+                [0, 0, 0, delay_ms],
+                [48000, 2, 0, delay_ms],
+                [48000, 2, 48000, delay_ms],
+                [48000, 0, 48000, delay_ms],    # ch count invalid
+                [48000, 2, 48000, delay_ms],
+                [48000, 2, 0, delay_ms],        # output sr invalid
+                [48000, 2, 48000, delay_ms],
+                [0, 2, 48000, delay_ms],        # input sr invalid
+                [48000, 2, 48000, delay_ms],
+                ]
+    output = run_dut(build_xe, cmd_list, timeout=60)
+    parse_output_for_changes(output, cmd_list)
+
+def analyse_thd(wav_file):
+    sample_rate, data = wavfile.read(wav_file)
+    start_chop_s = 0.01
+    data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
+    thd, freq = THDN_and_freq(data, sample_rate)
+
+    expected_freq = (44100 / 44) * sample_rate / 44100
+    max_thd = -90
+    print(F"THD: {thd}, freq: {freq}, expected_freq: {expected_freq}")
+
+    assert thd < max_thd
+    assert np.isclose(freq, expected_freq, rtol = 0.0001)
+
+
+def test_asrc_longish_run(build_xe):
+    cmd_list = [[48000, 4, 48000, 10 * 1000]] # 10s
+    output = run_dut(build_xe, cmd_list, timeout=60)
+    parse_output_for_changes(output, cmd_list)
+    vcd2wav("trace.vcd", 0, 1, 48000)
+    analyse_thd("ch0-1-48000.wav")
+
+
+# For test only
+if __name__ == "__main__":
+    analyse_thd("ch0-1-48000.wav")

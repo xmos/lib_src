@@ -13,57 +13,31 @@
 #include "asrc_task_config.h"
 #include "asrc_task.h"
 
+#define CMD_LEN     4
+#define MAX_CMDS    128
 
 // const unsigned sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
 const unsigned sample_rates[] = {44100, 48000, 88200, 96000};
 
 
-void test_master(chanend c_control[2]){
+void test_master(chanend c_control[2], unsigned commands[MAX_CMDS][CMD_LEN], unsigned n_cmds){
     xscope_mode_lossless();
 
     delay_milliseconds(1); // Test startup safe
 
-    const int order = 2;
-
-    // for(int consumer_start_first = 0; consumer_start_first < 2; consumer_start_first++){
-    for(int consumer_start_first = 0; consumer_start_first < 1; consumer_start_first++){
-        // for(int consumer_finish_first = 0; consumer_finish_first < 2; consumer_finish_first++){
-        for(int consumer_finish_first = 0; consumer_finish_first < 1; consumer_finish_first++){
-            // for(unsigned channel_count = 1; channel_count < MAX_ASRC_CHANNELS_TOTAL; channel_count++){
-            for(unsigned channel_count = 1; channel_count < 2; channel_count++){
-                for(int i = 0; i < sizeof(sample_rates) / sizeof(sample_rates[0]); i++){
-                    for(int o = 0; o < sizeof(sample_rates) / sizeof(sample_rates[0]); o++){
-
-                        if(consumer_start_first){
-                            c_control[1] <: sample_rates[o];
-                            delay_milliseconds(1); // Test startup safe
-                            c_control[0] <: sample_rates[i];
-                            c_control[0] <: channel_count;
-                        } else {
-                            c_control[0] <: sample_rates[i];
-                            c_control[0] <: channel_count;
-                            delay_milliseconds(1); // Test startup safe
-                            c_control[1] <: sample_rates[o];
-                        }
-
-                        delay_milliseconds(250); // Run test for a bit
-
-                        if(consumer_finish_first){
-                            c_control[1] <: 0;
-                            delay_milliseconds(1); // Test shutdown safe
-                            c_control[0] <: 0;
-                            c_control[0] <: 0;
-                        } else {
-                            c_control[0] <: 0;
-                            c_control[0] <: 0;
-                            delay_milliseconds(1); // Test shutdown safe
-                            c_control[1] <: 0;
-                        }
-                    }// output F
-                }// input F
-            }// channels
-        }// consumer_finish
-    }//consumer_start
+    // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
+    for(unsigned i = 0; i < n_cmds; i++){
+        printf("Setting ASRC to in_sr: %u n_chans: %u out_sr: %u post_delay_ms: %u\n",
+                commands[i][0],
+                commands[i][1],
+                commands[i][2],
+                commands[i][3]);
+        c_control[0] <: commands[i][0];
+        c_control[0] <: commands[i][1];
+        c_control[1] <: commands[i][2];
+        
+        delay_milliseconds(commands[i][3]); // Test startup safe     
+    }
     _Exit(0);
 }
 
@@ -174,18 +148,35 @@ void consumer(chanend c_control){
     }
 }
 
+unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned argc, char * unsafe argv[argc])
+{
+    for(int i = 1; i < argc; i++){
+        printf("Arg %u: %s\n", i, argv[i]);
+        unsigned val = (unsigned)(atoi((char *)argv[i]));
+        unsigned cmd_idx = (i - 1) % CMD_LEN;
+        unsigned cmd_n = (i - 1) / CMD_LEN;
+        commands[cmd_n][cmd_idx] = val;
+    }
 
-int main(void)
+    return (argc - 1) / CMD_LEN;
+}
+
+int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
     chan c_control[2];
 
     par
     {
+        {
+            // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
+            unsigned commands[MAX_CMDS][CMD_LEN] = {{0}};
+            unsigned n_cmds = parse_cmd_line(commands, argc, argv);
+            test_master(c_control, commands, n_cmds);
+        }
         producer(c_producer, c_control[0]);
         asrc_processor(c_producer);
         consumer(c_control[1]);
-        test_master(c_control);
 
     }
     return 0;
