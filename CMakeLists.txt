@@ -10,10 +10,7 @@ if(PROJECT_IS_TOP_LEVEL)
       GIT_TAG        v1.0.2
     )
     FetchContent_MakeAvailable(fwk_core)
-    message(STATUS TOP LEVEL!!!, ${ASRC_TASK_CONFIG_PATH})
-
 endif()
-message(STATUS LOWER LEVEL!!!, ${ASRC_TASK_CONFIG_PATH})
 
 add_subdirectory(tests)
 
@@ -34,7 +31,8 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
     file(GLOB_RECURSE LIB_C_SOURCES     lib_src/src/fixed_factor_of_3/*.c
                                         lib_src/src/fixed_factor_of_3_voice/*.c
                                         lib_src/src/multirate_hifi/*.c
-                                        lib_src/src/*.c
+    )
+    file(GLOB LIB_C_SOURCES_FIFO        lib_src/src/*.c
     )
     file(GLOB_RECURSE LIB_XC_SOURCES    lib_src/src/fixed_factor_of_3/*.xc
                                         lib_src/src/fixed_factor_of_3_voice/*.xc
@@ -44,9 +42,10 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
                                         lib_src/src/fixed_factor_of_3_voice/*.S
                                         lib_src/src/multirate_hifi/*.S
     )
-    
+
     ## Create library target
     add_library(lib_src STATIC EXCLUDE_FROM_ALL     ${LIB_C_SOURCES}
+                                                    ${LIB_C_SOURCES_FIFO}
                                                     ${LIB_C_SOURCES_XS3}
                                                     ${LIB_ASM_SOURCES}
                                                     ${LIB_XC_SOURCES_XS3}
@@ -69,24 +68,11 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
             ${ADDITIONAL_INCLUDE_DIRS_XS3}
     )
 
-    message(STATUS ASRC_TASK_CONFIG_PATH: ${ASRC_TASK_CONFIG_PATH})
-    if(NOT DEFINED ASRC_TASK_CONFIG_PATH)
-        target_compile_options(lib_src
-            PRIVATE 
-                -O3
-                -g
-        )
-    else()
-        target_compile_options(lib_src
-            PUBLIC
-                -D ASRC_TASK_CONFIG_PATH=${ASRC_TASK_CONFIG_PATH}
-            PRIVATE 
-                -O3
-                -g
-        )
-    endif()
-    
-
+   target_compile_options(lib_src
+        PRIVATE 
+            -O3
+            -g
+    )
 
     target_link_libraries(lib_src
         PUBLIC

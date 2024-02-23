@@ -6,14 +6,15 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
 
     file(GLOB APP_SOURCES               ${CMAKE_CURRENT_LIST_DIR}/*.c
                                         ${CMAKE_CURRENT_LIST_DIR}/*.xc
-                                        # ${CMAKE_CURRENT_LIST_DIR}/../../../lib_src/src/*.c
+                                        ${CMAKE_CURRENT_LIST_DIR}/../../lib_src/src/asrc_task/*.c
     )
 
     set(APP_INCLUDES
         ${APP_SRC_PATH}/
         ${CMAKE_CURRENT_LIST_DIR}/
+        ${CMAKE_CURRENT_LIST_DIR}/../../lib_src/src/asrc_task/
     )
-    message(STATUS APP_INCLUDES: ${APP_INCLUDES})
+
     #**********************
     # Flags
     #**********************
@@ -22,15 +23,15 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
         -g
         -Wall
         -Wno-xcore-fptrgroup
-        -target=XCORE-AI-EXPLORER
+        ${CMAKE_CURRENT_LIST_DIR}/config.xscope
     )
 
     set(APP_COMPILE_DEFINITIONS
+        ASRC_TASK_CONFIG=1
+        DEBUG_ASRC_TASK=1
     )
 
     set(ASRC_TASK_CONFIG_PATH "${CMAKE_CURRENT_LIST_DIR}")
-    message(STATUS ASRC_TASK_CONFIG_PATH from app, ${ASRC_TASK_CONFIG_PATH})
-
 
     set(APP_COMMON_LINK_LIBRARIES
         lib_src
@@ -38,9 +39,10 @@ if ((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR
 
     set(APP_LINK_OPTIONS
         -report
+        ${CMAKE_CURRENT_LIST_DIR}/config.xscope
         -target=XCORE-AI-EXPLORER
-        # Jenkins paths can get quite long
-        -fcmdline-buffer-bytes=2048
+        # Control paths can be quite long
+        -fcmdline-buffer-bytes=16384
     )
 
     #*************************
