@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#ifdef ASRC_TASK_CONFIG_PATH
+#ifdef ASRC_TASK_CONFIG
     #include "asrc_task_config.h"
 
     // Used for buffer sizing and FIFO sizing (statically defined)
@@ -39,7 +39,7 @@
     #endif
 
 #else
-    #warning ASRC_TASK using defaults. Please set in asrc_task_config.h and globally define ASRC_TASK_CONFIG="path_to_asrc_task_config.h"
+    #warning ASRC_TASK using defaults. Please set in asrc_task_config.h and globally define ASRC_TASK_CONFIG=1
     #define MAX_ASRC_CHANNELS_TOTAL             1
     #define MAX_ASRC_THREADS                    1
     #define SRC_MAX_SRC_CHANNELS_PER_INSTANCE   1

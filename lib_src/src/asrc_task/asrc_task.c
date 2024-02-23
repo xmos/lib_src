@@ -16,9 +16,10 @@
 #include "asynchronous_fifo.h"
 #include "asrc_timestamp_interpolation.h"
 
-#ifndef dprintf
+#ifdef DEBUG_ASRC_TASK
 #define dprintf(...)   printf(__VA_ARGS__)
-// #define dprintf(...)
+#else
+#define dprintf(...)
 #endif
 
 unsigned asrc_channel_count = 0;    // Current channel count (dynamic). Needs to be global so can be read by pull_samples
@@ -31,16 +32,16 @@ unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_
 
     /* Example Rx function (called from ASRC):
 
-    // Grab timestamp
-    timer tmr;
-    tmr :> asrc_io.input_timestamp;
-    new_input_rate = inuint(c_asrc_input_samples);
-    asrc_io.input_timestamp = inuint(c_adat_rx_demux);
+    static unsigned asrc_in_counter = 0;
+
+    new_input_rate = chanend_in_word(c_producer);
+    asrc_io.input_timestamp = chanend_in_word(c_producer);
+    asrc_io.input_channel_count = chanend_in_word(c_producer);
 
     // Pack into array properly LRLRLRLR or 123412341234 etc.
-    for(int i = 0; i < *asrc_channel_count; i++){
-        int idx = i + *asrc_channel_count * asrc_in_counter;
-        asrc_io.input_samples[input_write_idx][idx] = adat_rx_samples[i];
+    for(int i = 0; i < asrc_io.input_channel_count; i++){
+        int idx = i + asrc_io.input_channel_count * asrc_in_counter;
+        asrc_io.input_samples[asrc_io.input_write_idx][idx] = chanend_in_word(c_producer);
     }
 
     if(++asrc_in_counter == SRC_N_IN_SAMPLES){
@@ -260,14 +261,10 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = new_output_rate;
-        printf("****%u %u %u\n", *input_frequency, *output_frequency, asrc_channel_count);
         delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
             asrc_channel_count == 0);
-
-    printf("****%u %u %u\n", *input_frequency, *output_frequency, asrc_channel_count);
-
 
     xassert(asrc_channel_count <= MAX_ASRC_CHANNELS_TOTAL);
     frequency_to_fs_code(*input_frequency);  // This will assert if invalid
@@ -281,7 +278,7 @@ static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t 
     if( asrc_io->input_frequency != input_frequency || 
         asrc_io->input_channel_count != asrc_channel_count ||
         *new_output_rate_ptr != output_frequency){
-        dprintf("FORMAT CHANGE %u %u %u\n", asrc_io->input_frequency, asrc_io->input_channel_count, *new_output_rate_ptr);
+
         return true;
     } else {
         return false;
@@ -317,9 +314,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
 
     // This is a forever loop consisting of init -> forever process, until format change when we return to init
     while(1){
-        printf("wait..\n");
         asrc_wait_for_valid_config(c_buff_idx, &input_frequency, &output_frequency, &asrc_io, ready_flag_ptr);
-        printf("K..\n");
 
         // Extract frequency info
         dprintf("Input fs: %lu Output fs: %lu\n", input_frequency, output_frequency);
@@ -402,9 +397,10 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
             int32_t t1 = get_reference_time();
             if(t1 - t0 > asrc_peak_processing_time){
                 asrc_peak_processing_time = t1 - t0;
-                // printintln(asrc_peak_processing_time);
+                printintln(asrc_peak_processing_time);
                 // xassert(asrc_peak_processing_time <= asrc_process_time_limit);
                 (void)asrc_peak_processing_time; // Remove compiler warning
+                (void)asrc_process_time_limit; // Remove compiler warning
             }
         } // while !asrc_detect_format_change()
     } // while 1
