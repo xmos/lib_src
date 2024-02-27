@@ -35,10 +35,6 @@ static void asynchronous_fifo_init_producing_side(asynchronous_fifo_t *state) {
  * and called during reset by the consumer before it notifies the producer that a reset
  * is needed.
  */
-static void asynchronous_fifo_init_consuming_side(asynchronous_fifo_t *state) {
-    state->sample_timestamp = 0;
-}
-
 static void asynchronous_fifo_reset_consumer_flags(asynchronous_fifo_t *state) {
     state->reset = 0;        // This has to be the last one
 }
@@ -95,7 +91,6 @@ void asynchronous_fifo_init(asynchronous_fifo_t *state, int channel_count,
     // Now clear the buffer.
     memset(state->buffer, 0, channel_count * max_fifo_depth * sizeof(int));
     // Finally initialise those parts that are reset on a RESET
-    asynchronous_fifo_init_consuming_side(state);    // Does not reset read_ptr
     asynchronous_fifo_init_producing_side(state);    // uses read_ptr
     asynchronous_fifo_reset_consumer_flags(state);
 }
@@ -215,7 +210,6 @@ void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples
         state->read_ptr = read_ptr;
         state->timestamps[read_ptr] = timestamp;
     } else {
-        asynchronous_fifo_init_consuming_side(state); // This must happen in this thread
         state->reset = 1;                // The rest must happen in the other thread
     }
 }

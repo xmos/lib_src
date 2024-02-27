@@ -21,13 +21,17 @@
 typedef struct asynchronous_fifo_t asynchronous_fifo_t;
 
 /**
- * Function that must be called to initialise the asynchronous FIFO. You must pass in an array
- * of ``int64_t [ASYNCHRONOUS_FIFO_INT64_ELEMENTS(fifo_max_depth, channel_count)]``
- * The same pointer must be used on both sides of the asynchronous FIFO.
+ * Function that must be called to initialise the asynchronous FIFO.
+ * The ``state`` argument should be an int64_t array of
+ * ``ASYNCHRONOUS_FIFO_INT64_ELEMENTS`` elements that is cast to
+ * ``asynchronous_fifo_t*``.
+ * 
+ * That pointer should also be used for all other operations, including operations
+ * both the consumer and producer sides.
  *
  * After initialising, you must initialise the PID by calling one of
- * ``asynchronous_fifo_init_PID_fs_codes()`` or
- * ``asynchronous_fifo_init_PID_raw()``
+ * asynchronous_fifo_init_PID_fs_codes() or
+ * asynchronous_fifo_init_PID_raw()
  *
  * @param   state               Asynchronous FIFO to be initialised
  *
@@ -41,28 +45,32 @@ void asynchronous_fifo_init(asynchronous_fifo_t * UNSAFE state,
 
 /**
  * Function that that initialises the PID of a FIFO. Either this function
- * or ``asynchronous_fifo_init_PID_raw()`` should be called. This function
+ * or asynchronous_fifo_init_PID_raw() should be called. This function
  * uses frequency codes as defined in the ASRC for a quick default setup,
  * the raw function allows full control
  *
- * @param   state               Asynchronous FIFO to be initialised
+ * @param   state      Asynchronous FIFO to be initialised
  *
- * @param   fs_input            Input FS ratio, used to pick appropriate Kp, Ki
+ * @param   fs_input   Input FS ratio, used to pick appropriate Kp, and Ki.
+ *                     Must be a number less than 6.
  *
- * @param   fs_output           Input FS ratio, used to pick appropriate Kp, Ki, ideal phase
+ * @param   fs_output  Input FS ratio, used to pick appropriate Kp, Ki,
+ *                     ideal phase. Must be a number less than 6.
  */
 void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t * UNSAFE state,
-                                         int fs_input, int fs_output);
+                                         int fs_input,
+                                         int fs_output);
 
 /**
  * Function that that initialises the PID of a FIFO. Either this function
- * or ``asynchronous_fifo_init_PID_raw()`` should be called. This function
+ * or asynchronous_fifo_init_PID_raw() should be called. This function
  * uses frequency codes as defined in the ASRC for a quick default setup,
  * the raw function allows full control.
  *
  * This function may be called at any time by the producer in order to alter the PID
  * and midpoint settings. It does not reset the error;  one of the
- * ``asynchronous_fifo_init_reset()`` functions should be called for that.
+ * asynchronous_fifo_init_reset_producer() or
+ * asynchronous_fifo_init_reset_consumer() functions should be called for that.
  *
  * @param   state               Asynchronous FIFO to be initialised
  *
@@ -83,11 +91,13 @@ void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t * UNSAFE state,
  *                              the FIFO.
  */
 void asynchronous_fifo_init_PID_raw(asynchronous_fifo_t * UNSAFE state,
-                                    int Kp, int Ki, int ticks_between_samples);
+                                    int Kp,
+                                    int Ki,
+                                    int ticks_between_samples);
 
 /**
  * Function that that resets the FIFO from the producer side. Either this function should
- * be called on the producing side, or ``asynchronous_fifo_reset_consumer()``
+ * be called on the producing side, or ``asynchronous_fifo_reset_consumer``
  * should be called on the consumer side. In both cases the whole FIFO will be reset back
  *
  * @param   state               Asynchronous FIFO to be initialised
@@ -96,7 +106,7 @@ void asynchronous_fifo_reset_producer(asynchronous_fifo_t * UNSAFE state);
 
 /**
  * Function that that resets the FIFO from the consumer side. Either this function should
- * be called on the consuming side, or ``asynchronous_fifo_reset_producer()``
+ * be called on the consuming side, or asynchronous_fifo_reset_producer()
  * should be called on the producer side. In both cases the whole FIFO will be reset back
  *
  * @param   state               Asynchronous FIFO to be initialised
@@ -111,11 +121,11 @@ void asynchronous_fifo_reset_consumer(asynchronous_fifo_t * UNSAFE state);
 void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
 
 /**
- * Function that provides the next sample to the asynchronous FIFO.
+ * Function that provides the next samples to the asynchronous FIFO.
  *
- * This function and the consume function both need a timestamp,
+ * This function and asynchronous_fifo_consumer_get() function both need a timestamp,
  * which is the time that the last sample was input (this function) or
- * output (``asynchronous_fifo_consume``). The asynchronous FIFO will hand the
+ * output (asynchronous_fifo_consumer_get()). The asynchronous FIFO will hand the
  * samples across from producer to consumer through an elastic queue, and run
  * a PID algorithm to calculate the best way to equalise the input clock relative
  * to the output clock. Therefore, the timestamps
@@ -133,6 +143,9 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *
  * @param   timestamp           The number of ticks when this sample was input.
  *
+ * @param   xscope_used         Set to 1 if the PID values should be output over
+ *                              xscope. Used for debugging. This parameter is subject to be removed in future revisions.
+ *
  * @returns The current estimate of the mismatch of input and output frequencies.
  *          This is represented as a 32-bit signed number. Zero means no mismatch,
  *          a value less than zero means that the producer is faster than the consumer,
@@ -144,10 +157,10 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  *          eg, multiplied into an ASRC ratio, or multiplied into a PLL timing.
  */
 int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
-                                  int32_t * UNSAFE samples,
-                                  int n,
-                                  int32_t timestamp,
-                                  int xscope_used);
+                                       int32_t * UNSAFE samples,
+                                       int n,
+                                       int32_t timestamp,
+                                       int xscope_used);
 
 
 /**
@@ -163,13 +176,13 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
  *                              ``asynchronous_fifo_produce`` for requirements.
  */
 void asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
-                               int32_t * UNSAFE samples,
-                               int32_t timestamp);
+                                    int32_t * UNSAFE samples,
+                                    int32_t timestamp);
 
 
 /**
  * Data structure that holds the state
- * Internal use only. Declared here so that one can create one of these
+ * Internal use only. Declared here so that the compiler can work out the size
  * on the stack
  */
 struct asynchronous_fifo_t {
@@ -190,7 +203,6 @@ struct asynchronous_fifo_t {
 
     // Updated on the consumer side only
     uint32_t  read_ptr;                       /* Read index in the buffer */
-    uint32_t  sample_timestamp;               /* Timestamp calculated by consumer */
 
     // Set by producer, reset by consumer
     uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
