@@ -25,7 +25,6 @@
  *
  * @param  ideal_freq      Expected base frequency to which the ASRC is operating;
  *                         eg, 48000 or 44100
- *                         TBD - WHAT IS THIS NUMBER?
  */
 int asrc_timestamp_interpolation(int timestamp, asrc_ctrl_t * UNSAFE asrc_ctrl, int ideal_freq);
 
