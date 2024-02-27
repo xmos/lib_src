@@ -5,6 +5,8 @@ lib_src change log
 -----
 
   * ADDED: VPU enabled ASRC and SSRC providing a 2x speed improvement
+  * ADDED: Asynchronous FIFO with phase detector and PID rate controller
+    for ASRC usage
   * ADDED: Support for XCommon CMake build system
   * FIXED: Function pointer annotation avoid stack corruption when using
     multiple instances of SSRC or ASRC.
