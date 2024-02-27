@@ -144,7 +144,7 @@ void asynchronous_fifo_exit(asynchronous_fifo_t * UNSAFE state);
  * @param   timestamp           The number of ticks when this sample was input.
  *
  * @param   xscope_used         Set to 1 if the PID values should be output over
- *                              xscope. Used for debugging.
+ *                              xscope. Used for debugging. This parameter is subject to be removed in future revisions.
  *
  * @returns The current estimate of the mismatch of input and output frequencies.
  *          This is represented as a 32-bit signed number. Zero means no mismatch,
