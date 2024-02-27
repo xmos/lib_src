@@ -16,6 +16,15 @@
 #endif
 
 /**
+ * \addtogroup src_fifo src_fifo
+ *
+ * The public API for using Asynchronous FIFO.
+ * @{
+ */
+
+
+
+/**
  * Data structure that holds the status of an asynchronous FIFO
  */
 typedef struct asynchronous_fifo_t asynchronous_fifo_t;
@@ -212,9 +221,12 @@ struct asynchronous_fifo_t {
     int32_t   buffer[0];                      /* Buffer of data */
 };
 
+
 /**
  * macro that calculates the number of int64_t to be allocated for the fifo
  * for a FIFO of N elements and C channels
  */
 #define ASYNCHRONOUS_FIFO_INT64_ELEMENTS(N, C) (sizeof(asynchronous_fifo_t)/sizeof(int64_t) + (N*(C+1))/2+1)
 #endif
+
+/**@}*/ // END: addtogroup src_fifo

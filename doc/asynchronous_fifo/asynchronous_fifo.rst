@@ -2,8 +2,9 @@ Asynchronous FIFO
 =================
 
 An Asynchronous FIFO is a non-blocking data structure in which elements
-gets pushed in on one side and pulled out on the other side. The key to
-this component is
+gets pushed in on one side and pulled out on the other side.
+It is primarily designed to be used with the ASRC to help build practical
+systems. The keys to this component are:
 
 #. the non-blocking nature of the interfaces on both sides.
 
@@ -157,32 +158,15 @@ The PID constants can be set in two ways:
 API
 ---
 
-.. doxygentypedef:: asynchronous_fifo_t
-
-.. doxygendefine:: ASYNCHRONOUS_FIFO_INT64_ELEMENTS
-
-.. doxygenfunction:: asynchronous_fifo_init
-
-.. doxygenfunction:: asynchronous_fifo_init_PID_fs_codes
-
-.. doxygenfunction:: asynchronous_fifo_init_PID_raw
-
-.. doxygenfunction:: asynchronous_fifo_producer_put
-
-.. doxygenfunction:: asynchronous_fifo_consumer_get
-
-.. doxygenfunction:: asynchronous_fifo_reset_producer
-
-.. doxygenfunction:: asynchronous_fifo_reset_consumer
-
-.. doxygenfunction:: asynchronous_fifo_exit
+.. doxygengroup:: src_fifo
+   :content-only:
 
 |appendix|
 
 Internal workings of the Asynchronous FIFO
 ------------------------------------------
 
-This appendix detail the inner workings of the FIFO and can be skipped.
+This appendix details the inner workings of the FIFO.
 
 Measurements for the PID
 ++++++++++++++++++++++++
