@@ -1,3 +1,5 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _ASRC_TASK_H_
 #define _ASRC_TASK_H_
 
@@ -71,7 +73,7 @@ typedef struct asrc_in_out_t{
 }asrc_in_out_t;
 
 #ifdef __XC__
-void asrc_processor(chanend c_asrc_input);
+void asrc_processor(streaming chanend c_asrc_input);
 int pull_samples(int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
 unsigned receive_asrc_input_samples(chanend c_asrc_input_samples, asrc_in_out_t &asrc_io, unsigned &new_input_rate);
 

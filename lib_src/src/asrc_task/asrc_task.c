@@ -1,3 +1,5 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <xcore/chanend.h>
 #include <xcore/parallel.h>
 #include <xcore/assert.h>
@@ -246,6 +248,9 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 
     // Only forward on to ASRC if it is ready (to avoid deadlock)
     if(asrc_in_counter == 0 && asrc_io->ready_flag_to_receive){
+        // Note if you ever find the code has stopped here then this is due to the time required to ASRC process the input frame
+        // is longer than the rate of the frames coming in. To remedy this you need to increase ASRC processing resources or reduce
+        // the processing requirement. If you are using XCORE-200, consider using xcore.ai for more than 2x the ASRC performance. 
         chanend_out_byte(c_buff_idx, (uint8_t)asrc_io->input_write_idx);
         asrc_io->input_write_idx ^= 1; // Swap buffers
     }
