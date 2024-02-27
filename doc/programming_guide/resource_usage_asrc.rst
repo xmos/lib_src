@@ -1,13 +1,16 @@
 The ASRC algorithm also runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; :numref:`fig_asrc_mhz` quantifies the MHz required for the first channel with adaptive coefficients calculation and :numref:`fig_asrc_mhz2` specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
 .. tip::
-  The below tables show the worst case  MHz consumption per sample, using the minimum block size of 4 input samples. The  MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
+  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
 
 .. tip::
   Typically some performance headroom is needed for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication.
 
+.. tip::
+  :numref:`_fig_asrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+
 .. _fig_asrc_mhz:
-.. list-table:: ASRC Processor Usage ( MHz) for the First Channel in the ASRC Instance
+.. list-table:: ASRC Processor Usage ( MHz) for the First Channel in the ASRC Instance for XCORE-200
      :header-rows: 2
 
      * -
@@ -76,6 +79,10 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
        - 115 MHz
 
 .. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an XCORE-AI device running at 600 MHz can provide 120 MHz logical cores.
+
+
+.. tip::
+  :numref:`_fig_asrc_mhz2` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz2:
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
