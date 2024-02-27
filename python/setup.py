@@ -19,7 +19,8 @@ setuptools.setup(
         'soundfile',
         'pytest-xdist',
         'scipy',
-        'mpmath'
+        'mpmath',
+        'bitstring'
     ],
     dependency_links=[
     ],
