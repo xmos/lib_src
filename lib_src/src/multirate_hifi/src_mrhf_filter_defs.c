@@ -121,7 +121,7 @@ ADFIRDescriptor_t        sADFirDescriptor =
 int                    iADFirPrototypeCoefs[FILTER_DEFS_ADFIR_PROTOTYPE_N_TAPS]  = {
     #include FILTER_DEFS_ADFIR_PROTOTYPE_FILE
 };
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
 int                    iADFirCoefs[FILTER_DEFS_ADFIR_PHASE_N_TAPS][FILTER_DEFS_ADFIR_N_PHASES + 2];
 #else
 int                    iADFirCoefs[FILTER_DEFS_ADFIR_N_PHASES + 2][FILTER_DEFS_ADFIR_PHASE_N_TAPS];

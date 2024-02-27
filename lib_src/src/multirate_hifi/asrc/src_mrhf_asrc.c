@@ -284,7 +284,7 @@ ASRCFsRatioConfigs_t		sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS] =				// Fs ratio con
 //
 // ===========================================================================
 
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
 #define xs3_index_shuffle(a,b) [(b)^7][a]
 #else
 #define xs3_index_shuffle(a,b) [a][b]
@@ -600,7 +600,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     iAlpha        = pasrc_ctrl->uiTimeFract>>1;        // Now alpha can be seen as a signed number
     i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
     iH[2]            = (int)(i64Acc0>>32);
     iH[0]            = 0x40000000;                        // Load H2 with 0.5;
     iH[1]            = iH[0] - iH[2];                        // H1 = 0.5 - 0.5 * alpha * alpha;

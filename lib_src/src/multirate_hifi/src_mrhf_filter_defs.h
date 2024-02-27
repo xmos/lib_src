@@ -71,7 +71,7 @@
     #define        FILTER_DEFS_FIR_MAX_TAPS_SHORT        FILTER_DEFS_FIR_DS_N_TAPS            // Maximum number of taps for short FIR filter
 
     // FIR filter coefficients files
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
     #define        FILTER_DEFS_FIR_BL_FILE                "FilterData/BL.dat"            // Coefficients file for BL FIR filter
     #define        FILTER_DEFS_FIR_BL9644_FILE            "FilterData/BL9644.dat"        // Coefficients file for BL9644 FIR filter
     #define        FILTER_DEFS_FIR_BL8848_FILE            "FilterData/BL8848.dat"        // Coefficients file for BL8848 filter
@@ -163,7 +163,7 @@
     extern        ADFIRDescriptor_t                    sADFirDescriptor;
     // ADFIR filters coefficients
     extern        int                                    iADFirPrototypeCoefs[FILTER_DEFS_ADFIR_PROTOTYPE_N_TAPS];
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
     extern        int                                    iADFirCoefs[FILTER_DEFS_ADFIR_PHASE_N_TAPS][FILTER_DEFS_ADFIR_N_PHASES + 2];
 #else
     extern        int                                    iADFirCoefs[FILTER_DEFS_ADFIR_N_PHASES + 2][FILTER_DEFS_ADFIR_PHASE_N_TAPS];

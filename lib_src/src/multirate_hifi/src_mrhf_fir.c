@@ -242,7 +242,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
         src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100)
@@ -275,7 +275,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
         src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100)
@@ -340,7 +340,7 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
 
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
         src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
@@ -404,7 +404,7 @@ FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
         // Clear accumulator and set access pointers
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
-#if defined(SRC_USE_VPU)
+#if SRC_USE_VPU
         src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
