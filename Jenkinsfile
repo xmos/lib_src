@@ -37,6 +37,44 @@ pipeline {
     )
   }
   stages {
+      stage ('Generate SNR plots') {
+        agent {
+          label 'xcore.ai && uhubctl'
+        }
+
+        steps {
+          runningOn(env.NODE_NAME)
+          sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+          dir("lib_src") {
+            checkout scm
+            sh 'git submodule update --init --recursive'
+          }
+          createVenv("lib_src/requirements.txt")
+
+          dir("lib_src") {
+            withVenv {
+              withTools(params.TOOLS_VERSION) {
+                sh "pip install -r requirements.txt"
+                sh "pip install -e ${WORKSPACE}/xtagctl"
+                withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  sh "xtagctl reset ${adapterIDs[0]}"
+                  dir("doc/python") {
+                    sh "pip install -r requirements_test.txt"
+                    sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
+                    stash name: 'doc_asrc_output', includes: '_build/**'
+                  }
+                }
+              }
+            }
+          }
+        }
+        post {
+          cleanup {
+            xcoreCleanSandbox()
+          }
+        }
+      } // Hardware test
+
     stage('Build and Test') {
       when {
         expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
@@ -74,7 +112,6 @@ pipeline {
               sh 'git clone git@github.com:xmos/infr_scripts_py.git'
               // These are needed for xmake legacy build and also changelog check
               sh 'git clone git@github.com:xmos/lib_logging.git'
-              sh 'git clone git@github.com:xmos/lib_xassert.git'
               withVenv {
                 sh 'pip install -e infr_scripts_py'
                 sh 'pip install -e infr_apps'
@@ -101,7 +138,15 @@ pipeline {
             }
           }
         }
-        stage('Run doc python') {
+        stage('Unstash doc_asrc.py output') {
+          steps {
+            runningOn(env.NODE_NAME)
+            dir("${REPO}/doc/python") {
+              unstash 'doc_asrc_output'
+            }
+          }
+        }
+        stage('Build docs') {
           steps {
             runningOn(env.NODE_NAME)
             dir("${REPO}") {
@@ -122,7 +167,7 @@ pipeline {
                 withVenv {
                   sh 'mkdir -p build'
                   dir("build") {
-                    sh 'rm CMakeCache.txt'
+                    sh 'rm -f -- CMakeCache.txt'
                     sh 'cmake --toolchain ../xmos_cmake_toolchain/xs2a.cmake ..'
                     sh 'make test_ds3_voice test_us3_voice test_unity_gain_voice -j'
                   }
@@ -130,7 +175,7 @@ pipeline {
                     localRunPytest('-n auto -k "xs2" -vv')
                   }
                   dir("build") {
-                    sh 'rm CMakeCache.txt' // Cleanup XS2 cmake cache for next stage
+                    sh 'rm -f -- CMakeCache.txt' // Cleanup XS2 cmake cache for next stage
                   }
                 }
               }
