@@ -23,11 +23,36 @@
  */
 
 
-
 /**
  * Data structure that holds the status of an asynchronous FIFO
  */
-typedef struct asynchronous_fifo_t asynchronous_fifo_t;
+typedef struct asynchronous_fifo_t {
+    // Updated on initialisation only
+    int32_t   channel_count;                  /* Number of audio channels */
+    int32_t   copy_mask;                      /* Number of audio channels */
+    int32_t   max_fifo_depth;                 /* Length of buffer[] in channel_counts */
+    int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
+    int32_t   Ki;                             /* Ki PID coefficient */
+    int32_t   Kp;                             /* Kp PID coefficient */
+
+    // Updated on the producer side only
+    int       skip_ctr;                       /* Set to indicate initialisation runs */
+    int32_t   write_ptr;                      /* Write index in the buffer */
+    int64_t   last_phase_error;               /* previous error, used for proportional */
+    int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
+    int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
+
+    // Updated on the consumer side only
+    uint32_t  read_ptr;                       /* Read index in the buffer */
+
+    // Set by producer, reset by consumer
+    uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
+
+    // Updated from both sides
+    uint32_t  * UNSAFE timestamps;            /* Timestamps of samples */
+    int32_t   buffer[0];                      /* Buffer of data */
+} asynchronous_fifo_t;
+
 
 /**
  * Function that must be called to initialise the asynchronous FIFO.
@@ -187,39 +212,6 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
 void asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
                                     int32_t * UNSAFE samples,
                                     int32_t timestamp);
-
-
-/**
- * Data structure that holds the state
- * Internal use only. Declared here so that the compiler can work out the size
- * on the stack
- */
-struct asynchronous_fifo_t {
-    // Updated on initialisation only
-    int32_t   channel_count;                  /* Number of audio channels */
-    int32_t   copy_mask;                      /* Number of audio channels */
-    int32_t   max_fifo_depth;                 /* Length of buffer[] in channel_counts */
-    int32_t   ideal_phase_error_ticks;        /* Ideal ticks between samples */
-    int32_t   Ki;                             /* Ki PID coefficient */
-    int32_t   Kp;                             /* Kp PID coefficient */
-
-    // Updated on the producer side only
-    int       skip_ctr;                       /* Set to indicate initialisation runs */
-    int32_t   write_ptr;                      /* Write index in the buffer */
-    int64_t   last_phase_error;               /* previous error, used for proportional */
-    int64_t   frequency_ratio;                /* Current ratio of frequencies in 64.64 */
-    int32_t   stop_producing;                 /* In case of overflow, stops producer until consumer restarts and requests a reset */
-
-    // Updated on the consumer side only
-    uint32_t  read_ptr;                       /* Read index in the buffer */
-
-    // Set by producer, reset by consumer
-    uint32_t  reset;                          /* Set to 1 if consumer wants a reset */
-
-    // Updated from both sides
-    uint32_t  * UNSAFE timestamps;            /* Timestamps of samples */
-    int32_t   buffer[0];                      /* Buffer of data */
-};
 
 
 /**

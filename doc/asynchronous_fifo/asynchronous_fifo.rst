@@ -161,12 +161,15 @@ API
 .. doxygengroup:: src_fifo
    :content-only:
 
-|appendix|
+.. doxygengroup:: src_fifo_interp
+   :content-only:
+
 
 Internal workings of the Asynchronous FIFO
 ------------------------------------------
 
-This appendix details the inner workings of the FIFO.
+This appendix details the inner workings of the FIFO and is intended only
+for advanced users who wish to understand the operation in more detail.
 
 Measurements for the PID
 ++++++++++++++++++++++++
@@ -182,7 +185,7 @@ sample.
 
 .. _asynchronous_FIFO_phase_difference:
 
-.. figure:: images/phase_difference.*
+.. figure:: images/phase_difference.pdf
             :width: 75%
 
             Measurement of the phase difference
