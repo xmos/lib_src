@@ -31,7 +31,7 @@ half-full at all times. When the producer is slower than the consumer the
 FIFO will drain a bit until the rates match again, and when the producer is
 faster than the consumer the FIFO will grow until the rates match again. In
 order to ensure that the FIFO stays half full, the control algorithm will
-always slightly overshoot on a a step-change in rates.
+always slightly overshoot on a step-change in rates.
 
 Note that the FIFO is unaware whether it is the producer that is too fast,
 or the consumer that is too slow. It does not attribute blame for a
@@ -56,11 +56,11 @@ The number of elements in the FIFO is a trade-off that the system designer
 makes. As the FIFO will always aim to be half-full, a large number of
 elements will introduce a high latency in the system and occupy a large
 amount of memory. A short FIFO wil contribute little latency but may easily
-overflow and underflow.
+overflow and underflow. Typically you will need at least two "blocks" plus a bit more for the FIFO, where a "block" is the largest unit that goes in or out of the FIFO.
 
 The Asynchronous FIFO has four functions to control the FIFO:
 
-* ``asynchronous_fifo_init()`` initialises the FIFO structure. It needs to
+* ``asynchronous_fifo_init()`` initialises the FIFO structure, and resets the queue data to zero. It needs to
   know the number of integers that comprise a single sample, the maximum
   length that has been allocated for the FIFO.
 
@@ -143,7 +143,7 @@ Internally, the Asynchronous FIFO measures the phase difference between
 producer and the consumer. It does so by storing the time samples of all
 consumed samples, and comparing the sample consumed N/2 samples in the past
 with the time sample 
-TWhat we are going to measure is the phase-difference between samples going
+That we are going to measure is the phase-difference between samples going
 into the FIFO and samples going out of the FIFO. In an ideal world, sample X
 sample enters the FIFO at exactly the same time as sample X-N/2 leaving the
 FIFO. N/2 is the ideal fill-level of the FIFO that is N items long. For
@@ -168,7 +168,7 @@ number of samples since the beginning of time that the ASRC is out by. The goal 
 the rate converter is to make the phase difference stable (ie, it does not
 move between subsequent samples), and zero (ie, the FIFO is exactly mid
 level). Hence, we can see the differential of the phase error as a
-proportional error, and the phase error itself as an integral error.
+proportional error, and the phase error itself as an integral error. For all typical cases the Kp and Ki terms have been precalculated.
 
 
 The three degrees of freedom
@@ -182,7 +182,7 @@ There are three degrees of freedom in this system:
 
 * The jitter characteristics of the two clocks that can be sustained.
 
-If you pick a long FIFO length, everything is great, but you introduce a
+If you pick a long FIFO length, it will work without underflow or overflow, but you introduce a
 large delay between input-signal and output-signal. If you pick a short
 time constant for the loop-filter, the adjustments of the ASRC will be
 audible as harmonic distortion. If you only permit small changes between
