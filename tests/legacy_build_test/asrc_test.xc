@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // General includes
 #include <stdlib.h>
@@ -346,7 +346,7 @@ void ParseCmdLine(char *input, char * unsafe * argv, int ui)
   }
 }
 
-int main(int argc, char * unsafe argv[argc]) 
+int main(unsigned argc, char * unsafe argv[argc]) 
 {
     int ui;
 
