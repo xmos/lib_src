@@ -195,7 +195,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     withVenv {
                       dir("tests") {
-                        localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
+                        localRunPytest('-m prepare -n auto') // Do all pre work like building and generating golden ref where needed
 
                         // FF3 HiFi tests for OS3 and DS3
                         localRunPytest('-m main -n auto -k "hifi_ff3" -vv')
@@ -209,7 +209,6 @@ pipeline {
 
                         // Profile the ASRC
                         localRunPytest('-m main -k "profile_asrc" -vv')
-                        sh 'tree'
                         archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
                       }
                     }
