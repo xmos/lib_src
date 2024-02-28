@@ -153,7 +153,7 @@ pipeline {
                         sh "xtagctl reset ${adapterIDs[0]}"
                         dir("tests/asynchronous_fifo_asrc_test") {
                           sh "xmake -j"
-                          sh "xrun --xscope --adapter-id " + adapterIDs[0]
+                          sh "xrun --xscope --adapter-id " + adapterIDs[0] + "bin/asynchronous_fifo_asrc_test.xe"
                         }
                       }
                     }
@@ -169,7 +169,7 @@ pipeline {
           }
         } // HW tests
 
-        stage('Build and Test (simulation)') {
+        stage('Sim tests') {
           when {
             expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
           }
