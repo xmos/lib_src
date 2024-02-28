@@ -7,7 +7,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
   Typically some performance headroom is needed for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication.
 
 .. tip::
-  :numref:`_fig_asrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+  :numref:`fig_asrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz:
 .. list-table:: ASRC Processor Usage ( MHz) for the First Channel in the ASRC Instance for XCORE-200
@@ -82,7 +82,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
 
 
 .. tip::
-  :numref:`_fig_asrc_mhz2` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+  :numref:`fig_asrc_mhz2` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz2:
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance

@@ -185,7 +185,7 @@ sample.
 
 .. _asynchronous_FIFO_phase_difference:
 
-.. figure:: images/phase_difference.pdf
+.. figure:: images/phase-difference.*
             :width: 75%
 
             Measurement of the phase difference
