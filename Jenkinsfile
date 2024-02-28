@@ -104,7 +104,71 @@ pipeline {
           }
         } // SNR plots
 
-        stage('Build and Test') {
+        stage ('Hardware Tests') {
+          agent {
+            label 'xcore.ai && uhubctl'
+          }
+          stages {
+            stage('Get repo') {
+              steps {
+                runningOn(env.NODE_NAME)
+                sh "mkdir ${REPO}"
+                // source checks require the directory
+                // name to be the same as the repo name
+                dir("${REPO}") {
+                  // checkout repo
+                  checkout scm
+                  sh 'git submodule update --init --recursive --depth 1'
+                }
+              }
+            }
+            stage ("Create Python environment") {
+              steps {
+                runningOn(env.NODE_NAME)
+                dir("${REPO}") {
+                  createVenv('requirements.txt')
+                  withVenv {
+                    sh 'pip install -r requirements.txt'
+                  }
+                }
+              }
+            }
+            stage ('Gen plots') {
+              steps {
+                runningOn(env.NODE_NAME)
+                sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+                dir("lib_src") {
+                  checkout scm
+                  sh 'git submodule update --init --recursive'
+                }
+                createVenv("lib_src/requirements.txt")
+
+                dir("lib_src") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      sh "pip install -r requirements.txt"
+                      sh "pip install -e ${WORKSPACE}/xtagctl"
+                      withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                        sh "xtagctl reset ${adapterIDs[0]}"
+                        dir("tests/asynchronous_fifo_asrc_test") {
+                          sh "xmake -j"
+                          sh "xrun --xscope --adapter-id " + adapterIDs[0]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // HW tests
+
+        stage('Build and Test (simulation)') {
           when {
             expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
           }

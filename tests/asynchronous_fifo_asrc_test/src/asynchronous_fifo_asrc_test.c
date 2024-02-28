@@ -432,6 +432,8 @@ int main(void) {
     }
 
     hwtimer_realloc_xc_timer();
+
+    return errors;
 }
 
 
