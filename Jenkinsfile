@@ -45,8 +45,8 @@ pipeline {
           }
           stages {
             stage('Get repo') {
-              runningOn(env.NODE_NAME)
               steps {
+                runningOn(env.NODE_NAME)
                 sh "mkdir ${REPO}"
                 // source checks require the directory
                 // name to be the same as the repo name
