@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // General includes
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 
 // ASRC includes
 #include "src.h"
+#include "use_vpu.h"
 
 extern ASRCFsRatioConfigs_t     sFsRatioConfigs[ASRC_N_FS][ASRC_N_FS];
 
@@ -177,6 +178,23 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
             iAlpha      = asrc_ctrl[0].uiTimeFract>>1;      // Now alpha can be seen as a signed number
             i64Acc0 = (long long)iAlpha * (long long)iAlpha;
 
+#if SRC_USE_VPU
+            iH[2]           = (int)(i64Acc0>>32);
+            iH[0]           = 0x40000000;                       // Load H2 with 0.5;
+            iH[1]           = iH[0] - iH[2];                        // H1 = 0.5 - 0.5 * alpha * alpha;
+            iH[1]           = iH[1] - iH[2];                        // H1 = 0.5 - alpha * alpha
+            iH[1]           = iH[1] + iAlpha;                       // H1 = 0.5 + alpha - alpha * alpha;
+            iH[0]           = iH[0] - iAlpha;                       // H2 = 0.5 - alpha
+            iH[0]           = iH[0] + iH[2];                        // H2 = 0.5 - alpha + 0.5 * alpha * alpha
+
+            // The integer part of time gives the phase
+            piPhase0        = &iADFirCoefs[0][asrc_ctrl[0].iTimeInt];
+            // These are calculated by the asm funcion  piPhase1        = piPhase0 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
+            //                                          piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
+            piADCoefs       = asrc_ctrl[0].piADCoefs;       // Given limited number of registers, this could be DP
+            // Apply spline coefficients to filter coefficients
+            src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+#else
             iH[0]           = (int)(i64Acc0>>32);
             iH[2]           = 0x40000000;                       // Load H2 with 0.5;
             iH[1]           = iH[2] - iH[0];                        // H1 = 0.5 - 0.5 * alpha * alpha;
@@ -194,6 +212,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
             // Apply spline coefficients to filter coefficients
             src_mrhf_spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
+#endif
 
             // Step time for next output sample
             // --------------------------------
@@ -225,8 +244,12 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
                 piCoefs                 = asrc_ctrl[uj].sADFIRF3Ctrl.piADCoefs;
 
                 // Do FIR
+#if SRC_USE_VPU
+                src_mrhf_adfir_inner_loop_asm_xs3(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
+#else
                 if ((unsigned)piData & 0b0100) src_mrhf_adfir_inner_loop_asm_odd(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
                 else                               src_mrhf_adfir_inner_loop_asm(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
+#endif
 
                 // Write output
                 *(asrc_ctrl[uj].sADFIRF3Ctrl.piOut)       = iData;

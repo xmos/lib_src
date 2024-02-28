@@ -5,5 +5,5 @@ PROJECT_BRIEF          = "Synchronous and Asynchronous Rate Conversion Documenta
 
 INPUT                  = ../lib_src/api ../lib_src/src ../lib_src/src/fixed_factor_vpu_voice
 
-PREDEFINED             = C_API= EXTERN_C= 
+PREDEFINED             = C_API= EXTERN_C= UNSAFE=
 

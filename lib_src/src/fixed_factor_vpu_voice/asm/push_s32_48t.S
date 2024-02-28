@@ -1,4 +1,4 @@
-// Copyright 2023 XMOS LIMITED.
+// Copyright 2023-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #define FUNCTION_NAME push_s32_48t
@@ -19,6 +19,7 @@
 
 FUNCTION_NAME: // (int32_t * state, int32_t new_samp)
         dualentsp NSTACKWORDS
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
 
         // r4 - r10 are not used here
 
@@ -51,7 +52,7 @@ FUNCTION_NAME: // (int32_t * state, int32_t new_samp)
         // put new_samp in state[0]
     {                                   ;   stw new_samp, state[0]          }
 
-
+#endif // Only available for XS3 with VPU
         retsp NSTACKWORDS
 
 .cc_bottom FUNCTION_NAME.function; 
