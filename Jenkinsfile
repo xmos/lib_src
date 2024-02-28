@@ -138,27 +138,6 @@ pipeline {
             }
           }
         }
-        stage('Unstash doc_asrc.py output') {
-          steps {
-            runningOn(env.NODE_NAME)
-            dir("${REPO}/doc/python") {
-              unstash 'doc_asrc_output'
-            }
-          }
-        }
-        stage('Build docs') {
-          steps {
-            runningOn(env.NODE_NAME)
-            dir("${REPO}") {
-              withTools(params.TOOLS_VERSION) {
-                withVenv {
-                  sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-                  archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
-                }
-              }
-            }
-          }
-        }
         stage('Tests XS2') {
           steps {
             runningOn(env.NODE_NAME)
@@ -218,6 +197,64 @@ pipeline {
         }
       }
     }
-
+    // This stage needs to wait for characterisation plots so put at end
+    stage('Documentation') {
+      when {
+        expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
+      }
+      agent {
+        label 'x86_64&&docker'
+      }
+      stages {
+        stage('Get repo') {
+          steps {
+            sh "mkdir ${REPO}"
+            // source checks require the directory
+            // name to be the same as the repo name
+            dir("${REPO}") {
+              // checkout repo
+              checkout scm
+              sh 'git submodule update --init --recursive --depth 1'
+            }
+          }
+        }
+        stage ("Create Python environment") {
+          steps {
+            dir("${REPO}") {
+              createVenv('requirements.txt')
+              withVenv {
+                sh 'pip install -r requirements.txt'
+              }
+            }
+          }
+        }
+        stage('Unstash doc_asrc.py output') {
+          steps {
+            runningOn(env.NODE_NAME)
+            dir("${REPO}/doc/python") {
+              unstash 'doc_asrc_output'
+            }
+          }
+        }
+        stage('Build docs') {
+          steps {
+            runningOn(env.NODE_NAME)
+            dir("${REPO}") {
+              withTools(params.TOOLS_VERSION) {
+                withVenv {
+                  sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
+                  archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
+                }
+              }
+            }
+          }
+        }
+      }
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      }
+    }
   }
 }
