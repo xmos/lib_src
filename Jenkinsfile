@@ -133,13 +133,14 @@ pipeline {
                 }
               }
             }
-            stage ('Gen plots') {
+            stage ('Build and run tests') {
               steps {
                 runningOn(env.NODE_NAME)
                 sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
                 dir("lib_src") {
                   checkout scm
                   sh 'git submodule update --init --recursive'
+                  sh 'git clone git@github.com:xmos/lib_logging.git'
                 }
                 createVenv("lib_src/requirements.txt")
 
