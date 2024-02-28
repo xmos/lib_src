@@ -20,7 +20,7 @@
 
 FUNCTION_NAME: // (int32_t * state, int32_t * coef)
         dualentsp NSTACKWORDS
-
+#if (defined(__XS3A__)) // Only available for XS3 with VPU
         // r4 - r10 are not used here
 
         // Setting up the vpu and some constants
@@ -58,7 +58,7 @@ FUNCTION_NAME: // (int32_t * state, int32_t * coef)
     {   add out, out, tmp1              ;   ldw tmp0, buff[2]               }
     {   add out, out, tmp0              ;   ldw tmp1, buff[3]               }
     {   add out, out, tmp1              ;                                   }
-    
+#endif // Only available for XS3 with VPU
         retsp NSTACKWORDS
 
 .cc_bottom FUNCTION_NAME.function; 
