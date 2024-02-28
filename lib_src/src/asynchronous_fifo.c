@@ -129,6 +129,7 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
 
 #ifdef __XS2A__
             memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
+            (void)copy_mask; // Remove unused var warning
 #else
             register int32_t *ptr asm("r11") = samples;
             asm("vldr %0[0]" :: "r" (ptr));
@@ -196,6 +197,7 @@ void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
 #ifdef __XS2A__
     memcpy(samples, state->buffer + read_ptr * channel_count, channel_count * sizeof(int));
+    (void)copy_mask; // Remove unused var warning
 #else
     register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
     asm("vldr %0[0]" :: "r" (ptr));
