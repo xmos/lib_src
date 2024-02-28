@@ -58,8 +58,8 @@ pipeline {
               }
             }
             stage ("Create Python environment") {
-              runningOn(env.NODE_NAME)
               steps {
+                runningOn(env.NODE_NAME)
                 dir("${REPO}") {
                   createVenv('requirements.txt')
                   withVenv {
@@ -114,6 +114,7 @@ pipeline {
           stages {
             stage('Get repo') {
               steps {
+                runningOn(env.NODE_NAME)
                 sh "mkdir ${REPO}"
                 // source checks require the directory
                 // name to be the same as the repo name
@@ -126,6 +127,7 @@ pipeline {
             }
             stage ("Create Python environment") {
               steps {
+                runningOn(env.NODE_NAME)
                 dir("${REPO}") {
                   createVenv('requirements.txt')
                   withVenv {
@@ -136,6 +138,7 @@ pipeline {
             }
             stage('Library checks') {
               steps {
+                runningOn(env.NODE_NAME)
                 dir("${REPO}") {
                   sh 'git clone git@github.com:xmos/infr_apps.git'
                   sh 'git clone git@github.com:xmos/infr_scripts_py.git'
