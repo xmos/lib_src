@@ -45,6 +45,7 @@ pipeline {
           }
           stages {
             stage('Get repo') {
+              runningOn(env.NODE_NAME)
               steps {
                 sh "mkdir ${REPO}"
                 // source checks require the directory
@@ -57,6 +58,7 @@ pipeline {
               }
             }
             stage ("Create Python environment") {
+              runningOn(env.NODE_NAME)
               steps {
                 dir("${REPO}") {
                   createVenv('requirements.txt')
