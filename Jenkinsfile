@@ -43,27 +43,50 @@ pipeline {
           agent {
             label 'xcore.ai && uhubctl'
           }
-
-          steps {
-            runningOn(env.NODE_NAME)
-            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-            dir("lib_src") {
-              checkout scm
-              sh 'git submodule update --init --recursive'
+          stage('Get repo') {
+            steps {
+              sh "mkdir ${REPO}"
+              // source checks require the directory
+              // name to be the same as the repo name
+              dir("${REPO}") {
+                // checkout repo
+                checkout scm
+                sh 'git submodule update --init --recursive --depth 1'
+              }
             }
-            createVenv("lib_src/requirements.txt")
+          }
+          stage ("Create Python environment") {
+            steps {
+              dir("${REPO}") {
+                createVenv('requirements.txt')
+                withVenv {
+                  sh 'pip install -r requirements.txt'
+                }
+              }
+            }
+          }
+          stage ('Gen plots') {
+            steps {
+              runningOn(env.NODE_NAME)
+              sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+              dir("lib_src") {
+                checkout scm
+                sh 'git submodule update --init --recursive'
+              }
+              createVenv("lib_src/requirements.txt")
 
-            dir("lib_src") {
-              withVenv {
-                withTools(params.TOOLS_VERSION) {
-                  sh "pip install -r requirements.txt"
-                  sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                    sh "xtagctl reset ${adapterIDs[0]}"
-                    dir("doc/python") {
-                      sh "pip install -r requirements_test.txt"
-                      sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
-                      stash name: 'doc_asrc_output', includes: '_build/**'
+              dir("lib_src") {
+                withVenv {
+                  withTools(params.TOOLS_VERSION) {
+                    sh "pip install -r requirements.txt"
+                    sh "pip install -e ${WORKSPACE}/xtagctl"
+                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                      sh "xtagctl reset ${adapterIDs[0]}"
+                      dir("doc/python") {
+                        sh "pip install -r requirements_test.txt"
+                        sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
+                        stash name: 'doc_asrc_output', includes: '_build/**'
+                      }
                     }
                   }
                 }
