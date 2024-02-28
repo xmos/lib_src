@@ -73,14 +73,9 @@ typedef struct asrc_in_out_t{
 }asrc_in_out_t;
 
 #ifdef __XC__
-void asrc_processor(streaming chanend c_asrc_input);
+void asrc_processor(chanend c_asrc_input);
 int pull_samples(int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
 unsigned receive_asrc_input_samples(chanend c_asrc_input_samples, asrc_in_out_t &asrc_io, unsigned &new_input_rate);
-
-extern "C" {
-    // unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *asrc_channel_count, unsigned *new_input_rate);
-
-}
 #else
 #include <xcore/chanend.h>
 void asrc_processor(chanend_t c_asrc_input);
