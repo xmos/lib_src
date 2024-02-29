@@ -394,7 +394,7 @@ int test_192000_low() {
     printf("Testing 192000 low\n");
     PAR_JOBS(
         // PJOB(test_async, (192000, 44100, 0, &e0)), //TODO enable https://github.com/xmos/lib_src/issues/119
-        // PJOB(test_async, (192000, 48000, 0, &e1)), //TODO enable https://github.com/xmos/lib_src/issues/119
+        PJOB(test_async, (192000, 48000, 0, &e1)),
         PJOB(test_async, (192000, 88200, 0, &e2)), 
         PJOB(test_async, (192000, 96000, 0, &e3))
         );
