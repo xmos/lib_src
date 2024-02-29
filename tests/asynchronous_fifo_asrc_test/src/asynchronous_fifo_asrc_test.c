@@ -393,7 +393,7 @@ int test_192000_low() {
     int e0=0, e1=0, e2=0, e3=0;
     printf("Testing 192000 low\n");
     PAR_JOBS(
-        // PJOB(test_async, (192000, 44100, 0, &e0)), //TODO enable https://github.com/xmos/lib_src/issues/119
+        PJOB(test_async, (192000, 44100, 0, &e0)),
         PJOB(test_async, (192000, 48000, 0, &e1)),
         PJOB(test_async, (192000, 88200, 0, &e2)), 
         PJOB(test_async, (192000, 96000, 0, &e3))
@@ -405,10 +405,10 @@ int test_1xxx00_high() {
     int e0=0, e1=0, e2=0, e3=0;
     printf("Testing 176400/192000 high\n");
     PAR_JOBS(
-        // PJOB(test_async, (176400, 176400, 1, &e2)), //TODO enable https://github.com/xmos/lib_src/issues/119
-        // PJOB(test_async, (176400, 192000, 1, &e3)), //TODO enable https://github.com/xmos/lib_src/issues/119
-        PJOB(test_async, (192000, 176400, 1, &e0)),
-        PJOB(test_async, (192000, 192000, 1, &e1))
+        PJOB(test_async, (176400, 176400, 0, &e2)),
+        PJOB(test_async, (176400, 192000, 0, &e3)),
+        PJOB(test_async, (192000, 176400, 0, &e0)),
+        PJOB(test_async, (192000, 192000, 0, &e1))
         );
     return e0 + e1 + e2 + e3;
 }
