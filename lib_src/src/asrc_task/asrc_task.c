@@ -31,7 +31,7 @@ unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_
 
     /* Example Rx function (called from ASRC):
 
-    static unsigned asrc_in_counter = 0;
+    static unsigned asrc_in_counter = 0; // Needs to persist between calls
 
     new_input_frequency = chanend_in_word(c_producer);
     asrc_io.input_timestamp = chanend_in_word(c_producer);
@@ -84,6 +84,7 @@ typedef struct schedule_info_t{
     int channel_start_idx;
 } schedule_info_t;
 
+
 // Generates a schedule based on the number of channels of ASRC needed vs available threads
 int calculate_job_share(int asrc_channel_count,
                         schedule_info_t *schedule){
@@ -130,6 +131,7 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
         asrc_io->output_samples[wr_idx] = output_samples[i];
     }
 }
+
 
 // Wrapper which forks and joins the parallel ASRC worker functions
 // Only about 55 ticks ticks overhead to fork and join at 120MIPS 8 channels/ 4 threads
@@ -235,8 +237,9 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
     // Only forward on to ASRC if it is ready (to avoid deadlock)
     if(asrc_in_counter == 0 && asrc_io->ready_flag_to_receive){
         // Note if you ever find the code has stopped here then this is due to the time required to ASRC process the input frame
-        // is longer than the rate of the frames coming in. To remedy this you need to increase ASRC processing resources or reduce
+        // is longer than the period of the frames coming in. To remedy this you need to increase ASRC processing resources or reduce
         // the processing requirement. If you are using XCORE-200, consider using xcore.ai for more than 2x the ASRC performance. 
+        // Notify ASRC main loop of new frame
         chanend_out_byte(c_buff_idx, (uint8_t)asrc_io->input_write_idx);
         asrc_io->input_write_idx ^= 1; // Swap buffers
     }
@@ -401,15 +404,16 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
     } // while 1
 }
 
+
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
-void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, unsigned fifo_length){
+void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
     printintln(fifo_length);
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
     // This is a workaround where only 4 params can be sent to INTERRUPT_PERMITTED(). So set it struct and extract in asrc_processor_() init
+    // http://bugzilla/show_bug.cgi?id=18745
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
     INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }
-

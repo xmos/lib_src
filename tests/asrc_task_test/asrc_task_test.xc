@@ -163,14 +163,15 @@ int main(unsigned argc, char * unsafe argv[argc])
     chan c_producer;
     chan c_control[2];
 
-    // IO struct for ASRC must be passed to both asrc_proc and consumer
-    asrc_in_out_t asrc_io = {{{0}}};
+
 
     // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
     #define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 3) // Half full is target so *2 is nominal size but we need wiggle room at startup
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
 
     unsafe{
+        // IO struct for ASRC must be passed to both asrc_proc and consumer
+        asrc_in_out_t asrc_io = {{{0}}};
         asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
         asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
 
@@ -183,8 +184,8 @@ int main(unsigned argc, char * unsafe argv[argc])
                 test_master(c_control, commands, n_cmds);
             }
             producer(c_producer, c_control[0]);
-            unsafe{asrc_processor(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);}
-            unsafe{consumer(c_control[1], asrc_io_ptr, fifo);}
+            asrc_processor(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);
+            consumer(c_control[1], asrc_io_ptr, fifo);
 
         }
     } // unsafe region
