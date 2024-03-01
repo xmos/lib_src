@@ -116,7 +116,7 @@ void producer(chanend c_producer, chanend c_control){
     }
 }
 
-void consumer(chanend c_control){
+void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io){
     unsigned sample_rate = 0;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
@@ -137,7 +137,7 @@ void consumer(chanend c_control){
             break;
 
             case t when timerafter(time_trigger) :> int32_t time_stamp:
-                pull_samples(samples, sample_rate, time_stamp);
+                pull_samples(asrc_io, samples, sample_rate, time_stamp);
                 time_trigger += sample_period;
                 xscope_int(0, samples[0]);
             break;
@@ -163,18 +163,24 @@ int main(unsigned argc, char * unsafe argv[argc])
     chan c_producer;
     chan c_control[2];
 
-    par
-    {
-        {
-            // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
-            unsigned commands[MAX_CMDS][CMD_LEN] = {{0}};
-            unsigned n_cmds = parse_cmd_line(commands, argc, argv);
-            test_master(c_control, commands, n_cmds);
-        }
-        producer(c_producer, c_control[0]);
-        asrc_processor(c_producer);
-        consumer(c_control[1]);
+    // IO struct for ASRC
+    asrc_in_out_t asrc_io = {{{0}}};
+    unsafe{
+        asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
 
-    }
+        par
+        {
+            {
+                // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
+                unsigned commands[MAX_CMDS][CMD_LEN] = {{0}};
+                unsigned n_cmds = parse_cmd_line(commands, argc, argv);
+                test_master(c_control, commands, n_cmds);
+            }
+            producer(c_producer, c_control[0]);
+            unsafe{asrc_processor(c_producer, asrc_io_ptr);}
+            unsafe{consumer(c_control[1], asrc_io_ptr);}
+
+        }
+    } // unsafe region
     return 0;
 }

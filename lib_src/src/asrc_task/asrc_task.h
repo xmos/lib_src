@@ -68,18 +68,18 @@ typedef struct asrc_in_out_t{
     unsigned input_frequency;                                               // Nominal input sample rate  44100..192000
     unsigned input_channel_count;                                           // This is set by the producer
     int32_t output_samples[SRC_MAX_NUM_SAMPS_OUT * MAX_ASRC_CHANNELS_TOTAL];// Output sample array
-    uint32_t num_output_samples;                                            // How many sample periods worth of channels
+    unsigned output_frequency;                                              // Output sample rate (set by consumer)
     int32_t output_time_stamp;                                              // The consumption timestamp (set by consumer)
 }asrc_in_out_t;
 
 #ifdef __XC__
-void asrc_processor(chanend c_asrc_input);
-int pull_samples(int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
+void asrc_processor(chanend c_asrc_input, asrc_in_out_t * unsafe asrc_io);
+int pull_samples(asrc_in_out_t * unsafe asrc_io, int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
 unsigned receive_asrc_input_samples(chanend c_asrc_input_samples, asrc_in_out_t &asrc_io, unsigned &new_input_rate);
 #else
 #include <xcore/chanend.h>
-void asrc_processor(chanend_t c_asrc_input);
-int pull_samples(int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp);
+void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io);
+int pull_samples(asrc_in_out_t *asrc_io, int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp);
 unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_rate);
 #endif
 void reset_asrc_fifo(void);
