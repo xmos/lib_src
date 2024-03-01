@@ -312,29 +312,28 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
     while(1){
         asrc_wait_for_valid_config(c_buff_idx, &input_frequency, &output_frequency, asrc_io);
 
-        // Extract frequency info
+        //// Extract frequency info
         dprintf("Input fs: %lu Output fs: %lu\n", input_frequency, output_frequency);
         int inputFsCode = frequency_to_fs_code(input_frequency);
         int outputFsCode = frequency_to_fs_code(output_frequency);
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
         
-        ///// FIFO init
+        //// FIFO init
         dprintf("FIFO init channels: %d length: %ld\n", asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init(fifo, asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init_PID_fs_codes(fifo, inputFsCode, outputFsCode);
 
-        // Parallel scheduler init
+        //// Parallel scheduler init
         schedule_info_t schedule[MAX_ASRC_THREADS];
         int num_jobs = calculate_job_share(asrc_io->asrc_channel_count, schedule);
         dprintf("num_jobs: %d, MAX_ASRC_THREADS: %d, asrc_channel_count: %d\n", num_jobs, MAX_ASRC_THREADS, asrc_io->asrc_channel_count);
         for(int i = 0; i < num_jobs; i++){
             dprintf("schedule: %d, num_channels: %d, channel_start_idx: %d\n", i, schedule[i].num_channels, schedule[i].channel_start_idx);
         }
-
         int max_channels_per_instance = schedule[0].num_channels;
         dprintf("max_channels_per_instance: %d\n", max_channels_per_instance);
 
-        // ASRC init
+        //// ASRC init
         asrc_state_t sASRCState[MAX_ASRC_THREADS][SRC_MAX_SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
         int iASRCStack[MAX_ASRC_THREADS][SRC_MAX_SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES ];// Buffer between filter stages
         asrc_ctrl_t sASRCCtrl[MAX_ASRC_THREADS][SRC_MAX_SRC_CHANNELS_PER_INSTANCE];                                     // Control structure
@@ -355,7 +354,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
             dprintf("ASRC init instance: %d ptr: %p\n", instance, sASRCCtrl[instance]);
         }
 
-        // Timing check vars. Includes ASRC, timestamp interpolation and FIFO push
+        //// Timing check vars. Includes ASRC, timestamp interpolation and FIFO push
         int32_t asrc_process_time_limit = (XS1_TIMER_HZ / input_frequency) * SRC_N_IN_SAMPLES;
         dprintf("ASRC process_time_limit: %ld\n", asrc_process_time_limit);
         int32_t asrc_peak_processing_time = 0;
@@ -368,12 +367,12 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
         asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
         asrc_io->ready_flag_configured = 1; // SIgnal we are ready to produce
 
-        // Run until format change detected
+        //// Run until format change detected
         while(1){
             // Wait for block of samples
             unsigned input_write_idx = (unsigned)chanend_in_byte(c_buff_idx);
 
-            // Check for format changes - do before we process
+            // Check for format changes - do before we process in case things have changed
             if(asrc_detect_format_change(input_frequency, output_frequency, asrc_io)){
                 asrc_io->ready_flag_configured = 0;
                 break;
@@ -407,7 +406,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
 void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
-    printintln(fifo_length);
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO

@@ -50,6 +50,10 @@
     #define SRC_DITHER_SETTING                  0
 #endif
 
+#if (((MAX_ASRC_CHANNELS_TOTAL + (MAX_ASRC_THREADS - 1)) / MAX_ASRC_THREADS) > SRC_MAX_SRC_CHANNELS_PER_INSTANCE)
+#error Please increase SRC_MAX_SRC_CHANNELS_PER_INSTANCE
+#endif
+
 #include "src.h"
 #include "asynchronous_fifo.h"
 
