@@ -17,7 +17,7 @@ import itertools
 import re
 from thdncalculator import THDN_and_freq
 
-SR_LIST = (44100, 48000, 88200, 96000)
+SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
 
 def run_dut(bin_name, cmds, timeout=60):
@@ -29,6 +29,7 @@ def run_dut(bin_name, cmds, timeout=60):
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
 
     return output.stderr #xrun puts output on err for some reason
+
 
 def analyse_wav(expected_freqs):
     print("Extracting WAV")
@@ -52,7 +53,7 @@ def analyse_wav(expected_freqs):
         expected = expected_freqs[expected_idx]
         # print(expected, peak)
         if np.isclose(expected, peak, rtol=0.05):
-            print(f"found {expected} - {peak} @ peak_idx {peak_idx} of {len(peaks)} peaks")
+            print(f"found {expected:.4f}Hz - {peak:.4f}Hz @ FFT peak_idx {peak_idx} of {len(peaks)} peaks")
             expected_idx += 1
             if expected_idx == len(expected_freqs):
                 break
@@ -73,6 +74,7 @@ def analyse_wav(expected_freqs):
     return True if expected_idx == len(expected_freqs) else False
 
 def build_cmd_list_expected_f(input_srs, output_srs, chans, delay_ms, input_freq = (44100 / 44)):
+    """Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS """
     cmd_list = []
     expected_freqs = []
 
@@ -92,9 +94,13 @@ def build_xe():
 
     return xe_path
 
-def test_asrc_task_freq_matrix(build_xe):
-    """ This checks all combinations of valid inputs """
 
+def test_asrc_task_freq_matrix(build_xe):
+    """
+    Looks for a set of frequencies accordng to SR rate changes. We uses a sine table of len 44
+    which produces a nominal 1kHz ish which gets scaled according to input SR.
+    It does a full matrix of the input and output frequencies.
+    """
     cmd_list, expected_freqs = build_cmd_list_expected_f(SR_LIST, SR_LIST, 4, 100)
     output = run_dut(build_xe, cmd_list, timeout=60)
     vcd2wav("trace.vcd", 0, 1, 44100)
@@ -142,7 +148,7 @@ def parse_output_for_changes(output, cmds):
     assert num_valid_configs == num_found_configs
 
 def test_asrc_task_zero_transition(build_xe):
-    """ This checks transitions through invalid ones (something is zero) """
+    """ This checks SR transitions through invalid ones (when something is zero) """
 
     delay_ms = 10
     cmd_list = [
@@ -161,20 +167,24 @@ def test_asrc_task_zero_transition(build_xe):
 
 def analyse_thd(wav_file):
     sample_rate, data = wavfile.read(wav_file)
-    start_chop_s = 0.01
+    start_chop_s = 0.02
     data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
     thd, freq = THDN_and_freq(data, sample_rate)
 
     expected_freq = (44100 / 44) * sample_rate / 44100
     max_thd = -90
-    print(F"THD: {thd}, freq: {freq}, expected_freq: {expected_freq}")
+    print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
 
     assert thd < max_thd
     assert np.isclose(freq, expected_freq, rtol = 0.0001)
 
 
 def test_asrc_longish_run(build_xe):
-    cmd_list = [[48000, 4, 48000, 10 * 1000]] # 10s
+    """
+    This runs a slightly longer test at a single frequency and checks THDN
+    """
+    test_len_s = 10
+    cmd_list = [[48000, 8, 48000, test_len_s * 1000]]
     output = run_dut(build_xe, cmd_list, timeout=60)
     parse_output_for_changes(output, cmd_list)
     vcd2wav("trace.vcd", 0, 1, 48000)

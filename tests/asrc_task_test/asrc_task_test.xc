@@ -13,11 +13,8 @@
 #include "asrc_task_config.h"
 #include "asrc_task.h"
 
-#define CMD_LEN     4
+#define CMD_LEN     4   // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
 #define MAX_CMDS    128
-
-// const unsigned sample_rates[] = {44100, 48000, 88200, 96000, 176400, 192000};
-const unsigned sample_rates[] = {44100, 48000, 88200, 96000};
 
 
 void test_master(chanend c_control[2], unsigned commands[MAX_CMDS][CMD_LEN], unsigned n_cmds){
