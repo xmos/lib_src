@@ -25,7 +25,7 @@
 
 
  __attribute__ ((weak))
-unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_rate){
+unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_frequency){
     printstrln("ERROR: Please define an appropriate ASRC receive samples function.");
     while(1);
 
@@ -33,7 +33,7 @@ unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_
 
     static unsigned asrc_in_counter = 0;
 
-    new_input_rate = chanend_in_word(c_producer);
+    new_input_frequency = chanend_in_word(c_producer);
     asrc_io.input_timestamp = chanend_in_word(c_producer);
     asrc_io.input_channel_count = chanend_in_word(c_producer);
 
@@ -202,16 +202,10 @@ int par_asrc(int num_jobs, schedule_info_t schedule[], uint64_t fs_ratio, asrc_i
     return num_output_samples;
 }
 
-// Globals
-
-// Set by consumer. Only read here. Needs to be a ptr to work with XC volatiles.
-volatile uint32_t new_output_rate = 0;
-volatile uint32_t * new_output_rate_ptr = &new_output_rate;
-
 
 // Called from consumer side. Produces samples and returns channel count
-int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_rate, int32_t consume_timestamp){
-    new_output_rate = output_rate;
+int pull_samples(asrc_in_out_t * asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp){
+    asrc_io->output_frequency = output_frequency;
     if (asrc_io->ready_flag_configured){
         asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp);
         return asrc_io->asrc_channel_count;
@@ -255,7 +249,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
         chanend_in_byte(c_buff_idx); // Receive frame from source
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
-        *output_frequency = new_output_rate;
+        *output_frequency = asrc_io->output_frequency;
         delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period. TODO: why is this needed?
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
@@ -272,7 +266,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
 static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t output_frequency, asrc_in_out_t *asrc_io){
     if( asrc_io->input_frequency != input_frequency || 
         asrc_io->input_channel_count != asrc_io->asrc_channel_count ||
-        *new_output_rate_ptr != output_frequency){
+        asrc_io->output_frequency != output_frequency){
 
         return true;
     } else {
