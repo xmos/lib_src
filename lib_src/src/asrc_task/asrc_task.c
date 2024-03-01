@@ -322,9 +322,9 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
         
         ///// FIFO init
-        asynchronous_fifo_init(fifo, asrc_channel_count, fifo->max_fifo_depth);// fifo_length has been set externally. So feed back in to init.
+        dprintf("FIFO init channels: %d length: %ld\n", asrc_channel_count, fifo->max_fifo_depth);
+        asynchronous_fifo_init(fifo, asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init_PID_fs_codes(fifo, inputFsCode, outputFsCode);
-        dprintf("FIFO init channels: %d\n", asrc_channel_count);
 
         // Parallel scheduler init
         schedule_info_t schedule[MAX_ASRC_THREADS];
@@ -408,10 +408,13 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
 }
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
-void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo){
+void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, unsigned fifo_length){
+    printintln(fifo_length);
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
+    // This is a workaround where only 4 params can be sent to INTERRUPT_PERMITTED. So set it struct and extract in asrc_processor_()
+    fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
     INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }
