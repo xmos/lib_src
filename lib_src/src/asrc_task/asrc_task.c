@@ -23,8 +23,6 @@
 #define dprintf(...)
 #endif
 
-unsigned asrc_channel_count = 0;    // Current channel count (dynamic). Needs to be global so can be read by pull_samples
-                                    // Set to invalid initially. This will be initialised when first samples received.
 
  __attribute__ ((weak))
 unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_rate){
@@ -117,7 +115,7 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
     // Pack into the frame this instance of ASRC expects
     int input_samples[ASRC_N_IN_SAMPLES * MAX_ASRC_CHANNELS_TOTAL];
     for(int i = 0; i < ASRC_N_IN_SAMPLES * num_worker_channels; i++){
-        int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_channel_count + worker_channel_start_idx;
+        int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
         input_samples[i] = asrc_io->input_samples[input_write_idx][rd_idx];
     }
 
@@ -128,7 +126,7 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
 
     // Unpack to combined output frame
     for(int i = 0; i < *num_output_samples * num_worker_channels; i++){
-        int wr_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_channel_count + worker_channel_start_idx;
+        int wr_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
         asrc_io->output_samples[wr_idx] = output_samples[i];
     }
 }
@@ -216,7 +214,7 @@ int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *sa
     new_output_rate = output_rate;
     if (asrc_io->ready_flag_configured){
         asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp);
-        return asrc_channel_count;
+        return asrc_io->asrc_channel_count;
     }
     return 0;
 }
@@ -256,14 +254,14 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
     do{
         chanend_in_byte(c_buff_idx); // Receive frame from source
         *input_frequency = asrc_io->input_frequency; // Extract input rate
-        asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
+        asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = new_output_rate;
         delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period. TODO: why is this needed?
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
-            asrc_channel_count == 0);
+            asrc_io->asrc_channel_count == 0);
 
-    xassert(asrc_channel_count <= MAX_ASRC_CHANNELS_TOTAL);
+    xassert(asrc_io->asrc_channel_count <= MAX_ASRC_CHANNELS_TOTAL); // Too many channels requested
     frequency_to_fs_code(*input_frequency);  // This will assert if invalid
     frequency_to_fs_code(*output_frequency); // This will assert if invalid
 
@@ -273,7 +271,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
 
 static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t output_frequency, asrc_in_out_t *asrc_io){
     if( asrc_io->input_frequency != input_frequency || 
-        asrc_io->input_channel_count != asrc_channel_count ||
+        asrc_io->input_channel_count != asrc_io->asrc_channel_count ||
         *new_output_rate_ptr != output_frequency){
 
         return true;
@@ -322,14 +320,14 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
         
         ///// FIFO init
-        dprintf("FIFO init channels: %d length: %ld\n", asrc_channel_count, fifo->max_fifo_depth);
-        asynchronous_fifo_init(fifo, asrc_channel_count, fifo->max_fifo_depth);
+        dprintf("FIFO init channels: %d length: %ld\n", asrc_io->asrc_channel_count, fifo->max_fifo_depth);
+        asynchronous_fifo_init(fifo, asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init_PID_fs_codes(fifo, inputFsCode, outputFsCode);
 
         // Parallel scheduler init
         schedule_info_t schedule[MAX_ASRC_THREADS];
-        int num_jobs = calculate_job_share(asrc_channel_count, schedule);
-        dprintf("num_jobs: %d, MAX_ASRC_THREADS: %d, asrc_channel_count: %d\n", num_jobs, MAX_ASRC_THREADS, asrc_channel_count);
+        int num_jobs = calculate_job_share(asrc_io->asrc_channel_count, schedule);
+        dprintf("num_jobs: %d, MAX_ASRC_THREADS: %d, asrc_channel_count: %d\n", num_jobs, MAX_ASRC_THREADS, asrc_io->asrc_channel_count);
         for(int i = 0; i < num_jobs; i++){
             dprintf("schedule: %d, num_channels: %d, channel_start_idx: %d\n", i, schedule[i].num_channels, schedule[i].channel_start_idx);
         }

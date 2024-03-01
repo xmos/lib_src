@@ -67,7 +67,8 @@ typedef struct asrc_in_out_t{
     int ready_flag_configured;                                              // Flag to indicate ASRC is configured and OK to pull from FIFO
     int32_t input_timestamp;                                                // Timestamp of last received input sample
     unsigned input_frequency;                                               // Nominal input sample rate  44100..192000
-    unsigned input_channel_count;                                           // This is set by the producer
+    unsigned input_channel_count;                                           // This is set by the producer and can change dynamically
+    unsigned asrc_channel_count;                                            // Currently configured channel count. Used by process and consumer
     int32_t output_samples[SRC_MAX_NUM_SAMPS_OUT * MAX_ASRC_CHANNELS_TOTAL];// Output sample array
     unsigned output_frequency;                                              // Output sample rate (set by consumer)
     int32_t output_time_stamp;                                              // The consumption timestamp (set by consumer)
