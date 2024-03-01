@@ -213,7 +213,7 @@ asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
 asrc_in_out_t asrc_io = {{{0}}};
 
 
-// Set by audio_hub. Only read here. Needs to be a ptr to work with XC volatiles.
+// Set by consumer. Only read here. Needs to be a ptr to work with XC volatiles.
 volatile uint32_t new_output_rate = 0;
 volatile uint32_t * new_output_rate_ptr = &new_output_rate;
 
@@ -257,9 +257,9 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 }
 
 
-static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, asrc_in_out_t *asrc_io, volatile int *ready_flag_ptr){
+static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, asrc_in_out_t *asrc_io){
     // Keep receiving samples until input format is good
-    *ready_flag_ptr = 1; // Signal we are ready to consume a frame of input samples
+    asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
 
     do{
         chanend_in_byte(c_buff_idx); // Receive frame from source
@@ -275,7 +275,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
     frequency_to_fs_code(*input_frequency);  // This will assert if invalid
     frequency_to_fs_code(*output_frequency); // This will assert if invalid
 
-    *ready_flag_ptr = 0; // Dsicard input samples for now
+    asrc_io->ready_flag_to_receive = 0;
 }
 
 
@@ -297,8 +297,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
     uint32_t input_frequency = 0;   // Set to invalid for now
     uint32_t output_frequency = 0;
 
-    volatile int *ready_flag_ptr = &asrc_io.ready_flag_to_receive; // Ensure accesses are a full memory read
-
     // Used for calculating the timestamp interpolation between major frequency conversions
     const int interpolation_ticks_2D[6][6] = {
         {  2268, 2268, 2268, 2268, 2268, 2268},
@@ -319,7 +317,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
 
     // This is a forever loop consisting of init -> forever process, until format change when we return to init
     while(1){
-        asrc_wait_for_valid_config(c_buff_idx, &input_frequency, &output_frequency, &asrc_io, ready_flag_ptr);
+        asrc_wait_for_valid_config(c_buff_idx, &input_frequency, &output_frequency, &asrc_io);
 
         // Extract frequency info
         dprintf("Input fs: %lu Output fs: %lu\n", input_frequency, output_frequency);
@@ -374,7 +372,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
 
         const int xscope_used = 0; // Vestige of ASRC API. TODO - cleanup in future when lib_src is tidied
 
-        *ready_flag_ptr = 1; // Signal we are ready to consume a frame of input samples
+        asrc_io.ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
         asrc_io.ready_flag_configured = 1;
 
         // Run until format change detected
