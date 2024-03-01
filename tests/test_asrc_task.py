@@ -25,7 +25,7 @@ def run_dut(bin_name, cmds, timeout=60):
 
     flattend_cmds = ' '.join(str(x)for x in list(itertools.chain(*cmds)))
 
-    cmd = f"xrun --xscope-file trace --args {bin_name} {flattend_cmds}"
+    cmd = f"xrun --id 0 --xscope-file trace --args {bin_name} {flattend_cmds}"
     output = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
 
     return output.stderr #xrun puts output on err for some reason
