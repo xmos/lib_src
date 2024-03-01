@@ -82,7 +82,7 @@ typedef struct isr_ctx_t{
 typedef struct schedule_info_t{
     int num_channels;
     int channel_start_idx;
-}schedule_info_t;
+} schedule_info_t;
 
 // Generates a schedule based on the number of channels of ASRC needed vs available threads
 int calculate_job_share(int asrc_channel_count,
@@ -213,6 +213,7 @@ int pull_samples(asrc_in_out_t * asrc_io, asynchronous_fifo_t * fifo, int32_t *s
     return 0;
 }
 
+
 // Consumer side FIFO reset and clear contents
 void reset_asrc_fifo(asynchronous_fifo_t * fifo){
     asynchronous_fifo_reset_consumer(fifo);
@@ -240,6 +241,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
         asrc_io->input_write_idx ^= 1; // Swap buffers
     }
 }
+
 
 // Keep receiving samples until input format is good
 static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, asrc_in_out_t *asrc_io){
@@ -405,7 +407,7 @@ void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
-    // This is a workaround where only 4 params can be sent to INTERRUPT_PERMITTED. So set it struct and extract in asrc_processor_()
+    // This is a workaround where only 4 params can be sent to INTERRUPT_PERMITTED(). So set it struct and extract in asrc_processor_() init
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
     INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
