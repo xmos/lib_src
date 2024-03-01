@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "asrc_task.h"
-#include "asynchronous_fifo.h"
 #include "asrc_timestamp_interpolation.h"
 
 #ifdef DEBUG_ASRC_TASK
@@ -205,12 +204,7 @@ int par_asrc(int num_jobs, schedule_info_t schedule[], uint64_t fs_ratio, asrc_i
     return num_output_samples;
 }
 
-
-// FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
-#define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 3) // Half full is target so *2 is nominal size but we need wiggle room at startup
-int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
-asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
-
+// Globals
 
 // Set by consumer. Only read here. Needs to be a ptr to work with XC volatiles.
 volatile uint32_t new_output_rate = 0;
@@ -218,7 +212,7 @@ volatile uint32_t * new_output_rate_ptr = &new_output_rate;
 
 
 // Called from consumer side. Produces samples and returns channel count
-int pull_samples(asrc_in_out_t *asrc_io, int32_t *samples, uint32_t output_rate, int32_t consume_timestamp){
+int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_rate, int32_t consume_timestamp){
     new_output_rate = output_rate;
     if (asrc_io->ready_flag_configured){
         asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp);
@@ -228,7 +222,7 @@ int pull_samples(asrc_in_out_t *asrc_io, int32_t *samples, uint32_t output_rate,
 }
 
 // Consumer side FIFO reset and clear contents
-void reset_asrc_fifo(void){
+void reset_asrc_fifo(asynchronous_fifo_t * fifo){
     asynchronous_fifo_reset_consumer(fifo);
     memset(fifo->buffer, 0, fifo->channel_count * fifo->max_fifo_depth * sizeof(int));
 }
@@ -290,7 +284,11 @@ static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t 
 
 
 // Main ASRC task. Defined as ISR friendly because we interrupt it receive samples
-DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc_input, asrc_in_out_t *asrc_io, chanend_t c_buff_idx){
+DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
+                            chanend_t c_asrc_input,
+                            asrc_in_out_t *asrc_io,
+                            chanend_t c_buff_idx,
+                            asynchronous_fifo_t * fifo){
     
     uint32_t input_frequency = 0;   // Set to invalid for now
     uint32_t output_frequency = 0;
@@ -324,7 +322,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
         
         ///// FIFO init
-        asynchronous_fifo_init(fifo, asrc_channel_count, FIFO_LENGTH);
+        asynchronous_fifo_init(fifo, asrc_channel_count, fifo->max_fifo_depth);// fifo_length has been set externally. So feed back in to init.
         asynchronous_fifo_init_PID_fs_codes(fifo, inputFsCode, outputFsCode);
         dprintf("FIFO init channels: %d\n", asrc_channel_count);
 
@@ -410,11 +408,11 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_, chanend_t c_asrc
 }
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
-void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io){
+void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo){
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
     // Run the ASRC task with stack set aside for an ISR
-    INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx);
+    INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }
 

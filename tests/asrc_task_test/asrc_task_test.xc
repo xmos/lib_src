@@ -116,7 +116,7 @@ void producer(chanend c_producer, chanend c_control){
     }
 }
 
-void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io){
+void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo){
     unsigned sample_rate = 0;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
@@ -137,7 +137,7 @@ void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io){
             break;
 
             case t when timerafter(time_trigger) :> int32_t time_stamp:
-                pull_samples(asrc_io, samples, sample_rate, time_stamp);
+                pull_samples(asrc_io, fifo, samples, sample_rate, time_stamp);
                 time_trigger += sample_period;
                 xscope_int(0, samples[0]);
             break;
@@ -163,10 +163,18 @@ int main(unsigned argc, char * unsafe argv[argc])
     chan c_producer;
     chan c_control[2];
 
-    // IO struct for ASRC
+    // IO struct for ASRC must be passed to both asrc_proc and consumer
     asrc_in_out_t asrc_io = {{{0}}};
+
+    // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
+    #define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 3) // Half full is target so *2 is nominal size but we need wiggle room at startup
+    int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
+
+
     unsafe{
         asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
+        asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
+        fifo->max_fifo_depth = FIFO_LENGTH;
 
         par
         {
@@ -177,8 +185,8 @@ int main(unsigned argc, char * unsafe argv[argc])
                 test_master(c_control, commands, n_cmds);
             }
             producer(c_producer, c_control[0]);
-            unsafe{asrc_processor(c_producer, asrc_io_ptr);}
-            unsafe{consumer(c_control[1], asrc_io_ptr);}
+            unsafe{asrc_processor(c_producer, asrc_io_ptr, fifo);}
+            unsafe{consumer(c_control[1], asrc_io_ptr, fifo);}
 
         }
     } // unsafe region
