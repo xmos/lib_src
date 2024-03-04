@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+// Check for required static defines
 #ifdef ASRC_TASK_CONFIG
     #include "asrc_task_config.h"
 
@@ -120,6 +121,7 @@ int pull_samples(asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fi
  *
  */
 void reset_asrc_fifo_consumer(asynchronous_fifo_t * unsafe fifo);
+
 #else
 #include <xcore/chanend.h>
 

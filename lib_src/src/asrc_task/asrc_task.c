@@ -204,15 +204,15 @@ typedef struct asrc_receive_samples_ctx_t{
 // This is fired each time a sample is received (triggered by first channel token)
 DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 
-    // Extract pointers and resource IDs
+    // Extract pointers and resource IDs and callback function pointer.
     asrc_receive_samples_ctx_t *asrc_receive_samples_ctx = app_data;
     chanend_t c_asrc_input = asrc_receive_samples_ctx->c_asrc_input;
     chanend_t c_buff_idx = asrc_receive_samples_ctx->c_buff_idx;
     asrc_in_out_t *asrc_io = asrc_receive_samples_ctx->asrc_io;
-
     ASRC_TASK_ISR_CALLBACK_ATTR asrc_task_produce_isr_cb_t receive_asrc_input_samples_cb = asrc_io->asrc_task_produce_cb;
     
     // Always consume samples so we don't apply backpressure to the producer
+    // Call the user defined receive samples callback.
     unsigned asrc_in_counter = receive_asrc_input_samples_cb(c_asrc_input, asrc_io, &(asrc_io->input_frequency));
 
     // Only forward on to ASRC if it is ready (to avoid deadlock)
