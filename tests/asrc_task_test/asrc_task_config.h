@@ -3,8 +3,6 @@
 
 #define     MAX_ASRC_CHANNELS_TOTAL             8 // Used for buffer sizing and FIFO sizing (static)
 #define     MAX_ASRC_THREADS                    4 // Sets upper limit of worker threads for ASRC task
-#define     SRC_MAX_SRC_CHANNELS_PER_INSTANCE   2 // Sets maximum number of SRC per thread. Allocates all ASRC storage so minimise to save memeory
-
 #define     SRC_N_IN_SAMPLES                    4 // Number of samples per channel in each block passed into SRC each call
                                                   // Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
                                                   // Lower improves latency and memory usage but costs MIPS
