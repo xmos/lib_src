@@ -27,5 +27,4 @@ unsigned receive_asrc_input_samples(chanend_t c_producer, asrc_in_out_t *asrc_io
 
 void init_asrc_io_callback(asrc_in_out_t *asrc_io){
     asrc_io->asrc_task_produce_cb = receive_asrc_input_samples;
-    printhexln((unsigned)receive_asrc_input_samples);
 }

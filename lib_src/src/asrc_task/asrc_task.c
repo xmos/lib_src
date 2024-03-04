@@ -71,7 +71,7 @@ int calculate_job_share(int asrc_channel_count,
 }
 
 
-// A single worker thread which operates on a group of channels in parallel
+// A single worker thread which operates on a group of channels in parallel with other worker threads
 DECLARE_JOB(do_asrc_group, (schedule_info_t*, uint64_t, asrc_in_out_t*, unsigned, int*, asrc_ctrl_t*));
 void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t * asrc_io, unsigned input_write_idx, int* num_output_samples, asrc_ctrl_t asrc_ctrl[]){
 
@@ -167,6 +167,8 @@ int par_asrc(int num_jobs, schedule_info_t schedule[], uint64_t fs_ratio, asrc_i
             xassert(0); // Too many jobs specified
         break;
     }
+
+    // Note this value is written by all workers however all workers have the same ratio so will always be equal.
     return num_output_samples;
 }
 
@@ -188,21 +190,29 @@ void reset_asrc_fifo(asynchronous_fifo_t * fifo){
     memset(fifo->buffer, 0, fifo->channel_count * fifo->max_fifo_depth * sizeof(int));
 }
 
+// Handy type definition of the callback function.
 typedef unsigned (*asrc_task_produce_isr_cb_t)(chanend_t c_producer, asrc_in_out_t *asrc_io, unsigned *new_input_rate);
 
+// Structure used for holding the vars needed for the ASRC_TASK receive_asrc_input_samples() callback.
+// This is needed because we can only pass a single pointer to an ISR.
+typedef struct asrc_receive_samples_ctx_t{
+    chanend_t c_asrc_input; // The chanend from which samples are received (streaming)
+    chanend_t c_buff_idx;   // The chanend used to notify asrc_processor that a new block of samples is available
+    asrc_in_out_t *asrc_io; // The ASRC IO state including buffers
+} asrc_receive_samples_ctx_t;
 
 // This is fired each time a sample is received (triggered by first channel token)
 DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 
     // Extract pointers and resource IDs
-    isr_ctx_t *isr_ctx = app_data;
-    chanend_t c_asrc_input = isr_ctx->c_asrc_input;
-    chanend_t c_buff_idx = isr_ctx->c_buff_idx;
-    asrc_in_out_t *asrc_io = isr_ctx->asrc_io;
+    asrc_receive_samples_ctx_t *asrc_receive_samples_ctx = app_data;
+    chanend_t c_asrc_input = asrc_receive_samples_ctx->c_asrc_input;
+    chanend_t c_buff_idx = asrc_receive_samples_ctx->c_buff_idx;
+    asrc_in_out_t *asrc_io = asrc_receive_samples_ctx->asrc_io;
 
     ASRC_TASK_ISR_CALLBACK_ATTR asrc_task_produce_isr_cb_t receive_asrc_input_samples_cb = asrc_io->asrc_task_produce_cb;
     
-    // Always consume samples so we don't apply backpressure
+    // Always consume samples so we don't apply backpressure to the producer
     unsigned asrc_in_counter = receive_asrc_input_samples_cb(c_asrc_input, asrc_io, &(asrc_io->input_frequency));
 
     // Only forward on to ASRC if it is ready (to avoid deadlock)
@@ -222,7 +232,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
     asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
 
     do{
-        chanend_in_byte(c_buff_idx); // Receive frame from source
+        chanend_in_byte(c_buff_idx); // Receive frame from source (receive_asrc_input_samples_cb)
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = asrc_io->output_frequency;
@@ -239,6 +249,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
 }
 
 
+// Check to see if input params have changed since last process
 static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t output_frequency, asrc_in_out_t *asrc_io){
     if( asrc_io->input_frequency != input_frequency || 
         asrc_io->input_channel_count != asrc_io->asrc_channel_count ||
@@ -257,11 +268,8 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
                             asrc_in_out_t *asrc_io,
                             chanend_t c_buff_idx,
                             asynchronous_fifo_t * fifo){
-
-    printintln(22);
-
     
-    uint32_t input_frequency = 0;   // Set to invalid for now
+    uint32_t input_frequency = 0;   // Set to invalid for now. We will get rates supplied by producer and consumer.
     uint32_t output_frequency = 0;
 
     // Used for calculating the timestamp interpolation between major frequency conversions
@@ -275,16 +283,12 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
     };
     
     // Setup a pointer to a struct so the ISR can access these elements
-    isr_ctx_t isr_ctx = {c_asrc_input, c_buff_idx, asrc_io};
+    asrc_receive_samples_ctx_t asrc_receive_samples_ctx = {c_asrc_input, c_buff_idx, asrc_io};
 
     // Enable interrupt on channel receive token (sent from ISR)
-    triggerable_setup_interrupt_callback(c_asrc_input, &isr_ctx, INTERRUPT_CALLBACK(asrc_samples_rx_isr_handler));
+    triggerable_setup_interrupt_callback(c_asrc_input, &asrc_receive_samples_ctx, INTERRUPT_CALLBACK(asrc_samples_rx_isr_handler));
     triggerable_enable_trigger(c_asrc_input);
-    printintln(44);
     interrupt_unmask_all();
-
-    printintln(55);
-
 
     // This is a forever loop consisting of init -> forever process, until format change when we return to init
     while(1){
@@ -347,7 +351,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
 
         //// Run until format change detected
         while(1){
-            // Wait for block of samples
+            // Wait for block of samples. We will get the buffer index of the newly written samples from receive_asrc_input_samples_cb
             unsigned input_write_idx = (unsigned)chanend_in_byte(c_buff_idx);
 
             // Check for format changes - do before we process in case things have changed
@@ -373,8 +377,8 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
                 #ifdef DEBUG_ASRC_TASK
                 printintln(asrc_peak_processing_time);
                 #endif
-                // xassert(asrc_peak_processing_time <= asrc_process_time_limit);
-                (void)asrc_peak_processing_time; // Remove compiler warning
+                // xassert(asrc_peak_processing_time <= asrc_process_time_limit); // Optional assert on timing failure.
+                (void)asrc_peak_processing_time; // Remove compiler warning if above not used.
                 (void)asrc_process_time_limit; // Remove compiler warning
             }
         } // while !asrc_detect_format_change()
@@ -391,6 +395,5 @@ void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous
     // http://bugzilla/show_bug.cgi?id=18745
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
-    printintln(11);
     INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }
