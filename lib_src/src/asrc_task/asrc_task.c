@@ -185,7 +185,7 @@ int pull_samples(asrc_in_out_t * asrc_io, asynchronous_fifo_t * fifo, int32_t *s
 
 
 // Consumer side FIFO reset and clear contents
-void reset_asrc_fifo(asynchronous_fifo_t * fifo){
+void reset_asrc_fifo_consumer(asynchronous_fifo_t * fifo){
     asynchronous_fifo_reset_consumer(fifo);
     memset(fifo->buffer, 0, fifo->channel_count * fifo->max_fifo_depth * sizeof(int));
 }
@@ -213,6 +213,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
     
     // Always consume samples so we don't apply backpressure to the producer
     // Call the user defined receive samples callback.
+    ASRC_TASK_ISR_CALLBACK_ATTR
     unsigned asrc_in_counter = receive_asrc_input_samples_cb(c_asrc_input, asrc_io, &(asrc_io->input_frequency));
 
     // Only forward on to ASRC if it is ready (to avoid deadlock)
@@ -388,6 +389,8 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
 void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
+    // Check callback is init'd.
+    xassert(asrc_io->asrc_task_produce_cb != NULL);
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
