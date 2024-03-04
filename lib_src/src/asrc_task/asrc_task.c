@@ -263,7 +263,7 @@ static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t 
 
 
 // Main ASRC task. Defined as ISR friendly because we interrupt it receive samples
-DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
+DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
                             chanend_t c_asrc_input,
                             asrc_in_out_t *asrc_io,
                             chanend_t c_buff_idx,
@@ -387,7 +387,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
 
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
-void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
+void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
@@ -395,5 +395,5 @@ void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous
     // http://bugzilla/show_bug.cgi?id=18745
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
-    INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
+    INTERRUPT_PERMITTED(asrc_processor)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }

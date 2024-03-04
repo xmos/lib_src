@@ -167,7 +167,7 @@ int main(unsigned argc, char * unsafe argv[argc])
                 test_master(c_control, commands, n_cmds);
             }
             producer(c_producer, c_control[0]);
-            asrc_processor(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);
+            asrc_task(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);
             consumer(c_control[1], asrc_io_ptr, fifo);
 
         }
