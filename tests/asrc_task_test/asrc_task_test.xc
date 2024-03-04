@@ -35,27 +35,8 @@ void test_master(chanend c_control[2], unsigned commands[MAX_CMDS][CMD_LEN], uns
         
         delay_milliseconds(commands[i][3]); // Test startup safe     
     }
+    printf("Normal exit: no more commands\n");
     _Exit(0);
-}
-
-unsigned receive_asrc_input_samples(chanend c_producer, asrc_in_out_t &asrc_io, unsigned &new_input_rate){
-    static unsigned asrc_in_counter = 0;
-
-    new_input_rate = inuint(c_producer);
-    asrc_io.input_timestamp = inuint(c_producer);
-    asrc_io.input_channel_count = inuint(c_producer);
-
-    // Pack into array properly LRLRLRLR or 123412341234 etc.
-    for(int i = 0; i < asrc_io.input_channel_count; i++){
-        int idx = i + asrc_io.input_channel_count * asrc_in_counter;
-        asrc_io.input_samples[asrc_io.input_write_idx][idx] = inuint(c_producer);
-    }
-
-    if(++asrc_in_counter == SRC_N_IN_SAMPLES){
-        asrc_in_counter = 0;
-    }
-
-    return asrc_in_counter;
 }
 
 void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNELS_TOTAL], unsigned channel_count, unsigned sample_rate, int32_t time_stamp){
@@ -158,11 +139,12 @@ unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned argc, cha
     return (argc - 1) / CMD_LEN;
 }
 
+extern void init_asrc_io_callback(asrc_in_out_t * unsafe asrc_io);
+
 int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
     chan c_control[2];
-
 
 
     // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
@@ -174,6 +156,7 @@ int main(unsigned argc, char * unsafe argv[argc])
         asrc_in_out_t asrc_io = {{{0}}};
         asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
         asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
+        init_asrc_io_callback(asrc_io_ptr);
 
         par
         {

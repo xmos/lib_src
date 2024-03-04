@@ -27,7 +27,8 @@ def run_dut(bin_name, cmds, timeout=60):
 
     cmd = f"xrun --id 0 --xscope-file trace --args {bin_name} {flattend_cmds}"
     print(f"running: {cmd}")
-    output = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
+    output = subprocess.run(cmd, shell=True, capture_output=True, check=True, text=True, timeout=timeout)
+    assert output.returncode == 0
 
     return output.stderr #xrun puts output on err for some reason
 

@@ -54,6 +54,8 @@
 #error Please increase SRC_MAX_SRC_CHANNELS_PER_INSTANCE
 #endif
 
+#define ASRC_TASK_ISR_CALLBACK_ATTR __attribute__((fptrgroup("asrc_callback_isr_fptr_grp")))
+
 #include "src.h"
 #include "asynchronous_fifo.h"
 
@@ -63,13 +65,23 @@
 #define     ASRC_N_IN_SAMPLES                   (SRC_N_IN_SAMPLES)                  // Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h
 #define     ASRC_N_CHANNELS                     (SRC_MAX_SRC_CHANNELS_PER_INSTANCE) // Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h
 
-// Structure used for 
+
+#ifdef __XC__
+#define UNSAFE unsafe
+#else
+#include <xcore/chanend.h>
+#define UNSAFE
+#endif
+
+
+// Structure used for holding the IO context of the ASRC_TASK
 typedef struct asrc_in_out_t{
     int32_t input_samples[2][ASRC_N_IN_SAMPLES * MAX_ASRC_CHANNELS_TOTAL];  // Double buffer input array
     unsigned input_write_idx;                                               // Double buffer idx
     int32_t input_timestamp;                                                // Timestamp of last received input sample
     unsigned input_frequency;                                               // Nominal input sample rate  44100..192000 (set by producer)
     unsigned input_channel_count;                                           // This is set by the producer and can change dynamically
+    void * UNSAFE asrc_task_produce_cb;                                     // The function pointer of the ASRC_TASK producer receive callback. Must be defined by user to receive samples from producer over channel.
 
     int32_t output_samples[SRC_MAX_NUM_SAMPS_OUT * MAX_ASRC_CHANNELS_TOTAL];// Output sample array
     unsigned output_frequency;                                              // Output sample rate (set by consumer)
@@ -82,6 +94,16 @@ typedef struct asrc_in_out_t{
 
 }asrc_in_out_t;
 
+
+#ifndef __XC__
+typedef struct isr_ctx_t{
+    chanend_t c_asrc_input;
+    chanend_t c_buff_idx;
+    asrc_in_out_t *asrc_io;
+} isr_ctx_t;
+#endif
+
+
 #ifdef __XC__
 void asrc_processor(chanend c_asrc_input, asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo, unsigned fifo_length);
 int pull_samples(asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo, int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
@@ -89,6 +111,8 @@ unsigned receive_asrc_input_samples(chanend c_asrc_input_samples, asrc_in_out_t 
 void reset_asrc_fifo(asynchronous_fifo_t * unsafe fifo);
 #else
 #include <xcore/chanend.h>
+
+
 void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, unsigned fifo_length);
 int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp);
 unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_frequency);

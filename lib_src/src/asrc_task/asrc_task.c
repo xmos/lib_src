@@ -24,34 +24,6 @@
 #endif
 
 
- __attribute__ ((weak))
-unsigned receive_asrc_input_samples(chanend_t c_asrc_input_samples, asrc_in_out_t *asrc_io, unsigned *new_input_frequency){
-    printstrln("ERROR: Please define an appropriate ASRC receive samples function.");
-    while(1);
-
-    /* Example Rx function (called from ASRC):
-
-    static unsigned asrc_in_counter = 0; // Needs to persist between calls
-
-    new_input_frequency = chanend_in_word(c_producer);
-    asrc_io.input_timestamp = chanend_in_word(c_producer);
-    asrc_io.input_channel_count = chanend_in_word(c_producer);
-
-    // Pack into array properly LRLRLRLR or 123412341234 etc.
-    for(int i = 0; i < asrc_io.input_channel_count; i++){
-        int idx = i + asrc_io.input_channel_count * asrc_in_counter;
-        asrc_io.input_samples[asrc_io.input_write_idx][idx] = chanend_in_word(c_producer);
-    }
-
-    if(++asrc_in_counter == SRC_N_IN_SAMPLES){
-        asrc_in_counter = 0;
-    }
-
-    return asrc_in_counter;
-    */
-}
-
-
 static int frequency_to_fs_code(int frequency) {
     if(frequency == 44100) {
         return  FS_CODE_44;
@@ -71,12 +43,6 @@ static int frequency_to_fs_code(int frequency) {
     return -1;
 }
 
-// Structure to populate to that the ISR can access main thread
-typedef struct isr_ctx_t{
-    chanend_t c_asrc_input;
-    chanend_t c_buff_idx;
-    asrc_in_out_t *asrc_io;
-} isr_ctx_t;
 
 // Structure used for thread scheduling of parallel ASRC
 typedef struct schedule_info_t{
@@ -222,17 +188,22 @@ void reset_asrc_fifo(asynchronous_fifo_t * fifo){
     memset(fifo->buffer, 0, fifo->channel_count * fifo->max_fifo_depth * sizeof(int));
 }
 
+typedef unsigned (*asrc_task_produce_isr_cb_t)(chanend_t c_producer, asrc_in_out_t *asrc_io, unsigned *new_input_rate);
+
 
 // This is fired each time a sample is received (triggered by first channel token)
 DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
+
     // Extract pointers and resource IDs
     isr_ctx_t *isr_ctx = app_data;
     chanend_t c_asrc_input = isr_ctx->c_asrc_input;
     chanend_t c_buff_idx = isr_ctx->c_buff_idx;
     asrc_in_out_t *asrc_io = isr_ctx->asrc_io;
+
+    ASRC_TASK_ISR_CALLBACK_ATTR asrc_task_produce_isr_cb_t receive_asrc_input_samples_cb = asrc_io->asrc_task_produce_cb;
     
     // Always consume samples so we don't apply backpressure
-    unsigned asrc_in_counter = receive_asrc_input_samples(c_asrc_input, asrc_io, &(asrc_io->input_frequency));
+    unsigned asrc_in_counter = receive_asrc_input_samples_cb(c_asrc_input, asrc_io, &(asrc_io->input_frequency));
 
     // Only forward on to ASRC if it is ready (to avoid deadlock)
     if(asrc_in_counter == 0 && asrc_io->ready_flag_to_receive){
@@ -286,6 +257,9 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
                             asrc_in_out_t *asrc_io,
                             chanend_t c_buff_idx,
                             asynchronous_fifo_t * fifo){
+
+    printintln(22);
+
     
     uint32_t input_frequency = 0;   // Set to invalid for now
     uint32_t output_frequency = 0;
@@ -306,7 +280,11 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor_,
     // Enable interrupt on channel receive token (sent from ISR)
     triggerable_setup_interrupt_callback(c_asrc_input, &isr_ctx, INTERRUPT_CALLBACK(asrc_samples_rx_isr_handler));
     triggerable_enable_trigger(c_asrc_input);
+    printintln(44);
     interrupt_unmask_all();
+
+    printintln(55);
+
 
     // This is a forever loop consisting of init -> forever process, until format change when we return to init
     while(1){
@@ -413,5 +391,6 @@ void asrc_processor(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous
     // http://bugzilla/show_bug.cgi?id=18745
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
+    printintln(11);
     INTERRUPT_PERMITTED(asrc_processor_)(c_asrc_input, asrc_io, c_buff_idx, fifo);
 }
