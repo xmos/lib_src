@@ -18,11 +18,6 @@
     #error      Please set MAX_ASRC_THREADS in asrc_task_config.h
     #endif
 
-    // Sets maximum number of SRC per thread. Allocates all ASRC storage so minimise to save memory
-    #ifndef     SRC_MAX_SRC_CHANNELS_PER_INSTANCE
-    #error      Please set SRC_MAX_SRC_CHANNELS_PER_INSTANCE in asrc_task_config.h
-    #endif
-
     // Number of samples per channel in each block passed into SRC each call
     // Must be a power of 2 and minimum value is 4 (due to two /2 decimation stages)
     // Lower improves latency and memory usage but costs MIPS
@@ -44,15 +39,12 @@
     #warning ASRC_TASK using defaults. Please set in asrc_task_config.h and globally define ASRC_TASK_CONFIG=1
     #define MAX_ASRC_CHANNELS_TOTAL             1
     #define MAX_ASRC_THREADS                    1
-    #define SRC_MAX_SRC_CHANNELS_PER_INSTANCE   1
     #define SRC_N_IN_SAMPLES                    4
     #define SRC_N_OUT_IN_RATIO_MAX              5
     #define SRC_DITHER_SETTING                  0
 #endif
 
-#if (((MAX_ASRC_CHANNELS_TOTAL + (MAX_ASRC_THREADS - 1)) / MAX_ASRC_THREADS) > SRC_MAX_SRC_CHANNELS_PER_INSTANCE)
-#error Please increase SRC_MAX_SRC_CHANNELS_PER_INSTANCE
-#endif
+#define  SRC_MAX_SRC_CHANNELS_PER_INSTANCE      (((MAX_ASRC_CHANNELS_TOTAL + (MAX_ASRC_THREADS - 1)) / MAX_ASRC_THREADS)) // Round up devide
 
 #include "src.h"
 #include "asynchronous_fifo.h"
