@@ -90,11 +90,11 @@ An example of calling the ASRC task form and ``XC`` main function is provided be
     } // unsafe region
 
 
-An example of the user `C` function for receiving the input samples is shown below. This function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received and so the `chanend_in_word()` operations will happen straight away and not block::
+An example of the user `C` function for receiving the input samples is shown below along with the user callback registration function. The `receive_asrc_input_samples()` function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received from the producer, the `chanend_in_word()` operations will happen straight away and not block::
 
     #include "asrc_task.h"
 
-    ASRC_TASK_ISR_CALLBACK_ATTR
+    ASRC_TASK_ISR_CALLBACK_ATTR // This is required for proper stack usage calculation by the compiler.
     unsigned receive_asrc_input_samples(chanend_t c_producer, asrc_in_out_t *asrc_io, unsigned *new_input_rate){
         static unsigned asrc_in_counter = 0;
 
