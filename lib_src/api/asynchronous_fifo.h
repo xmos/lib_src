@@ -26,7 +26,7 @@
 /**
  * Data structure that holds the status of an asynchronous FIFO
  */
-typedef struct asynchronous_fifo_t {
+typedef struct asynchronous_fifo_t_ {
     // Updated on initialisation only
     int32_t   channel_count;                  /* Number of audio channels */
     int32_t   copy_mask;                      /* Number of audio channels */

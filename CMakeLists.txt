@@ -32,6 +32,8 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
                                         lib_src/src/fixed_factor_of_3_voice/*.c
                                         lib_src/src/multirate_hifi/*.c
     )
+    file(GLOB LIB_C_SOURCES_FIFO        lib_src/src/*.c
+    )
     file(GLOB_RECURSE LIB_XC_SOURCES    lib_src/src/fixed_factor_of_3/*.xc
                                         lib_src/src/fixed_factor_of_3_voice/*.xc
                                         lib_src/src/multirate_hifi/*.xc
@@ -40,9 +42,10 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
                                         lib_src/src/fixed_factor_of_3_voice/*.S
                                         lib_src/src/multirate_hifi/*.S
     )
-    
+
     ## Create library target
     add_library(lib_src STATIC EXCLUDE_FROM_ALL     ${LIB_C_SOURCES}
+                                                    ${LIB_C_SOURCES_FIFO}
                                                     ${LIB_C_SOURCES_XS3}
                                                     ${LIB_ASM_SOURCES}
                                                     ${LIB_XC_SOURCES_XS3}
@@ -65,15 +68,17 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
             ${ADDITIONAL_INCLUDE_DIRS_XS3}
     )
 
+   target_compile_options(lib_src
+        PRIVATE 
+            -O3
+            -g
+    )
+
     target_link_libraries(lib_src
         PUBLIC
             # defined in fwk_core
             framework_core_legacy_compat
     )
-    
-    target_compile_options(lib_src
-        PRIVATE 
-            -O3
-            -g
-    )
+
+
 endif()

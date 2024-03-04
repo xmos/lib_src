@@ -112,7 +112,6 @@ pipeline {
             stage('Get repo') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "mkdir ${REPO}"
                 // source checks require the directory
                 // name to be the same as the repo name
                 dir("${REPO}") {
@@ -151,9 +150,15 @@ pipeline {
                       sh "pip install -e ${WORKSPACE}/xtagctl"
                       withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                         sh "xtagctl reset ${adapterIDs[0]}"
+                        // Do asynch FIFO test
                         dir("tests/asynchronous_fifo_asrc_test") {
                           sh "xmake -j"
                           sh "xrun --xscope --adapter-id " + adapterIDs[0] + " bin/asynchronous_fifo_asrc_test.xe"
+                        }
+                        // ASRC Task tests
+                        dir("tests") {
+                          localRunPytest('-k "asrc_task" -vv')
+                          archiveArtifacts artifacts: "*.png", allowEmptyArchive: true
                         }
                       }
                     }
