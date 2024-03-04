@@ -147,7 +147,21 @@ int pull_samples(asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fi
  */
 void reset_asrc_fifo_consumer(asynchronous_fifo_t * unsafe fifo);
 
-#else
+/**
+ * Prototype that must be defined by the user to initialise the function pointer for the ASRC receive produced samples ISR.
+ * Typical user function (where receive_asrc_input_samples() is the user defined rx function):
+ * void init_asrc_io_callback(asrc_in_out_t *asrc_io){
+ *      asrc_io->asrc_task_produce_cb = receive_asrc_input_samples;
+ * }
+ * 
+ * Must be called before running asrc_task()
+ * 
+ * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
+ *
+ */
+void init_asrc_io_callback(asrc_in_out_t * unsafe asrc_io);
+
+#else // C
 #include <xcore/chanend.h>
 
 /**
@@ -181,6 +195,20 @@ int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *sa
  *
  */
 void reset_asrc_fifo(asynchronous_fifo_t * fifo);
+
+/**
+ * Prototype that must be defined by the user to initialise the function pointer for the ASRC receive produced samples ISR.
+ * Typical user function (where receive_asrc_input_samples() is the user defined rx function):
+ * void init_asrc_io_callback(asrc_in_out_t *asrc_io){
+ *      asrc_io->asrc_task_produce_cb = receive_asrc_input_samples;
+ * }
+ *
+ * Must be called before running asrc_task()
+ * 
+ * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
+ *
+ */
+void init_asrc_io_callback(asrc_in_out_t * asrc_io);
 #endif
 
 /**@}*/ // END: addtogroup src_asrc_task

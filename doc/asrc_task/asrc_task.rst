@@ -4,7 +4,7 @@ ASRC Task
 Introduction
 ............
 
-The ASRC library provides a function call that operates on blocks of samples whereas typical XMOS audio IO libraries provide streaming audio one sample at a time. The ASRC task wraps up this and all of the other lower level APIs and required logic to providea a simple to use and generic ASRC conversion block suitable for integration into practical designs. It is fully re-entrant permitting multiple instances within a project supporting multiple (or bi-directional) sample rate changes and clock domain bridges.
+The ASRC library provides a function call that operates on blocks of samples whereas typical XMOS audio IO libraries provide streaming audio one sample at a time. The ASRC task wraps up this and all of the other lower level APIs and required logic to provide a a simple to use and generic ASRC conversion block suitable for integration into practical designs. It is fully re-entrant permitting multiple instances within a project supporting multiple (or bi-directional) sample rate changes and clock domain bridges.
 
 The ASRC task handles bridging between two asynchronous audio sources. It has an input side and output side. The input samples are provided over a channel allowing the source to be placed on a different XCORE tile if needed. The output side sample interface is via an asynchronous FIFO meaning the consumer must reside on the same XCORE tile as the ASRC.
 
@@ -69,7 +69,7 @@ An example of calling the ASRC task form and ``XC`` main function is provided be
 
     chan c_producer;
 
-    // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
+    // FIFO and ASRC I/O declaration. Unsafe to allow producer and consumer to access it from XC
     #define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 3) // Half full is target so *2 is nominal size but we need wiggle room at startup
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
 
@@ -91,9 +91,6 @@ An example of calling the ASRC task form and ``XC`` main function is provided be
 
 
 An example of the user `C` function for receiving the input samples is shown below. This function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received and so the `chanend_in_word()` operations will happen straight away and not block::
-
-    // Copyright 2024 XMOS LIMITED.
-    // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
     #include "asrc_task.h"
 

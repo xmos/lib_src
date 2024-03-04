@@ -139,8 +139,6 @@ unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned argc, cha
     return (argc - 1) / CMD_LEN;
 }
 
-extern void init_asrc_io_callback(asrc_in_out_t * unsafe asrc_io);
-
 int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
