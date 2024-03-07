@@ -45,24 +45,100 @@ void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInst
     }
 }
 
+void src_task_init(src_task_t * unsafe srcState, int64_t array[], int numChans, int fifoLength, int xscopeUsed)
+{
+    unsafe
+    {
+        srcState->async_fifo = (asynchronous_fifo_t *) array;
+        srcState->xscopeUsed = xscopeUsed;
+        asynchronous_fifo_init(srcState->async_fifo, numChans, fifoLength);
+    }
+}
 
-void src_task_init(src_task_t * unsafe srcState, int inputSr, int outputSr, int xscopeUsed, streaming chanend c[numInstances], unsigned numInstances)
+void src_task_set_sr(src_task_t * unsafe srcState, int inputSr, int outputSr, streaming chanend c[numInstances], unsigned numInstances)
 {
     float floatRatio = (float)inputSr/(float)outputSr;
     unsafe
     {
         srcState->fsRatio = (uint64_t) (floatRatio * (1LL << 60));
         srcState->idealFsRatio = (srcState->fsRatio + (1<<31)) >> 32;
-        srcState->xscopeUsed = xscopeUsed;
+
+        asynchronous_fifo_reset_producer(srcState->async_fifo);
+        asynchronous_fifo_init_PID_fs_codes(srcState->async_fifo, sr_to_fscode(inputSr), sr_to_fscode(outputSr));
     }
 
     src_change_worker_freqs(c, numInstances, inputSr, outputSr);
 }
 
-
 /* Send/receive samples from the SRC workers */
 #pragma unsafe arrays
 void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
+                                int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
+                                //asynchronous_fifo_t * unsafe a,
+                                int32_t now,
+                                src_task_t * unsafe srcState)
+{
+    int32_t error = 0;
+    int nSamps = 0;
+    int32_t timestamp;
+    int32_t samples[SRC_CHANNELS_PER_INSTANCE*SRC_N_CHANNELS * SRC_MAX_NUM_SAMPS_OUT];
+#pragma loop unroll
+    for (int i=0; i<SRC_N_INSTANCES; i++)
+    {
+        unsafe
+        {
+            c_src[i] <: (uint64_t) srcState->fsRatio;
+        }
+
+#pragma loop unroll
+        for (int j=0; j<SRC_N_IN_SAMPLES; j++)
+        {
+#pragma loop unroll
+            for (int k=0; k<SRC_CHANNELS_PER_INSTANCE; k++)
+            {
+                c_src[i] <: srcInputBuff[i][j][k];
+            }
+        }
+    }
+
+    /* Get number of samples to receive from all SRC cores */
+    /* Note, all nSamps should be equal */
+#pragma loop unroll
+    for (int i=0; i < SRC_N_INSTANCES; i++)
+    {
+        c_src[i] :> nSamps;
+        c_src[i] :> timestamp;
+        c_src[i] <: now;
+    }
+
+    int chanIdx = 0;
+    for (int j=0; j < nSamps; j++)
+    {
+#pragma loop unroll
+        for (int k=0; k<SRC_CHANNELS_PER_INSTANCE; k++)
+        {
+            int32_t sample;
+#pragma loop unroll
+            for (int i=0; i<SRC_N_INSTANCES; i++)
+            {
+                c_src[i] :> sample;
+                samples[chanIdx++] = sample;
+            }
+        }
+    }
+
+    unsafe
+    {
+        error = asynchronous_fifo_producer_put(srcState->async_fifo, samples, nSamps, timestamp, srcState->xscopeUsed);
+
+        /* Produce fsRatio from error */
+        srcState->fsRatio = (((int64_t)srcState->idealFsRatio) << 32) + (error * (int64_t) srcState->idealFsRatio);
+    }
+}
+
+/* Send/receive samples from the SRC workers */
+#pragma unsafe arrays
+void src_trigger_(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
                                 asynchronous_fifo_t * unsafe a,
                                 int32_t now,
@@ -125,6 +201,7 @@ void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
         srcState->fsRatio = (((int64_t)srcState->idealFsRatio) << 32) + (error * (int64_t) srcState->idealFsRatio);
     }
 }
+
 
 static int interpolation_ticks_2D[6][6] =
 {
@@ -203,9 +280,6 @@ void src_process(streaming chanend c, int instance, int inputFsCode, int outputF
 
             fsRatio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl, SRC_CHANNELS_PER_INSTANCE, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
 
-            //printintln(inputFsCode);
-            //printintln(outputFsCode);
-            //printstrln("----");
             /* Handshake back when init complete */
             soutct(c, XS1_CT_END);
             continue;
@@ -258,3 +332,4 @@ void src_task(streaming chanend c[numInstances], unsigned numInstances, int inpu
         }
     }
 }
+
