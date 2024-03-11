@@ -24,28 +24,21 @@ typedef struct src_task_t
     asynchronous_fifo_t * unsafe async_fifo;
 } src_task_t;
 
-
 fs_code_t sr_to_fscode(unsigned sr);
 
-void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
+void src_task_write(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                //asynchronous_fifo_t * unsafe a,
                                 int32_t now,
                                 src_task_t * unsafe srcState);
-void src_trigger_(streaming chanend c_src[SRC_N_INSTANCES],
-                                int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                asynchronous_fifo_t * unsafe a,
-                                int32_t now,
-                                src_task_t * unsafe srcState);
+
+#define src_task_read(a, b, c) unsafe{asynchronous_fifo_consumer_get(a->async_fifo, b, c);}
 
 #ifdef __XC__
 void src_task(streaming chanend c[numInstances], unsigned  numInstances, int i, int o);
-void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr);
 void src_task_set_sr(src_task_t * unsafe srcState, int inputSr, int outputSr, streaming chanend c[numInstances], unsigned numInstances);
 void src_task_init(src_task_t * unsafe srcState, int64_t array[], int numChans, int fifoLength, int xscopeUsed);
 #else
 void src_task(streaming chanend c[], unsigned numInstances, int i, int o);
-void src_change_worker_freqs(streaming chanend c[], unsigned numInstances, int inputSr, int outputSr);
 void src_task_set_sr(src_task_t * srcState, int inputSr, int outputSr, streaming chanend c[], unsigned numInstances);
 void src_task_init(src_task_t * unsafe srcState, int64_t array[], int numChans, int fifoLength, int xscopeUsed);
 #endif

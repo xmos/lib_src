@@ -31,7 +31,7 @@ fs_code_t sr_to_fscode(unsigned sr)
     return fsCode;
 }
 
-void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
+static void src_change_worker_freqs(streaming chanend c[numInstances], unsigned numInstances, int inputSr, int outputSr)
 {
     for(int i=0; i < numInstances; i++)
     unsafe
@@ -72,9 +72,8 @@ void src_task_set_sr(src_task_t * unsafe srcState, int inputSr, int outputSr, st
 
 /* Send/receive samples from the SRC workers */
 #pragma unsafe arrays
-void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
+void src_task_write(streaming chanend c_src[SRC_N_INSTANCES],
                                 int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                //asynchronous_fifo_t * unsafe a,
                                 int32_t now,
                                 src_task_t * unsafe srcState)
 {
@@ -135,73 +134,6 @@ void src_trigger(streaming chanend c_src[SRC_N_INSTANCES],
         srcState->fsRatio = (((int64_t)srcState->idealFsRatio) << 32) + (error * (int64_t) srcState->idealFsRatio);
     }
 }
-
-/* Send/receive samples from the SRC workers */
-#pragma unsafe arrays
-void src_trigger_(streaming chanend c_src[SRC_N_INSTANCES],
-                                int srcInputBuff[SRC_N_INSTANCES][SRC_N_IN_SAMPLES][SRC_CHANNELS_PER_INSTANCE],
-                                asynchronous_fifo_t * unsafe a,
-                                int32_t now,
-                                src_task_t * unsafe srcState)
-{
-    int32_t error = 0;
-    int nSamps = 0;
-    int32_t timestamp;
-    int32_t samples[SRC_CHANNELS_PER_INSTANCE*SRC_N_CHANNELS * SRC_MAX_NUM_SAMPS_OUT];
-#pragma loop unroll
-    for (int i=0; i<SRC_N_INSTANCES; i++)
-    {
-        unsafe
-        {
-            c_src[i] <: (uint64_t) srcState->fsRatio;
-        }
-
-#pragma loop unroll
-        for (int j=0; j<SRC_N_IN_SAMPLES; j++)
-        {
-#pragma loop unroll
-            for (int k=0; k<SRC_CHANNELS_PER_INSTANCE; k++)
-            {
-                c_src[i] <: srcInputBuff[i][j][k];
-            }
-        }
-    }
-
-    /* Get number of samples to receive from all SRC cores */
-    /* Note, all nSamps should be equal */
-#pragma loop unroll
-    for (int i=0; i < SRC_N_INSTANCES; i++)
-    {
-        c_src[i] :> nSamps;
-        c_src[i] :> timestamp;
-        c_src[i] <: now;
-    }
-
-    int chanIdx = 0;
-    for (int j=0; j < nSamps; j++)
-    {
-#pragma loop unroll
-        for (int k=0; k<SRC_CHANNELS_PER_INSTANCE; k++)
-        {
-            int32_t sample;
-#pragma loop unroll
-            for (int i=0; i<SRC_N_INSTANCES; i++)
-            {
-                c_src[i] :> sample;
-                samples[chanIdx++] = sample;
-            }
-        }
-    }
-
-    unsafe
-    {
-        error = asynchronous_fifo_producer_put(a, samples, nSamps, timestamp, srcState->xscopeUsed);
-
-        /* Produce fsRatio from error */
-        srcState->fsRatio = (((int64_t)srcState->idealFsRatio) << 32) + (error * (int64_t) srcState->idealFsRatio);
-    }
-}
-
 
 static int interpolation_ticks_2D[6][6] =
 {
