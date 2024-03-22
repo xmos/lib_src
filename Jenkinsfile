@@ -23,7 +23,7 @@ pipeline {
     VIEW = getViewName(REPO)
     PYTHON_VERSION = "3.10.5"
     VENV_DIRNAME = ".venv"
-    XMOSDOC_VERSION = "v4.0"
+    XMOSDOC_VERSION = "v5.1"
   }
   options {
     skipDefaultCheckout()
