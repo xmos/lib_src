@@ -338,7 +338,7 @@ pipeline {
               withTools(params.TOOLS_VERSION) {
                 withVenv {
                   sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-                  archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
+                  archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
                 }
               }
             }
