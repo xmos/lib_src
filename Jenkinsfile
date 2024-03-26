@@ -23,7 +23,7 @@ pipeline {
     VIEW = getViewName(REPO)
     PYTHON_VERSION = "3.10.5"
     VENV_DIRNAME = ".venv"
-    XMOSDOC_VERSION = "v4.0"
+    XMOSDOC_VERSION = "v5.1"
   }
   options {
     skipDefaultCheckout()
@@ -338,7 +338,7 @@ pipeline {
               withTools(params.TOOLS_VERSION) {
                 withVenv {
                   sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-                  archiveArtifacts artifacts: "doc_build.zip", allowEmptyArchive: true
+                  archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
                 }
               }
             }

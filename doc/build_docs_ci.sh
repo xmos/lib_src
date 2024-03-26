@@ -18,4 +18,5 @@ docker pull ghcr.io/xmos/xmosdoc:$1
 docker run -u "$(id -u):$(id -g)" --rm -v `pwd`:/build  ghcr.io/xmos/xmosdoc:$1 -v
 
 # Leave a nice zip file for picking up as an artefact
-zip -r doc_build.zip doc/_build
+cd doc/_build
+zip -r doc_build.zip .
