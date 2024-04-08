@@ -69,14 +69,17 @@
 #define     ASRC_N_IN_SAMPLES                   (SRC_N_IN_SAMPLES)                  // Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h
 #define     ASRC_N_CHANNELS                     (SRC_MAX_SRC_CHANNELS_PER_INSTANCE) // Used by SRC_STACK_LENGTH_MULT in src_mrhf_asrc.h
 
-
+// Compatibility for XC and C
 #ifdef __XC__
 #define UNSAFE unsafe
 #else
 #include <xcore/chanend.h>
+#include <xccompat.h>
 #define UNSAFE
-#endif
+#endif // __XC__
 
+#else
+#define UNSAFE
 #endif // ifndef __DOXYGEN__
 
 /**
@@ -114,7 +117,6 @@ typedef struct asrc_in_out_t_{
 }asrc_in_out_t;
 
 
-#ifdef __XC__
 /**
  * Main ASRC processor task. Runs forever waiting on new samples from the producer. Spawns up to MAX_ASRC_THREADS during ASRC processing.
  *
@@ -124,7 +126,7 @@ typedef struct asrc_in_out_t_{
  * \param fifo_length       The length (depth) of the output FIFO. This is multiplied by channel count internally.
  *
  */
-void asrc_task(chanend c_asrc_input, asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo, unsigned fifo_length);
+void asrc_task(chanend c_asrc_input, asrc_in_out_t * UNSAFE asrc_io, asynchronous_fifo_t * UNSAFE fifo, unsigned fifo_length);
 
 /**
  * Helper function called by consumer to provide ASRC output samples. Samples are populated in the *samples array and the user
@@ -137,7 +139,7 @@ void asrc_task(chanend c_asrc_input, asrc_in_out_t * unsafe asrc_io, asynchronou
  * \param consume_timestamp The timestamp of the most recently consumed sample.
  *
  */
-int pull_samples(asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo, int32_t * unsafe samples, uint32_t output_frequency, int32_t consume_timestamp);
+int pull_samples(asrc_in_out_t * UNSAFE asrc_io, asynchronous_fifo_t * UNSAFE fifo, int32_t * UNSAFE samples, uint32_t output_frequency, int32_t consume_timestamp);
 
 /**
  * Helper function called by consumer to reset the FIFO. Resets to half full and clears the contents to zero.
@@ -145,7 +147,7 @@ int pull_samples(asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fi
  * \param fifo              A pointer to the FIFO used for outputting samples from the ASRC task to the consumer.
  *
  */
-void reset_asrc_fifo_consumer(asynchronous_fifo_t * unsafe fifo);
+void reset_asrc_fifo_consumer(asynchronous_fifo_t * UNSAFE fifo);
 
 /**
  * Prototype that must be defined by the user to initialise the function pointer for the ASRC receive produced samples ISR.
@@ -159,59 +161,8 @@ void reset_asrc_fifo_consumer(asynchronous_fifo_t * unsafe fifo);
  * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
  *
  */
-void init_asrc_io_callback(asrc_in_out_t * unsafe asrc_io);
-
-#else // C
-#include <xcore/chanend.h>
-
-/**
- * Main ASRC processor task. Runs forever waiting on new samples from the producer. Spawns up to MAX_ASRC_THREADS during ASRC processing.
- *
- * \param c_asrc_input      The channel end used to connect the producer to the ASRC task.
- * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
- * \param fifo              A pointer to the FIFO used for outputting samples from the ASRC task to the consumer.
- * \param fifo_length       The length (depth) of the output FIFO. This is multiplied by channel count internally.
- *
- */
-void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, unsigned fifo_length);
-
-/**
- * Helper function called by consumer to provide ASRC output samples. Samples are populated in the *samples array and the user
- * must provide the current nominal output frequency and a timestamp of when the last samples were consumed from the 100 MHz ref clock
- *
- * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
- * \param fifo              A pointer to the FIFO used for outputting samples from the ASRC task to the consumer.
- * \param samples           A pointer to a whole output frame (all channels in a single sample period) to populate.
- * \param output_frequency  The nominal output frequency. Used for detecting a sample rate change.
- * \param consume_timestamp The timestamp of the most recently consumed sample.
- *
- */
-int pull_samples(asrc_in_out_t *asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp);
-
-/**
- * Helper function called by consumer to reset the FIFO. Resets to half full and clears the contents to zero.
- *
- * \param fifo              A pointer to the FIFO used for outputting samples from the ASRC task to the consumer.
- *
- */
-void reset_asrc_fifo(asynchronous_fifo_t * fifo);
-
-/**
- * Prototype that must be defined by the user to initialise the function pointer for the ASRC receive produced samples ISR.
- * Typical user function (where receive_asrc_input_samples() is the user defined rx function):
- * void init_asrc_io_callback(asrc_in_out_t *asrc_io){
- *      asrc_io->asrc_task_produce_cb = receive_asrc_input_samples;
- * }
- *
- * Must be called before running asrc_task()
- * 
- * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
- *
- */
-void init_asrc_io_callback(asrc_in_out_t * asrc_io);
-#endif
+void init_asrc_io_callback(asrc_in_out_t * UNSAFE asrc_io);
 
 /**@}*/ // END: addtogroup src_asrc_task
-
 
 #endif // _ASRC_TASK_H_
