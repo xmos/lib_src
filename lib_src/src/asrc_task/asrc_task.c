@@ -82,7 +82,8 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
     // Pack into the frame this instance of ASRC expects
     int input_samples[ASRC_N_IN_SAMPLES * MAX_ASRC_CHANNELS_TOTAL];
     for(int i = 0; i < ASRC_N_IN_SAMPLES * num_worker_channels; i++){
-        int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
+        // int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx; 
+        int rd_idx = i + (asrc_io->asrc_channel_count - num_worker_channels) * (i / num_worker_channels) + worker_channel_start_idx; // Optimisation of above
         input_samples[i] = asrc_io->input_samples[input_write_idx][rd_idx];
     }
 
@@ -93,7 +94,8 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
 
     // Unpack to combined output frame
     for(int i = 0; i < *num_output_samples * num_worker_channels; i++){
-        int wr_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
+        // int wr_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
+        int wr_idx = i + (asrc_io->asrc_channel_count - num_worker_channels) * (i / num_worker_channels) + worker_channel_start_idx; // Optimisation of above
         asrc_io->output_samples[wr_idx] = output_samples[i];
     }
 }
