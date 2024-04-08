@@ -10,6 +10,7 @@ lib_src change log
   * ADDED: Support for XCommon CMake build system
   * FIXED: Function pointer annotation avoid stack corruption when using
     multiple instances of SSRC or ASRC.
+  * ADDED: ASRC task wrapper to simplify integration of ASRC blocks
 
   * Changes to dependencies:
 
