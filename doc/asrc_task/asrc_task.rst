@@ -38,7 +38,7 @@ The difference between the performance requirement between the two architectures
 
     - A two channel system supporting up to 192kHz input and output will require about (0.15 * (192 + 192) * 2) ~= 115 thread MHz. This means a single thread (assuming no more than 5 active threads on an xcore.ai device with a 600MHz clock) will likely be capable of handling this stream.
 
-    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an xcore.ai device with a 600MHz clock).
+    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an xcore.ai device with a 600MHz clock).
 
 In reality the amount of thread MHz needed will be lower than the above formulae suggest since subsequent ASRC channels after the first can share some of the calculations resulting in about at 10% performance requirement reduction per additional channel per worker thread. Increasing the input frame size in the ASRC task may also reduce the MHz requirement a few % at the cost of larger buffers and a slight latency increase. 
 

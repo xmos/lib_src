@@ -15,7 +15,8 @@ set(LIB_INCLUDES   api
                    src/multirate_hifi
                    src/multirate_hifi/asrc
                    src/multirate_hifi/ssrc
-                   src/fixed_factor_vpu_voice)
+                   src/fixed_factor_vpu_voice
+                   src/asrc_task)
 
 XMOS_REGISTER_MODULE()
 
