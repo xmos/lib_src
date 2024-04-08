@@ -149,6 +149,8 @@ unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned &multi_to
     return (argc - 1) / CMD_LEN;
 }
 
+extern void setup_asrc_io_custom_callback(asrc_in_out_t *unsafe asrc_io);
+
 int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
@@ -164,7 +166,7 @@ int main(unsigned argc, char * unsafe argv[argc])
         asrc_in_out_t asrc_io = {{{0}}};
         asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
         asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
-        init_asrc_io_callback(asrc_io_ptr);
+        setup_asrc_io_custom_callback(asrc_io_ptr);
 
 
         // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 

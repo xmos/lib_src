@@ -192,8 +192,28 @@ void reset_asrc_fifo_consumer(asynchronous_fifo_t * fifo){
     memset(fifo->buffer, 0, fifo->channel_count * fifo->max_fifo_depth * sizeof(int));
 }
 
-// Handy type definition of the callback function.
-typedef unsigned (*asrc_task_produce_isr_cb_t)(chanend_t c_producer, asrc_in_out_t *asrc_io, unsigned *new_input_rate);
+// Default implementation of receive (called from ASRC) which receives samples and config over a channel. This is overridable.
+ASRC_TASK_ISR_CALLBACK_ATTR 
+unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, unsigned *new_input_rate){
+    static unsigned asrc_in_counter = 0;
+
+    // Get format and timing data from channel
+    *new_input_rate = chanend_in_word(c_asrc_input);
+    asrc_io->input_timestamp = chanend_in_word(c_asrc_input);
+    asrc_io->input_channel_count = chanend_in_word(c_asrc_input);
+
+    // Pack into array properly LRLRLRLR for 2ch or 123412341234 for 4ch etc.
+    for(int i = 0; i < asrc_io->input_channel_count; i++){
+        int idx = i + asrc_io->input_channel_count * asrc_in_counter;
+        asrc_io->input_samples[asrc_io->input_write_idx][idx] = chanend_in_word(c_asrc_input);
+    }
+
+    if(++asrc_in_counter == SRC_N_IN_SAMPLES){
+        asrc_in_counter = 0;
+    }
+
+    return asrc_in_counter;
+}
 
 // Structure used for holding the vars needed for the ASRC_TASK receive_asrc_input_samples() callback.
 // This is needed because we can only pass a single pointer to an ISR.
@@ -391,8 +411,10 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 
 // Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
 void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
-    // Check callback is init'd.
-    xassert(asrc_io->asrc_task_produce_cb != NULL);
+    // Check callback is init'd. If not, use default implementation.
+    if (asrc_io->asrc_task_produce_cb == NULL){
+        asrc_io->asrc_task_produce_cb = receive_asrc_input_samples_cb_default;
+    }
     // We use a single chanend to send the buffer IDX from the ISR of this task back to asrc task and sync
     chanend_t c_buff_idx = chanend_alloc();
     chanend_set_dest(c_buff_idx, c_buff_idx); // Loopback chanend to itself - we use this as a shallow event driven FIFO
@@ -401,4 +423,27 @@ void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo
     fifo->max_fifo_depth = fifo_length;
     // Run the ASRC task with stack set aside for an ISR
     INTERRUPT_PERMITTED(asrc_processor)(c_asrc_input, asrc_io, c_buff_idx, fifo);
+}
+
+// Register a custom rx function for ASRC task
+void init_asrc_io_callback(asrc_in_out_t *asrc_io, asrc_task_produce_isr_cb_t asrc_rx_fp){
+    asrc_io->asrc_task_produce_cb = asrc_rx_fp;
+}
+
+// Default send samples to ASRC function.
+void send_asrc_input_samples_default(chanend_t c_asrc_input,
+                                    unsigned input_frequency,
+                                    int32_t input_timestamp,
+                                    unsigned input_channel_count,
+                                    int32_t *input_samples){
+    // Send format info
+    chanend_out_word(c_asrc_input, input_frequency);
+    chanend_out_word(c_asrc_input, input_timestamp);
+    chanend_out_word(c_asrc_input, input_channel_count);
+
+    // Send samples
+    for(int i = 0; i < input_channel_count; i++){
+        chanend_out_word(c_asrc_input, input_samples[i]);
+    }
+
 }

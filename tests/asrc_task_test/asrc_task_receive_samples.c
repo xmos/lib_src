@@ -27,6 +27,6 @@ unsigned receive_asrc_input_samples(chanend_t c_producer, asrc_in_out_t *asrc_io
 }
 
 // Register the above function for ASRC task
-void init_asrc_io_callback(asrc_in_out_t *asrc_io){
-    asrc_io->asrc_task_produce_cb = receive_asrc_input_samples;
+void setup_asrc_io_custom_callback(asrc_in_out_t *asrc_io){
+    init_asrc_io_callback(asrc_io, receive_asrc_input_samples);
 }
