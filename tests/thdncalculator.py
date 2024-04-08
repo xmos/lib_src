@@ -1,7 +1,7 @@
-# Copyright 2019-2023 XMOS LIMITED.
+# Copyright 2019-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import sys, os
-from scipy.signal import blackmanharris
+from scipy.signal.windows import blackmanharris
 from numpy.fft import rfft, irfft
 from numpy import argmax, sqrt, mean, absolute, arange, log10
 import numpy as np
