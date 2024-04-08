@@ -36,6 +36,7 @@ void test_master(chanend c_control[2], unsigned commands[MAX_CMDS][CMD_LEN], uns
         delay_milliseconds(commands[i][3]); // Test startup safe     
     }
     printf("Normal exit: no more commands\n");
+    delay_milliseconds(100); // Ensure last xscope write finishes
     _Exit(0);
 }
 
@@ -49,7 +50,7 @@ void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNE
     }
 }
 
-void producer(chanend c_producer, chanend c_control){
+void producer(chanend c_producer, chanend c_control, const unsigned multi_tone){
     unsigned sample_rate = 0;
     unsigned channel_count = 0;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
@@ -83,12 +84,13 @@ void producer(chanend c_producer, chanend c_control){
 
             case t when timerafter(time_trigger) :> int32_t time_stamp:
                 for(int ch = 0; ch < channel_count; ch++){
-                    samples[ch] = sine[sine_counter];
+                    if(multi_tone){
+                        samples[ch] = sine[(sine_counter * (ch + 1)) % N_SINE];
+                    } else {
+                        samples[ch] = sine[sine_counter % N_SINE];
+                    }
                 }
                 sine_counter++;
-                if(sine_counter == N_SINE){
-                    sine_counter = 0;
-                }
 
                 send_asrc_input_samples(c_producer, samples, channel_count, sample_rate, time_stamp);
                 time_trigger += sample_period;
@@ -97,7 +99,7 @@ void producer(chanend c_producer, chanend c_control){
     }
 }
 
-void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo){
+void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io, asynchronous_fifo_t * unsafe fifo, const unsigned multi_tone){
     unsigned sample_rate = 0;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
@@ -120,19 +122,27 @@ void consumer(chanend c_control, asrc_in_out_t * unsafe asrc_io, asynchronous_fi
             case t when timerafter(time_trigger) :> int32_t time_stamp:
                 pull_samples(asrc_io, fifo, samples, sample_rate, time_stamp);
                 time_trigger += sample_period;
-                xscope_int(0, samples[0]);
+                if(!multi_tone){
+                    xscope_int(0, samples[0]);
+                } else unsafe{
+                    for(int ch = 0; ch < asrc_io->asrc_channel_count; ch++){
+                        xscope_int(ch, samples[ch]);
+                    }
+                }
             break;
         }
     }
 }
 
-unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned argc, char * unsafe argv[argc])
+unsigned parse_cmd_line(unsigned commands[MAX_CMDS][CMD_LEN], unsigned &multi_tone, unsigned argc, char * unsafe argv[argc])
 {
-    for(int i = 1; i < argc; i++){
+    multi_tone = atoi((char*)argv[1]);
+
+    for(int i = 2; i < argc; i++){
         printf("Arg %u: %s\n", i, argv[i]);
         unsigned val = (unsigned)(atoi((char *)argv[i]));
-        unsigned cmd_idx = (i - 1) % CMD_LEN;
-        unsigned cmd_n = (i - 1) / CMD_LEN;
+        unsigned cmd_idx = (i - 2) % CMD_LEN;
+        unsigned cmd_n = (i - 2) / CMD_LEN;
         commands[cmd_n][cmd_idx] = val;
     }
 
@@ -156,17 +166,18 @@ int main(unsigned argc, char * unsafe argv[argc])
         asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
         init_asrc_io_callback(asrc_io_ptr);
 
+
+        // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
+        unsigned commands[MAX_CMDS][CMD_LEN] = {{0}};
+        unsigned multi_tone = 0;
+        unsigned n_cmds = parse_cmd_line(commands, multi_tone, argc, argv);
+
         par
         {
-            {
-                // Format is SR_IN, IN_CHANS, SR_OUT, POST_DELAY_MS 
-                unsigned commands[MAX_CMDS][CMD_LEN] = {{0}};
-                unsigned n_cmds = parse_cmd_line(commands, argc, argv);
-                test_master(c_control, commands, n_cmds);
-            }
-            producer(c_producer, c_control[0]);
+            test_master(c_control, commands, n_cmds);
+            producer(c_producer, c_control[0], multi_tone);
             asrc_task(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);
-            consumer(c_control[1], asrc_io_ptr, fifo);
+            consumer(c_control[1], asrc_io_ptr, fifo, multi_tone);
 
         }
     } // unsafe region

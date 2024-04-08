@@ -20,10 +20,18 @@ from thdncalculator import THDN_and_freq
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
 
-def run_dut(bin_name, cmds, timeout=60):
+def run_dut(bin_name, cmds, multi_tone=False, timeout=60):
+    """
+    Runs DUT with a set of frequency change commands.
+    If multi-tone is set, then differening tones are sent
+    to each channel otherwise we use a single tone for
+    frequency change tests.
+    """
+
     print("Running DUT")
 
-    flattend_cmds = ' '.join(str(x)for x in list(itertools.chain(*cmds)))
+    flattend_cmds = "1 " if multi_tone else "0 "
+    flattend_cmds += ' '.join(str(x)for x in list(itertools.chain(*cmds)))
 
     cmd = f"xrun --id 0 --xscope-file trace --args {bin_name} {flattend_cmds}"
     print(f"running: {cmd}")
@@ -167,21 +175,19 @@ def test_asrc_task_zero_transition(build_xe):
     output = run_dut(build_xe, cmd_list, timeout=60)
     parse_output_for_changes(output, cmd_list)
 
-def analyse_thd(wav_file):
+def analyse_thd(wav_file, max_thd=-90):
     sample_rate, data = wavfile.read(wav_file)
     start_chop_s = 0.02
     data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
     thd, freq = THDN_and_freq(data, sample_rate)
 
     expected_freq = (44100 / 44) * sample_rate / 44100
-    max_thd = -90
     print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
 
     assert thd < max_thd
     assert np.isclose(freq, expected_freq, rtol = 0.0001)
 
-
-def test_asrc_longish_run(build_xe):
+def test_asrc_task_longish_run(build_xe):
     """
     This runs a slightly longer test at a single frequency and checks THDN
     """
@@ -192,7 +198,31 @@ def test_asrc_longish_run(build_xe):
     vcd2wav("trace.vcd", 0, 1, 48000)
     analyse_thd("ch0-1-48000.wav")
 
+def analyse_freq_multi_tone(wav_file):
+    sample_rate, data = wavfile.read(wav_file)
+    start_chop_s = 0.02
 
-# For test only
+    for ch in range(8):
+        ch_data = data[:,ch]
+        ch_data = (ch_data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
+        thd, freq = THDN_and_freq(ch_data, sample_rate)
+
+        expected_freq = (44100 / 44) * sample_rate / 44100 * (ch + 1)
+        print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
+
+        assert np.isclose(freq, expected_freq, rtol = 0.001) # Short test and sketchy sine for ch > 0 so larger RTOL
+
+def test_asrc_task_channel_mapping(build_xe):
+    """
+    This runs a short test at a multiple frequencies and checks output channels have correct tones
+    """
+    test_len_s = 1
+    test_sr = 44100
+    cmd_list = [[test_sr, 8, test_sr, test_len_s * 1000]]
+    output = run_dut(build_xe, cmd_list, multi_tone=True, timeout=60)
+    vcd2wav("trace.vcd", 0, 8, test_sr)
+    analyse_freq_multi_tone("ch0-8-44100.wav")
+
+# For local test only
 if __name__ == "__main__":
     analyse_thd("ch0-1-48000.wav")
