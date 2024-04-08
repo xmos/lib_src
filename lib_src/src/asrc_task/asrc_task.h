@@ -58,7 +58,7 @@
 #ifndef __DOXYGEN__
 
 // Internally calculated defines
-#define  SRC_MAX_SRC_CHANNELS_PER_INSTANCE      (((MAX_ASRC_CHANNELS_TOTAL + (MAX_ASRC_THREADS - 1)) / MAX_ASRC_THREADS)) // Round up devide
+#define  SRC_MAX_SRC_CHANNELS_PER_INSTANCE      (((MAX_ASRC_CHANNELS_TOTAL + (MAX_ASRC_THREADS - 1)) / MAX_ASRC_THREADS)) // Round up divide
 
 #include "src.h"
 #include "asynchronous_fifo.h"
