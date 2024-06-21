@@ -82,7 +82,7 @@ void do_asrc_group(schedule_info_t *schedule, uint64_t fs_ratio, asrc_in_out_t *
     // Pack into the frame this instance of ASRC expects
     int input_samples[ASRC_N_IN_SAMPLES * MAX_ASRC_CHANNELS_TOTAL];
     for(int i = 0; i < ASRC_N_IN_SAMPLES * num_worker_channels; i++){
-        // int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx; 
+        // int rd_idx = i % num_worker_channels + (i / num_worker_channels) * asrc_io->asrc_channel_count + worker_channel_start_idx;
         int rd_idx = i + (asrc_io->asrc_channel_count - num_worker_channels) * (i / num_worker_channels) + worker_channel_start_idx; // Optimisation of above
         input_samples[i] = asrc_io->input_samples[input_write_idx][rd_idx];
     }
@@ -193,7 +193,7 @@ void reset_asrc_fifo_consumer(asynchronous_fifo_t * fifo){
 }
 
 // Default implementation of receive (called from ASRC) which receives samples and config over a channel. This is overridable.
-ASRC_TASK_ISR_CALLBACK_ATTR 
+ASRC_TASK_ISR_CALLBACK_ATTR
 unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, unsigned *new_input_rate){
     static unsigned asrc_in_counter = 0;
 
@@ -232,7 +232,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
     chanend_t c_buff_idx = asrc_receive_samples_ctx->c_buff_idx;
     asrc_in_out_t *asrc_io = asrc_receive_samples_ctx->asrc_io;
     ASRC_TASK_ISR_CALLBACK_ATTR asrc_task_produce_isr_cb_t receive_asrc_input_samples_cb = asrc_io->asrc_task_produce_cb;
-    
+
     // Always consume samples so we don't apply backpressure to the producer
     // Call the user defined receive samples callback.
     ASRC_TASK_ISR_CALLBACK_ATTR
@@ -242,7 +242,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
     if(asrc_in_counter == 0 && asrc_io->ready_flag_to_receive){
         // Note if you ever find the code has stopped here then this is due to the time required to ASRC process the input frame
         // is longer than the period of the frames coming in. To remedy this you need to increase ASRC processing resources or reduce
-        // the processing requirement. If you are using XCORE-200, consider using xcore.ai for more than 2x the ASRC performance. 
+        // the processing requirement. If you are using XCORE-200, consider using xcore.ai for more than 2x the ASRC performance.
         // Notify ASRC main loop of new frame
         chanend_out_byte(c_buff_idx, (uint8_t)asrc_io->input_write_idx);
         asrc_io->input_write_idx ^= 1; // Swap buffers
@@ -274,7 +274,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
 
 // Check to see if input params have changed since last process
 static inline bool asrc_detect_format_change(uint32_t input_frequency, uint32_t output_frequency, asrc_in_out_t *asrc_io){
-    if( asrc_io->input_frequency != input_frequency || 
+    if( asrc_io->input_frequency != input_frequency ||
         asrc_io->input_channel_count != asrc_io->asrc_channel_count ||
         asrc_io->output_frequency != output_frequency){
 
@@ -291,7 +291,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
                             asrc_in_out_t *asrc_io,
                             chanend_t c_buff_idx,
                             asynchronous_fifo_t * fifo){
-    
+
     uint32_t input_frequency = 0;   // Set to invalid for now. We will get rates supplied by producer and consumer.
     uint32_t output_frequency = 0;
 
@@ -304,7 +304,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         {  2268, 2268, 1134, 1134,  567,  567},
         {  2083, 2083, 1042, 1042,  521,  521}
     };
-    
+
     // Setup a pointer to a struct so the ISR can access these elements
     asrc_receive_samples_ctx_t asrc_receive_samples_ctx = {c_asrc_input, c_buff_idx, asrc_io};
 
@@ -322,7 +322,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         int inputFsCode = frequency_to_fs_code(input_frequency);
         int outputFsCode = frequency_to_fs_code(output_frequency);
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
-        
+
         //// FIFO init
         dprintf("FIFO init channels: %d length: %ld\n", asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init(fifo, asrc_io->asrc_channel_count, fifo->max_fifo_depth);
@@ -376,6 +376,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         while(1){
             // Wait for block of samples. We will get the buffer index of the newly written samples from receive_asrc_input_samples_cb
             unsigned input_write_idx = (unsigned)chanend_in_byte(c_buff_idx);
+            int32_t save_timestamp = asrc_io->input_timestamp;
 
             // Check for format changes - do before we process in case things have changed
             if(asrc_detect_format_change(input_frequency, output_frequency, asrc_io)){
@@ -385,7 +386,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 
             int32_t t0 = get_reference_time();
             int num_output_samples = par_asrc(num_jobs, schedule, fs_ratio, asrc_io, input_write_idx, sASRCCtrl);
-            int ts = asrc_timestamp_interpolation(asrc_io->input_timestamp, sASRCCtrl[0], interpolation_ticks);
+            int ts = asrc_timestamp_interpolation(save_timestamp, sASRCCtrl[0], interpolation_ticks); // Use the saved copy of asrc_io->input_timestamp since asrc_io->input_timestamp might have got overwritten during asrc processing
             // Only push to FIFO if we have samples (FIFO has a bug) otherwise hold last error value
             if(num_output_samples){
                 error = asynchronous_fifo_producer_put(fifo, &asrc_io->output_samples[0], num_output_samples, ts, xscope_used);
@@ -409,7 +410,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 }
 
 
-// Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function 
+// Wrapper to setup ISR->task signalling chanend and use ISR friendly call to function
 void asrc_task(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo, unsigned fifo_length){
     // Check callback is init'd. If not, use default implementation.
     if (asrc_io->asrc_task_produce_cb == NULL){
