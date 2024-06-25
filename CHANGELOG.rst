@@ -4,8 +4,8 @@ lib_src change log
 2.6.0
 -----
 
-* CHANGED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
-  getting overwritten during asrc processing
+  * CHANGED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
+    getting overwritten during asrc processing
 
 2.5.0
 -----
