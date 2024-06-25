@@ -160,7 +160,7 @@ static int interpolation_ticks_2D[6][6] = {
     {  2083, 2083, 1042, 1042,  521,  521}
 };
 
-void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int xscope_used, int *errors) {
+void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency, int *errors) {
     int interpolation_ticks = interpolation_ticks_2D[fs_code(input_frequency)][fs_code(output_frequency)];
     asrc_state_t sASRCState[SRC_CHANNELS_PER_INSTANCE];                                   // ASRC state machine state
     int iASRCStack[SRC_CHANNELS_PER_INSTANCE][ASRC_STACK_LENGTH_MULT * SRC_N_IN_SAMPLES * 100]; // Buffer between filter stages
@@ -225,9 +225,10 @@ void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency,
         if (num_samples) {
             asm volatile("gettime %0" : "=r" (t2));
             int ts = asrc_timestamp_interpolation(now, &sASRCCtrl[0], interpolation_ticks);
-            if (xscope_used) xscope_int(5, fs_ratio >> 32);
-            error = asynchronous_fifo_producer_put(a, (int32_t *)out_samples, num_samples, ts+OFFSET,
-                                              xscope_used);
+#if defined(ASYNC_FIFO_XSCOPE_INSTRUMENTATION)
+            xscope_int(5, fs_ratio >> 32);
+#endif
+            error = asynchronous_fifo_producer_put(a, (int32_t *)out_samples, num_samples, ts+OFFSET,);
             asm volatile("gettime %0" : "=r" (t3));
             if (i == 48008) {
 //                printf("%d %d %d %d\n", t1-t0, t2-t1, t3-t2, t3-t0);
@@ -255,7 +256,7 @@ void producer(asynchronous_fifo_t *a, int input_frequency, int output_frequency,
     }
 }
 
-void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
+void consumer(asynchronous_fifo_t *a, int output_frequency) {
     hwtimer_t tmr = hwtimer_alloc();
     uint64_t now = hwtimer_get_time(tmr);
     int freq = POSITIVE_DEVIATION(output_frequency);
@@ -274,7 +275,9 @@ void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
         hwtimer_set_trigger_time(tmr, now);
         (void) hwtimer_get_time(tmr);
         asynchronous_fifo_consumer_get(a, &output_data, now + OFFSET);
-        if (xscope_used) xscope_int(0, output_data);
+#if defined(ASYNC_FIFO_XSCOPE_INSTRUMENTATION)
+        xscope_int(0, output_data);
+#endif
         if (i == output_frequency/2) {
             freq = NEGATIVE_DEVIATION(output_frequency);
             step = 100000000 / freq;
@@ -286,8 +289,7 @@ void consumer(asynchronous_fifo_t *a, int output_frequency, int xscope_used) {
 
 #define FIFO_LENGTH   100
 
-void test_async(int input_frequency, int output_frequency, int xscope_used,
-                int *errors) {
+void test_async(int input_frequency, int output_frequency, int *errors) {
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, 1)];
     asynchronous_fifo_t *asynchronous_fifo_state = (asynchronous_fifo_t *)array;
 
@@ -298,8 +300,8 @@ void test_async(int input_frequency, int output_frequency, int xscope_used,
                                         fs_code(output_frequency));
 
     PAR_JOBS(
-        PJOB(producer, (asynchronous_fifo_state, input_frequency, output_frequency, xscope_used, errors)),
-        PJOB(consumer, (asynchronous_fifo_state, output_frequency, xscope_used))
+        PJOB(producer, (asynchronous_fifo_state, input_frequency, output_frequency, errors)),
+        PJOB(consumer, (asynchronous_fifo_state, output_frequency))
         );
     asynchronous_fifo_exit(asynchronous_fifo_state);
 
@@ -395,7 +397,7 @@ int test_192000_low() {
     PAR_JOBS(
         PJOB(test_async, (192000, 44100, 0, &e0)),
         PJOB(test_async, (192000, 48000, 0, &e1)),
-        PJOB(test_async, (192000, 88200, 0, &e2)), 
+        PJOB(test_async, (192000, 88200, 0, &e2)),
         PJOB(test_async, (192000, 96000, 0, &e3))
         );
     return e0 + e1 + e2 + e3;
@@ -424,7 +426,7 @@ int main(void) {
     errors += test_9xx00_high();
     errors += test_176400_low();
     errors += test_192000_low();
-    errors += test_1xxx00_high(); 
+    errors += test_1xxx00_high();
     if (errors == 0) {
         printf("PASS\n");
     } else {

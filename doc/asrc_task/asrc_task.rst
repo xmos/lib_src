@@ -25,7 +25,7 @@ The ASRC Task supports the following nominal sample rates for input and output:
     - 88.2 kHz
     - 96 kHz
     - 176.4 kHz
-    - 192 kHz 
+    - 192 kHz
 
 Because the required compute for multi-channel systems may exceed the performance limit of a single thread, the ASRC subsystem is able to make use of multiple threads in parallel to achieve the required conversion within the sample time period. It uses a dynamic fork and join architecture to share the ASRC workload across multiple threads each time a batch of samples is processed. The threads must all reside on the same tile as the ASRC task due to them sharing input and output buffers. The workload and buffer partitioning is dynamically computed by the ASRC task at stream startup and is constrained by the user at compile time to set maximum limits of both channel count and worker threads.
 
@@ -40,7 +40,7 @@ The difference between the performance requirement between the two architectures
 
     - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an xcore.ai device with a 600MHz clock).
 
-In reality the amount of thread MHz needed will be lower than the above formulae suggest since subsequent ASRC channels after the first can share some of the calculations. This results in about at 10% performance requirement reduction per additional channel per worker thread. Increasing the input frame size in the ASRC task may also reduce the MHz requirement a few % at the cost of larger buffers and a slight latency increase. 
+In reality the amount of thread MHz needed will be lower than the above formulae suggest since subsequent ASRC channels after the first can share some of the calculations. This results in about at 10% performance requirement reduction per additional channel per worker thread. Increasing the input frame size in the ASRC task may also reduce the MHz requirement a few % at the cost of larger buffers and a slight latency increase.
 
 .. warning::
     Exceeding the processing time available by specifying a channel count, input/output rates, number of worker threads or device clock speed may result in at best choppy audio or a blocked ASRC task if the overrun is persistent.
@@ -102,7 +102,7 @@ An example of the user-defined `C` function for receiving the input samples is s
 
         // Receive stream info from producer
         *new_input_rate = chanend_in_word(c_producer);
-        asrc_io->input_timestamp = chanend_in_word(c_producer);
+        asrc_io->input_timestamp[asrc_io->input_write_idx] = chanend_in_word(c_producer);
         asrc_io->input_channel_count = chanend_in_word(c_producer);
 
         // Pack into array properly LRLRLRLR or 123412341234 etc.

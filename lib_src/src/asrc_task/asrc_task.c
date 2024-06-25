@@ -367,8 +367,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         ideal_fs_ratio = (fs_ratio + (1<<31)) >> 32;
         dprintf("ideal_fs_ratio: %d\n", ideal_fs_ratio);
 
-        const int xscope_used = 0; // Vestige of ASRC API. TODO - cleanup in future when lib_src is tidied
-
         asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
         asrc_io->ready_flag_configured = 1; // SIgnal we are ready to produce
 
@@ -388,7 +386,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
             int ts = asrc_timestamp_interpolation(asrc_io->input_timestamp[input_write_idx], sASRCCtrl[0], interpolation_ticks);
             // Only push to FIFO if we have samples (FIFO has a bug) otherwise hold last error value
             if(num_output_samples){
-                error = asynchronous_fifo_producer_put(fifo, &asrc_io->output_samples[0], num_output_samples, ts, xscope_used);
+                error = asynchronous_fifo_producer_put(fifo, &asrc_io->output_samples[0], num_output_samples, ts);
             }
 
             fs_ratio = (((int64_t)ideal_fs_ratio) << 32) + (error * (int64_t) ideal_fs_ratio);
