@@ -199,7 +199,7 @@ unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_o
 
     // Get format and timing data from channel
     *new_input_rate = chanend_in_word(c_asrc_input);
-    asrc_io->input_timestamp = chanend_in_word(c_asrc_input);
+    asrc_io->input_timestamp[asrc_io->input_write_idx] = chanend_in_word(c_asrc_input);
     asrc_io->input_channel_count = chanend_in_word(c_asrc_input);
 
     // Pack into array properly LRLRLRLR for 2ch or 123412341234 for 4ch etc.
@@ -376,7 +376,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         while(1){
             // Wait for block of samples. We will get the buffer index of the newly written samples from receive_asrc_input_samples_cb
             unsigned input_write_idx = (unsigned)chanend_in_byte(c_buff_idx);
-            int32_t save_timestamp = asrc_io->input_timestamp;
 
             // Check for format changes - do before we process in case things have changed
             if(asrc_detect_format_change(input_frequency, output_frequency, asrc_io)){
@@ -386,7 +385,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 
             int32_t t0 = get_reference_time();
             int num_output_samples = par_asrc(num_jobs, schedule, fs_ratio, asrc_io, input_write_idx, sASRCCtrl);
-            int ts = asrc_timestamp_interpolation(save_timestamp, sASRCCtrl[0], interpolation_ticks); // Use the saved copy of asrc_io->input_timestamp since asrc_io->input_timestamp might have got overwritten during asrc processing
+            int ts = asrc_timestamp_interpolation(asrc_io->input_timestamp[input_write_idx], sASRCCtrl[0], interpolation_ticks);
             // Only push to FIFO if we have samples (FIFO has a bug) otherwise hold last error value
             if(num_output_samples){
                 error = asynchronous_fifo_producer_put(fifo, &asrc_io->output_samples[0], num_output_samples, ts, xscope_used);
