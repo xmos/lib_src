@@ -1,6 +1,11 @@
 lib_src change log
 ==================
 
+UNRELEASED
+----------
+
+* FIXED: Producer timestamp getting overwritten during asrc processing
+
 2.5.0
 -----
 
