@@ -1,11 +1,12 @@
 lib_src change log
 ==================
 
-2.6.0
+3.0.0
 -----
 
-  * CHANGED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
+  * FIXED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
     getting overwritten during asrc processing
+  * REMOVED: xscope_used argument from the asynchronous_fifo_producer_put() API
 
 2.5.0
 -----

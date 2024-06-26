@@ -1,5 +1,5 @@
 set(LIB_NAME lib_src)
-set(LIB_VERSION 2.6.0)
+set(LIB_VERSION 3.0.0)
 
 set(LIB_DEPENDENT_MODULES "lib_logging(3.2.0)")
 
