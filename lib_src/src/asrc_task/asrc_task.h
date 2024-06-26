@@ -27,7 +27,7 @@
     #define SRC_DITHER_SETTING                  0
 
 #else
-    // Check for required static defines    
+    // Check for required static defines
     #include "asrc_task_config.h"
 
     #ifndef     MAX_ASRC_CHANNELS_TOTAL
@@ -53,7 +53,7 @@
 #endif
 
 /** @brief Decorator for user ASRC producer receive callback. Must be used to allow stack usage calculation. */
-#define  ASRC_TASK_ISR_CALLBACK_ATTR            __attribute__((fptrgroup("asrc_callback_isr_fptr_grp"))) 
+#define  ASRC_TASK_ISR_CALLBACK_ATTR            __attribute__((fptrgroup("asrc_callback_isr_fptr_grp")))
 
 #ifndef __DOXYGEN__
 
@@ -90,11 +90,11 @@ typedef struct asrc_in_out_t_{
     int32_t input_samples[2][ASRC_N_IN_SAMPLES * MAX_ASRC_CHANNELS_TOTAL];
     /** Double buffer idx */
     unsigned input_write_idx;
-    /** Timestamp of last received input sample */                                        
-    int32_t input_timestamp;
-    /** Nominal input sample rate  44100..192000 (set by producer) */  
+    /** Timestamp of last received input sample. Double buffered */
+    int32_t input_timestamp[2];
+    /** Nominal input sample rate  44100..192000 (set by producer) */
     unsigned input_frequency;
-    /** This is set by the producer and can change dynamically */                                           
+    /** This is set by the producer and can change dynamically */
     unsigned input_channel_count;
     /** The function pointer of the ASRC_TASK producer receive callback. Must be defined by user to receive samples from producer over channel. */
     void * UNSAFE asrc_task_produce_cb;
@@ -111,7 +111,7 @@ typedef struct asrc_in_out_t_{
     unsigned asrc_channel_count;
     /** Flag to indicate ASRC ready to accept samples */
     int ready_flag_to_receive;
-    /** Flag to indicate ASRC is configured and OK to pull from FIFO */                                               
+    /** Flag to indicate ASRC is configured and OK to pull from FIFO */
     int ready_flag_configured;
 
 }asrc_in_out_t;
@@ -161,9 +161,9 @@ void reset_asrc_fifo_consumer(asynchronous_fifo_t * UNSAFE fifo);
  * Prototype that can optionally be defined by the user to initialise the function pointer for the ASRC receive produced samples ISR.
  * If this is not called then receive_asrc_input_samples_cb_default() is used and the you may call send_asrc_input_samples_default()
  * from the application to send samples to the ASRC task.
- * 
+ *
  * Must be called before running asrc_task()
- * 
+ *
  * \param asrc_io           A pointer to the structure used for holding ASRC IO and state.
  * \param asrc_rx_fp        A pointer to the user asrc_receive_samples function. NOTE - This MUST be decorated by ASRC_TASK_ISR_CALLBACK_ATTR
  *                          to allow proper stack calculation by the compiler. See receive_asrc_input_samples_cb_default() in asrc_task.c
@@ -176,7 +176,7 @@ void init_asrc_io_callback(asrc_in_out_t * UNSAFE asrc_io, asrc_task_produce_isr
 /**
  * If the init_asrc_io_callback() function is not called then a default implementation of the ASRC receive will be used.
  * This send function (called by the user producer side) mirrors the receive and can be used to push samples into the ASRC.
- * 
+ *
  * \param c_asrc_input          The chan end on the application producer side connecting to the ASRC task.
  * \param input_frequency       The sample rate of the input stream (44100, 48000, ...).
  * \param input_timestamp       The ref clock timestamp of latest received input sample.

@@ -9,7 +9,7 @@ unsigned receive_asrc_input_samples(chanend_t c_producer, asrc_in_out_t *asrc_io
 
     // Receive stream info from producer
     *new_input_rate = chanend_in_word(c_producer);
-    asrc_io->input_timestamp = chanend_in_word(c_producer);
+    asrc_io->input_timestamp[asrc_io->input_write_idx] = chanend_in_word(c_producer);
     asrc_io->input_channel_count = chanend_in_word(c_producer);
 
     // Pack into array properly LRLRLRLR or 123412341234 etc.
