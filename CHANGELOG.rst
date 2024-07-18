@@ -1,7 +1,7 @@
 lib_src change log
 ==================
 
-3.0.0
+2.5.0
 -----
 
   * FIXED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
