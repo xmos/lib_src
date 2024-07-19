@@ -1,14 +1,34 @@
 lib_src change log
 ==================
 
+2.5.0
+-----
+
+  * FIXED: Double buffer asrc_io.input_timestamp to prevent producer timestamp
+    getting overwritten during asrc processing
+  * REMOVED: xscope_used argument from the asynchronous_fifo_producer_put() API
+  * ADDED: VPU enabled ASRC and SSRC providing a 2x speed improvement
+  * ADDED: Asynchronous FIFO with phase detector and PID rate controller for
+    ASRC usage
+  * ADDED: Support for XCommon CMake build system
+  * FIXED: Function pointer annotation avoid stack corruption when using
+    multiple instances of SSRC or ASRC.
+  * ADDED: ASRC task wrapper to simplify integration of ASRC blocks
+
+  * Changes to dependencies:
+
+    - lib_logging: 3.1.1 -> 3.2.0
+
+    - lib_xassert: Removed dependency
+
 2.4.0
 -----
 
   * ADDED: Support for building the core ASRC code in the C emulator as a
     library
   * ADDED: Auto-generated ASRC and SSRC performance plots in documentation
-  * CHANGED: Documents built under Jenkins instead of Github Actions
   * ADDED: Documentation warning about overflow in XS3 optimized SRC components
+  * CHANGED: Documents built under Jenkins instead of Github Actions
   * CHANGED: Tested against fwk_core v1.0.2 updated from v1.0.0
 
 2.3.0

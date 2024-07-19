@@ -16,7 +16,7 @@ Multi-rate Hi-Fi functionality:
  * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192 KHz input and output sample rates.
  * 32 bit PCM input and output data in Q1.31 signed format.
  * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF).
- * Optimized for xCORE-200 instruction set with dual-issue and compatible with XCORE-AI.
+ * Optimized for xCORE-200 instruction set with dual-issue and for the Vector Processing Unit for xcore.ai.
  * Block based processing - Minimum 4 samples input per call, must be power of 2.
  * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only).
  * Very high quality - SNR greater than 135 dB (ASRC) or 140 dB (SSRC), with THD of less than 0.0001% (reference 1KHz).
@@ -28,6 +28,12 @@ Fixed factor functionality:
 
  * Synchronous fixed factor of 3 downsample and oversample functions supporting either HiFi quality or reduced resource requirements for voice applications.
  * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit.
+
+Asynchronous FIFO:
+
+ * Non-blocking thread-safe FIFO for use with ASRC systems.
+ * Built in phase detector and control loop to determine the ASRC conversion ratio.
+ * Enables practical audio systems to be constructed using multiple clock domains and sample rates. 
 
 Building
 ........
@@ -41,6 +47,8 @@ Components
 
  * Synchronous Sample Rate Converter function (ssrc)
  * Asynchronous Sample Rate Converter function (asrc)
+
+ * Asynchronous FIFO with controller for use with ASRC
 
  * Synchronous factor of 3 downsample function (ds3)
  * Synchronous factor of 3 oversample function (os3)
@@ -71,6 +79,8 @@ Related Application Notes
 .........................
 
 An adaptive USB Audio ASRC example can be found in https://github.com/xmos/sln_voice/tree/develop/examples.
+
+Coming soon: Digital Rx (SPDIF/ADAT) to I2S slave application note & USB Audio with ASRC example.
 
 Simple file-based test applications may be found in this repo under `tests/xxxx_test` where xxxx is either `asrc`, `ssrc`, `ds3`, `os3`, `ds3_voice`, `os3_voice`, `vpu_ff3` or `vpu_rat`.
 These test applications may be used as basic examples to show how these components are used in a minimal application.

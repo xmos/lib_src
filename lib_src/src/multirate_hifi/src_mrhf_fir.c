@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // ===========================================================================
 // ===========================================================================
@@ -28,6 +28,7 @@
 
 // FIR includes
 #include "src_mrhf_fir.h"
+#include "use_vpu.h"
 
 // ===========================================================================
 //
@@ -204,6 +205,7 @@ FIRReturnCodes_t                FIR_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in over-sample by 2 mode            //
 // ==================================================================== //
+ __attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -240,10 +242,14 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
+#if SRC_USE_VPU
+        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
             src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+#endif
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -269,10 +275,14 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
         piCoefs                 = piCoefsB;
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
+#if SRC_USE_VPU
+        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
         else
             src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
+#endif
 
         // Write output with step
         // NOTE OUTPUT WRITE ORDER: First iData[1], then iData[0]
@@ -295,6 +305,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in asynchronous mode                //
 // ==================================================================== //
+__attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -329,8 +340,12 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
 
+#if SRC_USE_VPU
+        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+#endif
 
         // Write output with step
         *piOut                    = iData0;
@@ -351,6 +366,7 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
 //                    FIR_ERROR on failure                                //
 // Description:        Processes the FIR in down-sample by 2 mode            //
 // ==================================================================== //
+__attribute__((fptrgroup("MRHF_G1")))
 FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
 {
     int*            piIn        = psFIRCtrl->piIn;
@@ -388,8 +404,12 @@ FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
         // Clear accumulator and set access pointers
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
+#if SRC_USE_VPU
+        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+#else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
+#endif
         // Write output with step
         *piOut                    = iData0;
         piOut                    += uiOutStep;
