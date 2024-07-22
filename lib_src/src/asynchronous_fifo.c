@@ -67,7 +67,7 @@ void asynchronous_fifo_init_PID_fs_codes(asynchronous_fifo_t *state,
                                          int fs_input, int fs_output) {
     int max_fifo_depth = state->max_fifo_depth;
     state->Kp = Kp_2D[fs_input][fs_output];
-    state->Ki = Ki_2D[fs_input][fs_output];
+    state->Ki = Ki_2D[fs_input][fs_output] * 6;
     state->ideal_phase_error_ticks = ticks_between_samples_1D[fs_output] * (max_fifo_depth/2 + 1);
 }
 
