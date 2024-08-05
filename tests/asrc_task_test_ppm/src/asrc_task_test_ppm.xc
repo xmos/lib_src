@@ -88,7 +88,7 @@ void consumer(  unsigned test_len_s,
                         delay_microseconds(1); // Allow xscope write
                     }
                     if(asrc_io->asrc_channel_count){
-                        xscope_int(MAX_ASRC_CHANNELS_TOTAL, fifo->last_phase_error * 100000);
+                        xscope_int(MAX_ASRC_CHANNELS_TOTAL, fifo->last_phase_error);
                     }
                 }
 

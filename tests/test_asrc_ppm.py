@@ -62,24 +62,34 @@ def apply_ppm(freq, ppm):
 
 def plot_phase(data, name):
     data = np.array(data)
+ 
+    # Discard the junk at startup by zeroing it
+    clip_value = np.max(data) / 2
+    pos_clip_idxs = data > clip_value
+    neg_clip_idxs = data < -clip_value
+    data[pos_clip_idxs] = 0
+    data [neg_clip_idxs] = 0
+
+
     xpoints = np.arange(0, data.size)
     ypoints = np.array(data)
 
     plt.plot(xpoints, ypoints)
-    plt.savefig(name + ".png")
+    # plt.savefig(name + ".png")
+    plt.show()
 
 def test_asrc_range(build_xe):
     """
     This runs a slightly longer test at a single frequency and checks THDN
     """
 
-    pytest.skip() # WORK IN PROGRESS!
+    # pytest.skip() # WORK IN PROGRESS!
 
-    test_len_s = 10
+    test_len_s = 3
     fifo_len = 100
     in_freq = 48000
     out_freq = 48000
-    ppm = 10
+    ppm = 100
     cmd_list = [[in_freq, out_freq, apply_ppm(out_freq, ppm), test_len_s, fifo_len]]
     output = run_dut(build_xe, cmd_list, timeout=test_len_s + 5)
     print(output)
