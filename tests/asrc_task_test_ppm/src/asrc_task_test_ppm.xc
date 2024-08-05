@@ -14,7 +14,7 @@
 #include "asrc_task_config.h"
 #include "asrc_task.h"
 
-#define MAX_FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 32)
+#define MAX_FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 128)
 
 
 void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNELS_TOTAL], unsigned channel_count, unsigned sample_rate, int32_t time_stamp){
@@ -28,7 +28,7 @@ void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNE
 }
 
 void producer(chanend c_producer, unsigned sample_rate){
-    unsigned channel_count = 2;
+    unsigned channel_count = MAX_ASRC_CHANNELS_TOTAL;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
     #define N_SINE 44       // 1kHz at 44.1k, 4.36kHz at 192k
@@ -85,6 +85,10 @@ void consumer(  unsigned test_len_s,
                 unsafe{
                     for(int ch = 0; ch < asrc_io->asrc_channel_count; ch++){
                         xscope_int(ch, samples[ch]);
+                        delay_microseconds(1); // Allow xscope write
+                    }
+                    if(asrc_io->asrc_channel_count){
+                        xscope_int(MAX_ASRC_CHANNELS_TOTAL, fifo->last_phase_error * 100000);
                     }
                 }
 

@@ -21,10 +21,6 @@
     <Probe name="signal_r_out" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
     <Probe name="phase_error" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
     <Probe name="diff_error" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="len" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="fsratio" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="freq" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="sample_diff" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
     <!-- From the target code, call: xscope_int(PROBE_NAME, value); -->
 
 </xSCOPEconfig>
