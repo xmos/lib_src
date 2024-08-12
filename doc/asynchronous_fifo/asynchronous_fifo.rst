@@ -113,7 +113,8 @@ estimated rate is a linear function combining the error and the ideal rate.
 Internally the Asynchronous FIFO accumulates the errors so that the epsilon
 returned will eventually stabilise.
 
-Application notes describe the integration of the FIFO with an ASRC or PLL.
+The :ref:`ASRC Task <../asrc_task/asrc_task:asrc_task_header>` provides an example of the integration of the FIFO with an ASRC.
+
 
 .. _asynchronous_FIFO_three_degrees_of_freedom:
 
