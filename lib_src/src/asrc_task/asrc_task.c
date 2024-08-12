@@ -214,6 +214,7 @@ unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_o
 
     return asrc_in_counter;
 }
+// END ASRC_TASK_ISR_CALLBACK_ATTR
 
 // Structure used for holding the vars needed for the ASRC_TASK receive_asrc_input_samples() callback.
 // This is needed because we can only pass a single pointer to an ISR.

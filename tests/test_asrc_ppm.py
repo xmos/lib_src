@@ -198,7 +198,7 @@ def characterise_asrc_range():
     Needs an xcore ai target attached (any)
     """
     # mode = "STEP" # CHecks latency only
-    mode = "SINE" # Checks THDN (ie. FIFO works)
+    mode = "SINE" # Checks THDN (ie. FIFO works) and peak FIFO excursion (normally at startup)
 
 
     build_xe = build_xes()[mode]
