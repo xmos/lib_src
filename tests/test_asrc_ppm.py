@@ -2,7 +2,8 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """
-Test verify the operation of both SSRC and ASRC (which belong to the multi-rate HiFi SRC collection)
+Characterise the ASRC for latency, FIFO lock etc.
+Not intended to be run by Jenkins - this is here for characterisation run manually
 """
 
 import pytest
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 import itertools
 from thdncalculator import THDN_and_freq
 import csv
+
 
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
@@ -254,9 +256,103 @@ def characterise_asrc_range():
                             print(parameters)
                             writer.writerow(parameters)
 
+###################
+# PLOTTING UTILS
+###################
+def plot_required_fifo_len():
+    sr_in = SR_LIST[1]
+
+    # Load data from CSV
+    sr_out = []
+    ppm = []
+    fifo = []
+
+    with open('sweep_fifo_required.csv', 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        header = next(csvreader)
+        print(header)
+        for row in csvreader:
+            if row[header.index("sr_in")] == str(sr_in):
+                sr_out.append(int(row[header.index("sr_out")]))
+                ppm.append(int(row[header.index("ppm")]))
+                fifo.append(int(row[header.index("fifo_len")]))
+                print(row)
+
+    # Convert lists to numpy arrays
+    sr_out = np.array(sr_out)
+    ppm = np.array(ppm)
+    z_base = np.zeros_like(sr_out)  # The base of the bars (z=0)
+    column_size = 500
+    dx = np.ones_like(sr_out) * column_size
+    dy = np.ones_like(ppm) * column_size
+    dz = np.array(fifo)
+
+    # Create the 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Create 3D bar chart
+    ax.bar3d(sr_out, ppm, z_base, dx, dy, dz, color='b', zsort='average')
+    ax.view_init(elev=36, azim=160)
+
+    # Set labels
+    ax.set_title(f"FIFO length needed for SR in: {sr_in}")
+    ax.set_xlabel('sr_out')
+    ax.set_ylabel('ppm')
+    ax.set_zlabel('fifo_len')
+
+    plt.show()
+
+def plot_filter_latency():
+
+    # Load data from CSV
+    sr_in = []
+    sr_out = []
+    latency_ms = []
+
+    with open('sweep_filter_latency.csv', 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        header = next(csvreader)
+        print(header)
+        for row in csvreader:
+            sr_in.append(int(row[header.index("sr_in")]))
+            sample_rate_out = int(row[header.index("sr_out")])
+            sr_out.append(sample_rate_out)
+            print(row[header.index("latency_filter")])
+            latency_in_milliseconds = float(row[header.index("latency_filter")]) / sample_rate_out * 1000
+            latency_ms.append(latency_in_milliseconds)
+            print(row)
+
+    print(latency_ms)
+
+    # Convert lists to numpy arrays
+    sr_out = np.array(sr_out)
+    sr_in = np.array(sr_in)
+    z_base = np.zeros_like(latency_ms)  # The base of the bars (z=0)
+    column_size = 1000
+    dx = np.ones_like(sr_out) * column_size
+    dy = np.ones_like(sr_in) * column_size
+    dz = np.array(latency_ms)
+
+    # Create the 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Create 3D bar chart
+    ax.bar3d(sr_out, sr_in, z_base, dx, dy, dz, color='b', zsort='average')
+    ax.view_init(elev=27, azim=31)
+
+    # Set labels
+    ax.set_title(f"ASRC Filter latency across SR")
+    ax.set_xlabel('sr_out')
+    ax.set_ylabel('sr_in')
+    ax.set_zlabel('milliseconds')
+
+
 
 
 # For local test only
 if __name__ == "__main__":
-    characterise_asrc_fn_latency()
-    # characterise_asrc_range()
+    # characterise_asrc_fn_latency()
+    characterise_asrc_range()
+    plot_required_fifo_len()
