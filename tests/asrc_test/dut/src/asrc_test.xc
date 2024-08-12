@@ -9,7 +9,9 @@
 // ASRC includes
 #include "src.h"
 
+#ifndef     ASRC_N_CHANNELS
 #define     ASRC_N_CHANNELS                  2  //Total number of audio channels to be processed by SRC (minimum 1)
+#endif
 #define     ASRC_N_INSTANCES                 1  //Number of instances (each usuall run a logical core) used to process audio (minimum 1)
 #define     ASRC_CHANNELS_PER_INSTANCE       (ASRC_N_CHANNELS/ASRC_N_INSTANCES)
                                                 //Calcualted number of audio channels processed by each core

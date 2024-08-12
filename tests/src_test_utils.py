@@ -259,13 +259,16 @@ def build_firmware(target, extra_args=""):
 
     return target + ".xe"
 
-def build_firmware_xccm(target, extra_args=""):
+def build_firmware_xccm(target, build=""):
     file_dir = Path(__file__).resolve().parent
     print("***", file_dir)
     subprocess.run('cmake  -G "Unix Makefiles" -B build', shell=True, cwd=str(target))
-    subprocess.run(f"xmake -j -C build", shell=True, cwd=str(target))
+    subprocess.run(f"xmake -j -C build {build}", shell=True, cwd=str(target))
 
-    return file_dir / target / "bin" / (target + ".xe")
+    if build != "":
+        return file_dir / target / "bin" / build / (target + f"_{build}.xe")
+    else:
+        return file_dir / target / "bin" / (target + ".xe")
 
 def build_host_app(target):
     file_dir = Path(__file__).resolve().parent
@@ -484,7 +487,7 @@ def vcd2wav(input_file_name, ch_start, ch_end, rate):
         data = get_data(vcd, varnames)
         print(len(data))
         for d in data:
-            print(len(d))
+            print("VCD data len", len(d))
         write_wav(data, varnames, ch_start, ch_end, rate)
         print_summary(data, varnames)
 

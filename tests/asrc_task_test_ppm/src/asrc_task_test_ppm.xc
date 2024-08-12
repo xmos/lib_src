@@ -27,7 +27,7 @@ void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNE
     }
 }
 
-void producer(chanend c_producer, unsigned sample_rate){
+void producer(chanend c_producer, unsigned sample_rate, chanend c_latency_measure){
     unsigned channel_count = MAX_ASRC_CHANNELS_TOTAL;
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
@@ -39,6 +39,7 @@ void producer(chanend c_producer, unsigned sample_rate){
         // printf("sin: %d %ld\n", i, sine[i]);
     }
     unsigned sine_counter = 0;
+    int do_step = 0;
 
 
     timer t;
@@ -50,13 +51,24 @@ void producer(chanend c_producer, unsigned sample_rate){
         select{
             case t when timerafter(time_trigger) :> int32_t time_stamp:
                 for(int ch = 0; ch < channel_count; ch++){
+#if DO_SINE
                     samples[ch] = sine[sine_counter % N_SINE];
+#else
+                    samples[ch] = 0;
+#endif
+                    if (do_step){
+                        samples[ch] = 0x60000000; // 3/4 scale
+                    }
                 }
                 sine_counter++;
 
                 send_asrc_input_samples(c_producer, samples, channel_count, sample_rate, time_stamp);
                 time_trigger += sample_period;
             break;
+
+            case c_latency_measure :> int _:
+                do_step = 1;
+            break; 
         }
     }
 }
@@ -65,7 +77,8 @@ void consumer(  unsigned test_len_s,
                 unsigned sample_rate_nominal,
                 unsigned sample_rate_actual,
                 asrc_in_out_t * unsafe asrc_io,
-                asynchronous_fifo_t * unsafe fifo){
+                asynchronous_fifo_t * unsafe fifo,
+                chanend c_latency_measure){
  
     int32_t samples[MAX_ASRC_CHANNELS_TOTAL];
 
@@ -77,20 +90,39 @@ void consumer(  unsigned test_len_s,
     assert(test_len_s < 40);
     int32_t time_end = time_trigger + (int32_t)(test_len_s * XS1_TIMER_HZ); // Warning - 40s max to avoid wrap 
 
+    // For sending a trigger back to the producer
+    unsigned sample_count = 0;
+    int done = 0;
+
+    // Don't report zero FIFO at start
+    int fifo_init = 0;
+
     while(1){
         select{
             case t when timerafter(time_trigger) :> int32_t time_stamp:
                 pull_samples(asrc_io, fifo, samples, sample_rate_nominal, time_stamp);
                 time_trigger += sample_period;
                 unsafe{
-                    for(int ch = 0; ch < asrc_io->asrc_channel_count; ch++){
+                    for(int ch = 0; ch < MAX_ASRC_CHANNELS_TOTAL; ch++){
                         xscope_int(ch, samples[ch]);
-                        delay_microseconds(1); // Allow xscope write
+                        delay_microseconds(1); // Allow xscope write to complete
                     }
-                    if(asrc_io->asrc_channel_count){
-                        xscope_int(MAX_ASRC_CHANNELS_TOTAL, fifo->last_phase_error);
+                    xscope_int(MAX_ASRC_CHANNELS_TOTAL, fifo->last_phase_error);
+                    delay_microseconds(1); // Allow xscope write to complete
+                    int fifo_level = (fifo->write_ptr - fifo->read_ptr + fifo->max_fifo_depth) % fifo->max_fifo_depth;
+                    if (fifo_level != 0){
+                        fifo_init = 1;
                     }
+                    xscope_int(MAX_ASRC_CHANNELS_TOTAL + 1, fifo_init ? fifo_level : fifo->max_fifo_depth / 2);
+
                 }
+#if DO_STEP
+                if(sample_count >= sample_rate_nominal * 9 && !done){
+                    c_latency_measure <: 0;
+                    done = 1;
+                }
+#endif
+                sample_count ++;
 
                 if(timeafter(time_stamp, time_end)) {
                     delay_milliseconds(100); // Ensure last xscope write finishes
@@ -143,10 +175,12 @@ int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
 
+    chan c_latency_measure;
+
     xscope_mode_lossless();
 
     // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
-    int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(MAX_FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
+    int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(MAX_FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)] = {0};
 
     unsafe{
         unsigned sample_rate_producer = 0;
@@ -170,9 +204,9 @@ int main(unsigned argc, char * unsafe argv[argc])
 
         par
         {
-            producer(c_producer, sample_rate_producer);
+            producer(c_producer, sample_rate_producer, c_latency_measure);
             asrc_task(c_producer, asrc_io_ptr, fifo, fifo_len);
-            consumer(test_len_s, sample_rate_consumer_nominal, sample_rate_consumer_actual, asrc_io_ptr, fifo);
+            consumer(test_len_s, sample_rate_consumer_nominal, sample_rate_consumer_actual, asrc_io_ptr, fifo, c_latency_measure);
 
         }
     } // unsafe region

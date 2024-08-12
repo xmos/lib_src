@@ -16,11 +16,8 @@
 
 <xSCOPEconfig ioMode="basic" enabled="true">
 
-    <!-- For example: -->
     <Probe name="signal_l_out" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="signal_r_out" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
     <Probe name="phase_error" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <Probe name="diff_error" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
-    <!-- From the target code, call: xscope_int(PROBE_NAME, value); -->
+    <Probe name="fifo_depth" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
 
 </xSCOPEconfig>
