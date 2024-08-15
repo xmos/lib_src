@@ -207,6 +207,6 @@ void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples
         state->read_ptr = read_ptr;
         state->timestamps[read_ptr] = timestamp;
     } else {
-        state->reset = 1;                // The rest must happen in the other thread
+        state->reset = 1;                // The reset must happen in the other thread
     }
 }

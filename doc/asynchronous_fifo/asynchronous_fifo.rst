@@ -141,6 +141,44 @@ characteristics and the time-constant the FIFO length follows.
 Alternatively, given the jitter characteristics and the FIFO length the
 maximum time constant for the loop-filter follows.
 
+
+.. _asynchronous_FIFO_practical_sizing:
+
+Practical FIFO sizing for ASRC usage
+....................................
+
+Typically for most ASRC connected systems, the hardest case for the control loop is to stabilise at startup when the peak PPM difference is first seen. This results in a FIFO depth excursion from the half full state until the control loop has settled. It is not typical to see a large change in PPM difference during operation of practical systems; only small drifts due to voltage and temperature changes but a system always has a startup condition.
+
+Using the default constants for the loop filter (settings are conservative resulting in convergence time of around 4 seconds for a large step change in rate) and an expected nominal deviation of up to 500 PPM the FIFO size can be set to around 5 times the number of output samples expected per ASRC conversion to cover the worst-case start-up condition::
+
+    FIFO_LEN = 5 x SRC_N_IN_SAMPLES x SRC_N_OUT_IN_RATIO_MAX
+
+For a same sample rate conversion (eg. 48 kHz to 48 kHz) this results in 5 x 4 (the minimum block size) which is a FIFO length of 20. This allows for a peak deviation of +10 or -10 samples either side of half full. A typical FIFO depth plot at startup for a 500 PPM deviation is shown below. Note that the plot is a thick line because the ASRC produces 4 samples at a time and the FIFO is emptied one sample at a time which means the real-time FIFO depth plot looks like a sawtooth waveform close up. 
+
+.. figure:: images/peak_fifo_48000_500ppm.png
+            :width: 75%
+
+            Peak FIFO excursion at startup for a 500 PPM deviation
+
+Where an upsampling ratio of 4.35 is expected (44.1 kHz -> 192 kHz) the FIFO depth needs to be increased by a factor a 4.35 to 5 x 4 x 4.35 = 87 (pick 88 for symmetry). This to accommodate the faster rate of sample production at the ASRC egress compared with ingress due to upsampling.
+
+If downsampling then size the FIFO for 1:1 sample rate conversion; i.e. ``SRC_N_OUT_IN_RATIO_MAX = 1`` so that there is still enough elasticity in the FIFO to account for normal control loop excursions.
+
+The FIFO depth setting further depends on the peak PPM difference from the nominal rate. The PPM range of the input and output clocks must be added together. For example if your source can vary by up to +500 PPM and the sink can vary by -500 PPM then you must account for a 1000 PPM total clock rate difference.
+
+To scale the FIFO to account for step changes at larger than 500 PPM then a rule of thumb is to multiply the FIFO length by PEAK_PPM / 500. For example a 2000 PPM system with an upsample ratio of 2, the FIFO should be sized to 5 x 4 x 2 x 4 = 160.
+
+This can be generalised for cases where PPM >= 500::
+
+    FIFO_LEN = 5 x SRC_N_IN_SAMPLES x SRC_N_OUT_IN_RATIO_MAX x (MAX_PPM / 500)
+
+The normal working latency (group delay) of the FIFO in milliseconds is characterised by half the FIFO depth::
+
+    LATENCY_MS = FIFO_LEN / (2 * sample_rate) * 1000
+
+It is recommended to test your system to the maximum PPM tolerance across all supported sample rates to verify your chosen FIFO setting, especially if your goal is to minimise the latency by reducing the FIFO size, otherwise a conservative FIFO size setting may be applied at the cost of additional latency.
+
+
 PID settings
 ------------
 

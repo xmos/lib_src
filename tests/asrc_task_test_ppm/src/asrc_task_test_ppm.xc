@@ -14,7 +14,7 @@
 #include "asrc_task_config.h"
 #include "asrc_task.h"
 
-#define MAX_FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 128)
+#define MAX_FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 256)
 
 
 void send_asrc_input_samples(chanend c_producer, int32_t samples[MAX_ASRC_CHANNELS_TOTAL], unsigned channel_count, unsigned sample_rate, int32_t time_stamp){
@@ -114,7 +114,7 @@ void consumer(  unsigned test_len_s,
                         fifo_init = 1;
                     }
                     xscope_int(MAX_ASRC_CHANNELS_TOTAL + 1, fifo_init ? fifo_level : fifo->max_fifo_depth / 2);
-
+                    // printf("depth: %d max: %d\n", fifo_level, fifo->max_fifo_depth);
                 }
 #if DO_STEP
                 if(sample_count >= sample_rate_nominal * 9 && !done){

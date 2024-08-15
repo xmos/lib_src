@@ -1,8 +1,8 @@
 Fixed factor of 3 HiFi functions
 ================================
 
-Overview
---------
+Introduction
+------------
 
 The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of 3.
 

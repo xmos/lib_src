@@ -1,6 +1,5 @@
 .. _asrc_task_header:
 
-
 ASRC Task
 ---------
 
@@ -116,6 +115,25 @@ Note that the producing side of the above transaction must match the channel pro
 Because a `streaming` channel is used the back-pressure on the producer side will be very low because the channel outputs will be buffered and the receive callback will always respond to the received words.
 
 This callback function helps bridge between `sample based` systems and the block-based nature of the underlying ASRC functions without consuming an extra thread.
+
+Latency Characterisation
+------------------------
+
+The latency shown by ASRC Task depends on many factors:
+
+    - Input sample rate (dynamically variable)
+    - Output sample rate (dynamically variable)
+    - FIFO sizing (statically or dynamically variable)
+    - ASRC filter stages latency (fixed)
+    - ASRC sample processing block size (default of 4 which is the minimum for the ASRC)
+
+The input and output sample rate are defined by the application and are not negotiable. The ASRC filters have fixed group delay according to the input and output rates. The underlying filter delay can be found in :ref:`ASRC latency characterisation section <asrc_latency_header>`.
+The ASRC sample block processing size is nominally 4 but can be increased to 8, 16 or 32 to slightly reduce the MIPS required to run the processing.
+
+FIFO sizing is the major variable which the user has control over. The FIFO size is configurable and is a trade-off between PPM lock range and latency. It is also governed by the maximum upsample ratio since when upsampling, multiple samples are produced for a single input sample and hence the FIFO needs to be larger.
+
+Please see the :ref:`Practical FIFO sizing <asynchronous_FIFO_practical_sizing>` section for more details.
+
 
 The API for ASRC task is shown below:
 

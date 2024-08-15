@@ -51,13 +51,13 @@ def build_xes():
     return xes
 
 
-def analyse_thd(wav_file, max_thd=None):
+def analyse_thd(wav_file, in_sr, max_thd=None):
     sample_rate, data = wavfile.read(wav_file)
-    start_chop_s = 0.02
+    start_chop_s = 4.0
     data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
     thd, freq = THDN_and_freq(data, sample_rate)
 
-    expected_freq = (44100 / 44) * sample_rate / 44100
+    expected_freq = (44100 / 44) * in_sr / 44100
     print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
 
     if max_thd is not None:
@@ -76,16 +76,17 @@ def plot_phase(data, name):
     xpoints = np.arange(0, data.size)
     ypoints = np.array(data)
 
+    plt.title(name)
     plt.plot(xpoints, ypoints)
     plt.savefig(name + ".png")
     # plt.show()
+    plt.clf()
 
 def analyse_lock(data, sr_out):
     data = np.array(data, dtype=np.float64)
 
     # Discard the junk at startup by zeroing it
     clip_value = np.max(np.sqrt(np.square(data))) / 2
-    print("***", np.max(data), np.min(data), clip_value)
     pos_clip_idxs = data > clip_value
     neg_clip_idxs = data < -clip_value
     data[pos_clip_idxs] = 0
@@ -103,7 +104,7 @@ def analyse_lock(data, sr_out):
     peak_phase_diff = np.max(data)
 
     window_size = 1000
-    phase_lock_threshold = 10
+    phase_lock_threshold = 20
     lock_acheived_at = False
     for idx in range(0, data.size - window_size, window_size // 2): # step through with 50% overlap
         ave_phase = np.mean(data[idx:idx+1000])
@@ -136,17 +137,20 @@ def analyse_latency(data, sample_rate, fifo_len, specialised=True): # specialise
 
     return latency_filter
 
-def analyse_fifo(data, sample_rate, fifo_len):
+def analyse_fifo(data, sr_in, sr_out, fifo_len, ppm):
+
     # print(data)
     data =np.array(data)
     data -= int(fifo_len) // 2
-    min_fifo = abs(np.min(data))
-    max_fifo = abs(np.max(data))
+    plot_phase(data, f"FIFO_depth_relative_to_half_sr_in:{sr_in}_sr_out:{sr_out}_PPM:{ppm}")
 
-    if max_fifo > min_fifo:
+    min_fifo = np.min(data)
+    max_fifo = np.max(data)
+
+    if max_fifo > -min_fifo:
         peak_fifo = max_fifo
     else:
-        peak_fifo = min_fifo
+        peak_fifo = -min_fifo
 
     print(f"Peak FIFO excursion: {peak_fifo} (max: {fifo_len//2}) - min {min_fifo}, max {max_fifo}")
 
@@ -199,16 +203,18 @@ def characterise_asrc_range():
     This runs a slightly longer test at a single frequency and checks THDN
     Needs an xcore ai target attached (any)
     """
-    # mode = "STEP" # CHecks latency only
-    mode = "SINE" # Checks THDN (ie. FIFO works) and peak FIFO excursion (normally at startup)
+    # mode = "STEP" # CHecks latency only by running a step fn through the system. This has been supersceded by characterise_asrc_fn_latency()
+    mode = "SINE" # Checks THDN (ie. FIFO works without resets) and peak FIFO excursion (normally at startup)
 
 
     build_xe = build_xes()[mode]
 
-    ppm_list = [-4000, -2000, -1000, -500, -250, 0, 250, 500, 1000, 2000, 4000]
-    fifo_len_list = [20, 40, 80, 160, 320, 640]
+    # ppm_list = [-4000, -2000, -1000, -500, -250, 0, 250, 500, 1000, 2000, 4000]
+    # ppm_list = [-2000, 2000]
+    ppm_list = [-100, 100]
+    fifo_len_list = [20, 40, 80, 160, 320, 640, 1280]
 
-    test_len_s = 10
+    test_len_s = 6
     filenames = {"SINE": "sweep_fifo_required.csv",
                 "STEP":"sweep_filter_latency.csv"}
     paramkeys = {"SINE":['sr_in', 'sr_out', 'ppm', 'fifo_len', 'thd', 'lock_time', 'peak_fifo'],
@@ -217,13 +223,15 @@ def characterise_asrc_range():
     with open(filenames[mode], 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=paramkeys[mode])
         writer.writeheader()
-        # for sr_in in SR_LIST:
-        #     for sr_out in SR_LIST:
 
+        # for sr_in in SR_LIST:
         for sr_in in [48000]:
-            for sr_out in [48000]:
+            for sr_out in SR_LIST:
+            # for sr_out in [192000]:
                 for ppm in ppm_list if mode == "SINE" else [0]:
-                    for fifo_len in fifo_len_list if mode == "SINE" else [fifo_len_list[-1]]:
+                    # for fifo_len in fifo_len_list if mode == "SINE" else [fifo_len_list[-1]]:
+                    for fifo_len in [fifo_len_list[-1]]:
+                    # for fifo_len in [16]:
                         cmd_list = [[sr_in, sr_out, apply_ppm(sr_out, ppm), test_len_s, fifo_len]]
                         print() # newline
                         output = run_dut(build_xe, cmd_list, timeout=test_len_s + 10) # add enough time for XTAG to come up
@@ -236,11 +244,12 @@ def characterise_asrc_range():
                         parameters['ppm'] = ppm
 
                         if mode == "SINE":
-                            thd = analyse_thd(f"ch{chan_start}-{chan_stop}-{sr_out}.wav")
+                            thd = analyse_thd(f"ch{chan_start}-{chan_stop}-{sr_out}.wav", sr_in)
 
-                            if thd < -60:
+                            # if thd < -60:
+                            if True:
                                 lock_time = analyse_lock(data[chan_stop], sr_out)
-                                peak_fifo = analyse_fifo(data[chan_stop + 1], sr_out, fifo_len)
+                                peak_fifo = analyse_fifo(data[chan_stop + 1], sr_in, sr_out, fifo_len, ppm)
 
                                 parameters['fifo_len'] = fifo_len
                                 parameters['thd'] = int(thd)
@@ -260,12 +269,12 @@ def characterise_asrc_range():
 # PLOTTING UTILS
 ###################
 def plot_required_fifo_len():
-    sr_in = SR_LIST[1]
+    sr_in = 44100
 
     # Load data from CSV
     sr_out = []
     ppm = []
-    fifo = []
+    peak_fifo = []
 
     with open('sweep_fifo_required.csv', 'r') as csvfile:
         csvreader = csv.reader(csvfile)
@@ -275,7 +284,7 @@ def plot_required_fifo_len():
             if row[header.index("sr_in")] == str(sr_in):
                 sr_out.append(int(row[header.index("sr_out")]))
                 ppm.append(int(row[header.index("ppm")]))
-                fifo.append(int(row[header.index("fifo_len")]))
+                peak_fifo.append(int(row[header.index("peak_fifo")]))
                 print(row)
 
     # Convert lists to numpy arrays
@@ -285,7 +294,7 @@ def plot_required_fifo_len():
     column_size = 500
     dx = np.ones_like(sr_out) * column_size
     dy = np.ones_like(ppm) * column_size
-    dz = np.array(fifo)
+    dz = np.array(peak_fifo)
 
     # Create the 3D plot
     fig = plt.figure()
@@ -299,7 +308,7 @@ def plot_required_fifo_len():
     ax.set_title(f"FIFO length needed for SR in: {sr_in}")
     ax.set_xlabel('sr_out')
     ax.set_ylabel('ppm')
-    ax.set_zlabel('fifo_len')
+    ax.set_zlabel('peak fifo excursion')
 
     plt.show()
 
@@ -355,4 +364,4 @@ def plot_filter_latency():
 if __name__ == "__main__":
     # characterise_asrc_fn_latency()
     characterise_asrc_range()
-    plot_required_fifo_len()
+    # plot_required_fifo_len()
