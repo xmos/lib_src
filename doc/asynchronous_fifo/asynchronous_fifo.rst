@@ -145,7 +145,7 @@ maximum time constant for the loop-filter follows.
 .. _asynchronous_FIFO_practical_sizing:
 
 Practical FIFO sizing for ASRC usage
-....................................
+++++++++++++++++++++++++++++++++++++
 
 Typically for most ASRC connected systems, the hardest case for the control loop is to stabilise at startup when the peak PPM difference is first seen. This results in a FIFO depth excursion from the half full state until the control loop has settled. It is not typical to see a large change in PPM difference during operation of practical systems; only small drifts due to voltage and temperature changes but a system always has a startup condition.
 
