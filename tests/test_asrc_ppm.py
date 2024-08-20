@@ -20,6 +20,15 @@ import csv
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
 
+def build_vcd_to_csv():
+    path = "asrc_task_test_ppm/host"
+    bin_name = "vcd_to_csv"
+    cmd = f"gcc -O3 vcd_to_csv.c -o {bin_name}"
+    print(f"running: {cmd}") # so we can try locally
+    output = subprocess.run(cmd, shell=True, capture_output=True, check=True, text=True, cwd=path)
+
+    return path + "/" + bin_name
+
 def run_dut(bin_name, cmds, timeout=60, xscope=True):
     """
     Runs DUT with a set of frequency commands. See asrc_task_test_ppm.xc for expected format
@@ -51,12 +60,18 @@ def build_xes():
     return xes
 
 
-def analyse_thd(wav_file, in_sr, max_thd=None):
-    sample_rate, data = wavfile.read(wav_file)
-    start_chop_s = 3.0
-    data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
-    print(data.shape, data)
-    thd, freq = THDN_and_freq(data, sample_rate)
+def analyse_thd(data, in_sr, out_sr, max_thd=None):
+    start_chop_s = 2.0
+
+    audio_vcd = data[1:, 1]
+    # Skip repeats you get in VCD
+    mask = np.append(True, audio_vcd[1:] != audio_vcd[:-1])
+    data = audio_vcd[mask].astype(np.int32)
+
+    data = (data[int(out_sr*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
+    thd, freq = THDN_and_freq(data, out_sr)
+
+    wavfile.write("thd.wav", out_sr, data)
 
     expected_freq = (44100 / 44) * in_sr / 44100
     print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
@@ -79,8 +94,8 @@ def plot_trace(data, name):
 
     plt.title(name)
     plt.plot(xpoints, ypoints)
-    # plt.savefig(name + ".png")
-    plt.show()
+    plt.savefig(name + ".png")
+    # plt.show()
     plt.clf()
 
 def analyse_lock(data, sr_out):
@@ -97,19 +112,20 @@ def analyse_lock(data, sr_out):
     if np.max(data) < -np.min(data):
         data = -data
 
-    # plot_trace(data, "phase_plot")
+    plot_trace(data, "phase_plot")
 
 
     #grab part after overshoot (if present)
     peak_idx = np.argmax(data) # always positive
     peak_phase_diff = np.max(data)
 
-    window_size = 5000
-    phase_lock_threshold = 30
+    window_size = sr_out // 10 # 100ms
+    phase_lock_threshold = 100
     lock_acheived_at = False
-    for idx in range(0, data.size - window_size, window_size // 2): # step through with 50% overlap
-        ave_phase = np.mean(data[idx:idx+1000])
-        if abs(ave_phase) < phase_lock_threshold:
+    for idx in range(window_size, data.size - window_size, window_size // 2): # step through with 50% overlap. Skip first one
+        windowed = data[idx:idx+1000]
+        ave_phase = np.mean(windowed)
+        if abs(ave_phase) < phase_lock_threshold and np.max(windowed) < phase_lock_threshold:
             lock_acheived_at = idx
             time_lock = idx / sr_out
             print(f"Lock acheived at: {time_lock:.2f}s")
@@ -199,7 +215,7 @@ def characterise_asrc_fn_latency():
         print(line)
 
 
-def characterise_asrc_range():
+def characterise_asrc_range(input_sr):
     """
     This runs a slightly longer test at a single frequency and checks THDN
     Needs an xcore ai target attached (any)
@@ -209,15 +225,13 @@ def characterise_asrc_range():
 
 
     build_xe = build_xes()[mode]
+    vcd_bin = build_vcd_to_csv()
 
-    # ppm_list = [-4000, -2000, -1000, -500, -250, 0, 250, 500, 1000, 2000, 4000]
-    # ppm_list = [-2000, 2000]
-    # ppm_list = [-500, 500]
-    ppm_list = [-100]
+    ppm_list = [-5000, -2000, -1000, -500, -250, 0, 250, 500, 1000, 2000, 5000]
     fifo_len_list = [20, 40, 80, 160, 320, 640, 1280]
 
     test_len_s = 6
-    filenames = {"SINE": "sweep_fifo_required.csv",
+    filenames = {"SINE": f"sweep_fifo_required_{input_sr}.csv",
                 "STEP":"sweep_filter_latency.csv"}
     paramkeys = {"SINE":['sr_in', 'sr_out', 'ppm', 'fifo_len', 'thd', 'lock_time', 'peak_fifo'],
                 "STEP":['sr_in', 'sr_out', 'ppm', 'latency_filter']}
@@ -227,31 +241,47 @@ def characterise_asrc_range():
         writer.writeheader()
 
         # for sr_in in SR_LIST:
-        for sr_in in [48000]:
-            # for sr_out in SR_LIST:
-            for sr_out in [88200]:
+        for sr_in in [input_sr]:
+            for sr_out in SR_LIST:
                 for ppm in ppm_list if mode == "SINE" else [0]:
                     # for fifo_len in fifo_len_list if mode == "SINE" else [fifo_len_list[-1]]:
                     for fifo_len in [fifo_len_list[-1]]:
-                    # for fifo_len in [16]:
                         cmd_list = [[sr_in, sr_out, apply_ppm(sr_out, ppm), test_len_s, fifo_len]]
                         print() # newline
                         output = run_dut(build_xe, cmd_list, timeout=test_len_s + 10) # add enough time for XTAG to come up
                         print("Analysing...")
-                        chan_start = 0
-                        chan_stop = 1
-                        data = vcd2wav("trace.vcd", chan_start, chan_stop, sr_out)
+
+                        subprocess.run(f"./{vcd_bin} trace.vcd trace.csv", shell=True)
+                        data = np.loadtxt("trace.csv", delimiter=",", dtype=str)
+
                         parameters['sr_in'] = sr_in
                         parameters['sr_out'] = sr_out
                         parameters['ppm'] = ppm
 
                         if mode == "SINE":
-                            thd = analyse_thd(f"ch{chan_start}-{chan_stop}-{sr_out}.wav", sr_in)
+
+                            thd = analyse_thd(data, sr_in, sr_out)
 
                             # if thd < -60:
                             if True:
-                                lock_time = analyse_lock(data[chan_stop], sr_out)
-                                peak_fifo = analyse_fifo(data[chan_stop + 1], sr_in, sr_out, fifo_len, ppm)
+                                # helper to sort out repeated values in 
+                                def vcd_to_sequence(data, idx, sr_out):
+                                    times = data[1:,0]
+                                    length = times.shape[0]
+                                    time = int(times[4]) # skip first few to miss zero
+                                    extract = []
+                                    # print(f"length to search: {length}")
+                                    for i in range(length):
+                                        if int(times[i]) >= time:
+                                            extract.append(data[i + 1, idx])
+                                            time += 100000000 / sr_out
+
+                                    return np.array(extract, dtype=np.int32)
+                                        
+                                phase_data = vcd_to_sequence(data, 2, sr_out)
+                                lock_time = analyse_lock(phase_data, sr_out)
+                                fifo_data = vcd_to_sequence(data, 3, sr_out)
+                                peak_fifo = analyse_fifo(fifo_data, sr_in, sr_out, fifo_len, ppm)
 
                                 parameters['fifo_len'] = fifo_len
                                 parameters['thd'] = int(thd)
@@ -270,24 +300,23 @@ def characterise_asrc_range():
 ###################
 # PLOTTING UTILS
 ###################
-def plot_required_fifo_len():
-    sr_in = 48000
+def plot_required_fifo_len(in_sr):
+    sr_in = 44100
 
     # Load data from CSV
     sr_out = []
     ppm = []
     peak_fifo = []
 
-    with open('sweep_fifo_required.csv', 'r') as csvfile:
+    with open(f'sweep_fifo_required_{in_sr}.csv', 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         header = next(csvreader)
-        print(header)
+        # print(header)
         for row in csvreader:
             if row[header.index("sr_in")] == str(sr_in):
                 sr_out.append(int(row[header.index("sr_out")]))
                 ppm.append(int(row[header.index("ppm")]))
                 peak_fifo.append(int(row[header.index("peak_fifo")]))
-                print(row)
 
     # Convert lists to numpy arrays
     sr_out = np.array(sr_out)
@@ -303,7 +332,7 @@ def plot_required_fifo_len():
     ax = fig.add_subplot(111, projection='3d')
 
     # Create 3D bar chart
-    ax.bar3d(sr_out, ppm, z_base, dx, dy, dz, color='b', zsort='average')
+    ax.bar3d(in_sr, ppm, z_base, dx, dy, dz, color='b', zsort='average')
     ax.view_init(elev=36, azim=160)
 
     # Set labels
@@ -312,7 +341,8 @@ def plot_required_fifo_len():
     ax.set_ylabel('ppm')
     ax.set_zlabel('peak fifo excursion')
 
-    plt.show()
+    plt.savefig(f"FIFO_length_needed_for_SR_in:_{sr_in}" + ".png")
+    # plt.show()
 
 def plot_filter_latency():
 
@@ -332,7 +362,6 @@ def plot_filter_latency():
             print(row[header.index("latency_filter")])
             latency_in_milliseconds = float(row[header.index("latency_filter")]) / sample_rate_out * 1000
             latency_ms.append(latency_in_milliseconds)
-            print(row)
 
     print(latency_ms)
 
@@ -365,5 +394,6 @@ def plot_filter_latency():
 # For local test only
 if __name__ == "__main__":
     # characterise_asrc_fn_latency()
-    characterise_asrc_range()
-    # plot_required_fifo_len()
+    for in_sr in SR_LIST:
+        characterise_asrc_range(in_sr)
+        plot_required_fifo_len(in_sr)

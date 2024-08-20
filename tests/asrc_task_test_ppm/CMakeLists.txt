@@ -14,7 +14,7 @@ set(COMPILER_FLAGS_COMMON       -O3
                                 -g
                                 -report
                                 -DASRC_TASK_CONFIG=1 # Enables user setting of ASRC configuration  
-                                -DDEBUG_ASRC_TASK=1 # Prints cycle usage
+                                -DDEBUG_ASRC_TASK=0 # Prints cycle usage
                                 -fcmdline-buffer-bytes=16384
                                 )
 

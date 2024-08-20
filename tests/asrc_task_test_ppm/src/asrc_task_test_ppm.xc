@@ -177,7 +177,7 @@ int main(unsigned argc, char * unsafe argv[argc])
 
     chan c_latency_measure;
 
-    xscope_mode_lossless();
+    xscope_mode_lossy();
 
     // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(MAX_FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)] = {0};
