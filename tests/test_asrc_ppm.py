@@ -53,8 +53,9 @@ def build_xes():
 
 def analyse_thd(wav_file, in_sr, max_thd=None):
     sample_rate, data = wavfile.read(wav_file)
-    start_chop_s = 4.0
+    start_chop_s = 3.0
     data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
+    print(data.shape, data)
     thd, freq = THDN_and_freq(data, sample_rate)
 
     expected_freq = (44100 / 44) * in_sr / 44100
@@ -70,7 +71,7 @@ def apply_ppm(freq, ppm):
     freq += freq * (ppm / 1e6)
     return int(freq + 0.5)
 
-def plot_phase(data, name):
+def plot_trace(data, name):
     data = np.array(data)
 
     xpoints = np.arange(0, data.size)
@@ -78,8 +79,8 @@ def plot_phase(data, name):
 
     plt.title(name)
     plt.plot(xpoints, ypoints)
-    plt.savefig(name + ".png")
-    # plt.show()
+    # plt.savefig(name + ".png")
+    plt.show()
     plt.clf()
 
 def analyse_lock(data, sr_out):
@@ -96,15 +97,15 @@ def analyse_lock(data, sr_out):
     if np.max(data) < -np.min(data):
         data = -data
 
-    plot_phase(data, "phase_plot")
+    # plot_trace(data, "phase_plot")
 
 
     #grab part after overshoot (if present)
     peak_idx = np.argmax(data) # always positive
     peak_phase_diff = np.max(data)
 
-    window_size = 1000
-    phase_lock_threshold = 20
+    window_size = 5000
+    phase_lock_threshold = 30
     lock_acheived_at = False
     for idx in range(0, data.size - window_size, window_size // 2): # step through with 50% overlap
         ave_phase = np.mean(data[idx:idx+1000])
@@ -142,7 +143,7 @@ def analyse_fifo(data, sr_in, sr_out, fifo_len, ppm):
     # print(data)
     data =np.array(data)
     data -= int(fifo_len) // 2
-    plot_phase(data, f"FIFO_depth_relative_to_half_sr_in:{sr_in}_sr_out:{sr_out}_PPM:{ppm}")
+    plot_trace(data, f"FIFO_depth_relative_to_half_sr_in:{sr_in}_sr_out:{sr_out}_PPM:{ppm}")
 
     min_fifo = np.min(data)
     max_fifo = np.max(data)
@@ -211,7 +212,8 @@ def characterise_asrc_range():
 
     # ppm_list = [-4000, -2000, -1000, -500, -250, 0, 250, 500, 1000, 2000, 4000]
     # ppm_list = [-2000, 2000]
-    ppm_list = [-100, 100]
+    # ppm_list = [-500, 500]
+    ppm_list = [-100]
     fifo_len_list = [20, 40, 80, 160, 320, 640, 1280]
 
     test_len_s = 6
@@ -226,8 +228,8 @@ def characterise_asrc_range():
 
         # for sr_in in SR_LIST:
         for sr_in in [48000]:
-            for sr_out in SR_LIST:
-            # for sr_out in [192000]:
+            # for sr_out in SR_LIST:
+            for sr_out in [88200]:
                 for ppm in ppm_list if mode == "SINE" else [0]:
                     # for fifo_len in fifo_len_list if mode == "SINE" else [fifo_len_list[-1]]:
                     for fifo_len in [fifo_len_list[-1]]:
@@ -269,7 +271,7 @@ def characterise_asrc_range():
 # PLOTTING UTILS
 ###################
 def plot_required_fifo_len():
-    sr_in = 44100
+    sr_in = 48000
 
     # Load data from CSV
     sr_out = []
