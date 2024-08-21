@@ -4,6 +4,8 @@
 """
 Characterise the ASRC for latency, FIFO lock etc.
 Not intended to be run by Jenkins - this is here for characterisation run manually
+Requires any xcore.ai hardware to be attached
+These scripts take half a day or so to run due to the large combinatorial space of SR * SR * PPM
 """
 
 import pytest
@@ -300,15 +302,14 @@ def characterise_asrc_range(input_sr):
 ###################
 # PLOTTING UTILS
 ###################
-def plot_required_fifo_len(in_sr):
-    sr_in = 44100
+def plot_required_fifo_len(sr_in):
 
     # Load data from CSV
     sr_out = []
     ppm = []
     peak_fifo = []
 
-    with open(f'sweep_fifo_required_{in_sr}.csv', 'r') as csvfile:
+    with open(f'sweep_fifo_required_{sr_in}.csv', 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         header = next(csvreader)
         # print(header)
@@ -332,7 +333,7 @@ def plot_required_fifo_len(in_sr):
     ax = fig.add_subplot(111, projection='3d')
 
     # Create 3D bar chart
-    ax.bar3d(in_sr, ppm, z_base, dx, dy, dz, color='b', zsort='average')
+    ax.bar3d(sr_out, ppm, z_base, dx, dy, dz, color='b', zsort='average')
     ax.view_init(elev=36, azim=160)
 
     # Set labels
@@ -341,7 +342,7 @@ def plot_required_fifo_len(in_sr):
     ax.set_ylabel('ppm')
     ax.set_zlabel('peak fifo excursion')
 
-    plt.savefig(f"FIFO_length_needed_for_SR_in:_{sr_in}" + ".png")
+    plt.savefig(f"FIFO_needed_for_SR_in_{sr_in}" + ".png")
     # plt.show()
 
 def plot_filter_latency():
@@ -388,12 +389,12 @@ def plot_filter_latency():
     ax.set_ylabel('sr_in')
     ax.set_zlabel('milliseconds')
 
-
+    # plt.show()
 
 
 # For local test only
 if __name__ == "__main__":
     # characterise_asrc_fn_latency()
     for in_sr in SR_LIST:
-        characterise_asrc_range(in_sr)
+        # characterise_asrc_range(in_sr)
         plot_required_fifo_len(in_sr)
