@@ -45,11 +45,15 @@ void producer(chanend c_producer, unsigned sample_rate, chanend c_latency_measur
     timer t;
     int32_t time_trigger;
     t :> time_trigger;
-    int32_t sample_period = XS1_TIMER_HZ / sample_rate;
+
+    // We need to use fractional maths to avoid significant truncation issues
+    const int32_t sample_period_quotient = XS1_TIMER_HZ / sample_rate;
+    const int32_t sample_period_remainder = XS1_TIMER_HZ % sample_rate;
+    int32_t remainder = 0;
 
     while(1){
         select{
-            case t when timerafter(time_trigger) :> int32_t time_stamp:
+            case t when timerafter(time_trigger) :> int32_t _:
                 for(int ch = 0; ch < channel_count; ch++){
 #if DO_SINE
                     samples[ch] = sine[sine_counter % N_SINE];
@@ -62,8 +66,17 @@ void producer(chanend c_producer, unsigned sample_rate, chanend c_latency_measur
                 }
                 sine_counter++;
 
-                send_asrc_input_samples(c_producer, samples, channel_count, sample_rate, time_stamp);
-                time_trigger += sample_period;
+                send_asrc_input_samples(c_producer, samples, channel_count, sample_rate, time_trigger);
+
+                // Do fractional increment
+                remainder += sample_period_remainder;
+                if(remainder >= sample_rate){
+                    time_trigger += sample_period_quotient + 1;
+                    remainder -= sample_rate;    
+                }
+                else{
+                    time_trigger += sample_period_quotient;
+                }
             break;
 
             case c_latency_measure :> int _:
@@ -86,7 +99,12 @@ void consumer(  unsigned test_len_s,
     timer t;
     int32_t time_trigger;
     t :> time_trigger;
-    int32_t sample_period = XS1_TIMER_HZ / sample_rate_actual;
+
+    // We need to use fractional maths to avoid significant truncation issues
+    const int32_t sample_period_quotient = XS1_TIMER_HZ / sample_rate_actual;
+    const int32_t sample_period_remainder = XS1_TIMER_HZ % sample_rate_actual;
+    int32_t remainder = 0;
+
     assert(test_len_s < 40);
     int32_t time_end = time_trigger + (int32_t)(test_len_s * XS1_TIMER_HZ); // Warning - 40s max to avoid wrap 
 
@@ -99,9 +117,19 @@ void consumer(  unsigned test_len_s,
 
     while(1){
         select{
-            case t when timerafter(time_trigger) :> int32_t time_stamp:
-                pull_samples(asrc_io, fifo, samples, sample_rate_nominal, time_stamp);
-                time_trigger += sample_period;
+            case t when timerafter(time_trigger) :> int32_t _:
+                pull_samples(asrc_io, fifo, samples, sample_rate_nominal, time_trigger);
+
+                // Do fractional increment
+                remainder += sample_period_remainder;
+                if(remainder >= sample_rate_actual){
+                    time_trigger += sample_period_quotient + 1;
+                    remainder -= sample_rate_actual;    
+                }
+                else{
+                    time_trigger += sample_period_quotient;
+                }
+
                 unsafe{
                     for(int ch = 0; ch < MAX_ASRC_CHANNELS_TOTAL; ch++){
                         xscope_int(ch, samples[ch]);
@@ -124,7 +152,7 @@ void consumer(  unsigned test_len_s,
 #endif
                 sample_count ++;
 
-                if(timeafter(time_stamp, time_end)) {
+                if(timeafter(time_trigger, time_end)) {
                     delay_milliseconds(100); // Ensure last xscope write finishes
                     _Exit(0);
                 }
