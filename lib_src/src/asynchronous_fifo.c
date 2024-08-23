@@ -182,8 +182,9 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
  * Note that the samples are filled in regardless of whether the FIFO is
  * operating or not; the consumer will repeatedly get the same sample if
  * the producer fails. The producer side is reset exactly once on reset.
+ * If this is a problem then please use the return flag (0 = OK) to handle.
  */
-void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples, int32_t timestamp) {
+int asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples, int32_t timestamp) {
     int read_ptr = state->read_ptr;
     int write_ptr = state->write_ptr;
     int max_fifo_depth = state->max_fifo_depth;
@@ -199,14 +200,16 @@ void asynchronous_fifo_consumer_get(asynchronous_fifo_t *state, int32_t *samples
     asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
 #endif
     if (state->reset) {
-        return;
+        return 0;
     }
     if (len > 2) {
         // TODO: use IF not %
         read_ptr = (read_ptr + 1) % state->max_fifo_depth;
         state->read_ptr = read_ptr;
         state->timestamps[read_ptr] = timestamp;
+        return 1;
     } else {
         state->reset = 1;                // The rest must happen in the other thread
     }
+    return 0;
 }

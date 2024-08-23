@@ -1,6 +1,13 @@
 lib_src change log
 ==================
 
+
+UNRELEASED
+----------
+
+  * ADDED: Return code on asynchronous_fifo_consumer_get() to indicate if 
+    samples are valid or not
+
 2.5.0
 -----
 

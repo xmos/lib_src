@@ -205,10 +205,14 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
  * @param   timestamp           A timestamp taken at the time that the
  *                              last sample was output. See
  *                              ``asynchronous_fifo_produce`` for requirements.
+ * 
+ * @returns One if the samples are valid or zero if the FIFO is in reset following
+ *          initilaisation, underflow or overflow. 
+
  */
-void asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
-                                    int32_t * UNSAFE samples,
-                                    int32_t timestamp);
+int asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
+                                   int32_t * UNSAFE samples,
+                                   int32_t timestamp);
 
 
 /**
