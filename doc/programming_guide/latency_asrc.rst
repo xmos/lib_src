@@ -1,16 +1,10 @@
 .. _asrc_latency_header:
 
 
-The ASRC algorithm runs a series of cascaded FIR filters to perform the rate conversion including a final adaptive filter to handle the varying rate change between the input and the output. The latency or group delay through the filter depends on the input rate and output rate. :numref:`fig_asrc_delay` quantifies the amount of latency in milliseconds seen from the actual filtering. You will need to add the following delays to determine the system delay for your instance:
-
-    - The input block size of the ASRC (typically 4 samples at the input rate)
-    - Half of the output FIFO depth at the output rate
-    - Any addional system delays (eg. digital audio interfaces which are typically a sample or two only) 
-
-  The below table characterises the group delay (latency) for the low-level ASRC processing function.
+The ASRC algorithm runs a series of cascaded FIR filters to perform the rate conversion including a final adaptive filter to handle the varying rate change between the input and the output. The latency or group delay through the filter depends on the input rate and output rate and the input block size. :numref:`fig_asrc_delay` quantifies the amount of latency in milliseconds seen from the filtering. For input block sizes of greater than four please add `1000 * (INPUT_BLOCK_SIZE - 4) / INPUT_SAMPLE_RATE` milliseconds to the numbers in the table.
 
 .. _fig_asrc_delay:
-.. list-table:: ASRC total filter delay by sample rate in milliseconds
+.. list-table:: ASRC total filter delay by sample rate in milliseconds for input block size of four
      :header-rows: 2
 
      * -
