@@ -1,6 +1,13 @@
 lib_src change log
 ==================
 
+
+UNRELEASED
+----------
+
+  * ADDED: Documentation characterising latency for ASRC and associated
+    subsystems
+
 2.5.0
 -----
 
