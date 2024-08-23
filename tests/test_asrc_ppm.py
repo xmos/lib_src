@@ -163,6 +163,10 @@ def analyse_fifo(data, sr_in, sr_out, fifo_len, ppm):
     data -= int(fifo_len) // 2
     plot_trace(data, f"FIFO_depth_relative_to_half_sr_in:{sr_in}_sr_out:{sr_out}_PPM:{ppm}")
 
+    # Final depth
+    final_excursion = np.mean(data[-100:])
+
+    # peak analysis
     min_fifo = np.min(data)
     max_fifo = np.max(data)
 
@@ -171,7 +175,7 @@ def analyse_fifo(data, sr_in, sr_out, fifo_len, ppm):
     else:
         peak_fifo = -min_fifo
 
-    print(f"Peak FIFO excursion: {peak_fifo} (max: {fifo_len//2}) - min {min_fifo}, max {max_fifo}")
+    print(f"Peak FIFO excursion: {peak_fifo} (max: {fifo_len//2}) - min {min_fifo}, max {max_fifo}. Final: {final_excursion}")
 
     return int(peak_fifo)
 
