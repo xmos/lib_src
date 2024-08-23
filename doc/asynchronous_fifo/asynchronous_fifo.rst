@@ -84,7 +84,7 @@ The Asynchronous FIFO has the following functions to control the FIFO:
 
 * ``asynchronous_fifo_consumer_get()`` gets one sample from the FIFO. It
   must be given a timestamp related to when this (or the previous) sample
-  is (was) output.
+  is (was) output. It returns 1 if the pulled samples are valid else zero.
 
 All timestamps are measured in 100 MHz ticks.
 
