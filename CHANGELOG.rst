@@ -1,7 +1,6 @@
 lib_src change log
 ==================
 
-
 UNRELEASED
 ----------
 

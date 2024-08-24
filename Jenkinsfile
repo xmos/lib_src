@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.25.0')
+@Library('xmos_jenkins_shared_library@v0.29.0')
 
 def runningOn(machine) {
     println "Stage running on:"
