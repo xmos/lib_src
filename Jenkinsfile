@@ -210,8 +210,8 @@ pipeline {
               steps {
                 runningOn(env.NODE_NAME)
                 dir("${REPO}") {
-                  sh 'git clone git@github.com:xmos/infr_apps.git'
-                  sh 'git clone git@github.com:xmos/infr_scripts_py.git'
+                  sh 'git clone --branch master git@github.com:xmos/infr_apps.git'
+                  sh 'git clone --branch master git@github.com:xmos/infr_scripts_py.git'
                   // These are needed for xmake legacy build and also changelog check
                   sh 'git clone git@github.com:xmos/lib_logging.git'
                   withVenv {
