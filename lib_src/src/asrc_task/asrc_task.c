@@ -359,7 +359,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
                 sASRCCtrl[instance][ch].piADCoefs                 = asrc_adfir_coefs[instance].iASRCADFIRCoefs;
             }
             fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl[instance], max_channels_per_instance, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
-            dprintf("ASRC init instance: %d ptr: %p\n", instance, sASRCCtrl[instance]);
         }
 
         //// Timing check vars. Includes ASRC, timestamp interpolation and FIFO push
@@ -368,7 +367,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         int32_t asrc_peak_processing_time = 0;
 
         ideal_fs_ratio = (fs_ratio + (1<<31)) >> 32;
-        dprintf("ideal_fs_ratio: %d\n", ideal_fs_ratio);
 
         asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
         asrc_io->ready_flag_configured = 1; // SIgnal we are ready to produce
@@ -399,6 +397,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
             if(t1 - t0 > asrc_peak_processing_time){
                 asrc_peak_processing_time = t1 - t0;
                 #ifdef DEBUG_ASRC_TASK
+                // Use light-weight printintln instead of printf
                 printintln(asrc_peak_processing_time);
                 #endif
                 // xassert(asrc_peak_processing_time <= asrc_process_time_limit); // Optional assert on timing failure.
