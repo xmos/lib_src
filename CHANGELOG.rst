@@ -6,6 +6,7 @@ UNRELEASED
 
   * ADDED: Return code on asynchronous_fifo_consumer_get() to indicate if 
     samples are valid or not
+  * ADDED: ASRC task clears pulled samples to zero if FIFO is not valid
 
 2.5.0
 -----
