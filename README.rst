@@ -45,6 +45,9 @@ Features
     * Non-blocking thread-safe FIFO for use with ASRC systems.
     * Built in phase detector and control loop to determine the ASRC conversion ratio
     * Enables practical audio systems to be constructed using multiple clock domains and sample rates
+  * Helper function "ASRC Task":
+    * Wraps up the core ASRC function, Asynchronous FIFO and sample change and initialisation logic
+    * Provides a simple-to-use and generic ASRC conversion design block suitable for integration into practical systems
 
 Known Issues
 ************
