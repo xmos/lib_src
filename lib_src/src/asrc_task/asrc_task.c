@@ -263,7 +263,12 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = asrc_io->output_frequency;
-        delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period. TODO: why is this needed?
+
+        // Hold off reading c_buff_idx for half of a minimum frame period (2us). TODO: why is this needed?
+        hwtimer_t tmr = hwtimer_alloc();
+        hwtimer_delay(2 * XS1_TIMER_MHZ);
+        hwtimer_free(tmr);
+
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
             asrc_io->asrc_channel_count == 0);
