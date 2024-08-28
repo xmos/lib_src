@@ -102,7 +102,7 @@ An example of calling the ASRC task form and ``XC`` main function is provided be
     chan c_producer;
 
     // FIFO and ASRC I/O declaration. Unsafe to allow producer and consumer to access it from XC
-    #define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 4) // Half full is target so *2 is nominal size but we need wiggle room at startup
+    #define FIFO_LENGTH     40 // Example only. Depends on rates and PPM - see docs
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
 
     unsafe{
