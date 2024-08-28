@@ -84,7 +84,7 @@ The Asynchronous FIFO has the following functions to control the FIFO:
 
 * ``asynchronous_fifo_consumer_get()`` gets one sample from the FIFO. It
   must be given a timestamp related to when this (or the previous) sample
-  is (was) output. It returns 1 if the pulled samples are valid else zero.
+  is (was) output. It returns 0 if the pulled samples are valid.
 
 All timestamps are measured in 100 MHz ticks.
 
@@ -101,7 +101,7 @@ rate the estimated rate is calculated as::
 in 32-bit precision or for 64-bit precision::
 
   est_rate = (((int64_t)ideal_rate) << 32) + epsilon * (int64_t) ideal_rate
-  
+
 Where ``ideal_rate`` is the expected value that would make producer and
 consumer match if they had no error and ``epsilon`` is the value returned by
 ``asynchronous_fifo_producer_put()``. The number used for ``ideal_rate``
@@ -113,7 +113,8 @@ estimated rate is a linear function combining the error and the ideal rate.
 Internally the Asynchronous FIFO accumulates the errors so that the epsilon
 returned will eventually stabilise.
 
-Application notes describe the integration of the FIFO with an ASRC or PLL.
+The :ref:`ASRC Task <asrc_task_header>` provides an example of the integration of the FIFO with an ASRC.
+
 
 .. _asynchronous_FIFO_three_degrees_of_freedom:
 
@@ -140,13 +141,94 @@ characteristics and the time-constant the FIFO length follows.
 Alternatively, given the jitter characteristics and the FIFO length the
 maximum time constant for the loop-filter follows.
 
+
+.. _asynchronous_FIFO_practical_sizing:
+
+Practical FIFO sizing for ASRC usage
+++++++++++++++++++++++++++++++++++++
+
+Typically for most ASRC connected systems, the hardest case for the control loop is to stabilise at startup when the peak PPM difference is first seen. This results in a FIFO depth excursion from the half full state until the control loop has zeroed the error and the FIFO level has settled back to half full. It is not typical to see a large change in PPM difference during operation of practical systems; only small drifts due to voltage and temperature changes but a system always has a startup condition which needs to be accommodated.
+
+The FIFO size must be at least twice the peak excepted perturbation to account for either a positive or negative PPM difference. Should the FIFO underflow or overflow due to insufficient depth it will reset and wait to be filled to half and attempt to close the loop again.
+
+A typical FIFO depth plot at startup for a 500 PPM deviation is shown in the :ref:`fifo depth plot over samples consumed <fifo_startup_img>` image below. Note that the plot is a thick line because the ASRC produces on average four samples at a time whereas the FIFO is emptied one sample at a time. This "lumpiness" in the FIFO fill level means the real-time FIFO depth plot looks like a sawtooth waveform close up.
+
+.. _fifo_startup_img:
+.. figure:: images/peak_fifo_48000_500ppm.png
+            :width: 75%
+
+            Peak FIFO excursion at startup for a 500 PPM deviation at 48 kHz output rate.
+
+The size of the FIFO required depends on:
+
+* The nominal output rate of the ASRC. This defines how quickly the FIFO fills. Higher rates require a larger FIFO.
+
+* The PPM deviation from normal. This defines the maximum deviation of the nominal sample rates and the peak perturbation from half full. The PPM range of the input and output clocks must be added together. For example if your source can vary by up to +500 PPM and the sink can vary by -500 PPM then you must account for a 1000 PPM worst-case clock rate difference.
+
+* The input block size multiplied by the maximum upsample ratio. This defines the "lumpiness" of the real-time FIFO level and needs to be taken account of to fully buffer the block being written. This needs to be supported in both positive and negative PPM cases.
+
+Using the default constants for the loop filter (settings are conservative resulting in convergence time of around four seconds for a large step change in rate) and using the default (and minimum) input block size of four the FIFO should be sized to *at least*::
+
+    FIFO_LEN = (OUTPUT_RATE * PPM / 16000000) + (2 * SRC_N_IN_SAMPLES x SRC_N_OUT_IN_RATIO_MAX)
+
+It is a good idea to round up the FIFO_LEN to the nearest 2 to ensure it is symmetrical.
+
+A few examples follow for an ASRC input block size of four. Note that the additional latency/group delay added to the system will nominally be half of FIFO depth divided by the output rate:
+
+
+.. _required_fifo_length_table:
+.. list-table:: Example minimum FIFO length setting
+    :header-rows: 1
+
+    * - Input Sample Rate
+      - Output Sample Rate
+      - Peak PPM difference
+      - Minimum FIFO length
+    * - 48000
+      - 48000
+      - 250
+      - 16
+    * - 48000
+      - 48000
+      - 500
+      - 24
+    * - 48000
+      - 48000
+      - 1000
+      - 38
+    * - 48000
+      - 48000
+      - 2000
+      - 68
+    * - 48000
+      - 96000
+      - 500
+      - 46
+    * - 48000
+      - 192000
+      - 500
+      - 96
+    * - 192000
+      - 48000
+      - 500
+      - 20
+
+.. note::
+    The above settings are for the case when the timestamps are accurately measured. A time stamp relative offset between input and output values may require longer FIFO lengths since this may result in a FIFO nominal fill level away from half full.
+
+.. note::
+    Larger input block sizes will require longer FIFO lengths. Scaling the above number by around 1.5 for a block size of eight and 3.0 for a block size of 16 will help reduce the chance of a FIFO overflow or underflow during a frequency step change.
+
+It is recommended to test your system to the maximum PPM tolerance across all supported sample rates to verify your chosen FIFO setting, especially if your goal is to minimise the latency by reducing the FIFO size, otherwise a conservative FIFO size setting may be applied at the cost of additional latency.
+
+
 PID settings
 ------------
 
 The PID constants can be set in two ways:
 
 * When used with an ASRC they can be set based on input and output sample
-  rates to a value that stabilises a 375 ppm change in approximately 4
+  rates to a value that stabilises a 375 ppm change in approximately four
   seconds at 48,000 Hz.
 
 * When used in other situations one can provide ones own Kp and Ki values.
@@ -278,7 +360,7 @@ Summary of communications and reset protocol
 In the thread on the producer side a ``put()`` operation performs the following:
 
   * If the RESET flag is set:
-    
+
     #. Set the write-pointer to half-way from the read-pointer
 
     #. Set fs_ratio to 1
@@ -289,7 +371,7 @@ In the thread on the producer side a ``put()`` operation performs the following:
 
     #. Clear the RESET flag (this is the last step, unlocking the consumer
        when it is safe to do so)
-    
+
   * else if there is no room left in the FIFO to store all samples:
 
     #. Set the DO_NOT_PRODUCE flag
@@ -312,7 +394,7 @@ In the thread on the consumer side a ``get()`` operation performs the following:
   * Copy the sample at the read-pointer into the buffer provided by the consumer
 
   * If the RESET flag is clear and there is at least one sample in the FIFO:
-    
+
     #. Record the timestamp in the time-stamp queue
 
     #. Increase the read-pointer.

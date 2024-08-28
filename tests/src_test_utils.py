@@ -259,6 +259,17 @@ def build_firmware(target, extra_args=""):
 
     return target + ".xe"
 
+def build_firmware_xccm(target, build=""):
+    file_dir = Path(__file__).resolve().parent
+    print("***", file_dir)
+    subprocess.run('cmake  -G "Unix Makefiles" -B build', shell=True, cwd=str(target))
+    subprocess.run(f"xmake -j -C build {build}", shell=True, cwd=str(target))
+
+    if build != "":
+        return file_dir / target / "bin" / build / (target + f"_{build}.xe")
+    else:
+        return file_dir / target / "bin" / (target + ".xe")
+
 def build_host_app(target):
     file_dir = Path(__file__).resolve().parent
     build_path = file_dir / "../build"
@@ -476,11 +487,15 @@ def vcd2wav(input_file_name, ch_start, ch_end, rate):
         data = get_data(vcd, varnames)
         print(len(data))
         for d in data:
-            print(len(d))
+            print("VCD data len", len(d))
         write_wav(data, varnames, ch_start, ch_end, rate)
         print_summary(data, varnames)
 
+        return data
+
 # For test only
 if __name__ == "__main__":
-    gen_tone("t1.dat", 48000, 10, 1000, -6)
-    gen_tone("t2.dat", 48000, 10, [1000, 2000], -6)
+    # gen_tone("t1.dat", 48000, 10, 1000, -6)
+    # gen_tone("t2.dat", 48000, 10, [1000, 2000], -6)
+
+    vcd2wav("asrc_task_test_ppm/trace.vcd", 0, 3, 48000)
