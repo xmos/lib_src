@@ -84,7 +84,7 @@ The Asynchronous FIFO has the following functions to control the FIFO:
 
 * ``asynchronous_fifo_consumer_get()`` gets one sample from the FIFO. It
   must be given a timestamp related to when this (or the previous) sample
-  is (was) output.
+  is (was) output. It returns 0 if the pulled samples are valid.
 
 All timestamps are measured in 100 MHz ticks.
 
@@ -101,7 +101,7 @@ rate the estimated rate is calculated as::
 in 32-bit precision or for 64-bit precision::
 
   est_rate = (((int64_t)ideal_rate) << 32) + epsilon * (int64_t) ideal_rate
-  
+
 Where ``ideal_rate`` is the expected value that would make producer and
 consumer match if they had no error and ``epsilon`` is the value returned by
 ``asynchronous_fifo_producer_put()``. The number used for ``ideal_rate``
@@ -151,7 +151,7 @@ Typically for most ASRC connected systems, the hardest case for the control loop
 
 The FIFO size must be at least twice the peak excepted perturbation to account for either a positive or negative PPM difference. Should the FIFO underflow or overflow due to insufficient depth it will reset and wait to be filled to half and attempt to close the loop again.
 
-A typical FIFO depth plot at startup for a 500 PPM deviation is shown in the :ref:`fifo depth plot over samples consumed <fifo_startup_img>` image below. Note that the plot is a thick line because the ASRC produces on average four samples at a time whereas the FIFO is emptied one sample at a time. This "lumpiness" in the FIFO fill level means the real-time FIFO depth plot looks like a sawtooth waveform close up.  
+A typical FIFO depth plot at startup for a 500 PPM deviation is shown in the :ref:`fifo depth plot over samples consumed <fifo_startup_img>` image below. Note that the plot is a thick line because the ASRC produces on average four samples at a time whereas the FIFO is emptied one sample at a time. This "lumpiness" in the FIFO fill level means the real-time FIFO depth plot looks like a sawtooth waveform close up.
 
 .. _fifo_startup_img:
 .. figure:: images/peak_fifo_48000_500ppm.png
@@ -182,7 +182,7 @@ A few examples follow for an ASRC input block size of four. Note that the additi
 
     * - Input Sample Rate
       - Output Sample Rate
-      - Peak PPM difference 
+      - Peak PPM difference
       - Minimum FIFO length
     * - 48000
       - 48000
@@ -360,7 +360,7 @@ Summary of communications and reset protocol
 In the thread on the producer side a ``put()`` operation performs the following:
 
   * If the RESET flag is set:
-    
+
     #. Set the write-pointer to half-way from the read-pointer
 
     #. Set fs_ratio to 1
@@ -371,7 +371,7 @@ In the thread on the producer side a ``put()`` operation performs the following:
 
     #. Clear the RESET flag (this is the last step, unlocking the consumer
        when it is safe to do so)
-    
+
   * else if there is no room left in the FIFO to store all samples:
 
     #. Set the DO_NOT_PRODUCE flag
@@ -394,7 +394,7 @@ In the thread on the consumer side a ``get()`` operation performs the following:
   * Copy the sample at the read-pointer into the buffer provided by the consumer
 
   * If the RESET flag is clear and there is at least one sample in the FIFO:
-    
+
     #. Record the timestamp in the time-stamp queue
 
     #. Increase the read-pointer.
