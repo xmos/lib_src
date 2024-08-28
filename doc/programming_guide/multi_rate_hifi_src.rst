@@ -173,6 +173,12 @@ The performance of the ASRC library is as follows:
 To see frequency plots illustrating the noise floor with respect to a sample rate converted tone please refer to the :ref:`performance-plots` section of this document.
 
 
+ASRC Latency / Group Delay
+..........................
+
+.. include:: ./latency_asrc.rst
+
+
 ASRC Resource utilization
 .........................
 

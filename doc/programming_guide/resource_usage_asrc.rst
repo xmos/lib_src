@@ -1,4 +1,4 @@
-The ASRC algorithm also runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; :numref:`fig_asrc_mhz` quantifies the MHz required for the first channel with adaptive coefficients calculation and :numref:`fig_asrc_mhz2` specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
+The ASRC algorithm runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; :numref:`fig_asrc_mhz` quantifies the MHz required for the first channel with adaptive coefficients calculation and :numref:`fig_asrc_mhz2` specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
 
 .. tip::
   The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
@@ -10,7 +10,7 @@ The ASRC algorithm also runs a series of cascaded FIR filters to perform the rat
   :numref:`fig_asrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz:
-.. list-table:: ASRC Processor Usage ( MHz) for the First Channel in the ASRC Instance for XCORE-200
+.. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance for XCORE-200
      :header-rows: 2
 
      * -

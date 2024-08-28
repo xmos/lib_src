@@ -217,6 +217,7 @@ unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_o
 
     return asrc_in_counter;
 }
+// END ASRC_TASK_ISR_CALLBACK_ATTR
 
 // Structure used for holding the vars needed for the ASRC_TASK receive_asrc_input_samples() callback.
 // This is needed because we can only pass a single pointer to an ISR.
@@ -254,7 +255,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 
 
 // Keep receiving samples until input format is good
-static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, asrc_in_out_t *asrc_io){
+static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, volatile asrc_in_out_t *asrc_io){
     asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
 
     do{
@@ -262,7 +263,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = asrc_io->output_frequency;
-        delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period. TODO: why is this needed?
+
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
             asrc_io->asrc_channel_count == 0);
