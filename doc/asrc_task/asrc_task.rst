@@ -32,7 +32,7 @@ Because the required compute for multi-channel systems may exceed the performanc
 The number of threads that are required depends on the required channel count and sample rates required. Higher sample rates require more MIPS. The amount of thread MHz (and consequently how many threads) required can be *roughly* calculated using the following formulae:
 
     - Total thread MHz required for xcore.ai systems = 0.15 * Max channel count * (Max SR input kHz + Max SR output kHz)
-    - Total thread MHz required for XCORE-200 systems = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
+    - Total thread MHz required for xcore-200 systems = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
 
 The difference between the performance requirement between the two architectures is due to xcore.ai supporting a Vector Processing Unit (VPU) which allows acceleration of the internal filters used by the ASRC. For example:
 

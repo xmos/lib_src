@@ -16,7 +16,7 @@ Multi-rate Hi-Fi functionality:
  * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192 KHz input and output sample rates.
  * 32 bit PCM input and output data in Q1.31 signed format.
  * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF).
- * Optimized for xCORE-200 instruction set with dual-issue and for the Vector Processing Unit for xcore.ai.
+ * Optimized for xcore-200 instruction set with dual-issue and for the Vector Processing Unit for xcore.ai.
  * Block based processing - Minimum 4 samples input per call, must be power of 2.
  * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only).
  * Very high quality - SNR greater than 135 dB (ASRC) or 140 dB (SSRC), with THD of less than 0.0001% (reference 1KHz).
@@ -65,7 +65,7 @@ Components
 There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
 
  #. If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
- #. If voice quality (65 dB SNR) is required running on xCORE-200, use ds3_voice or us3_voice.
+ #. If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
  #. If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us.
 
 .. warning::
