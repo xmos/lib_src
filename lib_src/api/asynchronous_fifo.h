@@ -195,6 +195,16 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
 
 
 /**
+ * Return code for asynchronous_fifo_consumer_get()
+ */
+typedef enum asynchronous_fifo_get_return_t_ {
+    ASYNCH_FIFO_OK = 0,
+    ASYNCH_FIFO_UNDERFLOW,
+    ASYNCH_FIFO_IN_RESET
+} asynchronous_fifo_get_return_t;
+
+
+/**
  * Function that gets an output sample from the asynchronous FIFO
  *
  * @param   state               ASRC structure to read a sample out off.
@@ -206,13 +216,12 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t * UNSAFE state,
  *                              last sample was output. See
  *                              ``asynchronous_fifo_produce`` for requirements.
  * 
- * @returns One if the samples are valid or zero if the FIFO is in reset following
- *          initilaisation, underflow or overflow. 
+ * @returns The FIFO status and whether the samples are valid or not
 
  */
-int asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
-                                   int32_t * UNSAFE samples,
-                                   int32_t timestamp);
+asynchronous_fifo_get_return_t asynchronous_fifo_consumer_get(asynchronous_fifo_t * UNSAFE state,
+                                                                int32_t * UNSAFE samples,
+                                                                int32_t timestamp);
 
 
 /**

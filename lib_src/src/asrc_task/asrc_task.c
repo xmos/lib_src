@@ -180,7 +180,7 @@ int pull_samples(asrc_in_out_t * asrc_io, asynchronous_fifo_t * fifo, int32_t *s
     asrc_io->output_frequency = output_frequency;
     if (asrc_io->ready_flag_configured){
         // Zero samples if got samples are invalid
-        if(asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp) == 0){
+        if(asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp) != ASYNCH_FIFO_OK){
             memset(samples, 0, fifo->channel_count * sizeof(samples[0]));
         }
         return asrc_io->asrc_channel_count;
