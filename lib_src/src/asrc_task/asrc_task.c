@@ -266,7 +266,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
 
         // Hold off reading c_buff_idx for half of a minimum frame period (2us). TODO: why is this needed?
         hwtimer_t tmr = hwtimer_alloc();
-        hwtimer_delay(2 * XS1_TIMER_MHZ);
+        hwtimer_delay(tmr, 2 * XS1_TIMER_MHZ);
         hwtimer_free(tmr);
 
     } while(*input_frequency == 0 ||
