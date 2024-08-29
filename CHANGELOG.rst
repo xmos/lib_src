@@ -1,6 +1,15 @@
 lib_src change log
 ==================
 
+2.6.0
+-----
+
+  * ADDED: Documentation characterising latency for ASRC and associated
+    subsystems
+  * ADDED: Return code on asynchronous_fifo_consumer_get() to indicate if
+    samples are valid or not
+  * CHANGED: ASRC task zeros pulled samples if FIFO get is not valid
+
 2.5.0
 -----
 

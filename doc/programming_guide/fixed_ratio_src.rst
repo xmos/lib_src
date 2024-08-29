@@ -1,8 +1,8 @@
 Fixed factor of 3 HiFi functions
 ================================
 
-Overview
---------
+Introduction
+------------
 
 The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of 3.
 
@@ -42,6 +42,14 @@ The upsampling functions return the following error codes ::
 
   FIROS3_NO_ERROR
   FIROS3_ERROR
+
+.. tip::
+  There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
+  If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
+  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
+  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
+
+
 
 API
 ---
@@ -83,7 +91,14 @@ A pair of SRC components supporting upconversion and downconversion by a factor 
 
 
 .. warning::
-    These SRC components have been deprecated. For new designs using XCORE-AI, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
+    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
+
+.. tip::
+  There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
+  If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
+  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
+  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
+
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
@@ -119,13 +134,19 @@ They have been designed for voice applications and, in particular, conformance t
 
 
 .. note::
-    These filters will only run on XCORE-AI due to the inner dot product calculation employing the XS3 VPU.
+    These filters will only run on xcore-ai due to the inner dot product calculation employing the XS3 VPU.
 
 .. warning::
     Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
     currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
     To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
     The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
+
+.. tip::
+  There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
+  If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
+  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
+  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
 
 
 .. _ff3_voice_vpu_hdr:

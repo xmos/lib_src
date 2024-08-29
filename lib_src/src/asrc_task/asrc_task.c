@@ -179,7 +179,10 @@ int par_asrc(int num_jobs, schedule_info_t schedule[], uint64_t fs_ratio, asrc_i
 int pull_samples(asrc_in_out_t * asrc_io, asynchronous_fifo_t * fifo, int32_t *samples, uint32_t output_frequency, int32_t consume_timestamp){
     asrc_io->output_frequency = output_frequency;
     if (asrc_io->ready_flag_configured){
-        asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp);
+        // Zero samples if got samples are invalid
+        if(asynchronous_fifo_consumer_get(fifo, samples, consume_timestamp) != ASYNCH_FIFO_OK){
+            memset(samples, 0, fifo->channel_count * sizeof(samples[0]));
+        }
         return asrc_io->asrc_channel_count;
     }
     return 0;
@@ -214,6 +217,7 @@ unsigned receive_asrc_input_samples_cb_default(chanend_t c_asrc_input, asrc_in_o
 
     return asrc_in_counter;
 }
+// END ASRC_TASK_ISR_CALLBACK_ATTR
 
 // Structure used for holding the vars needed for the ASRC_TASK receive_asrc_input_samples() callback.
 // This is needed because we can only pass a single pointer to an ISR.
@@ -242,7 +246,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
     if(asrc_in_counter == 0 && asrc_io->ready_flag_to_receive){
         // Note if you ever find the code has stopped here then this is due to the time required to ASRC process the input frame
         // is longer than the period of the frames coming in. To remedy this you need to increase ASRC processing resources or reduce
-        // the processing requirement. If you are using XCORE-200, consider using xcore.ai for more than 2x the ASRC performance.
+        // the processing requirement. If you are using xcore-200, consider using xcore.ai for more than 2x the ASRC performance.
         // Notify ASRC main loop of new frame
         chanend_out_byte(c_buff_idx, (uint8_t)asrc_io->input_write_idx);
         asrc_io->input_write_idx ^= 1; // Swap buffers
@@ -251,7 +255,7 @@ DEFINE_INTERRUPT_CALLBACK(ASRC_ISR_GRP, asrc_samples_rx_isr_handler, app_data){
 
 
 // Keep receiving samples until input format is good
-static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, asrc_in_out_t *asrc_io){
+static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *input_frequency, uint32_t *output_frequency, volatile asrc_in_out_t *asrc_io){
     asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
 
     do{
@@ -259,7 +263,7 @@ static inline void asrc_wait_for_valid_config(chanend_t c_buff_idx, uint32_t *in
         *input_frequency = asrc_io->input_frequency; // Extract input rate
         asrc_io->asrc_channel_count = asrc_io->input_channel_count; // Extract input channel count
         *output_frequency = asrc_io->output_frequency;
-        delay_microseconds(2); // Hold off reading c_buff_idx for half of a minimum frame period. TODO: why is this needed?
+
     } while(*input_frequency == 0 ||
             *output_frequency == 0 ||
             asrc_io->asrc_channel_count == 0);
@@ -356,7 +360,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
                 sASRCCtrl[instance][ch].piADCoefs                 = asrc_adfir_coefs[instance].iASRCADFIRCoefs;
             }
             fs_ratio = asrc_init(inputFsCode, outputFsCode, sASRCCtrl[instance], max_channels_per_instance, SRC_N_IN_SAMPLES, SRC_DITHER_SETTING);
-            dprintf("ASRC init instance: %d ptr: %p\n", instance, sASRCCtrl[instance]);
         }
 
         //// Timing check vars. Includes ASRC, timestamp interpolation and FIFO push
@@ -365,7 +368,6 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         int32_t asrc_peak_processing_time = 0;
 
         ideal_fs_ratio = (fs_ratio + (1<<31)) >> 32;
-        dprintf("ideal_fs_ratio: %d\n", ideal_fs_ratio);
 
         asrc_io->ready_flag_to_receive = 1; // Signal we are ready to consume a frame of input samples
         asrc_io->ready_flag_configured = 1; // SIgnal we are ready to produce
@@ -396,6 +398,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
             if(t1 - t0 > asrc_peak_processing_time){
                 asrc_peak_processing_time = t1 - t0;
                 #ifdef DEBUG_ASRC_TASK
+                // Use light-weight printintln instead of printf
                 printintln(asrc_peak_processing_time);
                 #endif
                 // xassert(asrc_peak_processing_time <= asrc_process_time_limit); // Optional assert on timing failure.
