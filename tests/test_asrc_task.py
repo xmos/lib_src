@@ -35,10 +35,10 @@ def run_dut(bin_name, cmds, multi_tone=False, timeout=60):
 
     cmd = f"xrun --id 0 --xscope-file trace --args {bin_name} {flattend_cmds}"
     print(f"running: {cmd}")
-    output = subprocess.run(cmd, shell=True, capture_output=True, check=True, text=True, timeout=timeout)
+    cmd = cmd.split()
+    output = subprocess.run(cmd, text=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     assert output.returncode == 0
-
-    return output.stderr #xrun puts output on err for some reason
+    return output.stdout
 
 
 def analyse_wav(expected_freqs):
@@ -148,7 +148,7 @@ def parse_output_for_changes(output, cmds):
                 found_ch = True
                 f_n_ch = int(res.group(1))
 
-        print(f"Found successful config: input_sr {f_i_sr} ({i_sr}), n_chan: {f_n_ch} ({n_ch}), output_sr {f_o_sr} ({o_sr})") 
+        print(f"Found successful config: input_sr {f_i_sr} ({i_sr}), n_chan: {f_n_ch} ({n_ch}), output_sr {f_o_sr} ({o_sr})")
         num_found_configs += 1
 
         assert i_sr == f_i_sr
