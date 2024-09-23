@@ -7,7 +7,7 @@ Test verify the operation of both SSRC and ASRC (which belong to the multi-rate 
 
 import pytest
 import subprocess
-from src_test_utils import vcd2wav, build_firmware
+from src_test_utils import vcd2wav, build_firmware, build_firmware_xcommon_cmake
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import stft, get_window, find_peaks
@@ -99,10 +99,8 @@ def build_cmd_list_expected_f(input_srs, output_srs, chans, delay_ms, input_freq
 @pytest.fixture(scope="module")
 def build_xe():
     print("Building DUT")
-    xe = build_firmware("test_asrc_task")
-    xe_path = f"../../lib_src/build/tests/asrc_task_test/{xe}"
-
-    return xe_path
+    xe = build_firmware_xcommon_cmake("asrc_task_test")
+    return xe
 
 
 def test_asrc_task_freq_matrix(build_xe):

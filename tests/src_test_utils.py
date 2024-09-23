@@ -256,8 +256,30 @@ def build_firmware(target, extra_args=""):
     subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
     subprocess.run(f"cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake {extra_args} ..", shell=True, cwd=str(build_path))
     subprocess.run(f"make -j {target}", shell=True, cwd=str(build_path))
-
     return target + ".xe"
+
+def build_firmware_xcommon_cmake(target):
+    file_dir = Path(__file__).parent
+    test_dir = file_dir / f"{target}"
+    assert test_dir.exists(), f"test directory {test_dir} doesn't exist"
+    build_dir = test_dir / "build"
+    if build_dir.exists() and build_dir.is_dir():
+        shutil.rmtree(build_dir) # Delete the build directory :|
+
+    cmake_cmd = ["cmake", "-B", build_dir, "-S", test_dir]
+    subprocess.run(
+        cmake_cmd, capture_output=True, text=True, cwd=test_dir, check=True
+    )
+    make_cmd = ["make", "-C", build_dir, target]
+    subprocess.run(
+        make_cmd, capture_output=True, text=True, cwd=test_dir, check=True
+    )
+    xe = test_dir / "bin" / f"{target}.xe"
+    assert xe.exists(), f"Executable file {xe} doesn't exist"
+    return xe
+
+
+
 
 def build_firmware_xccm(target, build=""):
     file_dir = Path(__file__).resolve().parent
@@ -404,7 +426,7 @@ def get_meta_data(file):
     counter = 0
     while True:
         line = file.readline()
-        
+
         if "$timescale" in line:
             time_str = file.readline()
             m = re.match(r'\s*([0-1.]+)\s+([a-z]+)', line)
@@ -456,7 +478,7 @@ def get_data(file, varnames):
         else:
             assert 0, f"bNNNNNNNNNNNNNNNNNN M not found in {line}"
         data[idx].append(val)
-    
+
 
 def write_wav(data, varnames, ch_start, ch_end, rate):
     num_channels = len(data) - 1 #remove Missing_Data data

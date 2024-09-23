@@ -152,7 +152,8 @@ pipeline {
                         sh "xtagctl reset ${adapterIDs[0]}"
                         // Do asynch FIFO test
                         dir("tests/asynchronous_fifo_asrc_test") {
-                          sh "xmake -j"
+                          sh "cmake -B build"
+                          sh "xmake -j -C build"
                           sh "xrun --xscope --adapter-id " + adapterIDs[0] + " bin/asynchronous_fifo_asrc_test.xe"
                         }
                         // ASRC Task tests
