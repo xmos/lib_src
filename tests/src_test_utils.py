@@ -267,13 +267,15 @@ def build_firmware_xcommon_cmake(target):
         shutil.rmtree(build_dir) # Delete the build directory :|
 
     cmake_cmd = ["cmake", "-B", build_dir, "-S", test_dir]
-    subprocess.run(
-        cmake_cmd, capture_output=True, text=True, cwd=test_dir, check=True
+    ret = subprocess.run(
+            cmake_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )
-    make_cmd = ["make", "-C", build_dir, target]
-    subprocess.run(
-        make_cmd, capture_output=True, text=True, cwd=test_dir, check=True
+    assert ret.returncode == 0, f"CMAKE command failed. stdout = {ret.stdout}"
+    make_cmd = ["xmake", "-C", build_dir, target]
+    ret = subprocess.run(
+            make_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )
+    assert ret.returncode == 0, f"MAKE command failed. stdout = {ret.stdout}"
     xe = test_dir / "bin" / f"{target}.xe"
     assert xe.exists(), f"Executable file {xe} doesn't exist"
     return xe

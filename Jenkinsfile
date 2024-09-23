@@ -234,7 +234,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     withVenv {
                       dir("tests") {
-                        localRunPytest('-k "legacy" -vv')
+                        localRunPytest('-k "legacy" -s')
                       }
                     }
                   }
