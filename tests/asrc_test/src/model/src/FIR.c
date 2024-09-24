@@ -119,7 +119,7 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 				return FIR_ERROR;
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= (psFIRCtrl->uiNInSamples)<<1;						// Os2 FIR doubles the number of samples
-			psFIRCtrl->pvProc			= FIR_proc_os2;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void *))FIR_proc_os2;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs;						// Double length for circular buffer simulation, but only half length due to OS2
 			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + (psFIRDescriptor->uiNCoefs>>1);	
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs>>1;
@@ -135,7 +135,7 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 			// Non zero coefficients number, so it is a true filter
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= psFIRCtrl->uiNInSamples;							// Sync FIR does not change number of samples
-			psFIRCtrl->pvProc			= FIR_proc_sync;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void *))FIR_proc_sync;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs<<1;						// Double length for circular buffer simulation
 			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;	
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs;
@@ -150,7 +150,7 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 				return FIR_ERROR;
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= psFIRCtrl->uiNInSamples>>1;						// Ds2 FIR divides the number of samples by two
-			psFIRCtrl->pvProc			= FIR_proc_ds2;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void *))FIR_proc_ds2;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs<<1;						// Double length for circular buffer simulation
 			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;	
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs;
