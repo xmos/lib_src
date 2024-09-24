@@ -1,35 +1,27 @@
-
 cmake_minimum_required(VERSION 3.21)
+include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 
-project(test_ds3_voice)
-enable_language(CXX C ASM)
 
-if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS2A))
-    set(TARGET_NAME test_ds3_voice)
+set(APP_PCA_ENABLE ON)
+set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
+set(APP_DEPENDENT_MODULES "lib_src")
+set(APP_INCLUDES src)
 
-    add_executable(${TARGET_NAME})
-    
-    target_sources(${TARGET_NAME}
-        PRIVATE
-            app_ds3_voice.xc
+set(ARCH xs2 xs3)
+
+foreach(arch ${ARCH})
+    if(arch STREQUAL "xs3")
+        set(target "XK-EVK-XU316")
+    elseif(arch STREQUAL "xs2")
+        set(target "XCORE-200-EXPLORER")
+    endif()
+    project(ds3_voice_test)
+    set(APP_HW_TARGET ${target})
+    set(APP_COMPILER_FLAGS_${arch}  -O3
+                                    -g
+                                    -report
+                                    -mno-dual-issue
     )
-
-    target_link_libraries(${TARGET_NAME}
-        PUBLIC
-            lib_src
-    )
-
-    target_compile_options(${TARGET_NAME}
-        PUBLIC
-            "-g"
-            "-O3"
-            "-mno-dual-issue"
-    )
-
-    target_link_options(${TARGET_NAME}
-        PUBLIC
-            "-target=XCORE-200-EXPLORER"
-            "-report"
-    )
-
-endif()
+    XMOS_REGISTER_APP()
+    unset(APP_COMPILER_FLAGS_${arch})
+endforeach()

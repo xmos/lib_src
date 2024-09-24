@@ -258,9 +258,9 @@ def build_firmware(target, extra_args=""):
     subprocess.run(f"make -j {target}", shell=True, cwd=str(build_path))
     return target + ".xe"
 
-def build_firmware_xcommon_cmake(target):
+def build_firmware_xcommon_cmake(testname, config=None):
     file_dir = Path(__file__).parent
-    test_dir = file_dir / f"{target}"
+    test_dir = file_dir / f"{testname}"
     assert test_dir.exists(), f"test directory {test_dir} doesn't exist"
     build_dir = test_dir / "build"
     if build_dir.exists() and build_dir.is_dir():
@@ -271,14 +271,31 @@ def build_firmware_xcommon_cmake(target):
             cmake_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )
     assert ret.returncode == 0, f"CMAKE command failed. stdout = {ret.stdout}"
-    make_cmd = ["xmake", "-C", build_dir, target]
+    target = testname
+    if config: # Build only the specified config
+        target = f"{target}_{config}"
+        make_cmd = ["xmake", "-j", "-C", build_dir, target]
+    else: # Build everything
+        make_cmd = ["xmake", "-j", "-C", build_dir]
+
     ret = subprocess.run(
             make_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )
     assert ret.returncode == 0, f"MAKE command failed. stdout = {ret.stdout}"
-    xe = test_dir / "bin" / f"{target}.xe"
-    assert xe.exists(), f"Executable file {xe} doesn't exist"
-    return xe
+
+    if config: # Get the xe for the specified config
+        xe = test_dir / "bin" / f"{config}" / f"{target}.xe"
+        assert xe.exists(), f"Executable file {xe} doesn't exist"
+        return xe
+    else:
+        # Check if more than one executables were created
+        xe = [f for f in Path(test_dir / "bin").rglob("*.xe")]
+        print(xe)
+        assert len(xe) > 0, "Nothing got built"
+        if len(xe) == 1:
+            return xe[0]
+        else:
+            return xe # Return a list of all built executables
 
 
 

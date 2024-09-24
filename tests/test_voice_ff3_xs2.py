@@ -8,15 +8,26 @@ Wrapper to run the legacy ff3 voice tests so we get a nice test report in Jenkin
 import pytest
 import subprocess
 from pathlib import Path
+from src_test_utils import build_firmware_xcommon_cmake
 
-@pytest.mark.parametrize("voice_test", ["ds3_voice", "us3_voice", "unity_gain_voice"])
-def test_voice_ff3_xs2(voice_test):
+@pytest.mark.prepare
+@pytest.mark.parametrize("testname", ["ds3_voice_test", "us3_voice_test", "unity_gain_voice_test"])
+def test_prepare(testname):
+    """ Build firmware """
+    build_firmware_xcommon_cmake(testname)
+
+
+@pytest.mark.main
+@pytest.mark.parametrize("voice_test", ["ds3_voice_test", "us3_voice_test", "unity_gain_voice_test"])
+@pytest.mark.parametrize("arch", ["xs2"])
+def test_voice_ff3_xs2(voice_test, arch):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
 
-    file_dir = Path(__file__).resolve().parent
-    cmd = f"xsim {str(file_dir)}/../build/tests/{voice_test}_test/test_{voice_test}.xe"
-  
+    file_dir = Path(__file__).parent
+    xe = file_dir / voice_test / "bin" / arch / f"{voice_test}_{arch}.xe"
+    cmd = f"xsim {xe}"
+
     print(f"Running: {cmd}")
-    output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    output = subprocess.run(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     print(output.stdout)
     assert output.returncode == 0
