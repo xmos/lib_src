@@ -8,12 +8,12 @@ project(ssrc_test)
 if(NOT BUILD_NATIVE)
     set(APP_HW_TARGET XK-EVK-XU316)
 
-    set(APP_COMPILER_FLAGS  -Os
-                            -g
-                            -Wall
-                            -Wno-xcore-fptrgroup
-                            -report
-                            -fcmdline-buffer-bytes=2048
+    set(APP_COMPILER_FLAGS      -Os
+                                -g
+                                -Wall
+                                -Wno-xcore-fptrgroup
+                                -report
+                                -fcmdline-buffer-bytes=2048
     )
 
     set(APP_DEPENDENT_MODULES "lib_src")
