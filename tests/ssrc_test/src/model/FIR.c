@@ -1,6 +1,6 @@
 // ===========================================================================
 // ===========================================================================
-//	
+//
 // File: FIR.c
 //
 // FIR functions implementation file for the SSRC
@@ -73,18 +73,18 @@
 // ==================================================================== //
 FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* psFIRDescriptor)
 {
-	
+
 	// Check if FIR is disabled (this is given by the number of coefficients being zero)
 	if( psFIRDescriptor->uiNCoefs == 0)
 	{
 		// Number of coefficients is zero, so disable FIR
 		psFIRCtrl->eEnable			= FIR_OFF;
-		psFIRCtrl->uiNOutSamples	= 0;						
+		psFIRCtrl->uiNOutSamples	= 0;
 		psFIRCtrl->pvProc			= 0;
-		psFIRCtrl->uiDelayL			= 0;						
-		psFIRCtrl->piDelayW			= 0;	
+		psFIRCtrl->uiDelayL			= 0;
+		psFIRCtrl->piDelayW			= 0;
 		psFIRCtrl->uiDelayO			= 0;
-		psFIRCtrl->uiNLoops			= 0;						
+		psFIRCtrl->uiNLoops			= 0;
 		psFIRCtrl->uiNCoefs			= 0;
 		psFIRCtrl->piCoefs			= 0;
 
@@ -117,9 +117,9 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 				return FIR_ERROR;
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= (psFIRCtrl->uiNInSamples)<<1;						// Os2 FIR doubles the number of samples
-			psFIRCtrl->pvProc			= FIR_proc_os2;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void*))FIR_proc_os2;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs;						// Double length for circular buffer simulation, but only half length due to OS2
-			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + (psFIRDescriptor->uiNCoefs>>1);	
+			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + (psFIRDescriptor->uiNCoefs>>1);
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs>>1;
 			psFIRCtrl->uiNLoops			= psFIRDescriptor->uiNCoefs>>2;						// Due to 2 x 32bits read for data and 4 x 32bits for coefs per inner loop
 			psFIRCtrl->uiNCoefs			= psFIRDescriptor->uiNCoefs;
@@ -133,9 +133,9 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 			// Non zero coefficients number, so it is a true filter
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= psFIRCtrl->uiNInSamples;							// Sync FIR does not change number of samples
-			psFIRCtrl->pvProc			= FIR_proc_sync;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void*))FIR_proc_sync;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs<<1;						// Double length for circular buffer simulation
-			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;	
+			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs;
 			psFIRCtrl->uiNLoops			= psFIRDescriptor->uiNCoefs>>1;						// Due to 2 x 32bits read for data and coefs per inner loop
 			psFIRCtrl->uiNCoefs			= psFIRDescriptor->uiNCoefs;
@@ -148,9 +148,9 @@ FIRReturnCodes_t				FIR_init_from_desc(FIRCtrl_t* psFIRCtrl, FIRDescriptor_t* ps
 				return FIR_ERROR;
 			psFIRCtrl->eEnable			= FIR_ON;
 			psFIRCtrl->uiNOutSamples	= psFIRCtrl->uiNInSamples>>1;						// Ds2 FIR divides the number of samples by two
-			psFIRCtrl->pvProc			= FIR_proc_ds2;
+			psFIRCtrl->pvProc			= (FIRReturnCodes_t (*)(void*))FIR_proc_ds2;
 			psFIRCtrl->uiDelayL			= psFIRDescriptor->uiNCoefs<<1;						// Double length for circular buffer simulation
-			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;	
+			psFIRCtrl->piDelayW			= psFIRCtrl->piDelayB + psFIRDescriptor->uiNCoefs;
 			psFIRCtrl->uiDelayO			= psFIRDescriptor->uiNCoefs;
 			psFIRCtrl->uiNLoops			= psFIRDescriptor->uiNCoefs>>1;						// Due to 2 x 32bits read for data and coefs per inner loop
 			psFIRCtrl->uiNCoefs			= psFIRDescriptor->uiNCoefs;
@@ -194,7 +194,7 @@ FIRReturnCodes_t				FIR_sync(FIRCtrl_t* psFIRCtrl)
 	return FIR_NO_ERROR;
 }
 
- 
+
 // ==================================================================== //
 // Function:		FIR_proc_os2										//
 // Arguments:		FIRCtrl_t 	*psFIRCtrl: Ctrl strct.					//
@@ -264,7 +264,7 @@ FIRReturnCodes_t				FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 		// Extract 32bits result
 		EXT30(&iData0, i64Acc0);
 		EXT30(&iData1, i64Acc1);
-	
+
 
 		// Write output with step
 		// NOTE OUTPUT WRITE ORDER: First iData1, then iData0
@@ -279,7 +279,7 @@ FIRReturnCodes_t				FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 
 	return FIR_NO_ERROR;
 }
-  
+
 
 // ==================================================================== //
 // Function:		FIR_proc_sync										//
@@ -394,9 +394,9 @@ FIRReturnCodes_t				FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
 		*(piDelayI + uiDelayO + 1)	= iData1;
 		// Step delay with circular simulation
 		piDelayI				+= 2;
-		if(piDelayI >= piDelayW)						
-			piDelayI				= piDelayB;	
-		
+		if(piDelayI >= piDelayW)
+			piDelayI				= piDelayB;
+
 		// Clear accumulator and set access pointers
 		piData					= piDelayI;
 		piCoefs					= piCoefsB;
@@ -448,11 +448,11 @@ FIRReturnCodes_t				PPFIR_init_from_desc(PPFIRCtrl_t* psPPFIRCtrl, PPFIRDescript
 	{
 		// Number of coefficients is zero, so disable FIR
 		psPPFIRCtrl->eEnable			= FIR_OFF;
-		psPPFIRCtrl->uiNOutSamples		= 0;						
-		psPPFIRCtrl->uiDelayL			= 0;						
-		psPPFIRCtrl->piDelayW			= 0;	
+		psPPFIRCtrl->uiNOutSamples		= 0;
+		psPPFIRCtrl->uiDelayL			= 0;
+		psPPFIRCtrl->piDelayW			= 0;
 		psPPFIRCtrl->uiDelayO			= 0;
-		psPPFIRCtrl->uiNLoops			= 0;						
+		psPPFIRCtrl->uiNLoops			= 0;
 		psPPFIRCtrl->uiNCoefs			= 0;
 		psPPFIRCtrl->piCoefs			= 0;
 		psPPFIRCtrl->uiNPhases			= 0;
@@ -491,10 +491,10 @@ FIRReturnCodes_t				PPFIR_init_from_desc(PPFIRCtrl_t* psPPFIRCtrl, PPFIRDescript
 
 	// Setup PPFIR
 	psPPFIRCtrl->eEnable			= FIR_ON;
-	psPPFIRCtrl->uiDelayL			= uiPhaseLength<<1;									// Double length for circular buffer simulation					
-	psPPFIRCtrl->piDelayW			= psPPFIRCtrl->piDelayB + uiPhaseLength;	
+	psPPFIRCtrl->uiDelayL			= uiPhaseLength<<1;									// Double length for circular buffer simulation
+	psPPFIRCtrl->piDelayW			= psPPFIRCtrl->piDelayB + uiPhaseLength;
 	psPPFIRCtrl->uiDelayO			= uiPhaseLength;
-	psPPFIRCtrl->uiNLoops			= uiPhaseLength>>1;									// Due to 2 x 32bits read for data and coefs per inner loop						
+	psPPFIRCtrl->uiNLoops			= uiPhaseLength>>1;									// Due to 2 x 32bits read for data and coefs per inner loop
 	psPPFIRCtrl->uiNCoefs			= psPPFIRDescriptor->uiNCoefs;
 	psPPFIRCtrl->piCoefs			= psPPFIRDescriptor->piCoefs;
 	psPPFIRCtrl->uiNPhases			= psPPFIRDescriptor->uiNPhases;
@@ -534,7 +534,7 @@ FIRReturnCodes_t				PPFIR_sync(PPFIRCtrl_t* psPPFIRCtrl)
 		// Clear number of output sampes
 		psPPFIRCtrl->uiNOutSamples		= 0;
 	}
-	
+
 
 	return FIR_NO_ERROR;
 }
