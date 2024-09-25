@@ -1,35 +1,18 @@
-
 cmake_minimum_required(VERSION 3.21)
+include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
+project(vpu_rat_test)
 
-project(src_rat_test)
-enable_language(CXX C ASM)
+set(APP_HW_TARGET XK-EVK-XU316)
 
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
+set(APP_PCA_ENABLE ON)
 
-    set(TARGET_NAME test_src_vpu_rat)
+set(APP_COMPILER_FLAGS      "-g"
+                            "-O3"
+                            "-mno-dual-issue"
+)
 
-    add_executable(${TARGET_NAME})
-    
-    target_sources(${TARGET_NAME}
-        PRIVATE
-            fileio_app.c
-    )
+set(APP_DEPENDENT_MODULES "lib_src")
 
-    target_link_libraries(${TARGET_NAME}
-        PUBLIC
-            lib_src
-    )
+set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 
-    target_compile_options(${TARGET_NAME}
-        PUBLIC
-            "-g"
-            "-O3"
-            "-mno-dual-issue"
-    )
-
-    target_link_options(${TARGET_NAME}
-        PUBLIC
-            "-target=XCORE-AI-EXPLORER"
-    )
-
-endif()
+XMOS_REGISTER_APP()

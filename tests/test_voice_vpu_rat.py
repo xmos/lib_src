@@ -41,14 +41,14 @@ def conv_simple(h, x):
     acc = 0
     for p in range(len(h)):
         acc += h[p] * x[p]
-    
+
     return acc
 
 def upsample(sig32k_fl, orig_taps, poly_taps, fc_ex):
     fact_up = 3
     fact_down = 2
     sig48k = np.zeros(len(sig32k_fl) * fact_up // fact_down)
-    
+
     if True:
         buff = np.zeros(len(sig32k_fl) * fact_up)
         buff[0::fact_up] = sig32k_fl
@@ -103,12 +103,14 @@ def build_c(poly_ds_int, poly_us_int):
     gf.generate_header_file(coeffs_path)
     gf.generate_c_file(coeffs_path, poly_ds_int, poly_us_int)
 
-    src_test_utils.build_firmware("test_src_vpu_rat")
+    src_test_utils.build_firmware_xcommon_cmake("vpu_rat_test")
 
 def run_c(fc_ex):
-
-    app = "xsim --args " + str(build_dir) + "/test_src_vpu_rat.xe"
-    stdout = subprocess.check_output(app, cwd = build_dir, shell = True)
+    file_path = Path(__file__).parent
+    testname = "vpu_rat_test"
+    xe = file_path / testname / "bin" / f"{testname}.xe"
+    app = f"xsim {xe}"
+    subprocess.check_output(app.split(), cwd = build_dir)
     #print("run msg\n", stdout)
 
     sig_bin = build_dir / "sig_c_32k.bin"

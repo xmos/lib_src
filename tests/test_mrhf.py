@@ -6,8 +6,7 @@ Test verify the operation of both SSRC and ASRC (which belong to the multi-rate 
 """
 
 import pytest
-from src_test_utils import gen_golden, build_firmware, build_host_app, compare_results, src_mrh_file_name_builder, run_dut
-from src_test_utils import build_firmware_xcommon_cmake, build_host_app_xcommon_cmake
+from src_test_utils import gen_golden, run_dut, build_firmware_xcommon_cmake, build_host_app_xcommon_cmake
 from pathlib import Path
 
 
