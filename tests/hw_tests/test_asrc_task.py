@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import itertools
 import re
 from utils.thdncalculator import THDN_and_freq
+from pathlib import Path
 
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
@@ -99,7 +100,7 @@ def build_cmd_list_expected_f(input_srs, output_srs, chans, delay_ms, input_freq
 @pytest.fixture(scope="module")
 def build_xe():
     print("Building DUT")
-    xe = build_firmware_xcommon_cmake("asrc_task_test")
+    xe = build_firmware_xcommon_cmake(Path(__file__).parent / "asrc_task_test")
     return xe
 
 
@@ -110,7 +111,8 @@ def test_asrc_task_freq_matrix(build_xe):
     It does a full matrix of the input and output frequencies.
     """
     cmd_list, expected_freqs = build_cmd_list_expected_f(SR_LIST, SR_LIST, 4, 100)
-    output = run_dut(build_xe, cmd_list, timeout=60)
+    xe = Path(__file__).parent / "asrc_task_test" / "bin" / "asrc_task_test.xe"
+    output = run_dut(xe, cmd_list, timeout=60)
     vcd2wav("trace.vcd", 0, 1, 44100)
     assert analyse_wav(expected_freqs)
 

@@ -15,8 +15,8 @@ NUM_SAMPLES_TO_PROCESS = 256
 @pytest.mark.parametrize("src_type", ["ds3", "os3"])
 def test_prepare(src_type):
     """ Builds firmware and host reference and generates the golden reference signals on the host """
-    host_app = build_host_app_xcommon_cmake(f"{src_type}_test")
-    build_firmware_xcommon_cmake(f"{src_type}_test")
+    host_app = build_host_app_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
+    build_firmware_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
     sr_in = 16000 if src_type == "os3" else 48000
     sr_out = 48000 if src_type == "os3" else 16000
     gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, [sr_in], [sr_out], None)

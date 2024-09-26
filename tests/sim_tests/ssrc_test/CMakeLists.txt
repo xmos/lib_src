@@ -29,7 +29,7 @@ else()
     set(APP_XC_SRCS "")
     set(APP_C_SRCS      ${APP_SOURCES})
     set(APP_INCLUDES    src/model
-                        ../../lib_src/src/multirate_hifi)
+                        ../../../lib_src/src/multirate_hifi)
 endif()
 
 XMOS_REGISTER_APP()

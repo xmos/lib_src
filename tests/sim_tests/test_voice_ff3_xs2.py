@@ -14,7 +14,7 @@ from utils.src_test_utils import build_firmware_xcommon_cmake
 @pytest.mark.parametrize("testname", ["ds3_voice_test", "us3_voice_test", "unity_gain_voice_test"])
 def test_prepare(testname):
     """ Build firmware """
-    build_firmware_xcommon_cmake(testname)
+    build_firmware_xcommon_cmake(Path(__file__).parent / testname)
 
 
 @pytest.mark.main

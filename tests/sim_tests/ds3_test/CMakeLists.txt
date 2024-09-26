@@ -27,7 +27,7 @@ else()
     set(APP_XC_SRCS "")
     set(APP_C_SRCS      ${APP_SOURCES})
     set(APP_INCLUDES    src/model
-                        ../../lib_src/src/fixed_factor_of_3/ds3)
+                        ../../../lib_src/src/fixed_factor_of_3/ds3)
 endif()
 
 XMOS_REGISTER_APP()

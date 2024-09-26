@@ -58,7 +58,7 @@ def tmp_dir(new_dir):
 
 @pytest.mark.prepare
 def test_prepare():
-    build_firmware_xcommon_cmake(f"asrc_test")
+    build_firmware_xcommon_cmake(Path(__file__).parent / f"asrc_test")
 
 @pytest.mark.parametrize("in_sr", [44100, 176400])
 @pytest.mark.parametrize("out_sr", [48000, 192000])
@@ -84,7 +84,7 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
             fnb = src_mrh_file_name_builder()
             input_signal_0, input_signal_1 = fnb.get_in_signal_pair(in_sr, "asrc")
             dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "asrc", "dut", fs_deviation=fs_deviation)
-            signal_dir = file_dir / "src_input"
+            signal_dir = Path(__file__).parents[1] / "utils" / "src_input"
 
             cmd = f"xsim --gprof --args {xe_file}"
             cmd += f" -i {signal_dir / input_signal_0} {signal_dir / input_signal_1}"

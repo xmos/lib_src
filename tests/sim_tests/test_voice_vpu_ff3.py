@@ -134,7 +134,7 @@ def run_c(fc, xe_name, num_taps, working_dir):
 @pytest.mark.prepare
 def test_src_vpu_ff3_prepare(num_taps):
     print(f"Building for num_taps {num_taps}")
-    build_firmware_xcommon_cmake("vpu_ff3_test", config=f"{num_taps}t")
+    build_firmware_xcommon_cmake(Path(__file__).parent / "vpu_ff3_test", config=f"{num_taps}t")
 
 @pytest.mark.parametrize(
     "test_freq", [

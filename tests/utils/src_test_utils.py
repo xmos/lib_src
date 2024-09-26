@@ -68,7 +68,7 @@ def gen_golden(host_app, src_type, num_samples_to_process, input_freqs, output_f
 
     fnb = src_mrh_file_name_builder()
 
-    file_dir = Path(__file__).resolve().parent
+    file_dir = Path(__file__).parent
     bin_path = host_app
     test_in_path = file_dir / "src_input"
     test_out_path = file_dir / "src_output" / src_type
@@ -140,7 +140,7 @@ def run_dut(bin_file, in_sr, out_sr, src_type, num_samples_to_process, fs_deviat
         compare_mode = 'abs_diff' implies that the absoulte difference between samples is compared against a threshold to determine closeness.
     """
 
-    file_dir = Path(__file__).resolve().parent
+    file_dir = Path(__file__).parent
     tmp_dir = file_dir / "tmp" / src_type / f"{in_sr}_{out_sr}"
     if src_type == "asrc":
         tmp_dir = tmp_dir / f"{fs_deviation}"
@@ -249,9 +249,9 @@ def compare_results_ff3(stdout, golden_signal_0, golden_signal_1):
     return same
 
 
-def build_firmware_xcommon_cmake(testname, config=None):
-    file_dir = Path(__file__).parent
-    test_dir = file_dir / f"{testname}"
+def build_firmware_xcommon_cmake(testpath, config=None):
+    test_dir = testpath
+    testname = testpath.name
     assert test_dir.exists(), f"test directory {test_dir} doesn't exist"
     build_dir = test_dir / "build"
     if build_dir.exists() and build_dir.is_dir():
@@ -265,7 +265,7 @@ def build_firmware_xcommon_cmake(testname, config=None):
     target = testname
     if config: # Build only the specified config
         target = f"{target}_{config}"
-        make_cmd = ["xmake", "-j", "-C", build_dir, target]
+        make_cmd = ["xmake", "-j", "-C", build_dir, config]
     else: # Build everything
         make_cmd = ["xmake", "-j", "-C", build_dir]
 
@@ -289,9 +289,9 @@ def build_firmware_xcommon_cmake(testname, config=None):
             return xe # Return a list of all built executables
 
 
-def build_host_app_xcommon_cmake(testname):
-    file_dir = Path(__file__).parent
-    test_dir = file_dir / f"{testname}"
+def build_host_app_xcommon_cmake(testpath):
+    test_dir = testpath
+    testname = testpath.name
     assert test_dir.exists(), f"test directory {test_dir} doesn't exist"
     build_dir = test_dir / "build_native"
     if build_dir.exists() and build_dir.is_dir():

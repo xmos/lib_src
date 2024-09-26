@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import itertools
 from utils.thdncalculator import THDN_and_freq
 import csv
+from pathlib import Path
 
 
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
@@ -57,7 +58,8 @@ def build_xes():
     print("Building DUT")
     xes = {}
     for build in ["STEP", "SINE"]:
-        xes[build] = build_firmware_xcommon_cmake("asrc_task_test_ppm", config=build)
+        build_firmware_xcommon_cmake(Path(__file__).parent / "asrc_task_test_ppm", config=build)
+        xes[build] = Path(__file__).parent / "asrc_task_test_ppm" / "bin" / build / f"asrc_task_test_ppm_{build}.xe"
 
     return xes
 

@@ -31,7 +31,7 @@ set(APP_C_SRCS      ${APP_SOURCES})
 set(APP_INCLUDES    src/model
                     src/model/api
                     src/model/src
-                    ../../lib_src/src/multirate_hifi)
+                    ../../../lib_src/src/multirate_hifi)
 set(APP_XSCOPE_SRCS "")
 endif()
 
