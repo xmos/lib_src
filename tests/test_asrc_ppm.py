@@ -10,7 +10,7 @@ These scripts take half a day or so to run due to the large combinatorial space 
 
 import pytest
 import subprocess
-from src_test_utils import vcd2wav, build_firmware_xccm
+from src_test_utils import vcd2wav, build_firmware_xcommon_cmake
 import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
@@ -57,7 +57,7 @@ def build_xes():
     print("Building DUT")
     xes = {}
     for build in ["STEP", "SINE"]:
-        xes[build] = build_firmware_xccm("asrc_task_test_ppm", build=build)
+        xes[build] = build_firmware_xcommon_cmake("asrc_task_test_ppm", config=build)
 
     return xes
 
@@ -139,7 +139,7 @@ def analyse_latency(data, sample_rate, fifo_len, specialised=True): # specialise
     data =np.array(data)
     if specialised:
         zero_initial_data_end = sample_rate // 100 # Zero first 10ms to allow init filters to empty
-        data[:zero_initial_data_end] = 0 
+        data[:zero_initial_data_end] = 0
     step_seen = np.argmax(data > 0x60000000 // 2) # when step reaches half of the input step
     if not specialised:
         return step_seen
@@ -270,7 +270,7 @@ def characterise_asrc_range(input_sr):
 
                             # if thd < -60:
                             if True:
-                                # helper to sort out repeated values in 
+                                # helper to sort out repeated values in
                                 def vcd_to_sequence(data, idx, sr_out):
                                     times = data[1:,0]
                                     length = times.shape[0]
@@ -283,7 +283,7 @@ def characterise_asrc_range(input_sr):
                                             time += 100000000 / sr_out
 
                                     return np.array(extract, dtype=np.int32)
-                                        
+
                                 phase_data = vcd_to_sequence(data, 2, sr_out)
                                 lock_time = analyse_lock(phase_data, sr_out)
                                 fifo_data = vcd_to_sequence(data, 3, sr_out)

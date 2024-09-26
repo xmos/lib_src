@@ -223,16 +223,19 @@ const int32_t ALIGNMENT(8) src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_R
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate FIR coefficiens for a 48 - 32 kHz polyphase SRC")
     parser.add_argument('--output_dir','-o', help='output path for filter files')
-    parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', default=True)
-    parser.add_argument('--gen_plots', '-gp', help='Generate .png files', default=False)
+    parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', action='store_true')
+    parser.add_argument('--gen_plots', '-gp', help='Generate .png files', action='store_true')
     parser.add_argument('--num_taps', '-nt', help='number of taps', default=NUM_TAPS, type=int)
     args = parser.parse_args()
+
+    print(f"Running In src_ff3_fir_gen.py. num_taps = {args.num_taps}")
 
     taps, poly_ds, poly_ds_int, poly_us, poly_us_int = gen_coefs(args.num_taps)
 
     if args.gen_c_files:
-        generate_header_file(args.out_dir, args.num_taps)
-        generate_c_file(args.out_dir, poly_ds_int, poly_us_int, args.num_taps)
+        Path(args.output_dir).mkdir(exist_ok=True, parents=True)
+        generate_header_file(args.output_dir, args.num_taps)
+        generate_c_file(args.output_dir, poly_ds_int, poly_us_int, args.num_taps)
     if args.gen_plots:
         plot_response(taps, False)
         plot_response(taps, True)

@@ -12,13 +12,13 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import contextlib, os
-from src_test_utils import gen_golden, build_firmware, src_mrh_file_name_builder, max_mips_fron_std_out
+from src_test_utils import build_firmware_xcommon_cmake, src_mrh_file_name_builder, max_mips_fron_std_out
 
 
 # For calculating cycle count
 num_threads = 5
 f_clock_mhz = 600
-instr_per_mm = f_clock_mhz * 1e6 / num_threads / 1e6 
+instr_per_mm = f_clock_mhz * 1e6 / num_threads / 1e6
 instr_per_m = f_clock_mhz * 1e6 / num_threads / 1e3
 
 num_samples_to_process = 128
@@ -55,9 +55,10 @@ def tmp_dir(new_dir):
     finally:
         os.chdir(curdir)
 
-@pytest.fixture(scope="session")
-def firmware_build():
-    return build_firmware("test_asrc")
+
+@pytest.mark.prepare
+def test_prepare():
+    build_firmware_xcommon_cmake(f"asrc_test")
 
 @pytest.mark.parametrize("in_sr", [44100, 176400])
 @pytest.mark.parametrize("out_sr", [48000, 192000])
@@ -65,15 +66,16 @@ def firmware_build():
 # @pytest.mark.parametrize("out_sr", [48000])
 @pytest.mark.parametrize("fs_deviation", ["0.990099"])
 @pytest.mark.main
-def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
+def test_profile_asrc(in_sr, out_sr, fs_deviation):
     run = lambda cmd : subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode().splitlines()
 
-    file_dir = Path(__file__).resolve().parent
-    output_dir = file_dir / "gprof_results"
+    file_dir = Path(__file__).parent
+    output_dir = file_dir / f"gprof_results_{in_sr}in_{out_sr}out_{fs_deviation}dev"
     Path(output_dir).mkdir(exist_ok=True)
 
     with tmp_dir(output_dir):
-        xe_file = f"{file_dir}/../build/tests/asrc_test/test_asrc.xe"
+        file_path = Path(__file__).parent
+        xe_file = file_path / f"asrc_test" / "bin" / f"asrc_test.xe"
         print("Dumping object...")
         run(f"xobjdump --split {xe_file}")
 
@@ -83,7 +85,7 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
             input_signal_0, input_signal_1 = fnb.get_in_signal_pair(in_sr, "asrc")
             dut_signal_0, dut_signal_1 = fnb.get_out_signal_pair(in_sr, out_sr, "asrc", "dut", fs_deviation=fs_deviation)
             signal_dir = file_dir / "src_input"
-    
+
             cmd = f"xsim --gprof --args {xe_file}"
             cmd += f" -i {signal_dir / input_signal_0} {signal_dir / input_signal_1}"
             cmd += f" -o {dut_signal_0} {dut_signal_1}"
@@ -123,12 +125,12 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
                         gpo.write(f"{line}\n")
                 break
 
-        assert core_number is not None, f"ASRC functions not found in tile[1]_core_0..7 - see {gprof_file_name}"
+        assert core_number is not None, f"ASRC functions not found in tile[1]_core_0..7 - see {gprof_output_file}"
         gprof_terminated = [line + "EOL" for line in gprof]
 
         # gprof can change its units depending on how long the run was. Use % if reporting in m rather than mm for better accuracy
         if "mm/call" in "\n".join(gprof):
-            use_mm = True 
+            use_mm = True
         else:
             use_mm = False
             # First get call to a big fn to calc scaling factors for better accuracy as gprof uses milliseconds
@@ -205,8 +207,8 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
                 instr_cycles.append(0)
                 num_calls.append(0)
                 continue
-            
-            # gprof doesn't report loops in ASM properly so manually insert the number of runs  
+
+            # gprof doesn't report loops in ASM properly so manually insert the number of runs
             hack_list =     ["src_mrhf_spline_coeff_gen_main_loop",
                             "src_mrhf_fir_os_main_loop_odd",
                             "src_mrhf_fir_os_main_loop",
@@ -236,8 +238,8 @@ def test_profile_asrc(firmware_build, in_sr, out_sr, fs_deviation):
             # print(f"* {function} - {percent}% ({time_milli_cum}) self_milli: {time_milli} calls: {calls} ... {mm_call_self} {mm_call_tot} Instructions: {instructions}")
 
             instr_cycles.append(instructions)
-            num_calls.append(int(calls))  
-            print(function, int(calls), instructions)          
+            num_calls.append(int(calls))
+            print(function, int(calls), instructions)
 
         print(f"max_instr_per_samp: {max_instr_per_samp}")
 

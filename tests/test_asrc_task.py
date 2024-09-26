@@ -7,7 +7,7 @@ Test verify the operation of both SSRC and ASRC (which belong to the multi-rate 
 
 import pytest
 import subprocess
-from src_test_utils import vcd2wav, build_firmware, build_firmware_xcommon_cmake
+from src_test_utils import vcd2wav, build_firmware_xcommon_cmake
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import stft, get_window, find_peaks

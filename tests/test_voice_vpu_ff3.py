@@ -7,14 +7,13 @@ import subprocess
 import pytest
 from thdncalculator import THDN_and_freq
 import src_test_utils
+import tempfile
+import shutil
 
 try:
     from fixed_factor_vpu_voice import src_ff3_fir_gen as gf
 except ModuleNotFoundError:
     assert False, "Could not find src_ff3_fir_gen.py script"
-
-test_dir = Path(__file__).parent
-build_dir = test_dir
 
 fsup = 48000
 fsdown = 16000
@@ -23,7 +22,7 @@ def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
     assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
     assert thdn < thdn_ex, f"THDN {thdn} is higher then the threshold of {thdn_ex} dB"
 
-def gen_sig(f):
+def gen_sig(f, working_dir):
     length = 0.5
     time = np.arange(0, length, 1/fsup)
     vol = 0.8
@@ -32,7 +31,7 @@ def gen_sig(f):
     print("num samples: ", len(sig_int))
 
     name = f"sig_{str(48) if fsup == 48000.0 else str(16)}k"
-    sig_int.tofile(build_dir /  str(name + ".bin"))
+    sig_int.tofile(working_dir /  str(name + ".bin"))
     thdn, freq = THDN_and_freq(sig_int.astype(np.float64), 48000)
     print(f"NP 48k THDN: {thdn}, fc: {freq}")
 
@@ -98,7 +97,7 @@ def run_py(sig48k_int, taps, fc, num_taps):
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 
 
-def run_c(fc, xe_name, num_taps):
+def run_c(fc, xe_name, num_taps, working_dir):
 
     if num_taps == 96:
         bounds = [-75, -75]
@@ -108,20 +107,24 @@ def run_c(fc, xe_name, num_taps):
         if fc == 7000: bounds[1] = -35
 
     cmd = f"xsim {xe_name}"
-    stdout = subprocess.check_output(cmd.split(), cwd = build_dir)
+    stdout = subprocess.check_output(cmd.split(), cwd = working_dir)
     #print("run msg\n", stdout)
 
-    sig_bin = build_dir / "sig_c_16k.bin"
+    sig_bin = working_dir / "sig_c_16k.bin"
     assert sig_bin.is_file(), "could not find sig_c_16k.bin"
     sig16k_int = np.fromfile(sig_bin, dtype=np.int32)
+
+    sig_bin = working_dir / "sig_c_48k.bin"
+    assert sig_bin.is_file(), "could not find sig_c_48k.bin"
+    sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
+
+    # Safe to delete the temp directory now. Till we find a better solution. TODO
+    shutil.rmtree(working_dir)
 
     thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown)
     print(f"C  16k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[0], fc)
 
-    sig_bin = build_dir / "sig_c_48k.bin"
-    assert sig_bin.is_file(), "could not find sig_c_48k.bin"
-    sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
 
     thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup)
     print(f"C  48k THDN: {thdn}, fc: {freq}")
@@ -146,11 +149,11 @@ def test_src_vpu_ff3(test_freq, num_taps):
 
     file_path = Path(__file__).parent
     xe = file_path / "vpu_ff3_test" / "bin" / f"{num_taps}t"/ f"vpu_ff3_test_{num_taps}t.xe"
+    working_dir = Path(tempfile.mkdtemp(prefix="test_src_vpu_ff3", dir=file_path))
     num_phases = 3
-
     taps_per_phase = int(num_taps / num_phases)
 
     _, taps_int, _ = gf.gen_coefs(num_taps_per_phase = taps_per_phase)
-    _, sig_int = gen_sig(test_freq)
+    _, sig_int = gen_sig(test_freq, working_dir)
     run_py(sig_int, taps_int, test_freq, num_taps)
-    run_c(test_freq, xe, num_taps)
+    run_c(test_freq, xe, num_taps, working_dir)

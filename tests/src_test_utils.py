@@ -248,14 +248,6 @@ def compare_results_ff3(stdout, golden_signal_0, golden_signal_1):
 
     return same
 
-def build_firmware(target, extra_args=""):
-    file_dir = Path(__file__).resolve().parent
-    build_path = file_dir / "../build"
-    build_path.mkdir(exist_ok=True)
-    subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-    subprocess.run(f"cmake --toolchain ../xmos_cmake_toolchain/xs3a.cmake {extra_args} ..", shell=True, cwd=str(build_path))
-    subprocess.run(f"make -j {target}", shell=True, cwd=str(build_path))
-    return target + ".xe"
 
 def build_firmware_xcommon_cmake(testname, config=None):
     file_dir = Path(__file__).parent
@@ -310,16 +302,6 @@ def build_firmware_xccm(target, build=""):
     else:
         return file_dir / target / "bin" / (target + ".xe")
 
-def build_host_app(target):
-    file_dir = Path(__file__).resolve().parent
-    build_path = file_dir / "../build"
-    build_path.mkdir(exist_ok=True)
-    subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-    subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
-    bin_path = file_dir / f"{target}_/model"
-    subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
-
-    return f"{target}_golden"
 
 def build_host_app_xcommon_cmake(testname):
     file_dir = Path(__file__).parent
