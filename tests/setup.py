@@ -10,12 +10,14 @@ import setuptools
 # least the same minor version as specified in the requirements.txt file.
 # The same modules should appear in the requirements.txt file as given below.
 setuptools.setup(
-    name='lib_src',
+    name='lib_src_tests',
     packages=setuptools.find_packages(),
     install_requires=[
+        'pytest',
         'matplotlib',
         'numpy',
         'soundfile',
+        'pytest-xdist',
         'scipy',
         'mpmath',
         'bitstring'
