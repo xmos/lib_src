@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 
+if(NOT BUILD_NATIVE)
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 
 project(asrc_test_xscope_fileio)
@@ -22,5 +23,6 @@ file(GLOB_RECURSE APP_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT
 set(APP_C_SRCS ${APP_SOURCES})
 set(APP_INCLUDES    src/file_utils)
 XMOS_REGISTER_APP()
+endif()
 
 

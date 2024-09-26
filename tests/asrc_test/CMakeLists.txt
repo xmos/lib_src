@@ -5,7 +5,7 @@ set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 
 project(asrc_test)
 
-if(NOT BUILD_NATIVE) # dut and dut_xscope_fileio configs
+if(NOT BUILD_NATIVE) # dut
 set(APP_HW_TARGET XK-EVK-XU316)
 set(APP_DEPENDENT_MODULES "lib_src")
 

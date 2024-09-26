@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
+
+if(NOT BUILD_NATIVE)
 project(vpu_ff3_test)
 
 set(APP_HW_TARGET XK-EVK-XU316)
@@ -59,4 +61,5 @@ foreach(taps ${NUMTAPS})
     endforeach()
 
 endforeach()
+endif()
 

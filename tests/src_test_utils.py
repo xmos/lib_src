@@ -289,25 +289,11 @@ def build_firmware_xcommon_cmake(testname, config=None):
             return xe # Return a list of all built executables
 
 
-
-
-def build_firmware_xccm(target, build=""):
-    file_dir = Path(__file__).resolve().parent
-    print("***", file_dir)
-    subprocess.run('cmake  -G "Unix Makefiles" -B build', shell=True, cwd=str(target))
-    subprocess.run(f"xmake -j -C build {build}", shell=True, cwd=str(target))
-
-    if build != "":
-        return file_dir / target / "bin" / build / (target + f"_{build}.xe")
-    else:
-        return file_dir / target / "bin" / (target + ".xe")
-
-
 def build_host_app_xcommon_cmake(testname):
     file_dir = Path(__file__).parent
     test_dir = file_dir / f"{testname}"
     assert test_dir.exists(), f"test directory {test_dir} doesn't exist"
-    build_dir = test_dir / "build"
+    build_dir = test_dir / "build_native"
     if build_dir.exists() and build_dir.is_dir():
         shutil.rmtree(build_dir) # Delete the build directory :|
 

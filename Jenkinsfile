@@ -227,20 +227,6 @@ pipeline {
                 }
               }
             }
-            stage('Test xmake build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  withTools(params.TOOLS_VERSION) {
-                    withVenv {
-                      dir("tests") {
-                        localRunPytest('-k "legacy" -s')
-                      }
-                    }
-                  }
-                }
-              }
-            }
             stage('Tests XS2') {
               steps {
                 runningOn(env.NODE_NAME)
