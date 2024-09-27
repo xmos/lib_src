@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import argparse
-import run_xcoreai
+from utils import run_xcoreai
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
