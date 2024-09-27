@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 // Downsample by factor of 3 example
 // Uses Signed 32b Integer format
