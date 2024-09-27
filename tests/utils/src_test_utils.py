@@ -320,7 +320,8 @@ def generate_mips_report(src_type):
             mips_report.write("input_sr, output_sr, MIPS\n")
         else:
             mips_report.write("input_sr, output_sr, fs_deviation, MIPS\n")
-        file_list = subprocess.run(f'find tmp/{src_type} -iname "max_mips.txt"', shell=True, capture_output=True, text=True).stdout
+        file_dir = Path(__file__).parent
+        file_list = subprocess.run(f'find {file_dir}/tmp/{src_type} -iname "max_mips.txt"', shell=True, capture_output=True, text=True).stdout
         for mips_file in file_list.split():
             with open(mips_file) as mf:
                 if src_type == "ssrc":
