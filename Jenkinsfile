@@ -1,18 +1,6 @@
-@Library('xmos_jenkins_shared_library@v0.33.0')
+// This file relates to internal XMOS infrastructure and should be ignored by external users
 
-def runningOn(machine) {
-    println "Stage running on:"
-    println machine
-}
-
-// run pytest with common flags for project. any passed in though extra args will
-// be appended
-def localRunPytest(String extra_args="") {
-    catchError{
-        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all ${extra_args}"
-    }
-    junit "pytest_result.xml"
-}
+@Library('xmos_jenkins_shared_library@develop') _
 
 getApproval()
 
@@ -20,309 +8,41 @@ pipeline {
   agent none
   environment {
     REPO = 'lib_src'
-    VIEW = getViewName(REPO)
-    PYTHON_VERSION = "3.10.5"
-    VENV_DIRNAME = ".venv"
-    XMOSDOC_VERSION = "v5.1"
   }
   options {
+    buildDiscarder(xmosDiscardBuildSettings())
     skipDefaultCheckout()
     timestamps()
   }
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.2.1',
+      defaultValue: '15.3.0',
       description: 'The XTC tools version'
     )
+    string(
+      name: 'XMOSDOC_VERSION',
+      defaultValue: 'v6.0.0',
+      description: 'The xmosdoc version')
   }
   stages {
-    stage ('LIB SRC') {
-      parallel {
-        stage ('Generate SNR plots') {
-          agent {
-            label 'xcore.ai && uhubctl'
-          }
-          stages {
-            stage('Get repo') {
-              steps {
-                runningOn(env.NODE_NAME)
-                sh "mkdir ${REPO}"
-                // source checks require the directory
-                // name to be the same as the repo name
-                dir("${REPO}") {
-                  // checkout repo
-                  checkout scm
-                  sh 'git submodule update --init --recursive --depth 1'
-                }
-              }
-            }
-            stage ("Create Python environment") {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  createVenv('requirements.txt')
-                  withVenv {
-                    sh 'pip install -r requirements.txt'
-                  }
-                }
-              }
-            }
-            stage ('Gen plots') {
-              steps {
-                runningOn(env.NODE_NAME)
-                sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                dir("lib_src") {
-                  checkout scm
-                  sh 'git submodule update --init --recursive'
-                }
-                createVenv("lib_src/requirements.txt")
-
-                dir("lib_src") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
-                      sh "pip install -e ${WORKSPACE}/xtagctl"
-                      withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                        sh "xtagctl reset ${adapterIDs[0]}"
-                        dir("doc/python") {
-                          sh "pip install -r requirements_test.txt"
-                          sh "python -m doc_asrc.py --adapter-id " + adapterIDs[0]
-                          stash name: 'doc_asrc_output', includes: '_build/**'
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // SNR plots
-
-        stage ('Hardware Tests') {
-          agent {
-            label 'xcore.ai && uhubctl'
-          }
-          stages {
-            stage('Get repo') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // source checks require the directory
-                // name to be the same as the repo name
-                dir("${REPO}") {
-                  // checkout repo
-                  checkout scm
-                  sh 'git submodule update --init --recursive --depth 1'
-                }
-              }
-            }
-            stage ("Create Python environment") {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  createVenv('requirements.txt')
-                  withVenv {
-                    sh 'pip install -r requirements.txt'
-                  }
-                }
-              }
-            }
-            stage ('Build and run tests') {
-              steps {
-                runningOn(env.NODE_NAME)
-                sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                dir("lib_src") {
-                  checkout scm
-                  sh 'git submodule update --init --recursive'
-                  sh 'git clone git@github.com:xmos/lib_logging.git'
-                }
-                createVenv("lib_src/requirements.txt")
-
-                dir("lib_src") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
-                      sh "pip install -e ${WORKSPACE}/xtagctl"
-                      withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                        sh "xtagctl reset ${adapterIDs[0]}"
-                        // Do asynch FIFO test
-                        dir("tests/asynchronous_fifo_asrc_test") {
-                          sh "cmake -B build"
-                          sh "xmake -j -C build"
-                          sh "xrun --xscope --adapter-id " + adapterIDs[0] + " bin/asynchronous_fifo_asrc_test.xe"
-                        }
-                        // ASRC Task tests
-                        dir("tests") {
-                          localRunPytest('-k "asrc_task" -vv')
-                          archiveArtifacts artifacts: "*.png", allowEmptyArchive: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // HW tests
-
-        stage('Sim tests') {
-          when {
-            expression { !env.GH_LABEL_DOC_ONLY.toBoolean() }
-          }
-          agent {
-            label 'x86_64&&docker' // These agents have 24 cores so good for parallel xsim runs
-          }
-          stages {
-            stage('Get repo') {
-              steps {
-                runningOn(env.NODE_NAME)
-                sh "mkdir ${REPO}"
-                // source checks require the directory
-                // name to be the same as the repo name
-                dir("${REPO}") {
-                  // checkout repo
-                  checkout scm
-                  sh 'git submodule update --init --recursive --depth 1'
-                }
-              }
-            }
-            stage ("Create Python environment") {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  createVenv('requirements.txt')
-                  withVenv {
-                    sh 'pip install -r requirements.txt'
-                  }
-                }
-              }
-            }
-            stage('Library checks') {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  sh 'git clone --branch master git@github.com:xmos/infr_apps.git'
-                  sh 'git clone --branch master git@github.com:xmos/infr_scripts_py.git'
-                  // These are needed for xmake legacy build and also changelog check
-                  sh 'git clone git@github.com:xmos/lib_logging.git'
-                  withVenv {
-                    sh 'pip install -e infr_scripts_py'
-                    sh 'pip install -e infr_apps'
-                    dir("tests") {
-                      withEnv(["XMOS_ROOT=.."]) {
-                        localRunPytest('-s test_lib_checks.py -vv')
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            stage('Tests XS2') {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  withTools(params.TOOLS_VERSION) {
-                    withVenv {
-                      dir("tests") {
-                        sh "pytest test_voice_ff3_xs2.py -m prepare"
-                        sh "pytest test_voice_ff3_xs2.py -m main -n auto --junitxml=pytest_result.xml"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            stage('Tests XS3') {
-              steps {
-                runningOn(env.NODE_NAME)
-                dir("${REPO}") {
-                  withTools(params.TOOLS_VERSION) {
-                    withVenv {
-                      dir("tests") {
-                        localRunPytest('-m prepare') // Do all pre work like building and generating golden ref where needed
-
-                        // FF3 HiFi tests for OS3 and DS3
-                        localRunPytest('-m main -n auto -k "hifi_ff3" -vv')
-
-                        // ASRC and SSRC tests across all in/out freqs and deviations (asrc only)
-                        localRunPytest('-m main -n auto -k "mrhf" -vv')
-                        archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
-
-                        // VPU enabled ff3 and rat tests
-                        localRunPytest('-m main -k "vpu" -vv') // xdist not working yet so no -n auto
-
-                        // Profile the ASRC
-                        localRunPytest('-m main -k "profile_asrc" -vv')
-                        archiveArtifacts artifacts: "gprof_results/*.png", allowEmptyArchive: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        }
-      }
-    }
-    // This stage needs to wait for characterisation plots so put at end
-    stage('Documentation') {
+    stage('Build and test') {
       agent {
-        label 'x86_64&&docker'
+        label 'x86_64 && linux'
       }
       stages {
-        stage('Get repo') {
+        stage('Simulator tests') {
           steps {
-            sh "mkdir ${REPO}"
-            // source checks require the directory
-            // name to be the same as the repo name
             dir("${REPO}") {
-              // checkout repo
               checkout scm
-              sh 'git submodule update --init --recursive --depth 1'
-            }
-          }
-        }
-        stage ("Create Python environment") {
-          steps {
-            dir("${REPO}") {
-              createVenv('requirements.txt')
-              withVenv {
-                sh 'pip install -r requirements.txt'
-              }
-            }
-          }
-        }
-        stage('Unstash doc_asrc.py output') {
-          steps {
-            runningOn(env.NODE_NAME)
-            dir("${REPO}/doc/python") {
-              unstash 'doc_asrc_output'
-            }
-          }
-        }
-        stage('Build docs') {
-          steps {
-            runningOn(env.NODE_NAME)
-            dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
+                createVenv(reqFile: "requirements.txt")
                 withVenv {
-                  sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-                  archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
+                  dir("tests/sim_tests") {
+                    sh "pytest -n 1 -m prepare --junitxml=pytest_result.xml" // Build stage
+                    sh "pytest -n auto -m main --junitxml=pytest_result.xml" // Run in parallel
+
+                  }
                 }
               }
             }
@@ -330,10 +50,13 @@ pipeline {
         }
       }
       post {
+        always {
+          junit "${REPO}/tests/pytest_result.xml"
+        }
         cleanup {
           xcoreCleanSandbox()
         }
       }
-    }
+    }  // Build and test
   }
 }
