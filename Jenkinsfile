@@ -38,21 +38,23 @@ pipeline {
             println "Stage running on ${env.NODE_NAME}"
             dir("${REPO}") {
               checkout scm
+
               withTools(params.TOOLS_VERSION) {
                 createVenv(reqFile: "requirements.txt")
                 withVenv {
                   dir("tests/sim_tests") {
                     sh "pytest -n 1 -m prepare --junitxml=pytest_result.xml" // Build stage
-                    sh "pytest -n auto -m main --junitxml=pytest_result.xml" // Run in parallel
-                    archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
-                    archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
+                    //sh "pytest -n auto -m main --junitxml=pytest_result.xml" // Run in parallel
+                    //archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+                    //archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
                   }
                 }
               }
             }
-          }
-        }
-      }
+            runLibraryChecks("${WORKSPACE}/${REPO}")
+          } // steps
+        } // stage('Simulator tests')
+      } // stages
       post {
         always {
           junit "${REPO}/tests/sim_tests/pytest_result.xml"
@@ -75,6 +77,7 @@ pipeline {
               checkout scm
               createVenv(reqFile: "requirements.txt")
             }
+
             dir("${REPO}/tests/hw_tests") {
               withTools(params.TOOLS_VERSION) {
                 sh "cmake -G 'Unix Makefiles' -B build"
