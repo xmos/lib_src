@@ -5,6 +5,7 @@ version: 2.5.0
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
+  root_doc: doc/programming_guide/index.rst
   doxygen_projects:
     lib_xcore_math:
       doxyfile_path: doc/Doxyfile.inc
