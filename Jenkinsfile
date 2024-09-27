@@ -2,6 +2,15 @@
 
 @Library('xmos_jenkins_shared_library@develop') _
 
+def buildDocs(String repoName) {
+    withVenv {
+        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@v${params.XMOSDOC_VERSION}"
+        sh 'xmosdoc'
+        def repoNameUpper = repoName.toUpperCase()
+        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
+    }
+}
+
 getApproval()
 
 pipeline {
@@ -139,8 +148,9 @@ pipeline {
           }
           withTools(params.TOOLS_VERSION) {
             withVenv {
-              sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-              archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
+              //sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
+              //archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
+              buildDocs("${REPO}")
             }
           }
         }
