@@ -6,7 +6,8 @@ set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../)
 
 project(asrc_test_xscope_fileio)
 set(APP_HW_TARGET XK-EVK-XU316)
-set(APP_DEPENDENT_MODULES "lib_src" "xscope_fileio")
+include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
+list(APPEND APP_DEPENDENT_MODULES "xscope_fileio(1.2.0)")
 
 set(APP_COMPILER_FLAGS      -Os
                             -g

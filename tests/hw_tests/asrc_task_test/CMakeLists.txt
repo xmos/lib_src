@@ -18,7 +18,7 @@ set(APP_COMPILER_FLAGS  -Os
                         -fcmdline-buffer-bytes=16384
 )
 
-set(APP_DEPENDENT_MODULES "lib_src")
+include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
 set(APP_INCLUDES src)
 

@@ -12,7 +12,7 @@ set(APP_COMPILER_FLAGS  -O2
                         -fxscope
 )
 
-set(APP_DEPENDENT_MODULES "lib_src")
+include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../)
 

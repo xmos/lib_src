@@ -46,7 +46,7 @@ foreach(taps ${NUMTAPS})
                                         "-DNUM_TAPS=${taps}"
     )
 
-    set(APP_DEPENDENT_MODULES "lib_src")
+    include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
     set(APP_XC_SRCS "")
     set(APP_C_SRCS      src/fileio_app.c ${REL_AUTOGEN_C_FILE})

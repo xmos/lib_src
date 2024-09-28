@@ -16,7 +16,7 @@ if(NOT BUILD_NATIVE)
                                 -fcmdline-buffer-bytes=2048
     )
 
-    set(APP_DEPENDENT_MODULES "lib_src")
+    include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
     set(APP_XC_SRCS src/dut/app_os3.xc)
     set(APP_C_SRCS "")

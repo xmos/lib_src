@@ -6,7 +6,7 @@ project(asrc_task_test_ppm)
 
 set(APP_HW_TARGET       XCORE-AI-EXPLORER)
 
-set(APP_DEPENDENT_MODULES   lib_src)
+include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
 set(APP_XSCOPE_SRCS src/config.xscope)
 

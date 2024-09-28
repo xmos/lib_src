@@ -11,8 +11,8 @@ set(APP_COMPILER_FLAGS  -O2
                         -report
 )
 
-set(APP_DEPENDENT_MODULES "lib_src")
+include(${CMAKE_CURRENT_LIST_DIR}/../deps.cmake)
 
-set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../)
+set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 
 XMOS_REGISTER_APP()
