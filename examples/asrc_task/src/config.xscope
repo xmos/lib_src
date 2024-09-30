@@ -1,0 +1,11 @@
+<xSCOPEconfig ioMode="basic" enabled="true">
+  <Probe name="O0" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O1" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O2" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O3" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O4" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O5" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O6" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="O7" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+</xSCOPEconfig>
+

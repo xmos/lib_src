@@ -35,7 +35,7 @@ pipeline {
       description: 'The xmosdoc version')
   }
   stages {
-    stage ('LIB SRC') {
+    stage ('lib_src build and test') {
       parallel {
         stage('Build and sim test') {
           agent {
@@ -142,7 +142,7 @@ pipeline {
     } // stage ('LIB SRC')
 
     // This stage needs to wait for characterisation plots so run it last
-    stage('Build Doc') {
+    stage('Build Documentation') {
       agent {
         label 'x86_64&&docker'
       }
