@@ -42,12 +42,24 @@ pipeline {
             label 'x86_64 && linux'
           }
           stages {
-            stage('Simulator tests') {
+            stage('Build examples') {
               steps {
                 println "Stage running on ${env.NODE_NAME}"
                 dir("${REPO}") {
                   checkout scm
-
+                  dir("examples") {
+                    withTools(params.TOOLS_VERSION) {
+                      sh 'cmake -G "Unix Makefiles" -B build'
+                      sh 'xmake -C build -j 8'
+                    }
+                  }
+                } // dir("${REPO}")
+                runLibraryChecks("${WORKSPACE}/${REPO}")
+              } // steps
+            }  // stage('Build examples')
+            stage('Simulator tests') {
+              steps {
+                dir("${REPO}") {
                   withTools(params.TOOLS_VERSION) {
                     createVenv(reqFile: "requirements.txt")
                     withVenv {
@@ -60,7 +72,6 @@ pipeline {
                     }
                   }
                 }
-                runLibraryChecks("${WORKSPACE}/${REPO}")
               } // steps
             } // stage('Simulator tests')
           } // stages
@@ -111,6 +122,7 @@ pipeline {
                       withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                         sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
                         stash name: 'doc_asrc_output', includes: '_build/**'
+                        archiveArtifacts artifacts: "_build/**", allowEmptyArchive: true
                       }
                     } // withTools
                   } // withVenv
