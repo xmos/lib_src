@@ -167,11 +167,11 @@ pipeline {
           }
         }
       }
-      post {
-        cleanup {
-          xcoreCleanSandbox()
-        }
-      } // post
+      //post {
+      //  cleanup {
+      //    xcoreCleanSandbox()
+      //  }
+      //} // post
     } // stage('Build Doc')
   } // stages
 } // pipeline
