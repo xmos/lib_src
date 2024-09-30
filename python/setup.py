@@ -16,7 +16,7 @@ setuptools.setup(
         'matplotlib==3.9.2',
         'numpy==2.1.1',
         'soundfile==0.12.1',
-        'scipy=1.14.1',
+        'scipy==1.14.1',
         'mpmath==1.3.0',
         'bitstring==4.2.3'
     ],

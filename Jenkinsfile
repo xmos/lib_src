@@ -31,7 +31,7 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v6.0.0',
+      defaultValue: 'v5.5.2', // https://github.com/xmos/lib_src/issues/141
       description: 'The xmosdoc version')
   }
   stages {
