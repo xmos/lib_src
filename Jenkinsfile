@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@develop') _
+@Library('xmos_jenkins_shared_library@v0.34.0') _
 
 def buildDocs(String repoName) {
     withVenv {
@@ -54,7 +54,7 @@ pipeline {
                     }
                   }
                 } // dir("${REPO}")
-                runLibraryChecks("${WORKSPACE}/${REPO}")
+                runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
               } // steps
             }  // stage('Build examples')
             stage('Simulator tests') {
