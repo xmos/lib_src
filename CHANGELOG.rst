@@ -9,6 +9,7 @@ UNRELEASED
   * ADDED: Return code on asynchronous_fifo_consumer_get() to indicate if
     samples are valid or not
   * CHANGED: ASRC task zeros pulled samples if FIFO get is not valid
+  * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
 
 2.5.0
 -----
