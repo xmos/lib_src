@@ -122,7 +122,6 @@ pipeline {
                       withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                         sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
                         stash name: 'doc_asrc_output', includes: '_build/**'
-                        archiveArtifacts artifacts: "_build/**", allowEmptyArchive: true
                       }
                     } // withTools
                   } // withVenv
@@ -167,11 +166,11 @@ pipeline {
           }
         }
       }
-      //post {
-      //  cleanup {
-      //    xcoreCleanSandbox()
-      //  }
-      //} // post
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      } // post
     } // stage('Build Doc')
   } // stages
 } // pipeline
