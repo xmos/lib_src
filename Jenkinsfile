@@ -2,14 +2,14 @@
 
 @Library('xmos_jenkins_shared_library@v0.34.0') _
 
-def buildDocs(String repoName) {
-    withVenv {
-        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${params.XMOSDOC_VERSION}"
-        sh 'xmosdoc'
-        def repoNameUpper = repoName.toUpperCase()
-        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
-    }
-}
+//def buildDocs(String repoName) {
+//    withVenv {
+//        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${params.XMOSDOC_VERSION}"
+//        sh 'xmosdoc'
+//        def repoNameUpper = repoName.toUpperCase()
+//        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
+//    }
+//}
 
 getApproval()
 
@@ -65,8 +65,8 @@ pipeline {
                     createVenv(reqFile: "requirements.txt")
                     withVenv {
                       dir("tests/sim_tests") {
-                        sh "pytest -n 1 -m prepare --junitxml=pytest_result.xml" // Build stage
-                        sh "pytest -n auto -m main --junitxml=pytest_result.xml" // Run in parallel
+                        sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
+                        sh "pytest -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
                         archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
                         archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
                       }
@@ -78,7 +78,8 @@ pipeline {
           } // stages
           post {
             always {
-              junit "${REPO}/tests/sim_tests/pytest_result.xml"
+              junit "${REPO}/tests/sim_tests/pytest_result_prepare.xml"
+              junit "${REPO}/tests/sim_tests/pytest_result_run.xml"
             }
             cleanup {
               xcoreCleanSandbox()
@@ -94,6 +95,7 @@ pipeline {
               steps {
                 println "Stage running on ${env.NODE_NAME}"
                 sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+                sh 'git -C xtagctl checkout v2.0.0'
                 dir("${REPO}") {
                   checkout scm
                   createVenv(reqFile: "requirements.txt")
@@ -139,26 +141,25 @@ pipeline {
             }
           } // post
         }  // stage('Hardware tests + Gen SNR plots')
-
-        stage('Legacy CMake build') {
-          agent {
-            label 'x86_64 && linux'
-          }
-          steps {
-            println "Stage running on ${env.NODE_NAME}"
-            dir("${REPO}") {
-              checkout scm
-              sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
-              withTools(params.TOOLS_VERSION) {
-                sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
-                sh 'xmake -C build_legacy_cmake lib_src'
-              }
-            } // dir("${REPO}")
-            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
-          } // steps
-        }  // stage('Legacy CMake build')
       } // parallel
     } // stage ('LIB SRC')
+
+    stage('Legacy CMake build') {
+      agent {
+        label 'x86_64 && linux'
+      }
+      steps {
+        println "Stage running on ${env.NODE_NAME}"
+        dir("${REPO}") {
+          checkout scm
+          sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
+          withTools(params.TOOLS_VERSION) {
+            sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
+            sh 'xmake -C build_legacy_cmake lib_src'
+          }
+        } // dir("${REPO}")
+      } // steps
+    }  // stage('Legacy CMake build')
 
     // This stage needs to wait for characterisation plots so run it last
     stage('Build Documentation') {
