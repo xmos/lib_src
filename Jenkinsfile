@@ -156,6 +156,11 @@ pipeline {
               }
             } // dir("${REPO}")
           } // steps
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          } // post
         }  // stage('Legacy CMake build')
 
       } // parallel
