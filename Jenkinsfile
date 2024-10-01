@@ -2,14 +2,14 @@
 
 @Library('xmos_jenkins_shared_library@v0.34.0') _
 
-//def buildDocs(String repoName) {
-//    withVenv {
-//        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${params.XMOSDOC_VERSION}"
-//        sh 'xmosdoc'
-//        def repoNameUpper = repoName.toUpperCase()
-//        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
-//    }
-//}
+def buildDocs(String repoName) {
+    withVenv {
+        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${params.XMOSDOC_VERSION}"
+        sh 'xmosdoc'
+        def repoNameUpper = repoName.toUpperCase()
+        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
+    }
+}
 
 getApproval()
 
@@ -141,25 +141,25 @@ pipeline {
             }
           } // post
         }  // stage('Hardware tests + Gen SNR plots')
+        stage('Legacy CMake build') {
+          agent {
+            label 'x86_64 && linux'
+          }
+          steps {
+            println "Stage running on ${env.NODE_NAME}"
+            dir("${REPO}") {
+              checkout scm
+              sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
+              withTools(params.TOOLS_VERSION) {
+                sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
+                sh 'xmake -C build_legacy_cmake lib_src'
+              }
+            } // dir("${REPO}")
+          } // steps
+        }  // stage('Legacy CMake build')
+
       } // parallel
     } // stage ('LIB SRC')
-
-    stage('Legacy CMake build') {
-      agent {
-        label 'x86_64 && linux'
-      }
-      steps {
-        println "Stage running on ${env.NODE_NAME}"
-        dir("${REPO}") {
-          checkout scm
-          sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
-          withTools(params.TOOLS_VERSION) {
-            sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
-            sh 'xmake -C build_legacy_cmake lib_src'
-          }
-        } // dir("${REPO}")
-      } // steps
-    }  // stage('Legacy CMake build')
 
     // This stage needs to wait for characterisation plots so run it last
     stage('Build Documentation') {
@@ -179,8 +179,6 @@ pipeline {
           }
           withTools(params.TOOLS_VERSION) {
             withVenv {
-              //sh "sh doc/build_docs_ci.sh $XMOSDOC_VERSION"
-              //archiveArtifacts artifacts: "doc/_build/doc_build.zip", allowEmptyArchive: true
               buildDocs("${REPO}")
             }
           }
