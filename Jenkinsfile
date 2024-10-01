@@ -66,7 +66,7 @@ pipeline {
                     withVenv {
                       dir("tests/sim_tests") {
                         sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
-                        sh "pytest -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
+                        sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
                         archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
                         archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
                       }
