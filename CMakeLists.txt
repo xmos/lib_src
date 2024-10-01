@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.21.0)
 if(NOT DEFINED XCOMMON_CMAKE_VER)
 project(lib_src LANGUAGES C ASM)
 
+if(PROJECT_IS_TOP_LEVEL)
+    include(FetchContent)
+    FetchContent_Declare(
+      fwk_core
+      GIT_REPOSITORY https://github.com/xmos/fwk_core.git
+      GIT_TAG        v1.0.2
+    )
+    FetchContent_MakeAvailable(fwk_core)
+endif()
+
 # XS3 only libraries that use the Vector Processing Unit
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
     ## Source files

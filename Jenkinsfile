@@ -57,6 +57,7 @@ pipeline {
                 runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
               } // steps
             }  // stage('Build examples')
+
             stage('Simulator tests') {
               steps {
                 dir("${REPO}") {
@@ -138,6 +139,24 @@ pipeline {
             }
           } // post
         }  // stage('Hardware tests + Gen SNR plots')
+
+        stage('Legacy CMake build') {
+          agent {
+            label 'x86_64 && linux'
+          }
+          steps {
+            println "Stage running on ${env.NODE_NAME}"
+            dir("${REPO}") {
+              checkout scm
+              sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
+              withTools(params.TOOLS_VERSION) {
+                sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
+                sh 'xmake -C build_legacy_cmake lib_src'
+              }
+            } // dir("${REPO}")
+            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
+          } // steps
+        }  // stage('Legacy CMake build')
       } // parallel
     } // stage ('LIB SRC')
 
