@@ -9,3 +9,4 @@ Programming Guide
    fixed_ratio_src
    ../asrc_task/asrc_task
    ../../CHANGELOG
+   ../python/_build/rst/allPlots

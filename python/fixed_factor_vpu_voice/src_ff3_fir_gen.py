@@ -1,4 +1,4 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2023-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
 This script generates filter coefficient for a 48 - 16 kHz fixed-factor-of-3 sample rate conversion
@@ -97,7 +97,7 @@ def plot_response(taps, passband = False, freq_domain = True):
     title = Path(__file__).parent / title
     fig.savefig(title, dpi = 200)
 
-def generate_header_file(output_path, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
+def generate_header_file(output_path, num_taps_per_phase = NUM_TAPS_PER_PHASE,
                          num_phases = NUM_PHASES, name=None):
     header_template = """\
 // Copyright 2023 XMOS LIMITED.
@@ -143,7 +143,7 @@ extern const int32_t %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TAPS_PER
                                                     'taps_per_phase':num_taps_per_phase,
                                                     'phases':num_phases})
 
-def generate_c_file(output_path, taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE, 
+def generate_c_file(output_path, taps, mixed_taps, num_taps_per_phase = NUM_TAPS_PER_PHASE,
                     num_phases = NUM_PHASES, name=None):
     c_template = """\
 // Copyright 2023 XMOS LIMITED.
@@ -189,7 +189,7 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
 
     filename = "src_ff3_fir_coefs.c" if name is None else name + "_coefs.c"
     c_path = Path(output_path) / filename
-    
+
     with open(c_path, "w") as c_file:
         c_file.writelines(c_template % {    'name_up': name.upper(),
                                             'name': name,
@@ -199,17 +199,21 @@ const int32_t ALIGNMENT(8) %(name)s_coefs[%(name_up)s_NUM_PHASES][%(name_up)s_TA
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate FIR coefficiens for a 48 - 16 kHz polyphase SRC")
     parser.add_argument('--output_dir','-o', help='output path for filter files')
-    parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', default=True)
-    parser.add_argument('--gen_plots', '-gp', help='Generate .png files', default=False)
+    parser.add_argument('--gen_c_files','-gc', help='Generate .h and .c files', action='store_true')
+    parser.add_argument('--name','-n', help='Name of the generated files', default=None)
+    parser.add_argument('--gen_plots', '-gp', help='Generate .png files', action='store_true')
     parser.add_argument('--num_taps_per_phase', '-ntp', help='Number of filter taps per phase', default=NUM_TAPS_PER_PHASE, type=int)
     parser.add_argument('--num_phases', '-np', help='number of phases', default=NUM_PHASES, type=int)
     args = parser.parse_args()
 
+    print(f"Running In src_ff3_fir_gen.py. name = {args.name}, num_taps_per_phase = {args.num_taps_per_phase}")
+
     taps_fl, taps, mixed_taps = gen_coefs(args.num_taps_per_phase, args.num_phases)
 
     if args.gen_c_files:
-        generate_header_file(args.out_dir, args.num_taps_per_phase, args.num_phases)
-        generate_c_file(args.out_dir, taps, mixed_taps, args.num_taps_per_phase, args.num_phases)
+        Path(args.output_dir).mkdir(exist_ok=True, parents=True)
+        generate_header_file(args.output_dir, args.num_taps_per_phase, args.num_phases, name=args.name)
+        generate_c_file(args.output_dir, taps, mixed_taps, args.num_taps_per_phase, args.num_phases, name=args.name)
     if args.gen_plots:
         plot_response(taps_fl, False)
         plot_response(taps_fl, True)

@@ -17,9 +17,8 @@ from scipy.io.wavfile import write as writewav
 from pathlib import Path
 import subprocess
 import sys
-pkg_dir = Path(__file__).parent
-sys.path.append(os.path.join(str(pkg_dir), "../../tests/asrc_test/dut/with_xscope_fileio/python"))
-import run_xcoreai
+from utils import run_xcoreai
+from utils.src_test_utils import build_firmware_xcommon_cmake, build_host_app_xcommon_cmake
 
 
 class asrc_util:
@@ -67,28 +66,16 @@ class asrc_util:
         self.rstFile = ""
 
     def build_model_exe(self, target):
-        print(f"BUILD_MODEL_EXE: target = {target}")
+        build_host_app_xcommon_cmake
         file_dir = Path(__file__).resolve().parent
-        if target != "asrc_dut":
-            build_path = file_dir / "../../build"
-            build_path.mkdir(exist_ok=True)
-            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-            subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
-            bin_path = file_dir / f"{target}_/model"
-            subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
-            return f"{build_path}/tests/{target}_test/{target}_golden"
-        else:
-            build_path = file_dir / "../../build_dut"
-            toolchain = build_path / "../xmos_cmake_toolchain/xs3a.cmake"
-            build_path.mkdir(exist_ok=True)
-            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-            subprocess.run(f"cmake  -S.. -DCMAKE_TOOLCHAIN_FILE={str(toolchain)}", shell=True, cwd=str(build_path))
-            subprocess.run(f"make test_asrc_xscope_fileio",  shell=True, cwd=str(build_path))
-            return f"{build_path}/tests/asrc_test/test_asrc_xscope_fileio.xe"
-
-
-
-
+        if target == "asrc_dut":
+            testpath = file_dir / ".." / ".." / "tests" / "hw_tests" / "asrc_test_xscope_fileio"
+            build_firmware_xcommon_cmake(testpath)
+            return testpath / "bin" / "asrc_test_xscope_fileio.xe"
+        else: # x86 app
+            testpath = file_dir / ".." / ".." / "tests" / "sim_tests" / f"{target}_test"
+            build_host_app_xcommon_cmake(testpath)
+            return testpath / "bin" / f"{target}_test"
 
 
     # update the input frequencies
@@ -543,7 +530,7 @@ class asrc_util:
         # source	ipRate(Hz)	opRate(Hz)	fDev	ch	signals(Hz)  	SNR(dB)	THD(dB)  Total MIPS	MIPS(ch0)	MIPS(ch1) Text
         self.rstFile = self.rstFile + "\n\n\n" + ".. csv-table:: Data table"
         self.rstFile = self.rstFile + "\n"     + "  :file: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 14, 9, 9, 9, 9, 9"
+        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 9, 9, 9"
         self.rstFile = self.rstFile + "\n"     + "  :header-rows: 1"
         self.rstFile = self.rstFile + "\n"
 

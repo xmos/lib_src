@@ -5,6 +5,7 @@ version: 2.5.0
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
+  root_doc: doc/programming_guide/index.rst
   doxygen_projects:
     lib_xcore_math:
       doxyfile_path: doc/Doxyfile.inc
@@ -12,6 +13,7 @@ documentation:
     doc/programming_guide/index:
       pdf_title: "{{title}} - Programming Guide"
       pdf_filename: "{{project}}_programming_guide_v{{version}}"
-    doc/python/_build/rst/allPlots:
-      pdf_title: "{{title}} - \\\\ Performance Characterisation for SSRC ASRC DS3 and OS3"
-      pdf_filename: "{{project}}_performance_characterisation_v{{version}}"
+    README.rst:
+      pdf_title: '{{title}} (README)'
+      pdf_filename: '{{project}}_v{{version}}_readme'
+      pdf_short: yes
