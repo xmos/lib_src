@@ -6,6 +6,10 @@ lib_src change log
 
   * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
 
+  * Changes to dependencies:
+
+    - lib_logging: 3.1.1 -> 3.2.0
+
 2.6.0
 -----
 
