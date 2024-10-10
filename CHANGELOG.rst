@@ -5,6 +5,8 @@ lib_src change log
 -----
 
   * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
+  * FIXED: Warning about "ASRC_TASK using defaults" if using lib_src without
+    using asrc_task
 
   * Changes to dependencies:
 

@@ -12,7 +12,6 @@ set(APP_COMPILER_FLAGS  -Os
                         -g
                         -Wall
                         -Wno-xcore-fptrgroup
-                        -DASRC_TASK_CONFIG=1
                         -DDEBUG_ASRC_TASK=1
                         -report
                         -fcmdline-buffer-bytes=16384
