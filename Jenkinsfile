@@ -50,7 +50,7 @@ pipeline {
                   dir("examples") {
                     withTools(params.TOOLS_VERSION) {
                       sh 'cmake -G "Unix Makefiles" -B build'
-                      sh 'xmake -C build -j 8'
+                      sh 'xmake -C build -j 16'
                     }
                   }
                 } // dir("${REPO}")
@@ -121,7 +121,7 @@ pipeline {
                 dir("${REPO}/doc/python") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@develop"
+                      sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0"
                       withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                         sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
                         stash name: 'doc_asrc_output', includes: '_build/**'
