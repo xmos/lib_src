@@ -7,3 +7,5 @@ INPUT                  = ../lib_src/api ../lib_src/src ../lib_src/src/fixed_fact
 
 PREDEFINED             = C_API= EXTERN_C= UNSAFE= __DOXYGEN__=1
 
+EXTRACT_ALL            = YES
+
