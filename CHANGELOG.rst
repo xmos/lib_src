@@ -1,13 +1,13 @@
 lib_src change log
 ==================
 
-v2.7.0
-------
+2.7.0
+-----
 
   * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
 
-v2.6.0
-------
+2.6.0
+-----
 
   * ADDED: Documentation characterising latency for ASRC and associated
     subsystems
