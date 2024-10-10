@@ -6,8 +6,11 @@ def buildDocs(String repoName) {
     withVenv {
         sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${params.XMOSDOC_VERSION}"
         sh 'xmosdoc'
-        def repoNameUpper = repoName.toUpperCase()
-        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
+
+        // Zip and archive doc files
+        zip dir: "doc/_build/html", zipFile: "lib_src_docs_html.zip"
+        archiveArtifacts artifacts: "lib_src_docs_html.zip"
+        archiveArtifacts artifacts: "doc/_build/pdf/lib_src*.pdf"
     }
 }
 
