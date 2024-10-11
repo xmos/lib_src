@@ -235,6 +235,8 @@ SRC Filter list
 A complete list of the filters supported by the SRC library, both SSRC and ASRC, is shown in :numref:`fig_src_filters`. The filters are implemented in C within the ``FilterDefs.c`` function and the coefficients can be found in the ``/FilterData`` folder. The particular combination of filters cascaded together for a given sample rate change is specified in ``ssrc.c`` and ``asrc.c``.
 
 
+|beginfullwidth|
+
 .. _fig_src_filters:
 .. list-table:: SRC Filter Specifications
      :header-rows: 2
@@ -368,7 +370,7 @@ A complete list of the filters supported by the SRC library, both SSRC and ASRC,
        - 1920
        - Adaptive polyphase prototype filter
 
-
+|endfullwidth|
 
 
 SRC File Structure and Overview

@@ -3,6 +3,8 @@
 
 The ASRC algorithm runs a series of cascaded FIR filters to perform the rate conversion including a final adaptive filter to handle the varying rate change between the input and the output. The latency or group delay through the filter depends on the input rate and output rate and the input block size. :numref:`fig_asrc_delay` quantifies the amount of latency in milliseconds seen from the filtering. For input block sizes of greater than four please add `1000 * (INPUT_BLOCK_SIZE - 4) / INPUT_SAMPLE_RATE` milliseconds to the numbers in the table.
 
+|beginfullwidth|
+
 .. _fig_asrc_delay:
 .. list-table:: ASRC total filter delay by sample rate in milliseconds for input block size of four
      :header-rows: 2
@@ -71,3 +73,6 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 0.292
        - 0.148
        - 0.146
+
+|endfullwidth|
+
