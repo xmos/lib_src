@@ -6,10 +6,6 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
 .. tip::
   :numref:`fig_ssrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
-
-
- |beginfullwidth|
-
 .. _fig_ssrc_mhz:
 .. list-table:: SSRC Processor Usage per Channel (MHz) for XCORE-200
      :header-rows: 2
@@ -79,4 +75,4 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 80 MHz
        - 4 MHz
 
-|endfullwidth|
+
