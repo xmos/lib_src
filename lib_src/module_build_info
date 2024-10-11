@@ -1,6 +1,6 @@
-VERSION = 2.5.0
+VERSION = 2.7.0
 
-DEPENDENT_MODULES = lib_logging(>=3.2.0)
+DEPENDENT_MODULES = lib_logging(>=3.3.0)
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -Wno-missing-braces \

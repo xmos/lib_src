@@ -1,15 +1,25 @@
 lib_src change log
 ==================
 
-UNRELEASED
-----------
+2.7.0
+-----
+
+  * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
+  * FIXED: Warning about "ASRC_TASK using defaults" if using lib_src without
+    using asrc_task
+
+  * Changes to dependencies:
+
+    - lib_logging: 3.2.0 -> 3.3.0
+
+2.6.0
+-----
 
   * ADDED: Documentation characterising latency for ASRC and associated
     subsystems
   * ADDED: Return code on asynchronous_fifo_consumer_get() to indicate if
     samples are valid or not
   * CHANGED: ASRC task zeros pulled samples if FIFO get is not valid
-  * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
 
 2.5.0
 -----

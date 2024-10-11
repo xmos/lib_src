@@ -91,7 +91,6 @@ extern void setup_asrc_io_custom_callback(asrc_in_out_t *unsafe asrc_io);
 int main(unsigned argc, char * unsafe argv[argc])
 {
     chan c_producer;
-    chan c_control[2];
 
     // FIFO and ASRC I/O declaration. Global to allow producer and consumer to access it
     #define FIFO_LENGTH     (SRC_MAX_NUM_SAMPS_OUT * 3) // Half full is target so *2 is nominal size but we need wiggle room at startup
