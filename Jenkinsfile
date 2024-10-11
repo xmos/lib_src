@@ -175,7 +175,9 @@ pipeline {
           }
           withTools(params.TOOLS_VERSION) {
             withVenv {
-              buildDocs("${REPO}")
+              warnError("Docs") {
+                buildDocs("${REPO}")
+              }
             }
           }
         }
