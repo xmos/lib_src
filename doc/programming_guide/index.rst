@@ -3,10 +3,8 @@ Programming Guide
 
 .. toctree::
 
-   ../../README
    multi_rate_hifi_src
-   ../asynchronous_fifo/asynchronous_fifo
    fixed_ratio_src
+   ../asynchronous_fifo/asynchronous_fifo
    ../asrc_task/asrc_task
-   ../../CHANGELOG
    ../python/_build/rst/allPlots
