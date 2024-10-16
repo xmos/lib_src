@@ -505,15 +505,20 @@ class asrc_util:
         return thd
 
 
-    def makeRST(self, file, ipRate, opRate, fDev, sims):
+    # returns a string containing the RST for this plot figure, without modifying self.rstFile (due to needing to insert a list of references before the plots)
+    def makePlotRST(self, file, ipRate, opRate, fDev, sims):
         relFile = os.path.relpath(self.outputFolder, self.rstFolder) + "/" + file
         fsi = "{:,d}Hz".format(self.sampleRates[ipRate])
         fso = "{:,d}Hz".format(self.sampleRates[opRate])
         ferr = "{:f}".format(fDev)
         plots = ", ".join(sims)
-        self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "   :scale: {}".format("90%")
-        self.rstFile = self.rstFile + "\n\n"   + "   Input Fs: {}, Output Fs: {}, Fs error: {}, Results for: {}".format(fsi, fso, ferr, plots)
+        plotRST = (
+            "\n\n\n" + f".. _{Path(file).stem}:"
+            + "\n"   + f".. figure:: {relFile}"
+            + "\n"   + "   :scale: 90%"
+            + "\n\n" + f"   Input Fs: {fsi}, Output Fs: {fso}, Fs error: {ferr}, Results for: {plots}"
+        )
+        return plotRST
 
 
     def addRSTHeader(self, title, level):

@@ -22,7 +22,7 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v5.5.2', // https://github.com/xmos/lib_src/issues/141
+      defaultValue: 'v6.1.2',
       description: 'The xmosdoc version')
   }
   stages {
@@ -167,16 +167,14 @@ pipeline {
         dir("${REPO}") {
           checkout scm
           createVenv(reqFile: "requirements.txt")
-        }
 
-        dir("${REPO}") {
           dir("doc/python") {
             unstash 'doc_asrc_output'
           }
           withTools(params.TOOLS_VERSION) {
             withVenv {
               warnError("Docs") {
-                buildDocs("${REPO}")
+                buildDocs()
               }
             }
           }

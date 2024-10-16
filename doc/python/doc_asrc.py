@@ -64,6 +64,9 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
         # Choose the o/p rate and freq deviation
         U.setOpRate(opRate, fDev)
 
+        # Need to store all the RST for the plots to append it after the list of references has been printed for this output rate
+        plots_rst = ""
+
         no_results = True # the RST contains headings for all fDev, opRate and ipRate - so if this is an unsupported combination, add a warning to thr RST.
         for ipRate in U.allRates:# for each of the possible input sample rates
             # opportunity to choose different test freq, which also sets a safer fft size
@@ -77,7 +80,7 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
 
             # Iterate over all the input data files and channels
             for channels in ipFiles: # For each input sata set there will be an output one for each channel
-                for channel in channels[0:2]:
+                for channel_idx, channel in enumerate(channels[0:2]):
                     print(channel)
 
                     if len(simLog[channel]) > 0: #at least one simulation ran for this combination of iprate, oprate and fdev
@@ -108,10 +111,15 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
 
                         #Plot the results
                         plotFile = U.plotFFT(U.plot_data, combine=False, title=U.makePlotTitle(simLog, channel), subtitles=U.plot_label, log=True, text=U.plot_text) # plots a grid of charts, one per simulation model
-                        U.makeRST(plotFile, ipRate, opRate, fDev, simLog[channel].keys()) # add this plot to a list to save as an RST file later
+                        plots_rst += U.makePlotRST(plotFile, ipRate, opRate, fDev, simLog[channel].keys()) # add this plot to a list to save as an RST file later
+                        U.addRSTText(f"* :ref:`Input Fs: {U.sampleRates[ipRate]:,d}Hz, channel {channel_idx}<{Path(plotFile).stem}>`")
                         U.resetPlotInfo() # otherwise the next iteration of rates etc will add more plots to this instead of starting a new plot.
         if no_results:
-            U.addRSTText("No SRC available for this scenario.")
+            U.addRSTText("* No SRC available for this scenario.")
+        else:
+            U.addRSTText(plots_rst)
+            # Insert a \FloatBarrier to flush all figures, preventing "Too many unprocessed floats" error from latex
+            U.addRSTText(".. raw:: latex\n\n   \\FloatBarrier\n")
 
 U.log2csv() # Save the log file
 U.addRSTHeader("Tabulated data", 2) # start the RST it generates with a title
