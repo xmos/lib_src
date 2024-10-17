@@ -1,19 +1,25 @@
+# This file relates to internal XMOS infrastructure and should be ignored by external users
 ---
-project: lib_src
-title: SAMPLE RATE CONVERSION
+lib_name: lib_src
+project: '{{lib_name}}'
+title: '{{lib_name}}: Sample rate conversion'
 version: 2.7.0
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
-  root_doc: doc/programming_guide/index.rst
+  root_doc: doc/rst/lib_src.rst
+  cognidox_part_number: XM-010383-UG
   doxygen_projects:
-    lib_xcore_math:
+    lib_src:
       doxyfile_path: doc/Doxyfile.inc
   pdfs:
-    doc/programming_guide/index:
-      pdf_title: "{{title}} - Programming Guide"
-      pdf_filename: "{{project}}_programming_guide_v{{version}}"
+    doc/rst/lib_src.rst:
+      pdf_title: '{{title}}'
+      pdf_filename: '{{lib_name}}_v{{version}}'
     README.rst:
       pdf_title: '{{title}} (README)'
-      pdf_filename: '{{project}}_v{{version}}_readme'
+      pdf_filename: '{{lib_name}}_v{{version}}_readme'
       pdf_short: yes
+software:
+  cognidox_part_number: XM-010388-SM
+
