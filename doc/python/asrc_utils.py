@@ -135,7 +135,11 @@ class asrc_util:
         sigList = []
         for s in self.sig[ch]:
             sigList.append("{:.3f}".format(float(mp.fmul(realRate ,mp.fdiv(s, self.fftPoints)))))
-        signals = ";".join(sigList)
+        # print single frequency of signal or range if multiple frequencies
+        if len(sigList) == 1:
+            signals = sigList[0]
+        else:
+            signals = f"{sigList[-1]}-{sigList[0]}"
         #info = {"source":source, "ipRate(Hz)":self.sampleRates[ipRate], "opRate(Hz)":self.sampleRates[opRate], "fDev":fDev, "ch":ch, "signals(Hz)":signals, "SNR(dB)":SNR, "THD(dB)":THD,"Total MIPS":totalmips, "MIPS(ch0)":ch0mips, "MIPS(ch1)":ch1mips, "Text":txt}
         info = {"source":source, "ipRate(Hz)":str(self.sampleRates[ipRate]), "opRate(Hz)":str(self.sampleRates[opRate]), "fDev":str(fDev), "ch":str(ch), "signals(Hz)":signals, "SNR(dB)":"{:.1f}".format(SNR), "THD(dB)":THD}
         self.log.append(info)
