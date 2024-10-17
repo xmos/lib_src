@@ -4,10 +4,10 @@ The SSRC algorithm runs a series of cascaded FIR filters to perform the rate con
   :numref:`fig_ssrc_mhz` shows the worst case  MHz consumption at a given sample rate using the minimum block size of 4 input samples with dithering disabled. The MHz requirement can be reduced by around 8-12%, depending on sample rate, by increasing the input block size to 16. It is not usefully reduced by increasing block size beyond 16.
 
 .. tip::
-  :numref:`fig_ssrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+  :numref:`fig_ssrc_mhz` is timed on xcore-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_ssrc_mhz:
-.. list-table:: SSRC Processor Usage per Channel (MHz) for XCORE-200
+.. list-table:: SSRC Processor Usage per Channel (MHz) for xcore-200
      :header-rows: 2
 
      * -

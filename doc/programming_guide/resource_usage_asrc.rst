@@ -7,12 +7,12 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
   Typically some performance headroom is needed for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication.
 
 .. tip::
-  :numref:`fig_asrc_mhz` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+  :numref:`fig_asrc_mhz` is timed on xcore-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz:
-.. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance for XCORE-200
+.. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance for xcore-200
      :header-rows: 2
-
+     
      * -
        -
        - Output rate
@@ -61,7 +61,7 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 64 MHz
        - 84 MHz
        - 87 MHz
-     * - 
+     * -
        - 176.4 kHz
        - 60 MHz
        - 66 MHz
@@ -78,11 +78,11 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 109 MHz
        - 115 MHz
 
-.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xCORE-200 device is 100 MHz (500/5) however an XCORE-AI device running at 600 MHz can provide 120 MHz logical cores.
+.. caution:: Configurations requiring more than 100 MHz may not be able run in real time on a single logical core. The performance limit for a single core on a 500 MHz xcore-200 device is 100 MHz (500/5) however an xcore-ai device running at 600 MHz can provide 120 MHz logical cores.
 
 
 .. tip::
-  :numref:`fig_asrc_mhz2` is timed on XCORE-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
+  :numref:`fig_asrc_mhz2` is timed on xcore-200. When using xcore.ai the performance requirement is roughly halved due to VPU optimisations.
 
 .. _fig_asrc_mhz2:
 .. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
@@ -96,7 +96,7 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
        -
        -
        -
-     * - 
+     * -
        -
        - 44.1 kHz
        - 48 kHz
@@ -112,7 +112,7 @@ The ASRC algorithm runs a series of cascaded FIR filters to perform the rate con
        - 30 MHz
        - 40 MHz
        - 40 MHz
-     * - 
+     * -
        - 48 kHz
        - 39 MHz
        - 31 MHz
