@@ -539,7 +539,7 @@ class asrc_util:
         # source	ipRate(Hz)	opRate(Hz)	fDev	ch	signals(Hz)  	SNR(dB)	THD(dB)  Total MIPS	MIPS(ch0)	MIPS(ch1) Text
         self.rstFile = self.rstFile + "\n\n\n" + ".. csv-table:: Data table"
         self.rstFile = self.rstFile + "\n"     + "  :file: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 9, 9, 9"
+        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 4, 12, 9, 10"
         self.rstFile = self.rstFile + "\n"     + "  :header-rows: 1"
         self.rstFile = self.rstFile + "\n"
 
