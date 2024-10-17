@@ -135,7 +135,11 @@ class asrc_util:
         sigList = []
         for s in self.sig[ch]:
             sigList.append("{:.3f}".format(float(mp.fmul(realRate ,mp.fdiv(s, self.fftPoints)))))
-        signals = ";".join(sigList)
+        # print single frequency of signal or range if multiple frequencies
+        if len(sigList) == 1:
+            signals = sigList[0]
+        else:
+            signals = f"{sigList[-1]}-{sigList[0]}"
         #info = {"source":source, "ipRate(Hz)":self.sampleRates[ipRate], "opRate(Hz)":self.sampleRates[opRate], "fDev":fDev, "ch":ch, "signals(Hz)":signals, "SNR(dB)":SNR, "THD(dB)":THD,"Total MIPS":totalmips, "MIPS(ch0)":ch0mips, "MIPS(ch1)":ch1mips, "Text":txt}
         info = {"source":source, "ipRate(Hz)":str(self.sampleRates[ipRate]), "opRate(Hz)":str(self.sampleRates[opRate]), "fDev":str(fDev), "ch":str(ch), "signals(Hz)":signals, "SNR(dB)":"{:.1f}".format(SNR), "THD(dB)":THD}
         self.log.append(info)
@@ -505,15 +509,20 @@ class asrc_util:
         return thd
 
 
-    def makeRST(self, file, ipRate, opRate, fDev, sims):
+    # returns a string containing the RST for this plot figure, without modifying self.rstFile (due to needing to insert a list of references before the plots)
+    def makePlotRST(self, file, ipRate, opRate, fDev, sims):
         relFile = os.path.relpath(self.outputFolder, self.rstFolder) + "/" + file
         fsi = "{:,d}Hz".format(self.sampleRates[ipRate])
         fso = "{:,d}Hz".format(self.sampleRates[opRate])
         ferr = "{:f}".format(fDev)
         plots = ", ".join(sims)
-        self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "   :scale: {}".format("90%")
-        self.rstFile = self.rstFile + "\n\n"   + "   Input Fs: {}, Output Fs: {}, Fs error: {}, Results for: {}".format(fsi, fso, ferr, plots)
+        plotRST = (
+            "\n\n\n" + f".. _{Path(file).stem}:"
+            + "\n"   + f".. figure:: {relFile}"
+            + "\n"   + "   :scale: 90%"
+            + "\n\n" + f"   Input Fs: {fsi}, Output Fs: {fso}, Fs error: {ferr}, Results for: {plots}"
+        )
+        return plotRST
 
 
     def addRSTHeader(self, title, level):
@@ -530,7 +539,7 @@ class asrc_util:
         # source	ipRate(Hz)	opRate(Hz)	fDev	ch	signals(Hz)  	SNR(dB)	THD(dB)  Total MIPS	MIPS(ch0)	MIPS(ch1) Text
         self.rstFile = self.rstFile + "\n\n\n" + ".. csv-table:: Data table"
         self.rstFile = self.rstFile + "\n"     + "  :file: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 9, 9, 9"
+        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 4, 12, 9, 10"
         self.rstFile = self.rstFile + "\n"     + "  :header-rows: 1"
         self.rstFile = self.rstFile + "\n"
 
