@@ -17,9 +17,8 @@ from scipy.io.wavfile import write as writewav
 from pathlib import Path
 import subprocess
 import sys
-pkg_dir = Path(__file__).parent
-sys.path.append(os.path.join(str(pkg_dir), "../../tests/asrc_test/dut/with_xscope_fileio/python"))
-import run_xcoreai
+from utils import run_xcoreai
+from utils.src_test_utils import build_firmware_xcommon_cmake, build_host_app_xcommon_cmake
 
 
 class asrc_util:
@@ -67,28 +66,16 @@ class asrc_util:
         self.rstFile = ""
 
     def build_model_exe(self, target):
-        print(f"BUILD_MODEL_EXE: target = {target}")
+        build_host_app_xcommon_cmake
         file_dir = Path(__file__).resolve().parent
-        if target != "asrc_dut":
-            build_path = file_dir / "../../build"
-            build_path.mkdir(exist_ok=True)
-            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-            subprocess.run("cmake  ..", shell=True, cwd=str(build_path))
-            bin_path = file_dir / f"{target}_/model"
-            subprocess.run(f"make {target}_golden",  shell=True, cwd=str(build_path))
-            return f"{build_path}/tests/{target}_test/{target}_golden"
-        else:
-            build_path = file_dir / "../../build_dut"
-            toolchain = build_path / "../xmos_cmake_toolchain/xs3a.cmake"
-            build_path.mkdir(exist_ok=True)
-            subprocess.run("rm -rf CMakeCache.txt CMakeFiles/", shell=True, cwd=str(build_path))
-            subprocess.run(f"cmake  -S.. -DCMAKE_TOOLCHAIN_FILE={str(toolchain)}", shell=True, cwd=str(build_path))
-            subprocess.run(f"make test_asrc_xscope_fileio",  shell=True, cwd=str(build_path))
-            return f"{build_path}/tests/asrc_test/test_asrc_xscope_fileio.xe"
-
-
-
-
+        if target == "asrc_dut":
+            testpath = file_dir / ".." / ".." / "tests" / "hw_tests" / "asrc_test_xscope_fileio"
+            build_firmware_xcommon_cmake(testpath)
+            return testpath / "bin" / "asrc_test_xscope_fileio.xe"
+        else: # x86 app
+            testpath = file_dir / ".." / ".." / "tests" / "sim_tests" / f"{target}_test"
+            build_host_app_xcommon_cmake(testpath)
+            return testpath / "bin" / f"{target}_test"
 
 
     # update the input frequencies
@@ -148,7 +135,11 @@ class asrc_util:
         sigList = []
         for s in self.sig[ch]:
             sigList.append("{:.3f}".format(float(mp.fmul(realRate ,mp.fdiv(s, self.fftPoints)))))
-        signals = ";".join(sigList)
+        # print single frequency of signal or range if multiple frequencies
+        if len(sigList) == 1:
+            signals = sigList[0]
+        else:
+            signals = f"{sigList[-1]}-{sigList[0]}"
         #info = {"source":source, "ipRate(Hz)":self.sampleRates[ipRate], "opRate(Hz)":self.sampleRates[opRate], "fDev":fDev, "ch":ch, "signals(Hz)":signals, "SNR(dB)":SNR, "THD(dB)":THD,"Total MIPS":totalmips, "MIPS(ch0)":ch0mips, "MIPS(ch1)":ch1mips, "Text":txt}
         info = {"source":source, "ipRate(Hz)":str(self.sampleRates[ipRate]), "opRate(Hz)":str(self.sampleRates[opRate]), "fDev":str(fDev), "ch":str(ch), "signals(Hz)":signals, "SNR(dB)":"{:.1f}".format(SNR), "THD(dB)":THD}
         self.log.append(info)
@@ -518,15 +509,20 @@ class asrc_util:
         return thd
 
 
-    def makeRST(self, file, ipRate, opRate, fDev, sims):
+    # returns a string containing the RST for this plot figure, without modifying self.rstFile (due to needing to insert a list of references before the plots)
+    def makePlotRST(self, file, ipRate, opRate, fDev, sims):
         relFile = os.path.relpath(self.outputFolder, self.rstFolder) + "/" + file
         fsi = "{:,d}Hz".format(self.sampleRates[ipRate])
         fso = "{:,d}Hz".format(self.sampleRates[opRate])
         ferr = "{:f}".format(fDev)
         plots = ", ".join(sims)
-        self.rstFile = self.rstFile + "\n\n\n" + ".. figure:: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "   :scale: {}".format("90%")
-        self.rstFile = self.rstFile + "\n\n"   + "   Input Fs: {}, Output Fs: {}, Fs error: {}, Results for: {}".format(fsi, fso, ferr, plots)
+        plotRST = (
+            "\n\n\n" + f".. _{Path(file).stem}:"
+            + "\n"   + f".. figure:: {relFile}"
+            + "\n"   + "   :scale: 90%"
+            + "\n\n" + f"   Input Fs: {fsi}, Output Fs: {fso}, Fs error: {ferr}, Results for: {plots}"
+        )
+        return plotRST
 
 
     def addRSTHeader(self, title, level):
@@ -543,7 +539,7 @@ class asrc_util:
         # source	ipRate(Hz)	opRate(Hz)	fDev	ch	signals(Hz)  	SNR(dB)	THD(dB)  Total MIPS	MIPS(ch0)	MIPS(ch1) Text
         self.rstFile = self.rstFile + "\n\n\n" + ".. csv-table:: Data table"
         self.rstFile = self.rstFile + "\n"     + "  :file: {}".format(relFile)
-        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 6, 14, 9, 9, 9, 9, 9"
+        self.rstFile = self.rstFile + "\n"     + "  :widths: 8, 9, 9, 9, 4, 12, 9, 10"
         self.rstFile = self.rstFile + "\n"     + "  :header-rows: 1"
         self.rstFile = self.rstFile + "\n"
 

@@ -13,14 +13,12 @@ setuptools.setup(
     name='lib_src',
     packages=setuptools.find_packages(),
     install_requires=[
-        'pytest',
-        'matplotlib',
-        'numpy',
-        'soundfile',
-        'pytest-xdist',
-        'scipy',
-        'mpmath',
-        'bitstring'
+        'matplotlib==3.9.2',
+        'numpy==2.1.1',
+        'soundfile==0.12.1',
+        'scipy==1.14.1',
+        'mpmath==1.3.0',
+        'bitstring==4.2.3'
     ],
     dependency_links=[
     ],

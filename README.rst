@@ -5,7 +5,7 @@ lib_src: Sample Rate Conversion
 ###############################
 
 :vendor: XMOS
-:version: 2.6.0
+:version: 2.7.0
 :scope: General Use
 :description: SSRC/ASRC for xcore
 :category: Audio
@@ -38,9 +38,9 @@ Features
     * No external components (PLL or memory) required.
   * Fixed factor functionality:
     * Synchronous fixed factor of 3 downsample and oversample functions supporting either HiFi quality
-      or reduced resource requirements for voice applications.
+    or reduced resource requirements for voice applications.
     * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
-      optimized for the XS3 Vector Processing Unit.
+    optimized for the XS3 Vector Processing Unit.
   * Asynchronous FIFO:
     * Non-blocking thread-safe FIFO for use with ASRC systems.
     * Built in phase detector and control loop to determine the ASRC conversion ratio
