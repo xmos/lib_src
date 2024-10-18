@@ -1,7 +1,0 @@
-# python_version 3.12.1
-# pip_version 24.2
-
--e ./python
--e ./tests
-
-# Files are specified in setup.py

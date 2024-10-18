@@ -62,11 +62,11 @@ pipeline {
 
             stage('Simulator tests') {
               steps {
-                dir("${REPO}") {
+                dir("${REPO}/tests") {
                   withTools(params.TOOLS_VERSION) {
                     createVenv(reqFile: "requirements.txt")
                     withVenv {
-                      dir("tests/sim_tests") {
+                      dir("sim_tests") {
                         sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
                         sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
                         archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
@@ -99,29 +99,32 @@ pipeline {
                 sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
                 sh 'git -C xtagctl checkout v2.0.0'
                 dir("${REPO}") {
-                  checkout scm
-                  createVenv(reqFile: "requirements.txt")
-                }
-
-                dir("${REPO}/tests/hw_tests") {
-                  withTools(params.TOOLS_VERSION) {
-                    sh "cmake -G 'Unix Makefiles' -B build"
-                    sh "xmake -C build -j 8"
-                    withVenv {
-                      sh "pip install -e ${WORKSPACE}/xtagctl"
-                      withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
-                        sh "pytest -n1 --junitxml=pytest_hw.xml"
-                        sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
-                      }
-                    } // withVenv
-                  } // withTools
-                } // dir("${REPO}/tests/hw_tests")
+                    checkout scm
+                    dir("tests") {
+                        createVenv(reqFile: "requirements.txt")
+                        dir("hw_tests") {
+                            withTools(params.TOOLS_VERSION) {
+                                sh "cmake -G 'Unix Makefiles' -B build"
+                                sh "xmake -C build -j 8"
+                                withVenv {
+                                    sh "pip install -e ${WORKSPACE}/xtagctl"
+                                    withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
+                                        sh "pytest -n1 --junitxml=pytest_hw.xml"
+                                        sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
+                                    }
+                                } // withVenv
+                            } // withTools
+                        } // dir(hw_tests")
+                    } // dir(tests)
+                } // dir ("${REPO}")
               } //steps
             } // stage('HW tests')
             stage('Generate SNR plots') {
               steps {
                 dir("${REPO}/doc/python") {
+                  createVenv(reqFile: "requirements.txt")
                   withVenv {
+                    sh "pip install -e ${WORKSPACE}/xtagctl"
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0"
                       withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
@@ -177,7 +180,7 @@ pipeline {
         println "Stage running on ${env.NODE_NAME}"
         dir("${REPO}") {
           checkout scm
-          createVenv(reqFile: "requirements.txt")
+          createVenv(reqFile: "doc/python/requirements.txt")
 
           dir("doc/python") {
             unstash 'doc_asrc_output'
