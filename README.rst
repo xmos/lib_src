@@ -17,7 +17,7 @@ Summary
 *******
 
 The XMOS Sample Rate Conversion (SRC) library provides both synchronous and asynchronous audio
-sample rate conversion functions for use on xcore multicore micro-controllers.
+sample rate conversion functions for use on `xcore` devices.
 
 In systems where the rate change is exactly equal to the ratio of nominal rates, synchronous sample rate conversion (SSRC) provides efficient and high performance rate conversion. Where the input and output rates are not locked by a common clock or clocked by an exact rational frequency ratio, the Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two different clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where there are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
 
@@ -31,7 +31,7 @@ Features
     * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192 KHz input and output sample rates.
     * 32 bit PCM input and output data in Q1.31 signed format.
     * Optional output dithering to 24 bit using Triangular Probability Density Function (TPDF).
-    * Optimized for xCORE-200 instruction set with dual-issue and for the Vector Processing Unit for xcore.ai.
+    * Optimized for `xcore-200` instruction set with dual-issue and for the Vector Processing Unit for `xcore.ai`.
     * Block based processing - Minimum 4 samples input per call, must be power of 2.
     * Up to 10000 ppm sample rate ratio deviation from nominal rate (ASRC only).
     * Very high quality - SNR greater than 135 dB (ASRC) or 140 dB (SSRC), with THD of less than 0.0001% (reference 1KHz).
@@ -55,10 +55,10 @@ Features
 Known issues
 ************
 
-  * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
-    currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
-    To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
-    The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
+  * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
+    optimised for the XS3 Vector Processing Unit currently overflow rather than saturate in cases
+    where a full scale input causes a perturbation above full scale at the output.
+    To avoid this scenario, ensure that the input amplitude is always 3.5 dB below full scale.
 
 ****************
 Development repo

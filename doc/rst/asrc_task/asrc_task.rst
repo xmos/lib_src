@@ -1,21 +1,22 @@
+|newpage|
+
 .. _asrc_task_header:
 
+*********
 ASRC Task
----------
+*********
 
-Introduction
-............
-
-The ASRC library provides a function call that operates on blocks of samples whereas typical XMOS audio IO libraries provide streaming audio one sample at a time. The ASRC task wraps up the core ASRC function with all of the other lower level APIs (eg. FIFO) and required sample change and initialisation logic. It provides a simple-to-use and generic ASRC conversion block suitable for integration into practical designs. It is fully re-entrant permitting multiple instances within a project supporting multiple (or bi-directional) sample rates and audio clock domain bridges.
+The ASRC library provides a function call that operates on blocks of samples whereas typical `XMOS`
+audio IO libraries provide streaming audio one sample at a time. The ASRC task wraps up the core ASRC function with all of the other lower level APIs (eg. FIFO) and required sample change and initialisation logic. It provides a simple-to-use and generic ASRC conversion block suitable for integration into practical designs. It is fully re-entrant permitting multiple instances within a project supporting multiple (or bi-directional) sample rates and audio clock domain bridges.
 
 .. figure:: images/asrc_task_layers.drawio.png
    :scale: 50 %
    :alt: ASRC Thread Usage
 
 Operation
-.........
+==========
 
-The ASRC task handles bridging between two asynchronous audio sources. It has an input side and output side. The input samples are provided over a channel allowing the source to be placed on a different XCORE tile if needed. The output side sample interface is via an asynchronous FIFO meaning the consumer must reside on the same XCORE tile as the ASRC. The ASRC task uses a minimum of one thread but may be configured to use many depending on processing requirements.
+The ASRC task handles bridging between two asynchronous audio sources. It has an input side and output side. The input samples are provided over a channel allowing the source to be placed on a different `xcore` tile if needed. The output side sample interface is via an asynchronous FIFO meaning the consumer must reside on the same `xcore` tile as the ASRC. The ASRC task uses a minimum of one thread but may be configured to use many depending on processing requirements.
 
 .. figure:: images/ASRC_block_threads.png
    :scale: 80 %
@@ -37,14 +38,14 @@ Because the required compute for multi-channel systems may exceed the performanc
 
 The number of threads that are required depends on the required channel count and sample rates required. Higher sample rates require more MIPS. The amount of thread MHz (and consequently how many threads) required can be *roughly* calculated using the following formulae:
 
-    - Total thread MHz required for xcore.ai systems = 0.15 * Max channel count * (Max SR input kHz + Max SR output kHz)
-    - Total thread MHz required for xcore-200 systems = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
+    - Total thread MHz required for `xcore.ai` systems = 0.15 * Max channel count * (Max SR input kHz + Max SR output kHz)
+    - Total thread MHz required for `xcore-200` systems = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
 
 The difference between the performance requirement between the two architectures is due to xcore.ai supporting a Vector Processing Unit (VPU) which allows acceleration of the internal filters used by the ASRC. For example:
 
-    - A two channel system supporting up to 192kHz input and output will require about (0.15 * (192 + 192) * 2) ~= 115 thread MHz. This means a single thread (assuming no more than 5 active threads on an xcore.ai device with a 600MHz clock) will likely be capable of handling this stream.
+    - A two channel system supporting up to 192kHz input and output will require about (0.15 * (192 + 192) * 2) ~= 115 thread MHz. This means a single thread (assuming no more than 5 active threads on an `xcore.ai` device with a 600MHz clock) will likely be capable of handling this stream.
 
-    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an xcore.ai device with a 600MHz clock).
+    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an `xcore.ai` device with a 600MHz clock).
 
 In reality the amount of thread MHz needed will be lower than the above formulae suggest since subsequent ASRC channels after the first can share some of the calculations. This results in about at 10% performance requirement reduction per additional channel per worker thread. Increasing the input frame size in the ASRC task may also reduce the MHz requirement a few % at the cost of larger buffers and a slight latency increase.
 
@@ -56,8 +57,8 @@ It is strongly recommended that you test the system for your desired channel cou
 The low level ASRC processing function call API accepts a minimum input frame size of four whereas most XMOS audio interfaces provide a single sample period frame. The ASRC subsystem integrates a serial to block back to serial conversion to support this. The input side works by stealing cycles from the ASRC using an interrupt and notifies the main ASRC loop using a single channel end when a complete frame of double buffered is available to process. The ASRC output side is handled by the asynchronous FIFO which supports a block `put` with single sample `get` and thus provides de-serialisation intrinsically.
 
 
-Latency Characterisation
-........................
+Latency characterisation
+========================
 
 The latency shown by ASRC Task depends on many factors:
 
@@ -73,29 +74,29 @@ The ASRC sample block processing size is nominally 4 but can be increased to 8, 
 
 FIFO sizing is the major variable which the user has control over. The FIFO size is configurable and is a trade-off between PPM lock range required, output sample rate and desired latency. It is also partly governed by the maximum upsample ratio since, when upsampling, multiple samples are produced for a single input sample and hence the FIFO needs to be larger to accommodate a whole block.
 
-Please see the :ref:`Practical FIFO sizing <asynchronous_FIFO_practical_sizing>` section for more details.
+See the :ref:`Practical FIFO sizing <asynchronous_FIFO_practical_sizing>` section for more details.
 
 The total delay can be calculated as follows::
 
     GROUP_DELAY = ((INPUT_BLOCK_SIZE - 4) / INPUT_SAMPLE_RATE) + ASRC_FILTER_DELAY + (OUTPUT_FIFO_LENGTH / OUTPUT_SAMPLE_RATE / 2)
 
 
-API & Usage
-...........
+API & usage
+===========
 
-The ASRC Task consists of a forever loop task to which various data structures must be declared and passed. The following items must be passed in:
+The ASRC Task consists of a task to which various data structures must be declared and passed:
 
     - A pointer to instance of the `asrc_in_out_t` structure which contains buffers, stream information and ASRC task state.
     - A pointer to the FIFO used at the output side of the ASRC task.
     - The length of the FIFO passed in above.
 
-
-In addition the following two functions may be declared in a user `C` file (note XC does not handle function pointers):
+In addition the following two functions may be declared in a user `C` file (note that `XC` does not handle function pointers):
 
     - The callback function from ASRC task which receives samples over a channel from the producer.
     - A callback initialisation function which registers the callback function into the `asrc_in_out_t` struct
 
-If these are not defined, then a default receive implementation will be used which is matched with the send_asrc_input_samples_default() function on the user's producer side. This should be sufficient for typical usage.
+If these are not defined, then a default receive implementation will be used which is matched with the
+``send_asrc_input_samples_default()`` function on the user's producer side. This should be sufficient for typical usage.
 
 .. note:: ``ASRC task`` must have ``asrc_task_config.h`` defined in the user application which sets various static settings for the ASRC. See :ref:`ASRC task API <asrc_task_api>` for details or reference `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_ as an example.
 
@@ -126,7 +127,7 @@ An example of calling the ASRC task form and ``XC`` main function is provided be
 
 An example of the user-defined `C` function for receiving the input samples is shown below along with the user callback registration function. The `receive_asrc_input_samples()` function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received from the producer, the `chanend_in_word()` operations will happen straight away and not block as long as the producer immediately produces all required samples.
 
-.. literalinclude:: ../../lib_src/src/asrc_task/asrc_task.c
+.. literalinclude:: ../../../lib_src/src/asrc_task/asrc_task.c
    :start-at: Default implementation of receive
    :end-at: END ASRC_TASK_ISR_CALLBACK_ATTR
 
@@ -142,9 +143,7 @@ Because a `streaming` channel is used the back-pressure on the producer side wil
 
 This callback function helps bridge between `sample based` systems and the block-based nature of the underlying ASRC functions without consuming an extra thread.
 
-
 .. _asrc_task_api:
-
 
 The API for ASRC task is shown below:
 
