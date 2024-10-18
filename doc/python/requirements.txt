@@ -2,4 +2,5 @@
 # pip_version 24.2
 
 -e ../../python
+-e ../../tests
 
