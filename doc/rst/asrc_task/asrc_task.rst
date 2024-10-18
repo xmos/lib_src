@@ -131,7 +131,6 @@ An example of the user-defined `C` function for receiving the input samples is s
    :start-at: Default implementation of receive
    :end-at: END ASRC_TASK_ISR_CALLBACK_ATTR
 
-
 Note that the producing side of the above transaction must match the channel protocol. For this example, the producer must send the following items across the channel in order:
 
     - The nominal input sample rate.
