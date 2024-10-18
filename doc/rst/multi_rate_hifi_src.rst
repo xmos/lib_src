@@ -177,7 +177,7 @@ ASRC latency / group delay
 
 .. include:: ./latency_asrc.rst
 
-ASRC resource utiliaation
+ASRC resource utilisation
 .........................
 
 .. include:: ./resource_usage_asrc.rst

@@ -180,7 +180,6 @@ pipeline {
                             }
                         } // post
                     }  // stage('Legacy CMake build')
-
             } // parallel
         } // stage ('Build and test')
 

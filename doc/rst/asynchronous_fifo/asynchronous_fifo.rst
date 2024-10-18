@@ -122,7 +122,7 @@ an ASRC.
 .. _asynchronous_FIFO_design_parameters:
 
 Design parameters
-==================
+=================
 
 There are three degrees of freedom in this system:
 
@@ -136,7 +136,7 @@ If a long FIFO length is chosen, operation will be guaranteed but a large delay 
 between input-signal and output-signal is introduced.
 If a short time constant for the loop-filter is chosen, the adjustments of the ASRC will be
 audible as harmonic distortion.
-If only small changes between the clocks is permitted, then a with a long time constant on the loop
+If only small changes between the clocks is permitted, then a long time constant on the loop
 filter can be used with along with a short FIFO.
 
 The value of a third parameter must match the choice of the first two; given the jitter
@@ -156,7 +156,7 @@ to half full. It is not typical to see a large change in PPM difference during o
 practical systems; only small drifts due to voltage and temperature changes but a system always has
 a startup condition which needs to be accommodated.
 
-The FIFO size must be at least twice the peak excepted perturbation to account for either a positive
+The FIFO size must be at least twice the peak expected perturbation to account for either a positive
 or negative PPM difference. Should the FIFO underflow or overflow due to insufficient depth it will
 reset and wait to be filled to half and attempt to close the loop again.
 

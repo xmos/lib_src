@@ -14,7 +14,7 @@ audio IO libraries provide streaming audio one sample at a time. The ASRC task w
    :alt: ASRC Thread Usage
 
 Operation
-==========
+=========
 
 The ASRC task handles bridging between two asynchronous audio sources. It has an input side and output side. The input samples are provided over a channel allowing the source to be placed on a different `xcore` tile if needed. The output side sample interface is via an asynchronous FIFO meaning the consumer must reside on the same `xcore` tile as the ASRC. The ASRC task uses a minimum of one thread but may be configured to use many depending on processing requirements.
 
@@ -52,7 +52,7 @@ In reality the amount of thread MHz needed will be lower than the above formulae
 .. warning::
     Exceeding the processing time available by specifying a channel count, input/output rates, number of worker threads or device clock speed may result in at best choppy audio or a blocked ASRC task if the overrun is persistent.
 
-It is strongly recommended that you test the system for your desired channel count and input and output sample rates. An optional timing calculation and check is provided in the ASRC to allow characterisation at run-time which can be found in the `asrc_task.c` source code.
+It is strongly recommended that the system is tested for the desired channel count and input and output sample rates. An optional timing calculation and check is provided in the ASRC to allow characterisation at run-time which can be found in the `asrc_task.c` source code.
 
 The low level ASRC processing function call API accepts a minimum input frame size of four whereas most XMOS audio interfaces provide a single sample period frame. The ASRC subsystem integrates a serial to block back to serial conversion to support this. The input side works by stealing cycles from the ASRC using an interrupt and notifies the main ASRC loop using a single channel end when a complete frame of double buffered is available to process. The ASRC output side is handled by the asynchronous FIFO which supports a block `put` with single sample `get` and thus provides de-serialisation intrinsically.
 
