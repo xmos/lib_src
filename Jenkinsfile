@@ -23,10 +23,16 @@ pipeline {
     string(
       name: 'XMOSDOC_VERSION',
       defaultValue: 'v6.1.2',
-      description: 'The xmosdoc version')
+      description: 'The xmosdoc version'
+    )
+    string(
+        name: 'INFR_APPS_VERSION',
+        defaultValue: 'v2.0.1',
+        description: 'The infr_apps version'
+    )
   }
   stages {
-    stage ('lib_src build and test') {
+    stage ('Build and test') {
       parallel {
         stage('Build and sim test') {
           agent {
@@ -45,9 +51,14 @@ pipeline {
                     }
                   }
                 } // dir("${REPO}")
-                runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
               } // steps
             }  // stage('Build examples')
+
+            stage('Library checks') {
+                steps {
+                    runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+                }
+            }
 
             stage('Simulator tests') {
               steps {
