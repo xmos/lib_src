@@ -3,9 +3,11 @@ lib_src: Sample rate conversion
 ###############################
 
 .. toctree::
+    :maxdepth: 3
 
-   multi_rate_hifi_src
-   fixed_ratio_src
-   ../asynchronous_fifo/asynchronous_fifo
-   ../asrc_task/asrc_task
-   ../python/_build/rst/allPlots
+    introduction
+    multi_rate_hifi_src
+    fixed_ratio_src
+    asynchronous_fifo/asynchronous_fifo
+    asrc_task/asrc_task
+    ../python/_build/rst/allPlots

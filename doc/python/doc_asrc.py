@@ -38,7 +38,7 @@ FERR = 1.0  #this is an additional sample rate deviation applied to the inpt sig
 
 U = asrc_util(pkg_dir, True, fftPoints,[200], [500]) # create the util object
 U.addRSTText(".. _performance-plots:")
-U.addRSTHeader("Performance Characterisation for SSRC ASRC DS3 and OS3", 1) # start the RST it generates with a title
+U.addRSTHeader("Performance characterisation", 1) # start the RST it generates with a title
 IntroText = """
 The FFT plots in this section provide a visual guide to the performance of the SSRC, ASRC, DS3 and OS3 sample rate converters.
 Test signals were created allowing analysis of the sample rate converter output across different scenarios.
@@ -53,7 +53,7 @@ The plots are annotated with an estimate of the Signal to Noise Ratio (SNR) as w
 For the case of the ASRC, in addition to the nominal input frequency of 0 PPM deviation, the +/-100 PPM frequency deviation cases are also shown.
 """
 U.addRSTText(IntroText)
-U.addRSTHeader("Pure Tone FFT SRC Plots Across Sample Rate Combinations", 2) # start the RST it generates with a title
+U.addRSTHeader("Pure Tone FFT SRC plots across sample rate combinations", 2) # start the RST it generates with a title
 
 for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviations
     U.addRSTHeader("Frequency error: {:.6f}Hz".format(fDev), 3) #add a title to the RST for the freq deviation
@@ -122,7 +122,7 @@ for fDev in [0.9999, 1.0, 1.0001]:  # for a set of different frequency deviation
             U.addRSTText(".. raw:: latex\n\n   \\FloatBarrier\n")
 
 U.log2csv() # Save the log file
-U.addRSTHeader("Tabulated data", 2) # start the RST it generates with a title
+U.addRSTHeader("Summary table", 2) # start the RST it generates with a title
 U.addLog2RST() # adds the log, which is the tabulated results, to the RST file
 U.saveRST("allPlots.rst") # Save the log file to the output folder
 

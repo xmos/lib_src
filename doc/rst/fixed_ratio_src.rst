@@ -1,8 +1,9 @@
-Fixed factor of 3 HiFi functions
-================================
 
-Introduction
-------------
+|newpage|
+
+**********************************
+HiFi quality fixed factor of 3 SRC
+**********************************
 
 The SRC library includes synchronous sample rate conversion functions to downsample (decimate) and oversample (upsample or interpolate) by a fixed factor of 3.
 
@@ -12,8 +13,8 @@ In each case, the processing is carried out each time a single output sample is 
 
 Both sample rate converters are based on a 144 tap FIR filter with two sets of coefficients available, depending on application requirements:
 
- * firos3_b_144.dat / firds3_b_144.dat - These filters have 20 dB of attenuation at the Nyquist frequency and a higher cutoff frequency
- * firos3_144.dat / firds3_144.dat - These filters have 60 dB of attenuation at the Nyquist frequency but trade this off with a lower cutoff frequency
+ * ``firos3_b_144.dat`` / ``firds3_b_144.dat`` - These filters have 20 dB of attenuation at the Nyquist frequency and a higher cutoff frequency
+ * ``firos3_144.dat`` / ``firds3_144.dat`` - These filters have 60 dB of attenuation at the Nyquist frequency but trade this off with a lower cutoff frequency
 
 The default setting is to use the coefficients that provide 60 dB of attenuation at the Nyquist frequency.
 
@@ -49,15 +50,13 @@ The upsampling functions return the following error codes ::
   If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
   If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
 
-
-
-API
----
+Shared API items
+================
 
 .. doxygenenum:: src_ff3_return_code_t
 
-DS3 API
--------
+HiFi quality DS3 API
+====================
 
 .. doxygenstruct:: src_ds3_ctrl_t
 
@@ -67,8 +66,8 @@ DS3 API
 
 .. doxygenfunction:: src_ds3_proc
 
-OS3 API
--------
+HiFi quality OS3 API
+====================
 
 .. doxygenstruct:: src_os3_ctrl_t
 
@@ -80,76 +79,65 @@ OS3 API
 
 .. doxygenfunction:: src_os3_proc
 
+***********************************
+Voice quality fixed factor of 3 SRC
+***********************************
 
-Fixed factor of 3 functions optimized for use with voice
-========================================================
-
-A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimized for the XS2 instruction set.
-
+A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided
+that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a
+72 tap Remez FIR filter and are optimized for the XS2 instruction set.
 
 .. warning::
-    These SRC components have been deprecated. For new designs using xcore-ai, please use the XS3 optimized components which provide both much better performance and use approximately half of the MIPS. See `ff3_voice_vpu_hdr`_
-
-.. tip::
-  There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
-  If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
-  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
-  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
-
-
+    These SRC components have been deprecated. For new designs using ``xcore-ai``, use the XS3
+    optimised components which provide both better performance and use approximately half of
+    the MIPS. See `ff3_voice_vpu_hdr`_
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
 
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs
 
-Voice DS3 API
--------------
+Voice quality DS3 API
+=====================
 
 .. doxygenfunction:: src_ds3_voice_add_sample
 
 .. doxygenfunction:: src_ds3_voice_add_final_sample
 
-Voice US3 API
--------------
+Voice quality US3 API
+=====================
 
 .. doxygenfunction:: src_us3_voice_input_sample
 
 .. doxygenfunction:: src_us3_voice_get_next_sample
 
+*************************************************************
+Voice quality fixed factor of 3 and 3/2 SRC optimised for XS3
+*************************************************************
 
-Fixed factor of 3 and 3/2 voice functions optimized for XS3
-===========================================================
+A set of SRC components are provided which are optimised for the Vector Processing Unit (VPU) and
+are suitable for voice applications. They cannot be run on XS2 based devices.
 
-A set of SRC components are provided which are optimized for the Vector Processing Unit (VPU) and are suitable for voice applications.
-The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
+The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the
+fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
 
-They have been designed for voice applications and, in particular, conformance to the MS Teams v5 specification.
-
-
-.. note::
-    These filters will only run on xcore-ai due to the inner dot product calculation employing the XS3 VPU.
+They have been designed for voice applications and, in particular, conformance to the `Microsoft
+Teams` v5 specification.
 
 .. warning::
-    Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
-    currently overflow rather than saturate in cases where a full scale input causes a perturbation above full scale at the output.
-    To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
-    The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
-
-.. tip::
-  There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
-  If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
-  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
-  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
-
+    Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
+    optimised for the XS3 Vector Processing Unit currently overflow rather than saturate in cases
+    where a full scale input causes a perturbation above full scale at the output.
+    To avoid this scenario, ensure that the input amplitude is always 3.5 dB below full scale.
 
 .. _ff3_voice_vpu_hdr:
 
-Fixed factor of 3 VPU
----------------------
+Fixed factor of 3 VPU implementation
+====================================
 
-The filters use less than half of the cycles of the previous fixed factor of 3 functions but at the same time offer a much improved
-filter response thanks to an increased filter length of 96 taps (compared with 72 taps) and use of a Kaiser window with a beta of 4.0.
+The filters use less than half of the cycles of the previous fixed factor of 3 functions but at
+the same time offer a much improved filter response thanks to an increased filter length of 96 taps
+(compared with 72 taps) and use of a Kaiser window with a beta of 4.0.
 The filter specification is shown in :numref:`src_ff3_vpu_filter`.
 
 .. _src_ff3_vpu_filter:
@@ -193,21 +181,20 @@ All input and output samples are signed 32 bit integers. The filter characterist
 
   Fixed Factor of 3 Voice VPU SRC passband ripple
 
-Voice DS3 VPU API
------------------
+Voice quality DS3 VPU API
+=========================
 
 .. doxygengroup:: src_ff3_96t_ds
    :content-only:
 
-Voice US3 VPU API
------------------
+Voice quality US3 VPU API
+=========================
 
 .. doxygengroup:: src_ff3_96t_us
    :content-only:
 
-
-Fixed factor of 3/2 VPU
------------------------
+Fixed factor of 3/2 VPU implementation
+======================================
 
 The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase architecture to achieve the non-integer rate ratio. Downsampling takes two phases while upsampling takes three. The filters have been designed with a Kaiser window with a beta of 3.2. The filter specification is shown in :numref:`src_ff3_2_vpu_filter`.
 
@@ -240,7 +227,6 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
 The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce two samples for each call passing three samples in the case of downsampling.
 All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_2_vpu` and :numref:`src_ff3_2_vpu_pb`.
 
-
 .. _src_ff3_2_vpu:
 .. figure:: images/src_rat_vpu.png
    :width: 80%
@@ -253,18 +239,15 @@ All input and output samples are signed 32 bit integers. The filter characterist
 
   Fixed Factor of 3/2 Voice VPU SRC passband ripple
 
-
-Voice DS3/2 API
----------------
+Voice quality DS3/2 API
+=======================
 
 .. doxygengroup:: src_rat_2_3_96t_ds
    :content-only:
 
-Voice US3/2 API
----------------
+Voice quality US3/2 API
+=======================
 
 .. doxygengroup:: src_rat_3_2_96t_us
    :content-only:
-
-
 
