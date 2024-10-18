@@ -1,5 +1,6 @@
-Programming Guide
-#################
+###############################
+lib_src: Sample rate conversion
+###############################
 
 .. toctree::
 

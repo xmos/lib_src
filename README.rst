@@ -1,7 +1,7 @@
 :orphan:
 
 ###############################
-lib_src: Sample Rate Conversion
+lib_src: Sample rate conversion
 ###############################
 
 :vendor: XMOS
@@ -12,6 +12,7 @@ lib_src: Sample Rate Conversion
 :keywords: SRC, SSRC, ASRC, DSP
 :devices: xcore.ai, xcore-200
 
+*******
 Summary
 *******
 
@@ -20,6 +21,7 @@ sample rate conversion functions for use on xcore multicore micro-controllers.
 
 In systems where the rate change is exactly equal to the ratio of nominal rates, synchronous sample rate conversion (SSRC) provides efficient and high performance rate conversion. Where the input and output rates are not locked by a common clock or clocked by an exact rational frequency ratio, the Asynchronous Sample Rate Converter (ASRC) provides a way of streaming high quality audio between the two different clock domains, at the cost of higher processing resource usage. ASRC can ease interfacing in cases where there are multiple digital audio inputs or allow cost saving by removing the need for physical clock recovery using a PLL.
 
+********
 Features
 ********
 
@@ -49,7 +51,8 @@ Features
     * Wraps up the core ASRC function, Asynchronous FIFO and sample change and initialisation logic
     * Provides a simple-to-use and generic ASRC conversion design block suitable for integration into practical systems
 
-Known Issues
+************
+Known issues
 ************
 
   * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimized for the XS3 Vector Processing Unit
@@ -57,23 +60,33 @@ Known Issues
     To avoid this scenario, please ensure that the input amplitude is always 3.5 dB below full scale.
     The overflow behavior of these SRC components will be replaced by saturating behavior (to match all other SRC components) in a future release.
 
-Required Tools
+****************
+Development repo
+****************
+
+  * `lib_src <https://www.github.com/xmos/lib_src>`_
+
+**************
+Required tools
 **************
 
   * XMOS XTC Tools: 15.3.0
 
-Required Libraries (dependencies)
+*********************************
+Required libraries (dependencies)
 *********************************
 
-  * lib_logging (www.github.com/xmos/lib_logging)
+  * `lib_logging <https://www.xmos.com/file/lib_logging>`_
 
-Related Application Notes
+*************************
+Related application notes
 *************************
 
 The following application notes use this library:
 
   * `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_
 
+*******
 Support
 *******
 

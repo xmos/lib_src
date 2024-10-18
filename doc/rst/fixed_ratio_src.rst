@@ -84,10 +84,7 @@ OS3 API
 Fixed factor of 3 functions optimized for use with voice
 ========================================================
 
-Overview
---------
-
-A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimized for the XS2 instruction set. 
+A pair of SRC components supporting upconversion and downconversion by a factor of 3 are provided that are suitable for voice applications. They provide voice quality SNR (around 60 dB) and use a 72 tap Remez FIR filter and are optimized for the XS2 instruction set.
 
 
 .. warning::
@@ -123,9 +120,6 @@ Voice US3 API
 
 Fixed factor of 3 and 3/2 voice functions optimized for XS3
 ===========================================================
-
-Overview
---------
 
 A set of SRC components are provided which are optimized for the Vector Processing Unit (VPU) and are suitable for voice applications.
 The fixed factor of 3 SRC components are designed for conversion between 48 kHz to 16 kHz and the fixed factor of 3/2 are designed for conversion between 48 kHz and 32 kHz.
@@ -199,15 +193,14 @@ All input and output samples are signed 32 bit integers. The filter characterist
 
   Fixed Factor of 3 Voice VPU SRC passband ripple
 
-
-Voice DS3 API
--------------
+Voice DS3 VPU API
+-----------------
 
 .. doxygengroup:: src_ff3_96t_ds
    :content-only:
 
-Voice US3 API
--------------
+Voice US3 VPU API
+-----------------
 
 .. doxygengroup:: src_ff3_96t_us
    :content-only:
@@ -244,7 +237,7 @@ The fixed factor of 3/2 VPU sample rate converts use a rational factor polyphase
       - 70 dB
       - 96
 
-The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce two samples for each call passing three samples in the case of downsampling. 
+The fixed factor of 3/2 components produce three samples for each call passing two samples in the case of upsampling and produce two samples for each call passing three samples in the case of downsampling.
 All input and output samples are signed 32 bit integers. The filter characteristics are shown in :numref:`src_ff3_2_vpu` and :numref:`src_ff3_2_vpu_pb`.
 
 

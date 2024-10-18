@@ -1,7 +1,7 @@
 set(LIB_NAME lib_src)
 set(LIB_VERSION 2.7.0)
 
-set(LIB_DEPENDENT_MODULES "lib_logging(3.3.0)")
+set(LIB_DEPENDENT_MODULES "lib_logging(3.3.1)")
 
 set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3)
 
