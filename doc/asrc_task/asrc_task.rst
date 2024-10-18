@@ -97,6 +97,8 @@ In addition the following two functions may be declared in a user `C` file (note
 
 If these are not defined, then a default receive implementation will be used which is matched with the send_asrc_input_samples_default() function on the user's producer side. This should be sufficient for typical usage.
 
+.. note:: ``ASRC task`` must have ``asrc_task_config.h`` defined in the user application which sets various static settings for the ASRC. See :ref:`ASRC task API <asrc_task_api>` for details or reference `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_ as an example.
+
 An example of calling the ASRC task form and ``XC`` main function is provided below. Note use of `unsafe` permitting the compiler to allow shared memory structures to be accessed by more than one thread::
 
     chan c_producer;
@@ -139,6 +141,9 @@ Note that the producing side of the above transaction must match the channel pro
 Because a `streaming` channel is used the back-pressure on the producer side will be very low because the channel outputs will be buffered and the receive callback will always respond to the received words.
 
 This callback function helps bridge between `sample based` systems and the block-based nature of the underlying ASRC functions without consuming an extra thread.
+
+
+.. _asrc_task_api:
 
 
 The API for ASRC task is shown below:

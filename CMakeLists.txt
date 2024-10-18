@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.21.0)
 
+if(NOT DEFINED XCOMMON_CMAKE_VER)
 project(lib_src LANGUAGES C ASM)
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -12,10 +13,8 @@ if(PROJECT_IS_TOP_LEVEL)
     FetchContent_MakeAvailable(fwk_core)
 endif()
 
-add_subdirectory(tests)
-
 # XS3 only libraries that use the Vector Processing Unit
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) 
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A)
     ## Source files
     file(GLOB_RECURSE LIB_C_SOURCES_XS3     lib_src/src/fixed_factor_vpu_voice/*.c )
     file(GLOB_RECURSE LIB_XC_SOURCES_XS3    lib_src/src/fixed_factor_vpu_voice/*.xc)
@@ -52,7 +51,7 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
                                                     ${LIB_XC_SOURCES}
                                                     ${LIB_ASM_SOURCES_XS3}
     )
-    
+
     target_include_directories(lib_src
         PUBLIC
             lib_src/api
@@ -69,7 +68,7 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
     )
 
    target_compile_options(lib_src
-        PRIVATE 
+        PRIVATE
             -O3
             -g
     )
@@ -80,5 +79,5 @@ if((${CMAKE_SYSTEM_PROCESSOR} STREQUAL XCORE_XS3A) OR (${CMAKE_SYSTEM_PROCESSOR}
             framework_core_legacy_compat
     )
 
-
+endif()
 endif()

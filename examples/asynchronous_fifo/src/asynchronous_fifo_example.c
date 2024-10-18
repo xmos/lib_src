@@ -25,13 +25,13 @@ void producer(asynchronous_fifo_t *a) {
     uint32_t now = hwtimer_get_time(tmr);
     int step = 2000;
     int error;
-    
+
     for(int32_t i = 0; i < 1000; i++) {
         now += step;
         hwtimer_set_trigger_time(tmr, now);
         int ts = hwtimer_get_time(tmr);
         int32_t data = i * i;
-        error = asynchronous_fifo_producer_put(a, &data, 1, ts, 0);
+        error = asynchronous_fifo_producer_put(a, &data, 1, ts);
     }
     hwtimer_free(tmr);
 }

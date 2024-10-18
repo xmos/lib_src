@@ -1,5 +1,10 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+// Only compile if we are using asrc_task
+#if __asrc_task_config_h_exists__
+
+
 #include <xcore/chanend.h>
 #include <xcore/parallel.h>
 #include <xcore/assert.h>
@@ -448,3 +453,6 @@ void send_asrc_input_samples_default(chanend_t c_asrc_input,
     }
 
 }
+
+#endif // __asrc_task_config_h_exists__
+
