@@ -3,7 +3,7 @@
 lib_name: lib_src
 project: '{{lib_name}}'
 title: '{{lib_name}}: Sample rate conversion'
-version: 2.7.0
+version: 2.7.1
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
