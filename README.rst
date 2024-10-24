@@ -25,7 +25,7 @@ In systems where the rate change is exactly equal to the ratio of nominal rates,
 Features
 ********
 
-  * Multi-rate Hi-Fi functionality:
+ * Multi-rate Hi-Fi functionality:
     * Synchronous Sample Rate Converter function (SSRC)
     * Asynchronous Sample Rate Converter function (ASRC)
     * Conversion between 44.1, 48, 88.2, 96, 176.4 and 192 KHz input and output sample rates.
@@ -38,16 +38,14 @@ Features
     * Configurable number of audio channels per SRC instance.
     * Reentrant library permitting multiple instances with differing configurations and channel count.
     * No external components (PLL or memory) required.
-  * Fixed factor functionality:
-    * Synchronous fixed factor of 3 downsample and oversample functions supporting either HiFi quality
-    or reduced resource requirements for voice applications.
-    * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
-    optimized for the XS3 Vector Processing Unit.
-  * Asynchronous FIFO:
+ * Fixed factor functionality:
+    * Synchronous fixed factor of 3 downsample and oversample functions supporting either HiFi quality or reduced resource requirements for voice applications.
+    * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications optimised for the XS3 Vector Processing Unit.
+ * Asynchronous FIFO:
     * Non-blocking thread-safe FIFO for use with ASRC systems.
     * Built in phase detector and control loop to determine the ASRC conversion ratio
     * Enables practical audio systems to be constructed using multiple clock domains and sample rates
-  * Helper function "ASRC Task":
+ * Helper function "ASRC Task":
     * Wraps up the core ASRC function, Asynchronous FIFO and sample change and initialisation logic
     * Provides a simple-to-use and generic ASRC conversion design block suitable for integration into practical systems
 
@@ -55,7 +53,7 @@ Features
 Known issues
 ************
 
-  * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
+ * Synchronous fixed factor of 3 and 3/2 downsample and oversample functions for voice applications
     optimised for the XS3 Vector Processing Unit currently overflow rather than saturate in cases
     where a full scale input causes a perturbation above full scale at the output.
     To avoid this scenario, ensure that the input amplitude is always 3.5 dB below full scale.
@@ -64,19 +62,19 @@ Known issues
 Development repo
 ****************
 
-  * `lib_src <https://www.github.com/xmos/lib_src>`_
+ * `lib_src <https://www.github.com/xmos/lib_src>`_
 
 **************
 Required tools
 **************
 
-  * XMOS XTC Tools: 15.3.0
+ * XMOS XTC Tools: 15.3.0
 
 *********************************
 Required libraries (dependencies)
 *********************************
 
-  * `lib_logging <https://www.xmos.com/file/lib_logging>`_
+ * `lib_logging <https://www.xmos.com/file/lib_logging>`_
 
 *************************
 Related application notes
@@ -84,7 +82,7 @@ Related application notes
 
 The following application notes use this library:
 
-  * `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_
+ * `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_
 
 *******
 Support
