@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.35.0') _
+@Library('xmos_jenkins_shared_library@v0.43.3') _
 
 getApproval()
 
@@ -17,17 +17,17 @@ pipeline {
     parameters {
         string(
           name: 'TOOLS_VERSION',
-          defaultValue: '15.3.0',
+          defaultValue: '15.3.1',
           description: 'The XTC tools version'
         )
         string(
           name: 'XMOSDOC_VERSION',
-          defaultValue: 'v6.2.0',
+          defaultValue: 'v8.0.1',
           description: 'The xmosdoc version'
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v2.0.1',
+            defaultValue: 'v3.2.2',
             description: 'The infr_apps version'
         )
     }

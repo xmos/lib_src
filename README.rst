@@ -5,7 +5,7 @@ lib_src: Sample rate conversion
 ###############################
 
 :vendor: XMOS
-:version: 2.7.0
+:version: 2.7.1
 :scope: General Use
 :description: SSRC/ASRC for xcore
 :category: Audio

@@ -40,3 +40,4 @@
 # Built documentation
 doc/_build/pdf/*.pdf
 **/doc/pdf/*.pdf
+**/.vscode/settings.json

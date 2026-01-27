@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #define     MAX_ASRC_CHANNELS_TOTAL             1 // Used for buffer sizing and FIFO sizing (static)
