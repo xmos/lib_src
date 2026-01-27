@@ -6,11 +6,8 @@ getApproval()
 
 pipeline {
   agent none
-    environment {
-        REPO = 'lib_src'
-    }
     options {
-        buildDiscarder(xmosDiscardBuildSettings())
+        buildDiscarder(xmosDiscardBuildSettings(onlyArtifacts = false))
         skipDefaultCheckout()
         timestamps()
     }
@@ -27,11 +24,23 @@ pipeline {
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v3.2.2',
+            defaultValue: 'v3.3.0',
             description: 'The infr_apps version'
         )
     }
     stages {
+        stage('Setup') {
+            agent {
+                label 'linux'
+            }
+            steps {
+                script {
+                    def (server, user, repo) = extractFromScmUrl()
+                    env.REPO_NAME = repo
+                }
+            }
+        }
+
         stage ('Build and test') {
             parallel {
                 stage('Build and sim test') {
@@ -42,27 +51,26 @@ pipeline {
                         stage('Build examples') {
                             steps {
                                 println "Stage running on ${env.NODE_NAME}"
-                                dir("${REPO}") {
-                                    checkout scm
+                                dir(REPO_NAME) {
+                                    checkoutScmShallow()
                                     dir("examples") {
-                                        withTools(params.TOOLS_VERSION) {
-                                            sh 'cmake -G "Unix Makefiles" -B build'
-                                            sh 'xmake -C build -j 16'
-                                        }
+                                        xcoreBuild()
                                     }
-                                } // dir("${REPO}")
+                                } // dir("${REPO_NAME}")
                             } // steps
                         }  // stage('Build examples')
 
                         stage('Library checks') {
                             steps {
-                                runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+                                warnError("Repo checks failed"){
+                                    runRepoChecks("${WORKSPACE}/${REPO_NAME}")
+                                }
                             }
                         }
 
                         stage('Simulator tests') {
                             steps {
-                                dir("${REPO}/tests") {
+                                dir("${REPO_NAME}/tests") {
                                     withTools(params.TOOLS_VERSION) {
                                         createVenv(reqFile: "requirements.txt")
                                         withVenv {
@@ -80,8 +88,8 @@ pipeline {
                     } // stages
                     post {
                         always {
-                            junit "${REPO}/tests/sim_tests/pytest_result_prepare.xml"
-                            junit "${REPO}/tests/sim_tests/pytest_result_run.xml"
+                            junit "${REPO_NAME}/tests/sim_tests/pytest_result_prepare.xml"
+                            junit "${REPO_NAME}/tests/sim_tests/pytest_result_run.xml"
                         }
                         cleanup {
                             xcoreCleanSandbox()
@@ -95,91 +103,92 @@ pipeline {
                     }
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
-                            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                            sh 'git -C xtagctl checkout v2.0.0'
-                            dir("${REPO}") {
-                                checkout scm
-                                dir("tests") {
-                                    createVenv(reqFile: "requirements.txt")
-                                    dir("hw_tests") {
-                                        withTools(params.TOOLS_VERSION) {
-                                            sh "cmake -G 'Unix Makefiles' -B build"
-                                            sh "xmake -C build -j 8"
-                                            withVenv {
-                                                sh "pip install -e ${WORKSPACE}/xtagctl"
-                                                withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
-                                                    sh "pytest -n1 --junitxml=pytest_hw.xml"
-                                                    sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
-                                                }
-                                            } // withVenv
-                                        } // withTools
-                                    } // dir(hw_tests")
-                                } // dir(tests)
-                            } // dir ("${REPO}")
-                        } //steps
-                        post {
-                            always {
-                                junit "${REPO}/tests/hw_tests/pytest_hw.xml"
-                            }
-                            cleanup {
-                                xcoreCleanSandbox()
-                            }
-                        } // post
-                    }  // stage('Hardware tests')
-
-                    stage('SNR plots') {
-                        agent {
-                            label 'xcore.ai && uhubctl'
-                        }
-                        steps {
-                            println "Stage running on ${env.NODE_NAME}"
-                            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                            sh 'git -C xtagctl checkout v2.0.0'
-                            dir("${REPO}") {
-                                checkout scm
-                                dir("doc/python") {
-                                    createVenv(reqFile: "requirements.txt")
-                                    withVenv {
-                                        sh "pip install -e ${WORKSPACE}/xtagctl"
-                                        withTools(params.TOOLS_VERSION) {
-                                            sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0"
+                        sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+                        sh 'git -C xtagctl checkout v3.0.0'
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                            dir("tests") {
+                                createVenv(reqFile: "requirements.txt")
+                                dir("hw_tests") {
+                                    withTools(params.TOOLS_VERSION) {
+                                        sh "cmake -G 'Unix Makefiles' -B build"
+                                        sh "xmake -C build -j 8"
+                                        withVenv {
+                                            sh "pip install -e ${WORKSPACE}/xtagctl"
                                             withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
-                                                sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
-                                                stash name: 'doc_asrc_output', includes: '_build/**'
+                                                sh "pytest -n1 --junitxml=pytest_hw.xml"
+                                                sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
                                             }
-                                        } // withTools
-                                    } // withVenv
-                                } // dir("doc/python")
-                            } // dir("${REPO}")
-                        } // steps
-                        post {
-                            cleanup {
-                                xcoreCleanSandbox()
-                            }
-                        } // post
-                    }  // stage('SNR plots')
+                                        } // withVenv
+                                    } // withTools
+                                } // dir("hw_tests")
+                            } // dir("tests")
+                        } // dir (REPO_NAME)
+                    } //steps
+                    post {
+                        always {
+                            junit "${REPO_NAME}/tests/hw_tests/pytest_hw.xml"
+                        }
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    } // post
+                }  // stage('Hardware tests')
 
-                    stage('Legacy CMake build') {
+                stage('SNR plots') {
+                    agent {
+                        label 'xcore.ai && uhubctl'
+                    }
+                    steps {
+                        println "Stage running on ${env.NODE_NAME}"
+                        sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+                        sh 'git -C xtagctl checkout v3.0.0'
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                            dir("doc/python") {
+                                createVenv(reqFile: "requirements.txt")
+                                withVenv {
+                                    sh "pip install -e ${WORKSPACE}/xtagctl"
+                                    withTools(params.TOOLS_VERSION) {
+                                        sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@v1.3.1"
+                                        withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
+                                            sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
+                                            stash name: 'doc_asrc_output', includes: '_build/**'
+                                        }
+                                    } // withTools
+                                } // withVenv
+                            } // dir("doc/python")
+                        } // dir(REPO_NAME)
+                    } // steps
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    } // post
+                }  // stage('SNR plots')
+
+                stage('Legacy CMake build') {
                     agent {
                         label 'x86_64 && linux'
                     }
-                        steps {
-                            println "Stage running on ${env.NODE_NAME}"
-                            dir("${REPO}") {
-                                checkout scm
-                                sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
-                                 withTools(params.TOOLS_VERSION) {
-                                    sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
-                                    sh 'xmake -C build_legacy_cmake lib_src'
-                                }
-                            } // dir("${REPO}")
-                        } // steps
-                        post {
-                            cleanup {
-                                xcoreCleanSandbox()
+                    steps {
+                        println "Stage running on ${env.NODE_NAME}"
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                            // Clone "Boston" cmake
+                            sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
+                            withTools(params.TOOLS_VERSION) {
+                                sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
+                                sh 'xmake -C build_legacy_cmake lib_src'
                             }
-                        } // post
-                    }  // stage('Legacy CMake build')
+                        } // dir(REPO_NAME)
+                    } // steps
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    } // post
+                }  // stage('Legacy CMake build')
             } // parallel
         } // stage ('Build and test')
 
@@ -190,8 +199,8 @@ pipeline {
             }
             steps {
                 println "Stage running on ${env.NODE_NAME}"
-                dir("${REPO}") {
-                    checkout scm
+                dir(REPO_NAME) {
+                    checkoutScmShallow()
 
                     dir("doc/python") {
                         unstash 'doc_asrc_output'
@@ -208,5 +217,14 @@ pipeline {
                 }
             } // post
         } // stage('Build Documentation')
+
+        stage('🚀 Release') {
+            when {
+                expression { triggerRelease.isReleasable() }
+            }
+            steps {
+                triggerRelease()
+            }
+        }
     } // stages
 } // pipeline

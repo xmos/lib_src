@@ -9,7 +9,7 @@ lib_src: Sample rate conversion
 :scope: General Use
 :description: SSRC/ASRC for xcore
 :category: Audio
-:keywords: SRC, SSRC, ASRC, DSP
+:keywords: SRC, DSP
 :devices: xcore.ai, xcore-200
 
 *******
