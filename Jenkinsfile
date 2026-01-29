@@ -103,25 +103,22 @@ pipeline {
                     }
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
-                        sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                        sh 'git -C xtagctl checkout v3.0.0'
                         dir(REPO_NAME) {
                             checkoutScmShallow()
                             dir("tests") {
-                                createVenv(reqFile: "requirements.txt")
-                                dir("hw_tests") {
-                                    withTools(params.TOOLS_VERSION) {
+                                withTools(params.TOOLS_VERSION) {
+                                    createVenv(reqFile: "requirements.txt")
+                                    dir("hw_tests") {
                                         sh "cmake -G 'Unix Makefiles' -B build"
                                         sh "xmake -C build -j 8"
                                         withVenv {
-                                            sh "pip install -e ${WORKSPACE}/xtagctl"
                                             withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                                                 sh "pytest -n1 --junitxml=pytest_hw.xml"
                                                 sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
                                             }
                                         } // withVenv
-                                    } // withTools
-                                } // dir("hw_tests")
+                                    } //  dir("hw_tests")
+                                } // withTools
                             } // dir("tests")
                         } // dir (REPO_NAME)
                     } //steps
@@ -141,22 +138,18 @@ pipeline {
                     }
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
-                        sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-                        sh 'git -C xtagctl checkout v3.0.0'
                         dir(REPO_NAME) {
                             checkoutScmShallow()
                             dir("doc/python") {
-                                createVenv(reqFile: "requirements.txt")
-                                withVenv {
-                                    sh "pip install -e ${WORKSPACE}/xtagctl"
-                                    withTools(params.TOOLS_VERSION) {
-                                        sh "pip install git+ssh://git@github.com/xmos/xscope_fileio@v1.3.1"
+                                withTools(params.TOOLS_VERSION) {
+                                    createVenv(reqFile: "requirements.txt")
+                                    withVenv {
                                         withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                                             sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
                                             stash name: 'doc_asrc_output', includes: '_build/**'
                                         }
-                                    } // withTools
-                                } // withVenv
+                                    } // withVenv
+                                } // withTools
                             } // dir("doc/python")
                         } // dir(REPO_NAME)
                     } // steps

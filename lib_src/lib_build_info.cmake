@@ -3,7 +3,7 @@ set(LIB_VERSION 2.7.1)
 
 set(LIB_DEPENDENT_MODULES "lib_logging(3.4.0)")
 
-set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3)
+set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3 -Wall)
 
 set(LIB_OPTIONAL_HEADERS src_conf.h asrc_task_config.h)
 
