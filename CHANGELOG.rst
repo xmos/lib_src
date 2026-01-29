@@ -1,6 +1,13 @@
 lib_src change log
 ==================
 
+2.7.1
+-----
+
+  * Changes to dependencies:
+
+    - lib_logging: 3.3.1 -> 3.4.0
+
 2.7.0
 -----
 

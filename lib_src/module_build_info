@@ -1,10 +1,11 @@
-VERSION = 2.7.0
+VERSION = 2.7.1
 
-DEPENDENT_MODULES = lib_logging(>=3.3.1)
+DEPENDENT_MODULES = lib_logging(>=3.4.0)
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -Wno-missing-braces \
-                   -O3
+                   -O3 \
+                   -Wall
 
 OPTIONAL_HEADERS += src_conf.h
 
