@@ -4,6 +4,8 @@ lib_src change log
 2.7.1
 -----
 
+  * CHANGED: Verified using XMOS XTC Tools: 15.3.1
+
   * Changes to dependencies:
 
     - lib_logging: 3.3.1 -> 3.4.0
