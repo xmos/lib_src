@@ -7,7 +7,7 @@ MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -O3 \
                    -Wall
 
-OPTIONAL_HEADERS += src_conf.h
+OPTIONAL_HEADERS += src_conf.h asrc_task_config.h
 
 EXPORT_INCLUDE_DIRS = api \
                       src/fixed_factor_of_3 \
