@@ -68,6 +68,12 @@ pipeline {
                             }
                         }
 
+                        stage("Archive sandbox") {
+                            steps {
+                                archiveSandbox(REPO_NAME)
+                            }  
+                        }
+                      
                         stage('Simulator tests') {
                             steps {
                                 dir("${REPO_NAME}/tests") {
