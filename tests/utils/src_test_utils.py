@@ -257,7 +257,7 @@ def build_firmware_xcommon_cmake(testpath, config=None):
     if build_dir.exists() and build_dir.is_dir():
         shutil.rmtree(build_dir) # Delete the build directory :|
 
-    cmake_cmd = ["cmake", "-B", build_dir, "-S", test_dir]
+    cmake_cmd = ["cmake", "-G", "Unix Makefiles", "-B", build_dir, "-S", test_dir]
     ret = subprocess.run(
             cmake_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )
@@ -297,7 +297,7 @@ def build_host_app_xcommon_cmake(testpath):
     if build_dir.exists() and build_dir.is_dir():
         shutil.rmtree(build_dir) # Delete the build directory :|
 
-    cmake_cmd = ["cmake", "-B", build_dir, "-S", test_dir, "-DBUILD_NATIVE=ON"]
+    cmake_cmd = ["cmake", "-G", "Unix Makefiles", "-B", build_dir, "-S", test_dir, "-DBUILD_NATIVE=ON"]
     ret = subprocess.run(
             cmake_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=test_dir
     )

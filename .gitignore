@@ -41,3 +41,4 @@
 doc/_build/pdf/*.pdf
 **/doc/pdf/*.pdf
 **/.vscode/*
+**/autogen/**
