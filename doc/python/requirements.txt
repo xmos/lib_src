@@ -19,7 +19,7 @@
 # same modules should appear in the setup.py list as given below.
 
 flake8==7.1.1
-pytest==8.3.3
+pytest==9.0.3
 pytest-xdist==3.6.1
 pyyaml==6.0.2
 
