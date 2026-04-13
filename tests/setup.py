@@ -13,7 +13,7 @@ setuptools.setup(
     name='lib_src_tests',
     packages=setuptools.find_packages(),
     install_requires=[
-        'pytest==8.3.3',
+        'pytest==9.0.3',
         'pytest-xdist==3.6.1',
         'matplotlib==3.9.2',
         'numpy==2.1.1',
