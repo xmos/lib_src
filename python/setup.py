@@ -13,12 +13,12 @@ setuptools.setup(
     name='lib_src',
     packages=setuptools.find_packages(),
     install_requires=[
-        'matplotlib==3.9.2',
-        'numpy==2.1.1',
-        'soundfile==0.12.1',
-        'scipy==1.14.1',
-        'mpmath==1.3.0',
-        'bitstring==4.2.3'
+        'matplotlib==3.11.2',
+        'numpy==2.5.4',
+        'soundfile==0.14.0',
+        'scipy==1.18.1',
+        'mpmath==1.4.1',
+        'bitstring==5.0.0'
     ],
     dependency_links=[
     ],
