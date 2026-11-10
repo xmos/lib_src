@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.43.3') _
+@Library('xmos_jenkins_shared_library@v0.56.0') _
 
 getApproval()
 
@@ -13,18 +13,28 @@ pipeline {
     }
     parameters {
         string(
-          name: 'TOOLS_VERSION',
+                    name: 'TOOLS_VERSION_XS',
           defaultValue: '15.3.1',
-          description: 'The XTC tools version'
+                    description: 'The xcore.ai (XS) XTC tools version'
+                )
+                string(
+                    name: 'TOOLS_VERSION_VX',
+                    defaultValue: 'bob@develop',
+                    description: 'The XCORE-400 (VX) tools version'
+                )
+                string(
+                    name: 'TOOLS_VERSION_VX_XCC',
+                    defaultValue: 'slipgate@master:143',
+                    description: 'The XCORE-400 (VX) XTC tools version'
         )
         string(
           name: 'XMOSDOC_VERSION',
-          defaultValue: 'v8.0.1',
+          defaultValue: 'v8.1.2',
           description: 'The xmosdoc version'
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v3.3.0',
+            defaultValue: 'v3.6.0',
             description: 'The infr_apps version'
         )
     }
@@ -77,7 +87,7 @@ pipeline {
                         stage('Simulator tests') {
                             steps {
                                 dir("${REPO_NAME}/tests") {
-                                    withTools(params.TOOLS_VERSION) {
+                                    withTools(params.TOOLS_VERSION_XS) {
                                         createVenv(reqFile: "requirements.txt")
                                         withVenv {
                                             dir("sim_tests") {
@@ -112,7 +122,7 @@ pipeline {
                         dir(REPO_NAME) {
                             checkoutScmShallow()
                             dir("tests") {
-                                withTools(params.TOOLS_VERSION) {
+                                withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
                                     dir("hw_tests") {
                                         sh "cmake -G 'Unix Makefiles' -B build"
@@ -147,7 +157,7 @@ pipeline {
                         dir(REPO_NAME) {
                             checkoutScmShallow()
                             dir("doc/python") {
-                                withTools(params.TOOLS_VERSION) {
+                                withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
                                     withVenv {
                                         withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
@@ -176,7 +186,7 @@ pipeline {
                             checkoutScmShallow()
                             // Clone "Boston" cmake
                             sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
-                            withTools(params.TOOLS_VERSION) {
+                            withTools(params.TOOLS_VERSION_XS) {
                                 sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
                                 sh 'xmake -C build_legacy_cmake lib_src'
                             }
@@ -188,6 +198,38 @@ pipeline {
                         }
                     } // post
                 }  // stage('Legacy CMake build')
+
+                stage('vx4 tests') {
+                    agent {
+                        label 'x86_64 && linux'
+                    }
+                    steps {
+                        withTools(params.TOOLS_VERSION_VX) {
+                            // TODO vx4 tests will be added here.
+                        }
+                    }
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    }
+                } // stage('Bob tests')
+
+                stage('Slipgate tests') {
+                    agent {
+                        label 'x86_64 && linux'
+                    }
+                    steps {
+                        withTools(params.TOOLS_VERSION_VX_XCC) {
+                            // VX4 XTC tests will be added here.
+                        }
+                    }
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    }
+                } // stage('Slipgate tests')
             } // parallel
         } // stage ('Build and test')
 
