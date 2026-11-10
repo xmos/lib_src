@@ -12,6 +12,18 @@
 #include <string.h>
 
 #include "src.h"
+#include "src_mrhf_adfir_inner_loop_asm.h"
+#include "src_mrhf_fir_inner_loop_asm.h"
+#include "src_mrhf_fir_os_inner_loop_asm.h"
+#include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
+
+#if defined(__XS3A__)
+#include "inline_asm_xs3a.h"
+#elif defined(__VX4B__)
+#include "inline_asm_vx4b.h"
+#else
+#error Unsupported ASRC test profile
+#endif
 
 
 int fs_code(int frequency) {
@@ -322,7 +334,7 @@ int expected_wave_96_48[] = {
 int unit_test_spline() {
 //    int DWORD_ALIGNED iH[3] = {0x12345678, 0x87654321, -12314516};
     int DWORD_ALIGNED iH[3] = { -12314516, 0x87654321,0x12345678};
-    int           *piPhase0 = &iADFirCoefs[0][63];
+    int           *piPhase0 = &iADFirCoefs[3][15];
     int DWORD_ALIGNED piADCoefs1[16];
     int out63[16] = {
         0xffffde68,
@@ -343,7 +355,7 @@ int unit_test_spline() {
         0x00000000        
     };
     ASRC_prepare_coefs();
-    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase0, iH, piADCoefs1, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+    ASRC_TEST_SPLINE(piPhase0, iH, piADCoefs1, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 //    src_mrhf_spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs2, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
     int errors = 0;
@@ -454,9 +466,9 @@ int unit_test_asrc(int test_case) {
             sine_cnt++;
             if (sine_cnt == 16) sine_cnt = 0;
         }
-        asm volatile("gettime %0" : "=r" (t0));
+        ASRC_TEST_GETTIME(t0);
         int num_samples = asrc_process(in_samples, out_samples, fs_ratio, sASRCCtrl);
-        asm volatile("gettime %0" : "=r" (t1));
+        ASRC_TEST_GETTIME(t1);
         total_time += t1-t0;
         for(int j = 0; j < num_samples; j++) {
             if (abs(out_samples[j] - expected_wave[exp_cnt]) > 25) {
@@ -812,9 +824,9 @@ int unit_test_asrc_stereo(int test_case) {
             sine2_cnt++;
             if (sine2_cnt == 19) sine2_cnt = 0;
         }
-        asm volatile("gettime %0" : "=r" (t0));
+        ASRC_TEST_GETTIME(t0);
         int num_samples = asrc_process((int *)in_samples, (int *) out_samples, fs_ratio, sASRCCtrl);
-        asm volatile("gettime %0" : "=r" (t1));
+        ASRC_TEST_GETTIME(t1);
         total_time += t1-t0;
         for(int j = 0; j < num_samples; j++) {
             for(int k = 0; k < 2; k++) {
@@ -833,6 +845,7 @@ int unit_test_asrc_stereo(int test_case) {
 
 #define ONE  0x1000000
 
+#if ASRC_TEST_HAS_VPU_FIR
 int unit_test_fir() {
     int        DWORD_ALIGNED piData[64]  = {
         1*ONE, 2*ONE, 4*ONE, 8*ONE, -1*ONE, -8*ONE, -4*ONE, -9*ONE+6,
@@ -905,26 +918,26 @@ int unit_test_fir() {
     iData2[1] = 0x4234;
     int t0, t1, t2, t3;
     int errors = 0;
-    asm volatile("gettime %0" : "=r" (t0));
+    ASRC_TEST_GETTIME(t0);
     src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData1, 16);
-    asm volatile("gettime %0" : "=r" (t1));
+    ASRC_TEST_GETTIME(t1);
     printf("Fir os inner loop: time old %d  ", t1-t0);
-    asm volatile("gettime %0" : "=r" (t2));
+    ASRC_TEST_GETTIME(t2);
     src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs2, iData2, 16);
-    asm volatile("gettime %0" : "=r" (t3));
+    ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2 || abs(iData1[1] - iData2[1]) > 2) {
         printf("expected %08x %08x ", iData1[0], iData1[1]);
         printf("saw %08x %08x\n", iData2[0], iData2[1]);
         errors++;
     }
-    asm volatile("gettime %0" : "=r" (t0));
+    ASRC_TEST_GETTIME(t0);
     src_mrhf_fir_inner_loop_asm(piData, piCoefs, iData1, 32);
-    asm volatile("gettime %0" : "=r" (t1));
+    ASRC_TEST_GETTIME(t1);
     printf("fir_inner_loop time old %d    ", t1-t0);
-    asm volatile("gettime %0" : "=r" (t2));
+    ASRC_TEST_GETTIME(t2);
     src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, iData2, 32);
-    asm volatile("gettime %0" : "=r" (t3));
+    ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2) {
         printf("expected %08x", iData1[0]);
@@ -932,13 +945,13 @@ int unit_test_fir() {
         errors++;
     }
 
-    asm volatile("gettime %0" : "=r" (t0));
+    ASRC_TEST_GETTIME(t0);
     src_mrhf_adfir_inner_loop_asm(piData, piCoefs, iData1, 32);
-    asm volatile("gettime %0" : "=r" (t1));
+    ASRC_TEST_GETTIME(t1);
     printf("adfir_inner_loop time old %d   ", t1-t0);
-    asm volatile("gettime %0" : "=r" (t2));
+    ASRC_TEST_GETTIME(t2);
     src_mrhf_adfir_inner_loop_asm_xs3(piData, piCoefs, iData2, 32);
-    asm volatile("gettime %0" : "=r" (t3));
+    ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 1) {
         printf("expected %08x", iData1[0]);
@@ -947,6 +960,7 @@ int unit_test_fir() {
     }
     return errors;
 }
+#endif
 
 
 int main(void) {
@@ -954,6 +968,7 @@ int main(void) {
 //    errors += unit_test_asrc(8);
 //    return errors;
     errors += unit_test_spline();
+#if ASRC_TEST_HAS_VPU_FIR
     errors += unit_test_fir();
     errors += unit_test_asrc(0);
     errors += unit_test_asrc(1);
@@ -966,13 +981,14 @@ int main(void) {
     errors += unit_test_asrc(8);
     errors += unit_test_asrc_stereo(8);
     errors += unit_test_asrc_stereo(9);
+#endif
 
     if (errors == 0) {
         printf("PASS\n");
     } else {
         printf("FAIL: %d errors\n", errors);
     }
-
+    return errors;
 }
 
 
