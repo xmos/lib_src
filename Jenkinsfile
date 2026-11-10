@@ -20,12 +20,12 @@ pipeline {
                 string(
                     name: 'TOOLS_VERSION_VX',
                     defaultValue: 'bob@develop',
-                    description: 'The XCORE-400 (VX) tools version'
+                    description: 'The XCORE-400 (VX) tools version (bob)'
                 )
                 string(
                     name: 'TOOLS_VERSION_VX_XCC',
                     defaultValue: 'slipgate@master:143',
-                    description: 'The XCORE-400 (VX) XTC tools version'
+                    description: 'The XCORE-400 (VX) XTC tools version (slipgate)'
         )
         string(
           name: 'XMOSDOC_VERSION',
@@ -190,7 +190,7 @@ pipeline {
                             xcoreCleanSandbox()
                         }
                     }
-                } // stage('Bob tests')
+                } // stage('vx4 tests')
 
                 stage('Slipgate tests') {
                     agent {
