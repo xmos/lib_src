@@ -1,5 +1,9 @@
 // Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+// VPU (XS3A/xcore.ai) implementations of the multirate HiFi inner loops
+// (adfir, fir, fir_os and spline coeff gen), selected via SRC_USE_VPU (see
+// use_vpu.h).  The VX4 (xcore-400) equivalents are in
+// src_mrhf_inner_loops_asm_vx4b.S.
 #if defined(__XS3A__)
     .text
 

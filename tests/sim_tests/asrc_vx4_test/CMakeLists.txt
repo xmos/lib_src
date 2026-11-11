@@ -7,7 +7,6 @@ project(asrc_vx4_test)
 set(APP_HW_TARGET XK-EVK-XU416)
 
 set(APP_COMPILER_FLAGS  -O2
-                        -fxscope
 )
 
 set(APP_DEPENDENT_MODULES lib_basix lib_logging)
@@ -29,16 +28,19 @@ set(APP_INCLUDES
 
 set(APP_C_SRCS
     ../asrc_vpu_test/src/test_asrc_vpu.c
-    src/asrc_vx4_asm.c
     ${LIB_SRC_DIR}/src/multirate_hifi/asrc/src_mrhf_asrc.c
     ${LIB_SRC_DIR}/src/multirate_hifi/asrc/src_mrhf_asrc_wrapper.c
+    ${LIB_SRC_DIR}/src/multirate_hifi/ssrc/src_mrhf_ssrc.c
+    ${LIB_SRC_DIR}/src/multirate_hifi/ssrc/src_mrhf_ssrc_wrapper.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_filter_defs.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_fir.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_int_arithmetic.c
+    ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_inner_loops_scalar_vx4b.c
+    src/asrc_vx4_asm.c
 )
 
 set(APP_ASM_SRCS
-    src/asrc_vx4_inner_loops.S
+    ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_inner_loops_asm_vx4b.S
 )
 
 get_filename_component(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../ ABSOLUTE)

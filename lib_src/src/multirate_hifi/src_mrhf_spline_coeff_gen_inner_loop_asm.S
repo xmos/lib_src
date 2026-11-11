@@ -1,5 +1,6 @@
 // Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+#if !defined(__VX4B__)  // XS2/XS3 dual-issue assembly; VX4 uses src_mrhf_inner_loops_scalar_vx4b.c
 
 #define        FILTER_DEFS_ADFIR_PHASE_N_TAPS        ((1920 / 128) + 1)        // Number of taps per phase
     .section    .dp.data,"awd",@progbits
@@ -229,3 +230,4 @@ src_mrhf_spline_coeff_gen_done:
     .globl    src_mrhf_spline_coeff_gen_inner_loop_asm.maxtimers
     .set    src_mrhf_spline_coeff_gen_inner_loop_asm.maxchanends,0
     .globl     src_mrhf_spline_coeff_gen_inner_loop_asm.maxchanends
+#endif // !defined(__VX4B__)
