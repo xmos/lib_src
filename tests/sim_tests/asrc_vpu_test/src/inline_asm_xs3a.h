@@ -4,6 +4,7 @@
 #define INLINE_ASM_XS3A_H_
 
 #define ASRC_TEST_GETTIME(value) asm volatile("gettime %0" : "=r" (value))
+#define ASRC_TEST_SPLINE_PHASE0 (&iADFirCoefs[0][63])
 #define ASRC_TEST_SPLINE(piPhase, iH, coefs, taps) \
     src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase, iH, coefs, taps)
 #define ASRC_TEST_HAS_VPU_FIR 1

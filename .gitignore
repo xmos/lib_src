@@ -44,6 +44,7 @@ tests/**/args.txt
 tests/**/stdout.txt
 doc/python/args.txt
 tests/sim_tests/*.csv
+tests/mips_report_*.csv
 
 # Built documentation
 doc/_build/pdf/*.pdf
