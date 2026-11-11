@@ -63,7 +63,7 @@ def test_asrc_profile_selftest():
     profile = os.environ.get("ASRC_TEST_PROFILE", "xs3a")
     firmware_names = {
         "xs3a": "asrc_vpu_test",
-        "vx4b": "asrc_vx4_test",
+        "vx4b": "asrc_vpu_test",
     }
     firmware_name = firmware_names.get(profile)
     assert firmware_name is not None, f"Unsupported ASRC_TEST_PROFILE: {profile}"

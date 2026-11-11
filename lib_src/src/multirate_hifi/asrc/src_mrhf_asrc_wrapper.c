@@ -193,7 +193,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
             //                                          piPhase2        = piPhase1 + FILTER_DEFS_ADFIR_PHASE_N_TAPS;
             piADCoefs       = asrc_ctrl[0].piADCoefs;       // Given limited number of registers, this could be DP
             // Apply spline coefficients to filter coefficients
-            src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+            src_mrhf_spline_coeff_gen_inner_loop_asm_vpu(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 #else
             iH[0]           = (int)(i64Acc0>>32);
             iH[2]           = 0x40000000;                       // Load H2 with 0.5;
@@ -245,7 +245,7 @@ unsigned asrc_process(int *in_buff, int *out_buff, uint64_t fs_ratio, asrc_ctrl_
 
                 // Do FIR
 #if SRC_USE_VPU
-                src_mrhf_adfir_inner_loop_asm_xs3(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
+                src_mrhf_adfir_inner_loop_asm_vpu(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
 #else
                 if ((unsigned)piData & 0b0100) src_mrhf_adfir_inner_loop_asm_odd(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);
                 else                               src_mrhf_adfir_inner_loop_asm(piData, piCoefs, &iData, asrc_ctrl[uj].sADFIRF3Ctrl.uiNLoops);

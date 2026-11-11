@@ -612,7 +612,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     // The integer part of time gives the phase
     piPhase0        = &iADFirCoefs[0][pasrc_ctrl->iTimeInt];
     piADCoefs        = pasrc_ctrl->piADCoefs;        // Given limited number of registers, this should be DP
-    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu(piPhase0, iH, piADCoefs, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 #else
     iH[0]            = (int)(i64Acc0>>32);
     iH[2]            = 0x40000000;                        // Load H2 with 0.5;

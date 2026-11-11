@@ -18,13 +18,12 @@
 #include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
 
 #if defined(__XS3A__)
-#include "inline_asm_xs3a.h"
+#define ASRC_TEST_GETTIME(value) asm volatile("gettime %0" : "=r" (value))
 #elif defined(__VX4B__)
-#include "inline_asm_vx4b.h"
+#define ASRC_TEST_GETTIME(value) asm volatile("xm.gettime %0" : "=r" (value))
 #else
 #error Unsupported ASRC test profile
 #endif
-
 
 int fs_code(int frequency) {
     if(frequency == 44100) {
@@ -334,7 +333,7 @@ int expected_wave_96_48[] = {
 int unit_test_spline() {
 //    int DWORD_ALIGNED iH[3] = {0x12345678, 0x87654321, -12314516};
     int DWORD_ALIGNED iH[3] = { -12314516, 0x87654321,0x12345678};
-    int           *piPhase0 = ASRC_TEST_SPLINE_PHASE0;
+    int           *piPhase0 = &iADFirCoefs[0][63];
     int DWORD_ALIGNED piADCoefs1[16];
     int out63[16] = {
         0xffffde68,
@@ -355,7 +354,7 @@ int unit_test_spline() {
         0x00000000        
     };
     ASRC_prepare_coefs();
-    ASRC_TEST_SPLINE(piPhase0, iH, piADCoefs1, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
+    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu(piPhase0, iH, piADCoefs1, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 //    src_mrhf_spline_coeff_gen_inner_loop_asm(piPhase0, iH, piADCoefs2, FILTER_DEFS_ADFIR_PHASE_N_TAPS);
 
     int errors = 0;
@@ -934,7 +933,6 @@ int unit_test_ssrc() {
 
 #define ONE  0x1000000
 
-#if ASRC_TEST_HAS_VPU_FIR
 int unit_test_fir() {
     int        DWORD_ALIGNED piData[64]  = {
         1*ONE, 2*ONE, 4*ONE, 8*ONE, -1*ONE, -8*ONE, -4*ONE, -9*ONE+6,
@@ -1012,7 +1010,7 @@ int unit_test_fir() {
     ASRC_TEST_GETTIME(t1);
     printf("Fir os inner loop: time old %d  ", t1-t0);
     ASRC_TEST_GETTIME(t2);
-    src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs2, iData2, 16);
+    src_mrhf_fir_os_inner_loop_asm_vpu(piData, piCoefs2, iData2, 16);
     ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2 || abs(iData1[1] - iData2[1]) > 2) {
@@ -1025,7 +1023,7 @@ int unit_test_fir() {
     ASRC_TEST_GETTIME(t1);
     printf("fir_inner_loop time old %d    ", t1-t0);
     ASRC_TEST_GETTIME(t2);
-    src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, iData2, 32);
+    src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, iData2, 32);
     ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2) {
@@ -1039,7 +1037,7 @@ int unit_test_fir() {
     ASRC_TEST_GETTIME(t1);
     printf("adfir_inner_loop time old %d   ", t1-t0);
     ASRC_TEST_GETTIME(t2);
-    src_mrhf_adfir_inner_loop_asm_xs3(piData, piCoefs, iData2, 32);
+    src_mrhf_adfir_inner_loop_asm_vpu(piData, piCoefs, iData2, 32);
     ASRC_TEST_GETTIME(t3);
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 1) {
@@ -1049,17 +1047,14 @@ int unit_test_fir() {
     }
     return errors;
 }
-#endif
 
 
 int main(void) {
     int errors = 0;
 //    errors += unit_test_asrc(8);
 //    return errors;
-#if ASRC_TEST_HAS_VPU_FIR
     errors += unit_test_spline();
     errors += unit_test_fir();
-#endif
     errors += unit_test_asrc(0);
     errors += unit_test_asrc(1);
     errors += unit_test_asrc(2);
