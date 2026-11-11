@@ -15,6 +15,8 @@ lib_src components
     * Synchronous Sample Rate Converter (SSRC) function
     * Asynchronous Sample Rate Converter (ASRC) function
 
+    Both are accelerated by the Vector Processing Unit (VPU) on `xcore-ai` and `xcore-400` devices.
+
   * HiFi quality fixed factor sample rate conversion:
 
     * Synchronous factor of 3 downsample function (``src_ds3``)
