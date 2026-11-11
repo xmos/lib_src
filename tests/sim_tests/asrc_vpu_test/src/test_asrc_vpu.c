@@ -334,7 +334,7 @@ int expected_wave_96_48[] = {
 int unit_test_spline() {
 //    int DWORD_ALIGNED iH[3] = {0x12345678, 0x87654321, -12314516};
     int DWORD_ALIGNED iH[3] = { -12314516, 0x87654321,0x12345678};
-    int           *piPhase0 = &iADFirCoefs[3][15];
+    int           *piPhase0 = ASRC_TEST_SPLINE_PHASE0;
     int DWORD_ALIGNED piADCoefs1[16];
     int out63[16] = {
         0xffffde68,
@@ -967,9 +967,10 @@ int main(void) {
     int errors = 0;
 //    errors += unit_test_asrc(8);
 //    return errors;
-    errors += unit_test_spline();
 #if ASRC_TEST_HAS_VPU_FIR
+    errors += unit_test_spline();
     errors += unit_test_fir();
+#endif
     errors += unit_test_asrc(0);
     errors += unit_test_asrc(1);
     errors += unit_test_asrc(2);
@@ -981,7 +982,6 @@ int main(void) {
     errors += unit_test_asrc(8);
     errors += unit_test_asrc_stereo(8);
     errors += unit_test_asrc_stereo(9);
-#endif
 
     if (errors == 0) {
         printf("PASS\n");

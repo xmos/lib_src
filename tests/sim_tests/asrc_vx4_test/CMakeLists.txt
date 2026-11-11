@@ -29,12 +29,16 @@ set(APP_INCLUDES
 
 set(APP_C_SRCS
     ../asrc_vpu_test/src/test_asrc_vpu.c
-    src/asrc_vx4_stubs.c
+    src/asrc_vx4_asm.c
     ${LIB_SRC_DIR}/src/multirate_hifi/asrc/src_mrhf_asrc.c
     ${LIB_SRC_DIR}/src/multirate_hifi/asrc/src_mrhf_asrc_wrapper.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_filter_defs.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_fir.c
     ${LIB_SRC_DIR}/src/multirate_hifi/src_mrhf_int_arithmetic.c
+)
+
+set(APP_ASM_SRCS
+    src/asrc_vx4_inner_loops.S
 )
 
 get_filename_component(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../ ABSOLUTE)
