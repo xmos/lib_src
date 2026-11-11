@@ -4,7 +4,6 @@ lib_src change log
 UNRELEASED
 ----------
 
-  * REMOVED: Support for legacy cmake build system
   * ADDED: Support for VX4 (xcore-400) VPU optimisations in lib_src SSRC and ASRC
   * ADDED: Portable C implementations of the scalar SSRC/ASRC inner loops for
     xcore-400
@@ -12,7 +11,7 @@ UNRELEASED
     verified against the double-precision host model on xcore.ai and xcore-400
   * CHANGED: Renamed src_mrhf_adfir_inner_loop_asm_xs3.S to
     src_mrhf_inner_loops_asm_xs3.S (contains all four VPU inner loops)
-  * ADDED: xcore-400 Jenkins pipeline support
+  * REMOVED: Support for legacy cmake build system
 
 2.7.1
 -----

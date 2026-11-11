@@ -126,13 +126,19 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
     } else if (!state->stop_producing && n) {
         for(int j = 0; j < n; j++) {
 
-#ifdef __XS2A__
+#if defined(__XS2A__)
             memcpy(state->buffer + write_ptr * channel_count, samples, channel_count * sizeof(int));
             (void)copy_mask; // Remove unused var warning
-#else
+#elif defined(__XS3A__)
             register int32_t *ptr asm("r11") = samples;
             asm("vldr %0[0]" :: "r" (ptr));
             asm("vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
+#elif defined(__VX4B__)
+            register int32_t *ptr asm("r11") = samples;
+            asm("xm.vldr %0[0]" :: "r" (ptr));
+            asm("xm.vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
+#else
+#error "Unsupported architecture - Only xcore-200, xcore.ai and xcore-400 supported"
 #endif
             samples += channel_count;
             write_ptr = (write_ptr + 1);
@@ -191,13 +197,19 @@ asynchronous_fifo_get_return_t asynchronous_fifo_consumer_get(asynchronous_fifo_
     int channel_count = state->channel_count;
     int copy_mask = state->copy_mask;
     int len = (write_ptr - read_ptr + max_fifo_depth) % max_fifo_depth;
-#ifdef __XS2A__
+#if defined(__XS2A__)
     memcpy(samples, state->buffer + read_ptr * channel_count, channel_count * sizeof(int));
     (void)copy_mask; // Remove unused var warning
-#else
+#elif defined(__XS3A__)
     register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
     asm("vldr %0[0]" :: "r" (ptr));
     asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
+#elif defined(__VX4B__)
+    register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
+    asm("xm.vldr %0[0]" :: "r" (ptr));
+    asm("xm.vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));   
+#else
+#error "Unsupported architecture - Only xcore-200, xcore.ai and xcore-400 supported"
 #endif
     if (state->reset) {
         return ASYNCH_FIFO_IN_RESET;

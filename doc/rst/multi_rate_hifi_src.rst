@@ -399,22 +399,22 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
 
  * src_mrhf_fir_inner_loop_asm.S / src_mrhf_fir_inner_loop_asm.h
 
-   Inner loop for the standard FIR function optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Even and odd sample long word alignment versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400.
+    Inner loop for the standard FIR function optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Even and odd sample long word alignment versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400, which has a separate VPU implementation recommended for performance on paths that dispatch to the VPU.
 
 
  * src_mrhf_fir_os_inner_loop_asm.S / scr_mrhf_fir_os_inner_loop_asm.h
 
-   Inner loop for the oversampling FIR function optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400.
+    Inner loop for the oversampling FIR function optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400, which has a separate VPU implementation recommended for performance on paths that dispatch to the VPU.
 
 
  * src_mrhf_spline_coeff_gen_inner_loop_asm.S / src_mrhf_spline_coeff_gen_inner_loop_asm.h
 
-   Inner loop for generating the spline interpolated coefficients. This assembler function is optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. This xcore-200/xcore.ai assembler implementation is not built for xcore-400.
+    Inner loop for generating the spline interpolated coefficients. This assembler function is optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. This xcore-200/xcore.ai assembler implementation is not built for xcore-400, which has a separate VPU implementation recommended for performance on paths that dispatch to the VPU.
 
 
  * src_mrhf_adfir_inner_loop_asm.S / src_mrhf_adfir_inner_loop_asm.h
 
-   Inner loop for the adaptive FIR function using the previously computed spline interpolated coefficients. It is optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400.
+    Inner loop for the adaptive FIR function using the previously computed spline interpolated coefficients. It is optimized for double-word load and store, 32 bit * 32 bit -> 64 bit MACC and saturation instructions. Both (long word) even and odd sample input versions are provided. This xcore-200/xcore.ai assembler implementation is not built for xcore-400, which has a separate VPU implementation recommended for performance on paths that dispatch to the VPU.
 
 
  * use_vpu.h
@@ -434,7 +434,7 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
 
  * src_mrhf_inner_loops_scalar_vx4b.c
 
-   Portable C implementations of the scalar (non-VPU) inner loops for xcore-400, replicating the arithmetic of the xcore-200/xcore.ai assembler versions. These are used by the polyphase (PPFIR) filter path of the SSRC and by the sample-based adaptive FIR processing path, which do not dispatch to the VPU implementations.
+    Portable C implementations of the scalar (non-VPU) inner loops for xcore-400, replicating the arithmetic of the xcore-200/xcore.ai assembler versions. With ``SRC_USE_VPU`` enabled, PPFIR phases that meet the VPU kernel's multiple-of-eight loop-count requirement use the VPU FIR implementation; other PPFIR configurations use these scalar versions. They are also used by the sample-based adaptive FIR processing path, which does not dispatch to VPU.
 
 
  * src_mrhf_int_arithmetic.c / src_mrhf_int_arithmetic.h

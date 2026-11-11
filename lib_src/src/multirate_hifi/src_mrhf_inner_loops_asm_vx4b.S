@@ -5,7 +5,7 @@
 // ===================================================================== //
 // VPU (VX4/xcore-400) implementations of the lib_src multirate HiFi     //
 // inner loops.  These implement the same contracts as the XS3A VPU      //
-// versions (the *_xs3 functions selected by SRC_USE_VPU, see            //
+// versions (the *_vpu functions selected by SRC_USE_VPU, see            //
 // use_vpu.h):                                                           //
 //  - VEC_INT_32 mode: 8 x 32-bit lanes, each product is shifted down    //
 //    by 30 bits and accumulated into a 40-bit accumulator (vD:vR)       //
@@ -48,16 +48,16 @@
 #define NSTACKWORDS 16
 
 // ===================================================================== //
-// void src_mrhf_adfir_inner_loop_asm_xs3(int *data, int *coefs,         //
+// void src_mrhf_adfir_inner_loop_asm_vpu(int *data, int *coefs,         //
 //                                        int result[], int count);      //
 // Computes result[0] = sat((sum of 2*count data*coef products) >> 30)   //
 // count must be a multiple of 8 (count/8 iterations of 16 taps).        //
 // ===================================================================== //
     .text
     .p2align 4
-    .globl  src_mrhf_adfir_inner_loop_asm_xs3
-    .type   src_mrhf_adfir_inner_loop_asm_xs3, @function
-src_mrhf_adfir_inner_loop_asm_xs3:
+    .globl  src_mrhf_adfir_inner_loop_asm_vpu
+    .type   src_mrhf_adfir_inner_loop_asm_vpu, @function
+src_mrhf_adfir_inner_loop_asm_vpu:
     xm.entsp (NSTACKWORDS)*4
     { li t3, 0                          ; nop                                   }
     { srli a3, a3, 3                    ; xm.vsetc t3                           }
@@ -85,22 +85,22 @@ src_mrhf_adfir_inner_loop_asm_xs3:
     xm.vstrpv a2, t3
     xm.retsp (NSTACKWORDS)*4
 .L_adfir_end:
-    .resource_const src_mrhf_adfir_inner_loop_asm_xs3, "stack_frame_bytes", (NSTACKWORDS)*4
-    .resource_list_empty src_mrhf_adfir_inner_loop_asm_xs3, "tail_callees"
-    .resource_list_empty src_mrhf_adfir_inner_loop_asm_xs3, "callees"
-    .resource_list_empty src_mrhf_adfir_inner_loop_asm_xs3, "parallel_callees"
-    .size   src_mrhf_adfir_inner_loop_asm_xs3, .L_adfir_end-src_mrhf_adfir_inner_loop_asm_xs3
+    .resource_const src_mrhf_adfir_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
+    .resource_list_empty src_mrhf_adfir_inner_loop_asm_vpu, "tail_callees"
+    .resource_list_empty src_mrhf_adfir_inner_loop_asm_vpu, "callees"
+    .resource_list_empty src_mrhf_adfir_inner_loop_asm_vpu, "parallel_callees"
+    .size   src_mrhf_adfir_inner_loop_asm_vpu, .L_adfir_end-src_mrhf_adfir_inner_loop_asm_vpu
 
 // ===================================================================== //
-// void src_mrhf_fir_inner_loop_asm_xs3(int *data, int *coefs,           //
+// void src_mrhf_fir_inner_loop_asm_vpu(int *data, int *coefs,           //
 //                                      int result[], int count);        //
 // Computes result[0] = sat((sum of 2*count data*coef products) >> 31)   //
 // count must be a multiple of 8 (count/8 iterations of 16 taps).        //
 // ===================================================================== //
     .p2align 4
-    .globl  src_mrhf_fir_inner_loop_asm_xs3
-    .type   src_mrhf_fir_inner_loop_asm_xs3, @function
-src_mrhf_fir_inner_loop_asm_xs3:
+    .globl  src_mrhf_fir_inner_loop_asm_vpu
+    .type   src_mrhf_fir_inner_loop_asm_vpu, @function
+src_mrhf_fir_inner_loop_asm_vpu:
     xm.entsp (NSTACKWORDS)*4
     { li t3, 0                          ; nop                                   }
     { srli a3, a3, 3                    ; xm.vsetc t3                           }
@@ -128,14 +128,14 @@ src_mrhf_fir_inner_loop_asm_xs3:
     xm.vstrpv a2, t3
     xm.retsp (NSTACKWORDS)*4
 .L_fir_end:
-    .resource_const src_mrhf_fir_inner_loop_asm_xs3, "stack_frame_bytes", (NSTACKWORDS)*4
-    .resource_list_empty src_mrhf_fir_inner_loop_asm_xs3, "tail_callees"
-    .resource_list_empty src_mrhf_fir_inner_loop_asm_xs3, "callees"
-    .resource_list_empty src_mrhf_fir_inner_loop_asm_xs3, "parallel_callees"
-    .size   src_mrhf_fir_inner_loop_asm_xs3, .L_fir_end-src_mrhf_fir_inner_loop_asm_xs3
+    .resource_const src_mrhf_fir_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
+    .resource_list_empty src_mrhf_fir_inner_loop_asm_vpu, "tail_callees"
+    .resource_list_empty src_mrhf_fir_inner_loop_asm_vpu, "callees"
+    .resource_list_empty src_mrhf_fir_inner_loop_asm_vpu, "parallel_callees"
+    .size   src_mrhf_fir_inner_loop_asm_vpu, .L_fir_end-src_mrhf_fir_inner_loop_asm_vpu
 
 // ===================================================================== //
-// void src_mrhf_fir_os_inner_loop_asm_xs3(int *data, int *coefs,        //
+// void src_mrhf_fir_os_inner_loop_asm_vpu(int *data, int *coefs,        //
 //                                         int result[], int count);     //
 // Oversampling FIR: coefs hold two interleaved phases as alternating    //
 // 8-word vectors (even vector, odd vector) per 8 data samples.          //
@@ -143,9 +143,9 @@ src_mrhf_fir_inner_loop_asm_xs3:
 // count must be a multiple of 4 (count/4 iterations of 8 samples).      //
 // ===================================================================== //
     .p2align 4
-    .globl  src_mrhf_fir_os_inner_loop_asm_xs3
-    .type   src_mrhf_fir_os_inner_loop_asm_xs3, @function
-src_mrhf_fir_os_inner_loop_asm_xs3:
+    .globl  src_mrhf_fir_os_inner_loop_asm_vpu
+    .type   src_mrhf_fir_os_inner_loop_asm_vpu, @function
+src_mrhf_fir_os_inner_loop_asm_vpu:
     xm.entsp (NSTACKWORDS)*4
     { li t3, 0                          ; nop                                   }
     { srli a3, a3, 2                    ; xm.vsetc t3                           }
@@ -174,14 +174,14 @@ src_mrhf_fir_os_inner_loop_asm_xs3:
     xm.vstrpv a2, t3
     xm.retsp (NSTACKWORDS)*4
 .L_fir_os_end:
-    .resource_const src_mrhf_fir_os_inner_loop_asm_xs3, "stack_frame_bytes", (NSTACKWORDS)*4
-    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_xs3, "tail_callees"
-    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_xs3, "callees"
-    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_xs3, "parallel_callees"
-    .size   src_mrhf_fir_os_inner_loop_asm_xs3, .L_fir_os_end-src_mrhf_fir_os_inner_loop_asm_xs3
+    .resource_const src_mrhf_fir_os_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
+    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_vpu, "tail_callees"
+    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_vpu, "callees"
+    .resource_list_empty src_mrhf_fir_os_inner_loop_asm_vpu, "parallel_callees"
+    .size   src_mrhf_fir_os_inner_loop_asm_vpu, .L_fir_os_end-src_mrhf_fir_os_inner_loop_asm_vpu
 
 // ===================================================================== //
-// void src_mrhf_spline_coeff_gen_inner_loop_asm_xs3(int *piPhase0,      //
+// void src_mrhf_spline_coeff_gen_inner_loop_asm_vpu(int *piPhase0,      //
 //                              int *iH, int *piADCoefs, int n_taps);    //
 // Generates the 16 adaptive FIR coefficients by interpolating three     //
 // adjacent phases with the spline weights iH[0..2].                     //
@@ -196,9 +196,9 @@ src_mrhf_fir_os_inner_loop_asm_xs3:
 #define ADFIR_PHASE_STRIDE ((128 + 2) * 4)  // FILTER_DEFS_ADFIR_N_PHASES + 2 words
 
     .p2align 4
-    .globl  src_mrhf_spline_coeff_gen_inner_loop_asm_xs3
-    .type   src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, @function
-src_mrhf_spline_coeff_gen_inner_loop_asm_xs3:
+    .globl  src_mrhf_spline_coeff_gen_inner_loop_asm_vpu
+    .type   src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, @function
+src_mrhf_spline_coeff_gen_inner_loop_asm_vpu:
     xm.entsp (NSTACKWORDS)*4
     { li t3, 0                          ; nop                                   }
     { addi a3, sp, 0                    ; xm.vsetc t3                           }
@@ -239,10 +239,10 @@ src_mrhf_spline_coeff_gen_inner_loop_asm_xs3:
     xm.vstr a2
     xm.retsp (NSTACKWORDS)*4
 .L_spline_end:
-    .resource_const src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, "stack_frame_bytes", (NSTACKWORDS)*4
-    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, "tail_callees"
-    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, "callees"
-    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, "parallel_callees"
-    .size   src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, .L_spline_end-src_mrhf_spline_coeff_gen_inner_loop_asm_xs3
+    .resource_const src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
+    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, "tail_callees"
+    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, "callees"
+    .resource_list_empty src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, "parallel_callees"
+    .size   src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, .L_spline_end-src_mrhf_spline_coeff_gen_inner_loop_asm_vpu
 
 #endif // defined(__VX4B__)

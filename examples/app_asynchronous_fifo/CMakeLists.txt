@@ -3,7 +3,9 @@ include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 
 project(app_asynchronous_fifo)
 
-set(APP_HW_TARGET XK-EVK-XU316)
+if(NOT DEFINED APP_HW_TARGET)
+    set(APP_HW_TARGET XK-EVK-XU316)
+endif()
 
 set(APP_PCA_ENABLE ON)
 

@@ -202,8 +202,8 @@ pipeline {
                         }
                         withTools(params.TOOLS_VERSION_VX_XCC) {
                             withEnv(["XCC_TARGET_PATH=${env.XCC_TARGET_PATH}:${env.XMOS_TOOL_PATH}/targets/XK-EVK-XU416"]) {
-                                dir("${REPO_NAME}/tests/sim_tests/asrc_vx4_test") {
-                                    sh "cmake -Wno-dev -G 'Unix Makefiles' -B build-vx4-xcc"
+                                dir("${REPO_NAME}/tests/sim_tests/asrc_vpu_test") {
+                                    sh "cmake -Wno-dev -G 'Unix Makefiles' -B build-vx4-xcc -DAPP_HW_TARGET=XK-EVK-XU416"
                                     sh "xmake -C build-vx4-xcc -j"
                                 }
                                 dir("${REPO_NAME}/tests") {
