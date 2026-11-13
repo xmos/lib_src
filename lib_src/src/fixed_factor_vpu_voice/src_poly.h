@@ -151,4 +151,29 @@ static inline void src_rat_3_2_96t_us(int32_t samp_in[2], int32_t samp_out[3], c
 
 /**@}*/ // END: addtogroup src_rat_3_2_96t_us
 
+
+/**
+ * \addtogroup src_rat_2_3_48t_ds src_rat_2_3_48t_ds
+ *
+ * The public API for using SRC.
+ * @{
+ */
+
+/**
+ * @brief Performs VPU-optimised 48 taps polyphase rational factor 2/3 downsampling
+ * 
+ * @param samp_in       Values to be downsampled
+ * @param samp_out      Downsampled output
+ * @param coefs_ds      Two-phase FIR coefficients array with [2][24] dimensions
+ * @param state_ds      FIR state array with 48 elements in it
+ */
+static inline void src_rat_2_3_48t_ds(int32_t samp_in[3], int32_t samp_out[2], const int32_t coefs_ds[2][24], int32_t state_ds[24])
+{
+    push_s32_24t(state_ds, samp_in[0]);
+    samp_out[0] = fir_s32_24t(state_ds, coefs_ds[0], samp_in[1]) * 2;
+    samp_out[1] = fir_s32_24t(state_ds, coefs_ds[1], samp_in[2]) * 2;
+}
+
+/**@}*/ // END: addtogroup src_rat_2_3_48t_ds
+
 #endif // _SRC_POLY_VPU_H_
