@@ -4,6 +4,7 @@ lib_src change log
 UNRELEASED
 ----------
 
+  * REMOVED: Support for legacy cmake build system
   * ADDED: xcore-400 Jenkins pipeline support
 
 2.7.1
