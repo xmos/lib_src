@@ -1,5 +1,9 @@
 // Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+// VPU (XS3A/xcore.ai) implementations of the multirate HiFi inner loops
+// (adfir, fir, fir_os and spline coeff gen), selected via SRC_USE_VPU (see
+// use_vpu.h).  The VX4 (xcore-400) equivalents are in
+// src_mrhf_inner_loops_asm_vx4b.S.
 #if defined(__XS3A__)
     .text
 
@@ -8,11 +12,11 @@
 
     .align    16
 
-    .cc_top src_mrhf_adfir_inner_loop_asm_xs3.function
-    .globl    src_mrhf_adfir_inner_loop_asm_xs3
-    .type    src_mrhf_adfir_inner_loop_asm_xs3,@function
+    .cc_top src_mrhf_adfir_inner_loop_asm_vpu.function
+    .globl    src_mrhf_adfir_inner_loop_asm_vpu
+    .type    src_mrhf_adfir_inner_loop_asm_vpu,@function
 
-src_mrhf_adfir_inner_loop_asm_xs3:
+src_mrhf_adfir_inner_loop_asm_vpu:
     { DUALENTSP_u6 NSTACKWORDS    ; ldc r11, 0 }
     { vsetc r11                   ; shr r3, r3, 3}
     { ldc r11, 0x20               ; vclrdr }
@@ -38,19 +42,19 @@ src_mrhf_adfir_done2:
     retsp NSTACKWORDS
 
 .atmp:
-    .size    src_mrhf_adfir_inner_loop_asm_xs3, .atmp-src_mrhf_adfir_inner_loop_asm_xs3
+    .size    src_mrhf_adfir_inner_loop_asm_vpu, .atmp-src_mrhf_adfir_inner_loop_asm_vpu
 
-    .set    src_mrhf_adfir_inner_loop_asm_xs3.nstackwords, NSTACKWORDS
-    .globl    src_mrhf_adfir_inner_loop_asm_xs3.nstackwords
-    .set    src_mrhf_adfir_inner_loop_asm_xs3.maxcores, 1
-    .globl    src_mrhf_adfir_inner_loop_asm_xs3.maxcores
-    .set    src_mrhf_adfir_inner_loop_asm_xs3.maxtimers,0
-    .globl    src_mrhf_adfir_inner_loop_asm_xs3.maxtimers
-    .set    src_mrhf_adfir_inner_loop_asm_xs3.maxchanends,0
-    .globl    src_mrhf_adfir_inner_loop_asm_xs3.maxchanends
+    .set    src_mrhf_adfir_inner_loop_asm_vpu.nstackwords, NSTACKWORDS
+    .globl    src_mrhf_adfir_inner_loop_asm_vpu.nstackwords
+    .set    src_mrhf_adfir_inner_loop_asm_vpu.maxcores, 1
+    .globl    src_mrhf_adfir_inner_loop_asm_vpu.maxcores
+    .set    src_mrhf_adfir_inner_loop_asm_vpu.maxtimers,0
+    .globl    src_mrhf_adfir_inner_loop_asm_vpu.maxtimers
+    .set    src_mrhf_adfir_inner_loop_asm_vpu.maxchanends,0
+    .globl    src_mrhf_adfir_inner_loop_asm_vpu.maxchanends
 
-    .globl    src_mrhf_fir_inner_loop_asm_xs3
-    .type    src_mrhf_fir_inner_loop_asm_xs3,@function
+    .globl    src_mrhf_fir_inner_loop_asm_vpu
+    .type    src_mrhf_fir_inner_loop_asm_vpu,@function
 
 #undef NSTACKWORDS
 #define NSTACKWORDS        8
@@ -68,7 +72,7 @@ shifts2:
 
     .align    16
 
-src_mrhf_fir_inner_loop_asm_xs3:
+src_mrhf_fir_inner_loop_asm_vpu:
     { DUALENTSP_u6 NSTACKWORDS    ; ldc r11, 0 }
     { vsetc r11                   ; shr r3, r3, 3}
     { ldc r11, 0x20               ; vclrdr }
@@ -94,19 +98,19 @@ src_mrhf_fir_done2:
     retsp NSTACKWORDS
 
 .btmp:
-    .size    src_mrhf_fir_inner_loop_asm_xs3, .btmp-src_mrhf_fir_inner_loop_asm_xs3
+    .size    src_mrhf_fir_inner_loop_asm_vpu, .btmp-src_mrhf_fir_inner_loop_asm_vpu
 
-    .set    src_mrhf_fir_inner_loop_asm_xs3.nstackwords, NSTACKWORDS
-    .globl    src_mrhf_fir_inner_loop_asm_xs3.nstackwords
-    .set    src_mrhf_fir_inner_loop_asm_xs3.maxcores, 1
-    .globl    src_mrhf_fir_inner_loop_asm_xs3.maxcores
-    .set    src_mrhf_fir_inner_loop_asm_xs3.maxtimers,0
-    .globl    src_mrhf_fir_inner_loop_asm_xs3.maxtimers
-    .set    src_mrhf_fir_inner_loop_asm_xs3.maxchanends,0
-    .globl     src_mrhf_fir_inner_loop_asm_xs3.maxchanends
+    .set    src_mrhf_fir_inner_loop_asm_vpu.nstackwords, NSTACKWORDS
+    .globl    src_mrhf_fir_inner_loop_asm_vpu.nstackwords
+    .set    src_mrhf_fir_inner_loop_asm_vpu.maxcores, 1
+    .globl    src_mrhf_fir_inner_loop_asm_vpu.maxcores
+    .set    src_mrhf_fir_inner_loop_asm_vpu.maxtimers,0
+    .globl    src_mrhf_fir_inner_loop_asm_vpu.maxtimers
+    .set    src_mrhf_fir_inner_loop_asm_vpu.maxchanends,0
+    .globl     src_mrhf_fir_inner_loop_asm_vpu.maxchanends
 
-    .globl    src_mrhf_fir_os_inner_loop_asm_xs3
-    .type    src_mrhf_fir_os_inner_loop_asm_xs3,@function
+    .globl    src_mrhf_fir_os_inner_loop_asm_vpu
+    .type    src_mrhf_fir_os_inner_loop_asm_vpu,@function
 
 #undef NSTACKWORDS
 #define NSTACKWORDS        8
@@ -117,7 +121,7 @@ odds:
     .word 0, 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff
 
     .align    16
-src_mrhf_fir_os_inner_loop_asm_xs3:
+src_mrhf_fir_os_inner_loop_asm_vpu:
     
     { DUALENTSP_u6 NSTACKWORDS     ; ldc r11, 0x0 }
     { vsetc r11                    ; shr r3, r3, 2 }
@@ -148,26 +152,26 @@ src_mrhf_fir_os_done2:
     retsp NSTACKWORDS
 
 .ctmp:
-    .size      src_mrhf_fir_os_inner_loop_asm_xs3, .ctmp-src_mrhf_fir_os_inner_loop_asm_xs3
+    .size      src_mrhf_fir_os_inner_loop_asm_vpu, .ctmp-src_mrhf_fir_os_inner_loop_asm_vpu
 
-    .set      src_mrhf_fir_os_inner_loop_asm_xs3.nstackwords, NSTACKWORDS
-    .globl    src_mrhf_fir_os_inner_loop_asm_xs3.nstackwords
-    .set      src_mrhf_fir_os_inner_loop_asm_xs3.maxcores, 1
-    .globl    src_mrhf_fir_os_inner_loop_asm_xs3.maxcores
-    .set      src_mrhf_fir_os_inner_loop_asm_xs3.maxtimers,0
-    .globl    src_mrhf_fir_os_inner_loop_asm_xs3.maxtimers
-    .set      src_mrhf_fir_os_inner_loop_asm_xs3.maxchanends,0
-    .globl    src_mrhf_fir_os_inner_loop_asm_xs3.maxchanends
+    .set      src_mrhf_fir_os_inner_loop_asm_vpu.nstackwords, NSTACKWORDS
+    .globl    src_mrhf_fir_os_inner_loop_asm_vpu.nstackwords
+    .set      src_mrhf_fir_os_inner_loop_asm_vpu.maxcores, 1
+    .globl    src_mrhf_fir_os_inner_loop_asm_vpu.maxcores
+    .set      src_mrhf_fir_os_inner_loop_asm_vpu.maxtimers,0
+    .globl    src_mrhf_fir_os_inner_loop_asm_vpu.maxtimers
+    .set      src_mrhf_fir_os_inner_loop_asm_vpu.maxchanends,0
+    .globl    src_mrhf_fir_os_inner_loop_asm_vpu.maxchanends
 
 #define FILTER_DEFS_ADFIR_N_PHASES            128 
-    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu
     .align    16
-    .type    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3,@function
+    .type    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu,@function
 
 #undef NSTACKWORDS
 #define NSTACKWORDS        8
 
-src_mrhf_spline_coeff_gen_inner_loop_asm_xs3:
+src_mrhf_spline_coeff_gen_inner_loop_asm_vpu:
     DUALENTSP_lu6 NSTACKWORDS
 
     ldc r3, (FILTER_DEFS_ADFIR_N_PHASES + 2)<< 2
@@ -227,15 +231,15 @@ src_mrhf_spline_coeff_gen_done2:
     retsp NSTACKWORDS
 
 .dtmp:
-    .size    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3, .dtmp-src_mrhf_spline_coeff_gen_inner_loop_asm_xs3
-    .cc_bottom src_mrhf_adfir_inner_loop_asm_xs3.function
+    .size    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, .dtmp-src_mrhf_spline_coeff_gen_inner_loop_asm_vpu
+    .cc_bottom src_mrhf_adfir_inner_loop_asm_vpu.function
 
-    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.nstackwords, NSTACKWORDS
-    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.nstackwords
-    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxcores, 1
-    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxcores
-    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxtimers,0
-    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxtimers
-    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxchanends,0
-    .globl     src_mrhf_spline_coeff_gen_inner_loop_asm_xs3.maxchanends
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.nstackwords, NSTACKWORDS
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.nstackwords
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxcores, 1
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxcores
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxtimers,0
+    .globl    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxtimers
+    .set    src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxchanends,0
+    .globl     src_mrhf_spline_coeff_gen_inner_loop_asm_vpu.maxchanends
 #endif

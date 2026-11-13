@@ -13,24 +13,24 @@ pipeline {
     }
     parameters {
         string(
-                    name: 'TOOLS_VERSION_XS',
-          defaultValue: '15.3.1',
-                    description: 'The xcore.ai (XS) XTC tools version'
-                )
-                string(
-                    name: 'TOOLS_VERSION_VX',
-                    defaultValue: 'bob@develop',
-                    description: 'The XCORE-400 (VX) tools version'
-                )
-                string(
-                    name: 'TOOLS_VERSION_VX_XCC',
-                    defaultValue: 'slipgate@master:143',
-                    description: 'The XCORE-400 (VX) XTC tools version'
+            name: 'TOOLS_VERSION_XS',
+            defaultValue: '15.3.1',
+            description: 'The xcore.ai (XS) XTC tools version'
         )
         string(
-          name: 'XMOSDOC_VERSION',
-          defaultValue: 'v8.1.2',
-          description: 'The xmosdoc version'
+            name: 'TOOLS_VERSION_VX',
+            defaultValue: 'bob@develop',
+            description: 'The XCORE-400 (VX) tools version (bob)'
+        )
+        string(
+            name: 'TOOLS_VERSION_VX_XCC',
+            defaultValue: 'slipgate@master:143',
+            description: 'The XCORE-400 (VX) XTC tools version (slipgate)'
+        )
+        string(
+            name: 'XMOSDOC_VERSION',
+            defaultValue: 'v8.1.2',
+            description: 'The xmosdoc version'
         )
         string(
             name: 'INFR_APPS_VERSION',
@@ -190,15 +190,33 @@ pipeline {
                             xcoreCleanSandbox()
                         }
                     }
-                } // stage('Bob tests')
+                } // stage('vx4 tests')
 
                 stage('Slipgate tests') {
                     agent {
                         label 'x86_64 && linux'
                     }
                     steps {
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                        }
                         withTools(params.TOOLS_VERSION_VX_XCC) {
-                            // VX4 XTC tests will be added here.
+                            withEnv(["XCC_TARGET_PATH=${env.XCC_TARGET_PATH}:${env.XMOS_TOOL_PATH}/targets/XK-EVK-XU416"]) {
+                                dir("${REPO_NAME}/tests/sim_tests/asrc_vpu_test") {
+                                    sh "cmake -Wno-dev -G 'Unix Makefiles' -B build-vx4-xcc -DAPP_HW_TARGET=XK-EVK-XU416"
+                                    sh "xmake -C build-vx4-xcc -j"
+                                }
+                                dir("${REPO_NAME}/tests") {
+                                    createVenv(reqFile: "requirements.txt")
+                                    withVenv {
+                                        withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
+                                            dir("sim_tests") {
+                                                sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     post {

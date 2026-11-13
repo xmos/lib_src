@@ -243,7 +243,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
 #if SRC_USE_VPU
-        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+        src_mrhf_fir_os_inner_loop_asm_vpu(piData, piCoefs, iData, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
@@ -276,7 +276,7 @@ FIRReturnCodes_t                FIR_proc_os2(FIRCtrl_t* psFIRCtrl)
 
         //printf("piData = %p, piCoefs = %p\n", piData, piCoefs);
 #if SRC_USE_VPU
-        src_mrhf_fir_os_inner_loop_asm_xs3(piData, piCoefs, iData, uiNLoops);
+        src_mrhf_fir_os_inner_loop_asm_vpu(piData, piCoefs, iData, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100)
             src_mrhf_fir_os_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
@@ -341,7 +341,7 @@ FIRReturnCodes_t                FIR_proc_sync(FIRCtrl_t* psFIRCtrl)
         piCoefs                    = piCoefsB;
 
 #if SRC_USE_VPU
-        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+        src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, &iData0, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
@@ -405,7 +405,7 @@ FIRReturnCodes_t                FIR_proc_ds2(FIRCtrl_t* psFIRCtrl)
         piData                    = piDelayI;
         piCoefs                    = piCoefsB;
 #if SRC_USE_VPU
-        src_mrhf_fir_inner_loop_asm_xs3(piData, piCoefs, &iData0, uiNLoops);
+        src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, &iData0, uiNLoops);
 #else
         if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, &iData0, uiNLoops);
         else src_mrhf_fir_inner_loop_asm(piData, piCoefs, &iData0, uiNLoops);
@@ -693,6 +693,11 @@ FIRReturnCodes_t                PPFIR_proc(PPFIRCtrl_t* psPPFIRCtrl)
             piData                    = piDelayI;
             piCoefs                    = piCoefsB + uiCoefsPhase;
 
+#if SRC_USE_VPU
+            if ((uiNLoops & 7) == 0)
+                src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, iData, uiNLoops);
+            else
+#endif
             if ((unsigned)piData & 0b0100) src_mrhf_fir_inner_loop_asm_odd(piData, piCoefs, iData, uiNLoops);
             else src_mrhf_fir_inner_loop_asm(piData, piCoefs, iData, uiNLoops);
 
