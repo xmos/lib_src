@@ -1,12 +1,13 @@
-VERSION = 2.5.0
+VERSION = 2.7.1
 
-DEPENDENT_MODULES = lib_logging(>=3.2.0)
+DEPENDENT_MODULES = lib_logging(>=3.4.0)
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -Wno-missing-braces \
-                   -O3
+                   -O3 \
+                   -Wall
 
-OPTIONAL_HEADERS += src_conf.h
+OPTIONAL_HEADERS += src_conf.h asrc_task_config.h
 
 EXPORT_INCLUDE_DIRS = api \
                       src/fixed_factor_of_3 \

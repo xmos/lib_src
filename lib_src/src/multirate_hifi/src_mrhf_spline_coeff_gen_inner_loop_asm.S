@@ -1,4 +1,4 @@
-// Copyright 2016-2023 XMOS LIMITED.
+// Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #define        FILTER_DEFS_ADFIR_PHASE_N_TAPS        ((1920 / 128) + 1)        // Number of taps per phase
