@@ -176,29 +176,6 @@ pipeline {
                     } // post
                 }  // stage('SNR plots')
 
-                stage('Legacy CMake build') {
-                    agent {
-                        label 'x86_64 && linux'
-                    }
-                    steps {
-                        println "Stage running on ${env.NODE_NAME}"
-                        dir(REPO_NAME) {
-                            checkoutScmShallow()
-                            // Clone "Boston" cmake
-                            sh "git clone git@github.com:xmos/xmos_cmake_toolchain.git --branch v1.0.0"
-                            withTools(params.TOOLS_VERSION_XS) {
-                                sh 'cmake -G "Unix Makefiles" -B build_legacy_cmake -DCMAKE_TOOLCHAIN_FILE=xmos_cmake_toolchain/xs3a.cmake'
-                                sh 'xmake -C build_legacy_cmake lib_src'
-                            }
-                        } // dir(REPO_NAME)
-                    } // steps
-                    post {
-                        cleanup {
-                            xcoreCleanSandbox()
-                        }
-                    } // post
-                }  // stage('Legacy CMake build')
-
                 stage('vx4 tests') {
                     agent {
                         label 'x86_64 && linux'
