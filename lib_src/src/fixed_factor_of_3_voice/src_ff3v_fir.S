@@ -1,5 +1,8 @@
 // Copyright 2017-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+#if defined(__XS2A__) || defined(__XS3A__)
+
 .section  .dp.data,"awd",@progbits
 .text
 
@@ -61,3 +64,5 @@ src_ff3v_fir_impl:
   .globl  src_ff3v_fir_impl.maxtimers
   .set  src_ff3v_fir_impl.maxchanends,0
   .globl  src_ff3v_fir_impl.maxchanends
+
+#endif // defined(__XS2A__) || defined(__XS3A__)

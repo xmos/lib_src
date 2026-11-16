@@ -17,6 +17,7 @@
 #include <print.h>
 
 #include <stdbool.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "asrc_task.h"
@@ -327,13 +328,13 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
         asrc_wait_for_valid_config(c_buff_idx, &input_frequency, &output_frequency, asrc_io);
 
         //// Extract frequency info
-        dprintf("Input fs: %lu Output fs: %lu\n", input_frequency, output_frequency);
+        dprintf("Input fs: %" PRIu32 " Output fs: %" PRIu32 "\n", input_frequency, output_frequency);
         int inputFsCode = frequency_to_fs_code(input_frequency);
         int outputFsCode = frequency_to_fs_code(output_frequency);
         int interpolation_ticks = interpolation_ticks_2D[inputFsCode][outputFsCode];
 
         //// FIFO init
-        dprintf("FIFO init channels: %d length: %ld\n", asrc_io->asrc_channel_count, fifo->max_fifo_depth);
+        dprintf("FIFO init channels: %u length: %" PRId32 "\n", asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init(fifo, asrc_io->asrc_channel_count, fifo->max_fifo_depth);
         asynchronous_fifo_init_PID_fs_codes(fifo, inputFsCode, outputFsCode);
 
@@ -369,7 +370,7 @@ DEFINE_INTERRUPT_PERMITTED(ASRC_ISR_GRP, void, asrc_processor,
 
         //// Timing check vars. Includes ASRC, timestamp interpolation and FIFO push
         int32_t asrc_process_time_limit = (XS1_TIMER_HZ / input_frequency) * SRC_N_IN_SAMPLES;
-        dprintf("ASRC process_time_limit: %ld\n", asrc_process_time_limit);
+        dprintf("ASRC process_time_limit: %" PRId32 "\n", asrc_process_time_limit);
         int32_t asrc_peak_processing_time = 0;
 
         ideal_fs_ratio = (fs_ratio + (1<<31)) >> 32;

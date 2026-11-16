@@ -17,14 +17,6 @@
 #include "src_mrhf_fir_os_inner_loop_asm.h"
 #include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
 
-#if defined(__XS3A__)
-#define ASRC_TEST_GETTIME(value) asm volatile("gettime %0" : "=r" (value))
-#elif defined(__VX4B__)
-#define ASRC_TEST_GETTIME(value) asm volatile("xm.gettime %0" : "=r" (value))
-#else
-#error Unsupported ASRC test profile
-#endif
-
 int fs_code(int frequency) {
     if(frequency == 44100) {
         return  FS_CODE_44;
@@ -465,9 +457,9 @@ int unit_test_asrc(int test_case) {
             sine_cnt++;
             if (sine_cnt == 16) sine_cnt = 0;
         }
-        ASRC_TEST_GETTIME(t0);
+        t0 = get_reference_time();
         int num_samples = asrc_process(in_samples, out_samples, fs_ratio, sASRCCtrl);
-        ASRC_TEST_GETTIME(t1);
+        t1 = get_reference_time();
         total_time += t1-t0;
         for(int j = 0; j < num_samples; j++) {
             if (abs(out_samples[j] - expected_wave[exp_cnt]) > 25) {
@@ -823,9 +815,9 @@ int unit_test_asrc_stereo(int test_case) {
             sine2_cnt++;
             if (sine2_cnt == 19) sine2_cnt = 0;
         }
-        ASRC_TEST_GETTIME(t0);
+        t0 = get_reference_time();
         int num_samples = asrc_process((int *)in_samples, (int *) out_samples, fs_ratio, sASRCCtrl);
-        ASRC_TEST_GETTIME(t1);
+        t1 = get_reference_time();
         total_time += t1-t0;
         for(int j = 0; j < num_samples; j++) {
             for(int k = 0; k < 2; k++) {
@@ -911,9 +903,9 @@ int unit_test_ssrc() {
         for (int j = 0; j < SSRC_TEST_N_IN_SAMPLES; j++) {
             in_samples[j] = sine_wave[idx++ & 15];
         }
-        ASRC_TEST_GETTIME(t0);
+        t0 = get_reference_time();
         unsigned n_samps_out = ssrc_process(in_samples, out_samples, sSSRCCtrl);
-        ASRC_TEST_GETTIME(t1);
+        t1 = get_reference_time();
         total_time += t1 - t0;
         for (unsigned j = 0; j < n_samps_out; j++) {
             if (abs(out_samples[j] - expected_ssrc_44_48[exp_cnt]) > 25) {
@@ -1005,26 +997,26 @@ int unit_test_fir() {
     iData2[1] = 0x4234;
     int t0, t1, t2, t3;
     int errors = 0;
-    ASRC_TEST_GETTIME(t0);
+    t0 = get_reference_time();
     src_mrhf_fir_os_inner_loop_asm(piData, piCoefs, iData1, 16);
-    ASRC_TEST_GETTIME(t1);
+    t1 = get_reference_time();
     printf("Fir os inner loop: time old %d  ", t1-t0);
-    ASRC_TEST_GETTIME(t2);
+    t2 = get_reference_time();
     src_mrhf_fir_os_inner_loop_asm_vpu(piData, piCoefs2, iData2, 16);
-    ASRC_TEST_GETTIME(t3);
+    t3 = get_reference_time();
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2 || abs(iData1[1] - iData2[1]) > 2) {
         printf("expected %08x %08x ", iData1[0], iData1[1]);
         printf("saw %08x %08x\n", iData2[0], iData2[1]);
         errors++;
     }
-    ASRC_TEST_GETTIME(t0);
+    t0 = get_reference_time();
     src_mrhf_fir_inner_loop_asm(piData, piCoefs, iData1, 32);
-    ASRC_TEST_GETTIME(t1);
+    t1 = get_reference_time();
     printf("fir_inner_loop time old %d    ", t1-t0);
-    ASRC_TEST_GETTIME(t2);
+    t2 = get_reference_time();
     src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, iData2, 32);
-    ASRC_TEST_GETTIME(t3);
+    t3 = get_reference_time();
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 2) {
         printf("expected %08x", iData1[0]);
@@ -1032,13 +1024,13 @@ int unit_test_fir() {
         errors++;
     }
 
-    ASRC_TEST_GETTIME(t0);
+    t0 = get_reference_time();
     src_mrhf_adfir_inner_loop_asm(piData, piCoefs, iData1, 32);
-    ASRC_TEST_GETTIME(t1);
+    t1 = get_reference_time();
     printf("adfir_inner_loop time old %d   ", t1-t0);
-    ASRC_TEST_GETTIME(t2);
+    t2 = get_reference_time();
     src_mrhf_adfir_inner_loop_asm_vpu(piData, piCoefs, iData2, 32);
-    ASRC_TEST_GETTIME(t3);
+    t3 = get_reference_time();
     printf(" new %d speedup %f\n", t3-t2, (t1-t0)/(float)(t3-t2));
     if (abs(iData1[0] - iData2[0]) > 1) {
         printf("expected %08x", iData1[0]);

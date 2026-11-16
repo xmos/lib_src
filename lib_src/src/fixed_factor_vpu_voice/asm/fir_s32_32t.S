@@ -1,5 +1,6 @@
 // Copyright 2023-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+#if defined(__XS2A__) || defined(__XS3A__)
 
 #define FUNCTION_NAME fir_s32_32t
 
@@ -21,7 +22,6 @@
 
 FUNCTION_NAME: // (int32_t * state, int32_t * coef, int32_t new_samp)
         dualentsp NSTACKWORDS
-#if (defined(__XS3A__)) // Only available for XS3 with VPU
 
         // r5 - r10 are not used here
 
@@ -83,7 +83,6 @@ FUNCTION_NAME: // (int32_t * state, int32_t * coef, int32_t new_samp)
     {   add out, out, tmp1              ;   ldw tmp0, buff[2]               }
     {   add out, out, tmp0              ;   ldw tmp1, buff[3]               }
     {   add out, out, tmp1              ;   ldw r4, sp[0]                   }
-#endif // Only available for XS3 with VPU
         retsp NSTACKWORDS
 
 .cc_bottom FUNCTION_NAME.function; 
@@ -93,4 +92,5 @@ FUNCTION_NAME: // (int32_t * state, int32_t * coef, int32_t new_samp)
 .set FUNCTION_NAME.maxchanends,0;               .global FUNCTION_NAME.maxchanends; 
 
 #undef FUNCTION_NAME
+#endif
 

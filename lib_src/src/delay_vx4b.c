@@ -4,7 +4,6 @@
 #if defined(__VX4B__)
 #include <stdint.h>
 
-
 #include <basix/architecture.h>
 
 void delay_milliseconds(unsigned milliseconds)

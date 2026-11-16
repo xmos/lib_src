@@ -7,6 +7,7 @@
 #include <math.h>
 #include <timer.h>
 #include "debug_print.h"
+#include "delay_vx4b.h"
 
 // ASRC includes
 #include "src.h"

@@ -196,29 +196,41 @@ pipeline {
                     agent {
                         label 'x86_64 && linux'
                     }
-                    steps {
-                        dir(REPO_NAME) {
-                            checkoutScmShallow()
-                        }
-                        withTools(params.TOOLS_VERSION_VX_XCC) {
-                            withEnv(["XCC_TARGET_PATH=${env.XCC_TARGET_PATH}:${env.XMOS_TOOL_PATH}/targets/XK-EVK-XU416"]) {
-                                dir("${REPO_NAME}/tests/sim_tests/asrc_vpu_test") {
-                                    sh "cmake -Wno-dev -G 'Unix Makefiles' -B build-vx4-xcc -DAPP_HW_TARGET=XK-EVK-XU416"
-                                    sh "xmake -C build-vx4-xcc -j"
+                    stages {
+                        stage('Build examples') {
+                            steps {
+                                dir(REPO_NAME) {
+                                    checkoutScmShallow()
                                 }
-                                dir("${REPO_NAME}/tests") {
-                                    createVenv(reqFile: "requirements.txt")
-                                    withVenv {
-                                        withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
-                                            dir("sim_tests") {
-                                                sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
+                                dir("${REPO_NAME}/examples") {
+                                    withTools(params.TOOLS_VERSION_VX_XCC) {
+                                        xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
+                                    }
+                                }
+                            }
+                        }
+
+                        stage('Build and test ASRC') {
+                            steps {
+                                withTools(params.TOOLS_VERSION_VX_XCC) {
+                                    dir("${REPO_NAME}/sim_tests/asrc_vpu_test")) {
+                                        xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
+                                    }     
+                                    dir("${REPO_NAME}/tests") {
+                                        createVenv(reqFile: "requirements.txt")
+                                        withVenv {
+                                            withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
+                                                dir("sim_tests") {
+                                                    sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
+                    } // stages
                     post {
                         cleanup {
                             xcoreCleanSandbox()

@@ -134,9 +134,13 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
             asm("vldr %0[0]" :: "r" (ptr));
             asm("vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
 #elif defined(__VX4B__)
-            register int32_t *ptr asm("r11") = samples;
-            asm("xm.vldr %0[0]" :: "r" (ptr));
-            asm("xm.vstrpv %0[0], %1" :: "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask));
+            register int32_t *ptr = samples;
+            asm volatile("xm.vldr %0\n\t"
+                          "xm.vstrpv %1, %2"
+                          :
+                          : "r" (ptr), "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask)
+                          : "memory");
+
 #else
 #error "Unsupported architecture - Only xcore-200, xcore.ai and xcore-400 supported"
 #endif
@@ -183,7 +187,7 @@ int32_t asynchronous_fifo_producer_put(asynchronous_fifo_t *state, int32_t *samp
  * Function that implements the consumer interface. Control communication
  * happens through two variables: reset and sample_data_valid. These shall
  * only be set as the last action, as they signify to the production side
- * that the datastructure can now be read on that side.
+ * that the data structure can now be read on that side.
  *
  * Note that the samples are filled in regardless of whether the FIFO is
  * operating or not; the consumer will repeatedly get the same sample if
@@ -205,9 +209,12 @@ asynchronous_fifo_get_return_t asynchronous_fifo_consumer_get(asynchronous_fifo_
     asm("vldr %0[0]" :: "r" (ptr));
     asm("vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));
 #elif defined(__VX4B__)
-    register int32_t *ptr asm("r11") = state->buffer + read_ptr * channel_count;
-    asm("xm.vldr %0[0]" :: "r" (ptr));
-    asm("xm.vstrpv %0[0], %1" :: "r" (samples), "r" (copy_mask));   
+    register int32_t *ptr = state->buffer + read_ptr * channel_count;
+    asm volatile("xm.vldr %0\n\t"
+                "xm.vstrpv %1, %2"
+                :
+                : "r" (ptr), "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask)
+                : "memory");
 #else
 #error "Unsupported architecture - Only xcore-200, xcore.ai and xcore-400 supported"
 #endif
