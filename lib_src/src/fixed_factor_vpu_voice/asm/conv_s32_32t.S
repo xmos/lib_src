@@ -1,6 +1,6 @@
 // Copyright 2023-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#if defined(__XS2A__) || defined(__XS3A__)
+#if defined(__XS3A__)
 
 #define FUNCTION_NAME conv_s32_32t
 

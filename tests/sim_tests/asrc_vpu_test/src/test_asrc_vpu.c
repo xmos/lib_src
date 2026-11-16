@@ -908,7 +908,7 @@ int unit_test_ssrc() {
         t1 = get_reference_time();
         total_time += t1 - t0;
         for (unsigned j = 0; j < n_samps_out; j++) {
-            if (abs(out_samples[j] - expected_ssrc_44_48[exp_cnt]) > 25) {
+            if (llabs((long long)out_samples[j] - expected_ssrc_44_48[exp_cnt]) > 25) {
                 printf("ssrc saw %d expected %d at %d\n", out_samples[j], expected_ssrc_44_48[exp_cnt], exp_cnt);
                 errors++;
             }
