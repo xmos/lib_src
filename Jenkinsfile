@@ -213,7 +213,7 @@ pipeline {
                         stage('Build and test ASRC') {
                             steps {
                                 withTools(params.TOOLS_VERSION_VX_XCC) {
-                                    dir("${REPO_NAME}/sim_tests/asrc_vpu_test")) {
+                                    dir("${REPO_NAME}/tests/sim_tests/asrc_vpu_test") {
                                         xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
                                     }     
                                     dir("${REPO_NAME}/tests") {
@@ -222,7 +222,6 @@ pipeline {
                                             withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
                                                 dir("sim_tests") {
                                                     sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
-                                                    }
                                                 }
                                             }
                                         }

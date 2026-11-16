@@ -100,29 +100,44 @@ If these are not defined, then a default receive implementation will be used whi
 
 .. note:: ``ASRC task`` must have ``asrc_task_config.h`` defined in the user application which sets various static settings for the ASRC. See :ref:`ASRC task API <asrc_task_api>` for details or reference `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_ as an example.
 
-An example of calling the ASRC task form and ``XC`` main function is provided below. Note use of `unsafe` permitting the compiler to allow shared memory structures to be accessed by more than one thread::
+The example application launches the producer, ASRC task, and consumer from C. Allocate two channel ends and connect them to provide the producer-to-task channel. C applications can share the ASRC and FIFO structures between jobs without XC's ``unsafe`` qualifier::
 
-    chan c_producer;
+    #define FIFO_LENGTH 40 // Example only. Depends on rates and PPM - see docs
 
-    // FIFO and ASRC I/O declaration. Unsafe to allow producer and consumer to access it from XC
-    #define FIFO_LENGTH     40 // Example only. Depends on rates and PPM - see docs
-    int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
+    DECLARE_JOB(producer, (chanend_t));
+    DECLARE_JOB(consumer, (asrc_in_out_t *, asynchronous_fifo_t *));
+    DECLARE_JOB(asrc_task_job, (chanend_t, asrc_in_out_t *, asynchronous_fifo_t *, unsigned));
 
-    unsafe{
-        // IO struct for ASRC must be passed to both asrc_proc and consumer
-        asrc_in_out_t asrc_io = {{{0}}};
-        asrc_in_out_t * unsafe asrc_io_ptr = &asrc_io;
-        asynchronous_fifo_t * unsafe fifo = (asynchronous_fifo_t *)array;
-        setup_asrc_io_custom_callback(asrc_io_ptr); // Optional user rx function
+    void asrc_task_job(chanend_t c_asrc, asrc_in_out_t *asrc_io,
+                       asynchronous_fifo_t *fifo, unsigned fifo_length)
+    {
+        asrc_task(c_asrc, asrc_io, fifo, fifo_length);
+    }
 
-        par
-        {
-            producer(c_producer);
-            asrc_task(c_producer, asrc_io_ptr, fifo, FIFO_LENGTH);
-            consumer(asrc_io_ptr, fifo);
+    int main(void)
+    {
+        int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
+        asrc_in_out_t asrc_io = {0};
+        asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
+        chanend_t c_producer = chanend_alloc();
+        chanend_t c_asrc = chanend_alloc();
 
+        if (c_producer == 0 || c_asrc == 0) {
+            return 1;
         }
-    } // unsafe region
+        chanend_set_dest(c_producer, c_asrc);
+        chanend_set_dest(c_asrc, c_producer);
+
+        setup_asrc_io_custom_callback(&asrc_io); // Optional user rx function
+
+        PAR_JOBS(
+            PJOB(producer, (c_producer)),
+            PJOB(asrc_task_job, (c_asrc, &asrc_io, fifo, FIFO_LENGTH)),
+            PJOB(consumer, (&asrc_io, fifo))
+        );
+
+        return 0;
+    }
 
 
 An example of the user-defined `C` function for receiving the input samples is shown below along with the user callback registration function. The `receive_asrc_input_samples()` function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received from the producer, the `chanend_in_word()` operations will happen straight away and not block as long as the producer immediately produces all required samples.
