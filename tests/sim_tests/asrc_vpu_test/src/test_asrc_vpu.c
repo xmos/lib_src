@@ -1065,7 +1065,7 @@ int main(void) {
     } else {
         printf("FAIL: %d errors\n", errors);
     }
-    return errors;
+    return errors == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 

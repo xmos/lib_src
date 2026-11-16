@@ -125,8 +125,7 @@ pipeline {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
                                     dir("hw_tests") {
-                                        sh "cmake -G 'Unix Makefiles' -B build"
-                                        sh "xmake -C build -j 8"
+                                        xcoreBuild()
                                         withVenv {
                                             withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
                                                 sh "pytest -n1 --junitxml=pytest_hw.xml"
@@ -222,6 +221,7 @@ pipeline {
                                             withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
                                                 dir("sim_tests") {
                                                     sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
+                                                    sh "pytest -v test_asynchronous_fifo.py::test_asynchronous_fifo_output --junitxml=pytest_vx4_fifo.xml"
                                                 }
                                             }
                                         }
@@ -231,6 +231,10 @@ pipeline {
                         }
                     } // stages
                     post {
+                        always {
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_profile.xml", allowEmptyResults: true
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_fifo.xml", allowEmptyResults: true
+                        }
                         cleanup {
                             xcoreCleanSandbox()
                         }

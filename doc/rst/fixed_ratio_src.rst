@@ -47,8 +47,8 @@ The upsampling functions return the following error codes ::
 .. tip::
   There are three different component options that support fixed factor of 3 up/downsampling. To help choose which one to use follow these steps:
   If HiFi quality (130 dB SNR) up/downsampling is required, use ds3 or os3.
-  If voice quality (65 dB SNR) is required running on xcore-200, use ds3_voice or us3_voice.
-  If voice quality (75 dB SNR) is required running xcore-ai, use ff3_96t_ds or ff3_96t_us
+  If voice quality (65 dB SNR) is required on xcore-200, use ds3_voice or us3_voice.
+  If voice quality (75 dB SNR) is required on VPU-equipped XS3 devices, use ff3_96t_ds or ff3_96t_us.
 
 Shared API items
 ================
@@ -88,9 +88,9 @@ that are suitable for voice applications. They provide voice quality SNR (around
 72 tap Remez FIR filter and are optimized for the XS2 instruction set.
 
 .. warning::
-    These SRC components have been deprecated. For new designs using ``xcore-ai``, use the XS3
-    optimised components which provide both better performance and use approximately half of
-    the MIPS. See `ff3_voice_vpu_hdr`_
+    These SRC components have been deprecated. For new designs targeting VPU-equipped XS3 devices,
+    use the XS3-optimised components, which provide better voice quality and use approximately half
+    the MIPS. See `ff3_voice_vpu_hdr`_.
 ..
   .. doxygenvariable:: src_ff3v_fir_coefs_debug
 
