@@ -1,5 +1,8 @@
 // Copyright 2017-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+#if defined(__XS2A__) || defined(__XS3A__)
+
 	.section	.dp.data,"awd",@progbits
 	.text
 
@@ -135,3 +138,5 @@ src_us3_voice_get_next_sample://(int32_t data[], int32_t coefs[], int32_t sample
 	.globl	src_us3_voice_get_next_sample.maxtimers
 	.set	src_us3_voice_get_next_sample.maxchanends,0
 	.globl	src_us3_voice_get_next_sample.maxchanends
+
+#endif // defined(__XS2A__) || defined(__XS3A__)

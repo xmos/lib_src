@@ -18,5 +18,16 @@ set(LIB_INCLUDES   api
                    src/fixed_factor_vpu_voice
                    src/asrc_task)
 
+if(DEFINED APP_HW_TARGET_VX OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
+    set(LIB_XC_SRCS "")
+    list(APPEND LIB_DEPENDENT_MODULES "lib_basix(0.1.0)")
+    file(GLOB_RECURSE LIB_C_SRCS CONFIGURE_DEPENDS
+         RELATIVE "${CMAKE_CURRENT_LIST_DIR}"
+         "${CMAKE_CURRENT_LIST_DIR}/src/*.c")
+    list(REMOVE_ITEM LIB_C_SRCS
+         "src/fixed_factor_of_3/ds3/src_ff3_ds3.c"
+         "src/fixed_factor_of_3/os3/src_ff3_os3.c")
+endif()
+
 XMOS_REGISTER_MODULE()
 

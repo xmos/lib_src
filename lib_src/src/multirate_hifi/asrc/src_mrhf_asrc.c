@@ -573,7 +573,6 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     unsigned int    uiTemp;
     int                iAlpha;
     int                iH[3]; //iH0, iH1, iH2;
-    int                iZero;
     __int64_t            i64Acc0;
     int*            piPhase0;
     int*            piADCoefs;
@@ -593,8 +592,6 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     // Total: 125 instructions
 
     // Set register to zero
-    iZero        = 0;
-
     // Compute adative coefficients spline factors
     // The fractional part of time gives alpha
     iAlpha        = pasrc_ctrl->uiTimeFract>>1;        // Now alpha can be seen as a signed number
