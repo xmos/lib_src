@@ -38,14 +38,14 @@ Because the required compute for multi-channel systems may exceed the performanc
 
 The number of threads that are required depends on the required channel count and sample rates required. Higher sample rates require more MIPS. The amount of thread MHz (and consequently how many threads) required can be *roughly* calculated using the following formulae:
 
-    - Total thread MHz required for `xcore.ai` systems = 0.15 * Max channel count * (Max SR input kHz + Max SR output kHz)
-    - Total thread MHz required for `xcore-200` systems = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
+    - Total thread MHz required for VPU-equipped xcore devices = 0.15 * Max channel count * (Max SR input kHz + Max SR output kHz)
+    - Total thread MHz required for xcore-200 = 0.3 * Max channel count * (Max SR input kHz + Max SR output kHz)
 
-The difference between the performance requirement between the two architectures is due to xcore.ai supporting a Vector Processing Unit (VPU) which allows acceleration of the internal filters used by the ASRC. For example:
+The difference between these estimates is due to the Vector Processing Unit (VPU), which accelerates the internal filters used by the ASRC. For example:
 
-    - A two channel system supporting up to 192kHz input and output will require about (0.15 * (192 + 192) * 2) ~= 115 thread MHz. This means a single thread (assuming no more than 5 active threads on an `xcore.ai` device with a 600MHz clock) will likely be capable of handling this stream.
+    - A two channel system supporting up to 192kHz input and output will require about (0.15 * (192 + 192) * 2) ~= 115 thread MHz. On a 600MHz xcore device, a single thread will likely be capable of handling this stream if no more than five threads are active.
 
-    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. This can adequately be provided by four threads (assuming up to 8 active threads on an `xcore.ai` device with a 600MHz clock).
+    - An eight channel system consisting of either 44.1kHz or 48kHz input with maximum output rate of 192kHz will require about (0.15 * (48 + 192) * 8) ~= 288 thread MHz. On a 600MHz xcore device, this can be adequately provided by four threads, assuming the device supports up to eight active threads.
 
 In reality the amount of thread MHz needed will be lower than the above formulae suggest since subsequent ASRC channels after the first can share some of the calculations. This results in about at 10% performance requirement reduction per additional channel per worker thread. Increasing the input frame size in the ASRC task may also reduce the MHz requirement a few % at the cost of larger buffers and a slight latency increase.
 
@@ -156,6 +156,57 @@ Note that the producing side of the above transaction must match the channel pro
 Because a `streaming` channel is used the back-pressure on the producer side will be very low because the channel outputs will be buffered and the receive callback will always respond to the received words.
 
 This callback function helps bridge between `sample based` systems and the block-based nature of the underlying ASRC functions without consuming an extra thread.
+
+Running the example
+-------------------
+
+The example application is in ``examples/app_asrc_task``. With the XMOS XTC tools installed, build and run it from the repository root::
+
+    cd examples/app_asrc_task
+    cmake -B build -G "Unix Makefiles"
+    xmake -C build
+    xrun --xscope-file xscope bin/app_asrc_task.xe
+
+The application runs continuously and generates a 1 kHz sine wave on 8 channels which is upsampled from 44.1 kHz to 96 kHz.
+Stop the run with Ctrl-C after about one second to keep the xscope capture short.
+The command writes ``xscope.vcd`` in the application directory.
+Open it with a VCD viewer such as GTKWave, select the input and output probes, and set their display format to signed decimal and analog.
+Note that only two input and output channels are shown in the xscope capture to avoid breaking timing.
+
+.. figure:: images/asrc_task_xscope.png
+   :width: 100%
+   :alt: ASRC task input and output signals in GTKWave
+
+   Example xscope capture of the ASRC task input and output signals.
+
+The console prints the configuration of the producer, including the input sample rate and the number of channels,
+as well as the maximum timescale of the ASRC task operation versus the limit. You can see that, in this case,
+the ASRC task operates well within the specified time limit, indicating that the processing load is manageable for the given configuration.
+
+.. code-block:: console
+
+    Config producer 44100 8
+    Input fs: 44100 Output fs: 96000
+    FIFO init channels: 8 length: 60
+    num_jobs: 4, MAX_ASRC_THREADS: 4, asrc_channel_count: 8
+    schedule: 0, num_channels: 2, channel_start_idx: 0
+    schedule: 1, num_channels: 2, channel_start_idx: 2
+    schedule: 2, num_channels: 2, channel_start_idx: 4
+    schedule: 3, num_channels: 2, channel_start_idx: 6
+    max_channels_per_instance: 2
+    ASRC process_time_limit: 9068
+    3418
+    3422
+    3424
+    3427
+    3434
+    3439
+    3442
+    3443
+    3444
+
+
+
 
 .. _asrc_task_api:
 

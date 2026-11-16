@@ -119,6 +119,24 @@ returned will eventually stabilise.
 The :ref:`ASRC Task <asrc_task_header>` section provides an example of the integration of the FIFO with
 an ASRC.
 
+Building and running the example
+================================
+
+The asynchronous FIFO example uses the XCommon CMake build system bundled with the XMOS XTC tools.
+Install the XTC tools version required by the repository before building. The example defaults to
+the ``XK-EVK-XU316`` target.
+
+From the application directory, configure and build the example, then run it in the simulator::
+
+  cd examples/app_asynchronous_fifo
+  cmake -B build -G "Unix Makefiles"
+  xmake -C build
+  xsim bin/app_asynchronous_fifo.xe
+
+The application sends a sequence of squared sample indices through the FIFO. The FIFO starts
+half-full with zero-filled samples, so the output begins with zeros before the generated values
+appear.
+
 .. _asynchronous_FIFO_design_parameters:
 
 Design parameters

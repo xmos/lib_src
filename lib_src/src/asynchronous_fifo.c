@@ -213,7 +213,7 @@ asynchronous_fifo_get_return_t asynchronous_fifo_consumer_get(asynchronous_fifo_
     asm volatile("xm.vldr %0\n\t"
                 "xm.vstrpv %1, %2"
                 :
-                : "r" (ptr), "r" (state->buffer + write_ptr * channel_count), "r" (copy_mask)
+                : "r" (ptr), "r" (samples), "r" (copy_mask)
                 : "memory");
 #else
 #error "Unsupported architecture - Only xcore-200, xcore.ai and xcore-400 supported"

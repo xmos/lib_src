@@ -57,13 +57,13 @@ void src_mrhf_adfir_inner_loop_asm_odd(int *data, int *coefs, int result[], int 
 
 void src_mrhf_fir_inner_loop_asm(int *data, int *coefs, int result[], int count)
 {
-    int64_t accumulator = 0;
+    uint64_t accumulator = 0;
     unsigned terms = (unsigned)count * 2U;
 
     for (unsigned term = 0; term < terms; ++term) {
         accumulator += (int64_t)data[term] * coefs[term];
     }
-    result[0] = saturate_shift(accumulator, 31);
+    result[0] = saturate_shift((int64_t)accumulator, 31);
 }
 
 void src_mrhf_fir_inner_loop_asm_odd(int *data, int *coefs, int result[], int count)
@@ -73,7 +73,7 @@ void src_mrhf_fir_inner_loop_asm_odd(int *data, int *coefs, int result[], int co
 
 void src_mrhf_fir_os_inner_loop_asm(int *data, int *coefs, int result[], int count)
 {
-    int64_t accumulators[2] = {0, 0};
+    uint64_t accumulators[2] = {0, 0};
     unsigned iterations = (unsigned)count >> 2;
 
     for (unsigned iteration = 0; iteration < iterations; ++iteration) {
@@ -84,8 +84,8 @@ void src_mrhf_fir_os_inner_loop_asm(int *data, int *coefs, int result[], int cou
             accumulators[1] += (int64_t)data[data_index] * coefs[coef_index + 1];
         }
     }
-    result[0] = saturate_shift(accumulators[0], 31);
-    result[1] = saturate_shift(accumulators[1], 31);
+    result[0] = saturate_shift((int64_t)accumulators[0], 31);
+    result[1] = saturate_shift((int64_t)accumulators[1], 31);
 }
 
 void src_mrhf_fir_os_inner_loop_asm_odd(int *data, int *coefs, int result[], int count)

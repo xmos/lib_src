@@ -33,6 +33,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/../deps.cmake)
 set(APP_INCLUDES src)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
+set(APP_XSCOPE_SRCS src/config.xscope)
 
 XMOS_REGISTER_APP()
 

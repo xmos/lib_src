@@ -19,6 +19,9 @@
 #define NUM_CHANS (8)
 #define FIFO_LENGTH (SRC_MAX_NUM_SAMPS_OUT * 3)
 
+// This is limited by the time taken to instrument each sample. 8 breaks timing.
+#define NUM_CHANS_TO_XSCOPE 2
+
 DECLARE_JOB(producer, (chanend_t));
 DECLARE_JOB(asrc_task_job, (chanend_t, asrc_in_out_t *, asynchronous_fifo_t *, unsigned));
 DECLARE_JOB(consumer, (asrc_in_out_t *, asynchronous_fifo_t *));
@@ -54,6 +57,11 @@ void producer(chanend_t c_producer)
 
         send_asrc_input_samples_default(c_producer, sample_rate, time_stamp,
                                         channel_count, samples);
+
+        for(int channel = 0; channel < NUM_CHANS_TO_XSCOPE; channel++) {
+            xscope_int(channel, samples[channel]);
+        }
+
         time_trigger += sample_period;
     }
 }
@@ -78,7 +86,9 @@ void consumer(asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo)
         int32_t time_stamp = (int32_t)hwtimer_get_time(timer);
 
         pull_samples(asrc_io, fifo, samples, sample_rate, time_stamp);
-        xscope_int(0, samples[0]);
+        for(int channel = 0; channel < NUM_CHANS_TO_XSCOPE; channel++) {
+            xscope_int(channel + NUM_CHANS_TO_XSCOPE, samples[channel]);
+        }
         time_trigger += sample_period;
     }
 }
@@ -88,7 +98,7 @@ extern void setup_asrc_io_custom_callback(asrc_in_out_t *asrc_io);
 int main(void)
 {
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
-    asrc_in_out_t asrc_io = {0};
+    asrc_in_out_t asrc_io = {{{0}}};
     asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
     chanend_t c_producer = chanend_alloc();
     chanend_t c_asrc = chanend_alloc();

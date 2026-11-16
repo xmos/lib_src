@@ -15,7 +15,7 @@ lib_src components
     * Synchronous Sample Rate Converter (SSRC) function
     * Asynchronous Sample Rate Converter (ASRC) function
 
-    Both are accelerated by the Vector Processing Unit (VPU) on `xcore-ai` and `xcore-400` devices.
+    Both are accelerated by the Vector Processing Unit (VPU) on VPU-equipped xcore devices.
 
   * HiFi quality fixed factor sample rate conversion:
 
@@ -42,8 +42,8 @@ The component listing above includes three different component options that supp
 3 up/downsampling. To order to choose which one to use follow these steps:
 
   #. If HiFi quality (130 dB SNR) up/downsampling is required, use ``src_ds3`` or ``src_os3``.
-  #. If voice quality (65 dB SNR) is required running on `xcore-200`, use ``src_ds3_voice`` or ``src_us3_voice``.
-  #. If voice quality (75 dB SNR) is required running `xcore-ai`, use ``src_ff3_96t_ds`` or ``src_ff3_96t_us``.
+  #. If voice quality (65 dB SNR) is required on xcore-200, use ``src_ds3_voice`` or ``src_us3_voice``.
+  #. If voice quality (75 dB SNR) is required on VPU-equipped XS3 devices, use ``src_ff3_96t_ds`` or ``src_ff3_96t_us``.
 
 Using lib_src
 =============
