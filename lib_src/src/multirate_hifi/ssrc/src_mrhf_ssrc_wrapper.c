@@ -14,6 +14,7 @@ void delay_milliseconds(unsigned milliseconds);
 
 // SSRC includes
 #include "src.h"
+#include "use_vpu.h"
 
 static void ssrc_error(int code)
 {
