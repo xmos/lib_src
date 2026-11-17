@@ -37,24 +37,26 @@ def test_prepare_asrc_profile_selftest():
 
 
 @pytest.mark.main
+@pytest.mark.parametrize("profile,compare_mode", [("scalar", None), ("vpu", "abs_diff")])
 @pytest.mark.parametrize("sr_out", SR_LIST)
 @pytest.mark.parametrize("sr_in", SR_LIST)
-def test_ssrc(sr_in, sr_out):
+def test_ssrc(sr_in, sr_out, profile, compare_mode):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
     file_path = Path(__file__).parent
-    xe = file_path / "ssrc_test" / "bin" / "ssrc_test.xe"
-    run_dut(xe, sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS, compare_mode='abs_diff')
+    xe = file_path / "ssrc_test" / "bin" / profile / f"ssrc_test_{profile}.xe"
+    run_dut(xe, sr_in, sr_out, "ssrc", NUM_SAMPLES_TO_PROCESS, compare_mode=compare_mode, profile=profile)
 
 
 @pytest.mark.main
+@pytest.mark.parametrize("profile,compare_mode", [("scalar", None), ("vpu", "abs_diff")])
 @pytest.mark.parametrize("sr_out", SR_LIST)
 @pytest.mark.parametrize("sr_in", SR_LIST)
 @pytest.mark.parametrize("fs_deviation", ASRC_DEVIATIONS)
-def test_asrc(sr_in, sr_out, fs_deviation):
+def test_asrc(sr_in, sr_out, fs_deviation, profile, compare_mode):
     """ Runs the signal through the simulator via an xcore test app and compares to golden ref """
     file_path = Path(__file__).parent
-    xe = file_path / "asrc_test" / "bin" / "asrc_test.xe"
-    run_dut(xe, sr_in, sr_out, "asrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation, compare_mode='abs_diff')
+    xe = file_path / "asrc_test" / "bin" / profile / f"asrc_test_{profile}.xe"
+    run_dut(xe, sr_in, sr_out, "asrc", NUM_SAMPLES_TO_PROCESS, fs_deviation=fs_deviation, compare_mode=compare_mode, profile=profile)
 
 
 @pytest.mark.main

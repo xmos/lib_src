@@ -9,10 +9,12 @@
 //
 // On VX4 the VPU data layouts are selected by default (see use_vpu.h), so
 // the ASRC/SSRC processing paths mostly use the VPU implementations in
-// src_mrhf_inner_loops_asm_vx4b.S.  These scalar versions remain required
-// by the PPFIR polyphase path (SSRC 44.1k<->48k family conversions) and
-// ADFIR_proc_macc, which have no VPU dispatch, and they serve as reference
-// implementations for the architecture self-tests.
+// src_mrhf_inner_loops_asm_vx4b.S. Current PPFIR descriptors use 16 taps
+// per phase (8 loops) and take the VPU path; the scalar PPFIR fallback is
+// retained for loop counts not divisible by eight. Scalar ADFIR and spline
+// implementations are also used when SRC_USE_VPU=0, and ADFIR_proc_macc has
+// no VPU dispatch. These functions also serve as reference implementations
+// for the architecture self-tests.
 
 #if defined(__VX4B__)
 

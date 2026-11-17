@@ -34,6 +34,7 @@
 *.pca.xml
 *.gtkw
 **/CMakeFiles/*
+**/.vscode/*
 
 # XMOS binaries
 *.xe
@@ -46,8 +47,11 @@ tests/**/stdout.txt
 doc/python/args.txt
 tests/sim_tests/*.csv
 tests/mips_report_*.csv
+tests/utils/src_output/*
+tests/utils/tmp/*
+tests/sim_tests/vpu_rat_test/autogen/*
+tests/sim_tests/gprof_results_*
 
 # Built documentation
 doc/_build/pdf/*.pdf
 **/doc/pdf/*.pdf
-**/.vscode/*

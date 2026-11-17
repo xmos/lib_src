@@ -25,8 +25,9 @@
 #include "src_mrhf_int_arithmetic.h"
 // XMOS built in functions
 #include <xs1.h>
-// SSRC include
+// SSRC includes
 #include "src.h"
+#include "use_vpu.h"
 
 // ===========================================================================
 //

@@ -9,13 +9,16 @@ if(NOT BUILD_NATIVE) # dut
 set(APP_HW_TARGET XK-EVK-XU316)
 include(${CMAKE_CURRENT_LIST_DIR}/../../../examples/deps.cmake)
 
-set(APP_COMPILER_FLAGS      -Os
+set(ASRC_COMPILER_FLAGS_COMMON -Os
                             -g
                             -Wall
                             -Wno-xcore-fptrgroup
                             -report
                             -fcmdline-buffer-bytes=2048
 )
+set(APP_COMPILER_FLAGS_scalar ${ASRC_COMPILER_FLAGS_COMMON} -DSRC_USE_VPU=0)
+set(APP_COMPILER_FLAGS_vpu ${ASRC_COMPILER_FLAGS_COMMON} -DSRC_USE_VPU=1)
+
 set(APP_XC_SRCS src/dut/asrc_test.xc)
 set(APP_C_SRCS "")
 set(APP_INCLUDES    src/dut)

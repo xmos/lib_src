@@ -694,6 +694,7 @@ FIRReturnCodes_t                PPFIR_proc(PPFIRCtrl_t* psPPFIRCtrl)
             piCoefs                    = piCoefsB + uiCoefsPhase;
 
 #if SRC_USE_VPU
+            // Current PPFIR descriptors use 16 taps per phase (8 loops); retain the scalar fallback for other loop counts.
             if ((uiNLoops & 7) == 0)
                 src_mrhf_fir_inner_loop_asm_vpu(piData, piCoefs, iData, uiNLoops);
             else

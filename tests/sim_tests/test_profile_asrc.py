@@ -75,7 +75,8 @@ def test_profile_asrc(in_sr, out_sr, fs_deviation):
 
     with tmp_dir(output_dir):
         file_path = Path(__file__).parent
-        xe_file = file_path / f"asrc_test" / "bin" / f"asrc_test.xe"
+        xe_file = file_path / "asrc_test" / "bin" / "scalar" / "asrc_test_scalar.xe"
+        assert xe_file.is_file(), f"ASRC scalar firmware not found: {xe_file}"
         print("Dumping object...")
         run(f"xobjdump --split {xe_file}")
 
