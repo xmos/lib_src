@@ -209,19 +209,30 @@ pipeline {
                             }
                         }
 
-                        stage('Build and test ASRC') {
+                        stage('Build and test MRHF and asynchronous FIFO') {
                             steps {
                                 withTools(params.TOOLS_VERSION_VX_XCC) {
                                     dir("${REPO_NAME}/tests/sim_tests/asrc_vpu_test") {
                                         xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
-                                    }     
+                                    }
+                                    dir("${REPO_NAME}/tests/sim_tests/asrc_test") {
+                                        xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
+                                    }
+                                    dir("${REPO_NAME}/tests/sim_tests/ssrc_test") {
+                                        xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
+                                    }
                                     dir("${REPO_NAME}/tests") {
                                         createVenv(reqFile: "requirements.txt")
                                         withVenv {
-                                            withEnv(["ASRC_TEST_PROFILE=vx4b"]) {
+                                            withEnv(["ASRC_TEST_PROFILE=vx4b", "SSRC_TEST_PROFILE=vx4b"]) {
                                                 dir("sim_tests") {
                                                     sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
                                                     sh "pytest -v test_asynchronous_fifo.py::test_asynchronous_fifo_output --junitxml=pytest_vx4_fifo.xml"
+                                                    sh "pytest -v 'test_mrhf.py::test_prepare[asrc]' --junitxml=pytest_vx4_asrc_prepare.xml"
+                                                    sh "pytest -v -n auto test_mrhf.py::test_asrc --junitxml=pytest_vx4_asrc.xml"
+                                                    sh "pytest -v 'test_mrhf.py::test_prepare[ssrc]' --junitxml=pytest_vx4_ssrc_prepare.xml"
+                                                    sh "pytest -v -n auto test_mrhf.py::test_ssrc --junitxml=pytest_vx4_ssrc.xml"
+                                                    archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
                                                 }
                                             }
                                         }
@@ -234,6 +245,10 @@ pipeline {
                         always {
                             junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_profile.xml", allowEmptyResults: true
                             junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_fifo.xml", allowEmptyResults: true
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_asrc_prepare.xml", allowEmptyResults: true
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_asrc.xml", allowEmptyResults: true
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_ssrc_prepare.xml", allowEmptyResults: true
+                            junit testResults: "${REPO_NAME}/tests/sim_tests/pytest_vx4_ssrc.xml", allowEmptyResults: true
                         }
                         cleanup {
                             xcoreCleanSandbox()
