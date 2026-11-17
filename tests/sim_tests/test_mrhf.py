@@ -22,7 +22,12 @@ ASRC_DEVIATIONS = ("1.000000", "0.990099", "1.009999")
 def test_prepare(src_type):
     """ Builds firmware and host reference and generates the golden reference signals on the host """
     host_app = build_host_app_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
-    build_firmware_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
+    profile_var = f"{src_type.upper()}_TEST_PROFILE"
+    profile = os.environ.get(profile_var, "xs3a")
+    if profile == "xs3a":
+        build_firmware_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
+    elif profile != "vx4b":
+        pytest.fail(f"Unsupported {profile_var}: {profile}")
     gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, SR_LIST, SR_LIST, ASRC_DEVIATIONS if src_type == "asrc" else None)
 
 

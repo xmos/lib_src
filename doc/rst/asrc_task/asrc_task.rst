@@ -173,7 +173,7 @@ The command writes ``xscope.vcd`` in the application directory.
 Open it with a VCD viewer such as GTKWave, select the input and output probes, and set their display format to signed decimal and analog.
 Note that only two input and output channels are shown in the xscope capture to avoid breaking timing.
 
-.. figure:: images/asrc_task_xscope.png
+.. figure:: images/asrc_task_scope.png
    :width: 100%
    :alt: ASRC task input and output signals in GTKWave
 
