@@ -1,9 +1,16 @@
 set(LIB_NAME lib_src)
 set(LIB_VERSION 2.7.1)
 
-set(LIB_DEPENDENT_MODULES "lib_logging(3.4.0)")
+set(LIB_DEPENDENT_MODULES   "lib_logging(3.4.0)"
+                            "lib_basix(0.1.0)")
 
 set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3 -Wall)
+
+if(DEFINED APP_HW_TARGET_VX OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
+    list(APPEND LIB_COMPILER_FLAGS -Wno-fptrgroup)
+else()
+    list(APPEND LIB_COMPILER_FLAGS -Wno-xcore-fptrgroup)
+endif()
 
 set(LIB_OPTIONAL_HEADERS src_conf.h asrc_task_config.h)
 
@@ -20,7 +27,6 @@ set(LIB_INCLUDES   api
 
 if(DEFINED APP_HW_TARGET_VX OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
     set(LIB_XC_SRCS "")
-    list(APPEND LIB_DEPENDENT_MODULES "lib_basix(0.1.0)")
     file(GLOB_RECURSE LIB_C_SRCS CONFIGURE_DEPENDS
          RELATIVE "${CMAKE_CURRENT_LIST_DIR}"
          "${CMAKE_CURRENT_LIST_DIR}/src/*.c")

@@ -245,7 +245,7 @@ void dsp_mgr(chanend_t c_dsp[], double fFsRatioDeviation){
     uint64_t FsRatio = (unsigned long long)(((double)sample_rates[uiInFs] / sample_rates[uiOutFs]) * ((unsigned long long)1 << (28 + 32)));
 
     FsRatio =  (uint64_t)((double)FsRatio * fFsRatioDeviation); //Ensure is precisely the same as golden value complete with trucation due to 32b float
-    printf("Adjusted FsRatio dsp_mgr = %lld, 0x%llx\n", FsRatio, FsRatio);
+    printf("Adjusted FsRatio dsp_mgr = %llu, 0x%llx\n", (unsigned long long)FsRatio, (unsigned long long)FsRatio);
 
 
     int ret;
@@ -475,7 +475,7 @@ void dsp_slave(chanend_t c_dsp)
             uint64_t nominal_FsRatio = asrc_init(InFs, OutFs, asrc_ctrl, ASRC_CHANNELS_PER_INSTANCE, ASRC_N_IN_SAMPLES, ASRC_DITHER_SETTING);
 
             sr_in_out = sr_in_out_new;
-            printf("DSP init Initial nominal_FsRatio=%lld, SR in=%d, SR out=%d\n", nominal_FsRatio, InFs, OutFs);
+            printf("DSP init Initial nominal_FsRatio=%llu, SR in=%d, SR out=%d\n", (unsigned long long)nominal_FsRatio, InFs, OutFs);
         }
         t1 = get_reference_time();
         n_samps_out = asrc_process(in_buff, out_buff, FsRatio, asrc_ctrl);

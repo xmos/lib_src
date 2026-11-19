@@ -8,12 +8,9 @@
 #include <timer.h>
 #include "debug_print.h"
 
-#if defined(__VX4B__)
-void delay_milliseconds(unsigned milliseconds);
-#endif
-
 // SSRC includes
 #include "src.h"
+#include "delay_vx4b.h"
 #include "use_vpu.h"
 
 static void ssrc_error(int code)

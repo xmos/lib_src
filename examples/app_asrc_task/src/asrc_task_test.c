@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <xcore/chanend.h>
+#include <xcore/channel.h>
 #include <xcore/hwtimer.h>
 #include <xcore/parallel.h>
 #include <xs1.h>
@@ -23,10 +23,9 @@
 #define NUM_CHANS_TO_XSCOPE 2
 
 DECLARE_JOB(producer, (chanend_t));
-DECLARE_JOB(asrc_task_job, (chanend_t, asrc_in_out_t *, asynchronous_fifo_t *, unsigned));
 DECLARE_JOB(consumer, (asrc_in_out_t *, asynchronous_fifo_t *));
 
-void producer(chanend_t c_producer)
+void producer(chanend_t c_asrc)
 {
     const unsigned sample_rate = INPUT_SAMPLING_RATE;
     const unsigned channel_count = NUM_CHANS;
@@ -55,7 +54,7 @@ void producer(chanend_t c_producer)
         }
         sine_counter++;
 
-        send_asrc_input_samples_default(c_producer, sample_rate, time_stamp,
+        send_asrc_input_samples_default(c_asrc, sample_rate, time_stamp,
                                         channel_count, samples);
 
         for(int channel = 0; channel < NUM_CHANS_TO_XSCOPE; channel++) {
@@ -64,12 +63,6 @@ void producer(chanend_t c_producer)
 
         time_trigger += sample_period;
     }
-}
-
-void asrc_task_job(chanend_t c_asrc, asrc_in_out_t *asrc_io,
-                   asynchronous_fifo_t *fifo, unsigned fifo_length)
-{
-    asrc_task(c_asrc, asrc_io, fifo, fifo_length);
 }
 
 void consumer(asrc_in_out_t *asrc_io, asynchronous_fifo_t *fifo)
@@ -100,21 +93,13 @@ int main(void)
     int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
     asrc_in_out_t asrc_io = {{{0}}};
     asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
-    chanend_t c_producer = chanend_alloc();
-    chanend_t c_asrc = chanend_alloc();
+    channel_t c_asrc = chan_alloc();
 
-    if (c_producer == 0 || c_asrc == 0) {
-        printf("Failed to allocate ASRC channel ends\n");
-        return 1;
-    }
-
-    chanend_set_dest(c_producer, c_asrc);
-    chanend_set_dest(c_asrc, c_producer);
     setup_asrc_io_custom_callback(&asrc_io);
 
     PAR_JOBS(
-        PJOB(producer, (c_producer)),
-        PJOB(asrc_task_job, (c_asrc, &asrc_io, fifo, FIFO_LENGTH)),
+        PJOB(producer, (c_asrc.end_a)),
+        PJOB(asrc_task, (c_asrc.end_b, &asrc_io, fifo, FIFO_LENGTH)),
         PJOB(consumer, (&asrc_io, fifo))
     );
 
