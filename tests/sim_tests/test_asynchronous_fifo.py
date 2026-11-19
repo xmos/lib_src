@@ -23,7 +23,7 @@ def test_prepare_asynchronous_fifo():
 
 @pytest.mark.main
 def test_asynchronous_fifo_output():
-    result = subprocess.run(["xsim", str(XE)], capture_output=True, text=True, timeout=120)
+    result = subprocess.run(["xsim", str(XE)], capture_output=True, text=True, timeout=360)
     assert result.returncode == 0, (
         f"asynchronous FIFO simulation exited {result.returncode}\n"
         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"

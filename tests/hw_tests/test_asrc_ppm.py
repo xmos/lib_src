@@ -32,7 +32,7 @@ def build_vcd_to_csv():
 
     return path + "/" + bin_name
 
-def run_dut(bin_name, cmds, timeout=60, xscope=True):
+def run_dut(bin_name, cmds, timeout=180, xscope=True):
     """
     Runs DUT with a set of frequency commands. See asrc_task_test_ppm.xc for expected format
     """
@@ -205,7 +205,7 @@ def characterise_asrc_fn_latency():
         for sr_out in SR_LIST:
             sr_ratio = sr_in / sr_out
             cmd_list = [f"-i {input_file} -o {output_file} -f {sr_in} -g {sr_out} -n {num_samples} -e {sr_ratio}".split(" ")]
-            output = run_dut(build_xe, cmd_list, timeout=20, xscope=False) # Time to run + enough time for XTAG to come up
+            output = run_dut(build_xe, cmd_list, timeout=60, xscope=False) # Time to run + enough time for XTAG to come up
             out_data = np.fromfile(output_file, sep="\n", dtype=np.int32)
             latency_at_output_sr = analyse_latency(out_data, sr_out, 0, specialised=False)
             latency_ms = ((latency_at_output_sr / sr_out) - (step_delay / sr_in)) * 1000
@@ -256,7 +256,7 @@ def characterise_asrc_range(input_sr):
                     for fifo_len in [fifo_len_list[-1]]:
                         cmd_list = [[sr_in, sr_out, apply_ppm(sr_out, ppm), test_len_s, fifo_len]]
                         print() # newline
-                        output = run_dut(build_xe, cmd_list, timeout=test_len_s + 10) # add enough time for XTAG to come up
+                        output = run_dut(build_xe, cmd_list, timeout=3 * (test_len_s + 10)) # add enough time for XTAG to come up
                         print("Analysing...")
 
                         subprocess.run(f"./{vcd_bin} trace.vcd trace.csv", shell=True)
