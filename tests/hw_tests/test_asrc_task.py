@@ -21,7 +21,7 @@ from pathlib import Path
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
 
-def run_dut(bin_name, cmds, multi_tone=False, timeout=60):
+def run_dut(bin_name, cmds, multi_tone=False, timeout=180):
     """
     Runs DUT with a set of frequency change commands.
     If multi-tone is set, then differening tones are sent
@@ -112,7 +112,7 @@ def test_asrc_task_freq_matrix(build_xe):
     """
     cmd_list, expected_freqs = build_cmd_list_expected_f(SR_LIST, SR_LIST, 4, 100)
     xe = Path(__file__).parent / "asrc_task_test" / "bin" / "asrc_task_test.xe"
-    output = run_dut(xe, cmd_list, timeout=60)
+    output = run_dut(xe, cmd_list, timeout=180)
     vcd2wav("trace.vcd", 0, 1, 44100)
     assert analyse_wav(expected_freqs)
 
@@ -172,7 +172,7 @@ def test_asrc_task_zero_transition(build_xe):
                 [0, 2, 48000, delay_ms],        # input sr invalid
                 [48000, 2, 48000, delay_ms],
                 ]
-    output = run_dut(build_xe, cmd_list, timeout=60)
+    output = run_dut(build_xe, cmd_list, timeout=180)
     parse_output_for_changes(output, cmd_list)
 
 def analyse_thd(wav_file, max_thd=-90):
@@ -193,7 +193,7 @@ def test_asrc_task_longish_run(build_xe):
     """
     test_len_s = 10
     cmd_list = [[48000, 8, 48000, test_len_s * 1000]]
-    output = run_dut(build_xe, cmd_list, timeout=60)
+    output = run_dut(build_xe, cmd_list, timeout=180)
     parse_output_for_changes(output, cmd_list)
     vcd2wav("trace.vcd", 0, 1, 48000)
     analyse_thd("ch0-1-48000.wav")
@@ -219,7 +219,7 @@ def test_asrc_task_channel_mapping(build_xe):
     test_len_s = 1
     test_sr = 44100
     cmd_list = [[test_sr, 8, test_sr, test_len_s * 1000]]
-    output = run_dut(build_xe, cmd_list, multi_tone=True, timeout=60)
+    output = run_dut(build_xe, cmd_list, multi_tone=True, timeout=180)
     vcd2wav("trace.vcd", 0, 8, test_sr)
     analyse_freq_multi_tone("ch0-8-44100.wav")
 

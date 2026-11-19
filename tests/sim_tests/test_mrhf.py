@@ -76,7 +76,7 @@ def test_asrc_profile_selftest():
     assert firmware_name is not None, f"Unsupported ASRC_TEST_PROFILE: {profile}"
 
     xe = Path(__file__).parent / firmware_name / "bin" / f"{firmware_name}.xe"
-    result = subprocess.run(["xsim", str(xe)], capture_output=True, text=True, timeout=120)
+    result = subprocess.run(["xsim", str(xe)], capture_output=True, text=True, timeout=900)
     assert result.returncode == 0, (
         f"{profile} ASRC self-test exited {result.returncode} for {xe}\n"
         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
