@@ -100,44 +100,27 @@ If these are not defined, then a default receive implementation will be used whi
 
 .. note:: ``ASRC task`` must have ``asrc_task_config.h`` defined in the user application which sets various static settings for the ASRC. See :ref:`ASRC task API <asrc_task_api>` for details or reference `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_ as an example.
 
-The example application launches the producer, ASRC task, and consumer from C. Allocate two channel ends and connect them to provide the producer-to-task channel. C applications can share the ASRC and FIFO structures between jobs without XC's ``unsafe`` qualifier::
+The example application launches the producer, ASRC task, and consumer from C. C applications can share the ASRC and FIFO structures between jobs without XC's ``unsafe`` qualifier.
 
-    #define FIFO_LENGTH 40 // Example only. Depends on rates and PPM - see docs
+The required FIFO length depends on the sample rates and PPM lock range; see :ref:`Practical FIFO sizing <asynchronous_FIFO_practical_sizing>`.
 
-    DECLARE_JOB(producer, (chanend_t));
-    DECLARE_JOB(consumer, (asrc_in_out_t *, asynchronous_fifo_t *));
-    DECLARE_JOB(asrc_task_job, (chanend_t, asrc_in_out_t *, asynchronous_fifo_t *, unsigned));
+.. literalinclude:: ../../../examples/app_asrc_task/src/asrc_task_test.c
+   :language: c
+   :start-at: #define FIFO_LENGTH
+   :end-at: #define FIFO_LENGTH
 
-    void asrc_task_job(chanend_t c_asrc, asrc_in_out_t *asrc_io,
-                       asynchronous_fifo_t *fifo, unsigned fifo_length)
-    {
-        asrc_task(c_asrc, asrc_io, fifo, fifo_length);
-    }
+The example declares the producer and consumer jobs; the library declares the ASRC task:
 
-    int main(void)
-    {
-        int64_t array[ASYNCHRONOUS_FIFO_INT64_ELEMENTS(FIFO_LENGTH, MAX_ASRC_CHANNELS_TOTAL)];
-        asrc_in_out_t asrc_io = {0};
-        asynchronous_fifo_t *fifo = (asynchronous_fifo_t *)array;
-        chanend_t c_producer = chanend_alloc();
-        chanend_t c_asrc = chanend_alloc();
+.. literalinclude:: ../../../examples/app_asrc_task/src/asrc_task_test.c
+   :language: c
+   :start-at: DECLARE_JOB(producer,
+   :end-at: DECLARE_JOB(consumer,
 
-        if (c_producer == 0 || c_asrc == 0) {
-            return 1;
-        }
-        chanend_set_dest(c_producer, c_asrc);
-        chanend_set_dest(c_asrc, c_producer);
+The main function allocates the channel, registers the optional custom receive callback, and launches the jobs:
 
-        setup_asrc_io_custom_callback(&asrc_io); // Optional user rx function
-
-        PAR_JOBS(
-            PJOB(producer, (c_producer)),
-            PJOB(asrc_task_job, (c_asrc, &asrc_io, fifo, FIFO_LENGTH)),
-            PJOB(consumer, (&asrc_io, fifo))
-        );
-
-        return 0;
-    }
+.. literalinclude:: ../../../examples/app_asrc_task/src/asrc_task_test.c
+   :language: c
+   :start-at: int main(void)
 
 
 An example of the user-defined `C` function for receiving the input samples is shown below along with the user callback registration function. The `receive_asrc_input_samples()` function must be as short as possible because it steals cycles from the ASRC task operation. Because this function is not called until the first channel word is received from the producer, the `chanend_in_word()` operations will happen straight away and not block as long as the producer immediately produces all required samples.

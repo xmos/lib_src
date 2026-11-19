@@ -4,6 +4,13 @@
 
 getApproval()
 
+def withResetXTAG(String target, Closure body) {
+    // Clear stale acquisition state left by a failed run before resetting.
+    sh 'rm -f ~/.xtag/acquired'
+    sh "xtagctl reset_all ${target}"
+    withXTAG([target], body)
+}
+
 pipeline {
   agent none
     options {
@@ -127,7 +134,7 @@ pipeline {
                                     dir("hw_tests") {
                                         xcoreBuild()
                                         withVenv {
-                                            withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
+                                            withResetXTAG("XCORE-AI-EXPLORER") { xtagIds ->
                                                 sh "pytest -n1 --junitxml=pytest_hw.xml"
                                                 sh "xrun --xscope --adapter-id ${xtagIds[0]} asynchronous_fifo_asrc_test/bin/asynchronous_fifo_asrc_test.xe"
                                             }
@@ -159,7 +166,7 @@ pipeline {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
                                     withVenv {
-                                        withXTAG(["XCORE-AI-EXPLORER"]) { xtagIds ->
+                                        withResetXTAG("XCORE-AI-EXPLORER") { xtagIds ->
                                             sh "python -m doc_asrc.py --adapter-id " + xtagIds[0]
                                             stash name: 'doc_asrc_output', includes: '_build/**'
                                         }

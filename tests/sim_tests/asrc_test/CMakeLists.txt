@@ -17,11 +17,7 @@ set(ASRC_COMPILER_FLAGS_COMMON -Os
                             -report
                             -fcmdline-buffer-bytes=2048
 )
-if(DEFINED APP_HW_TARGET_VX OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
-    list(APPEND ASRC_COMPILER_FLAGS_COMMON -Wno-fptrgroup)
-else()
-    list(APPEND ASRC_COMPILER_FLAGS_COMMON -Wno-xcore-fptrgroup)
-endif()
+
 set(APP_COMPILER_FLAGS_scalar ${ASRC_COMPILER_FLAGS_COMMON} -DSRC_USE_VPU=0)
 set(APP_COMPILER_FLAGS_vpu ${ASRC_COMPILER_FLAGS_COMMON} -DSRC_USE_VPU=1)
 

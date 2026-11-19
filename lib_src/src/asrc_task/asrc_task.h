@@ -61,6 +61,7 @@
 #define UNSAFE unsafe
 #else
 #include <xcore/chanend.h>
+#include <xcore/parallel.h>
 #include <xccompat.h>
 #define UNSAFE
 #endif // __XC__
@@ -107,6 +108,9 @@ typedef struct {
  * Type definition of the callback function if a user version is required. May only be used from "C" (XC does not support function pointers).
  */
 typedef unsigned (*asrc_task_produce_isr_cb_t)(chanend_t c_asrc_input, asrc_in_out_t *asrc_io, unsigned *new_input_rate);
+#ifndef __DOXYGEN__
+DECLARE_JOB(asrc_task, (chanend_t, asrc_in_out_t *, asynchronous_fifo_t *, unsigned));
+#endif
 #endif
 
 
