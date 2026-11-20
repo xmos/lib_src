@@ -60,7 +60,8 @@ Known issues
 
 *  Inputting non-sinusoidal 0 dB FS signals into filters with saturation support (eg. ASRC and SSRC)
     can potentially cause clipping in the filter banks due to the `Gibbs phenomenon <https://en.wikipedia.org/wiki/Gibbs_phenomenon>`_.
-    It is recommended to keep the input signal below -1 dB FS (about 10% headroom) to avoid potential clipping.
+    The required headroom depends on the waveform and conversion ratio; -1 dB FS does not prevent clipping in all cases.
+    Validate peak levels with the intended signals and apply enough input attenuation to keep all filter stages below full scale.
 
 ****************
 Development repo
