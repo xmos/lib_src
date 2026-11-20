@@ -58,6 +58,10 @@ Known issues
     where a full scale input causes a perturbation above full scale at the output.
     To avoid this scenario, ensure that the input amplitude is always 3.5 dB below full scale.
 
+*  Inputting non-sinusoidal 0 dB FS signals into filters with saturation support (eg. ASRC and SSRC)
+    can potentially cause clipping in the filter banks due to the `Gibbs phenomenon <https://en.wikipedia.org/wiki/Gibbs_phenomenon>`_.
+    It is recommended to keep the input signal below -1 dB FS (about 10% headroom) to avoid potential clipping.
+
 ****************
 Development repo
 ****************
@@ -80,9 +84,10 @@ Required libraries (dependencies)
 Related application notes
 *************************
 
-The following application notes use this library:
+The following application notes use or discuss this library:
 
 * `AN02003: SPDIF/ADAT/I2S Receive to I2S Slave Bridge with ASRC <https://www.xmos.com/file/an02003>`_
+* `AN02034: Making a sample rate converter for xcore <https://www.xmos.com/file/an02034-making-your-own-sample-rate-converter-on-xcore/>`_
 
 *******
 Support

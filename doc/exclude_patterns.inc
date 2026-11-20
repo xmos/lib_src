@@ -1,6 +1,8 @@
 # The following patterns are to be excluded from the documentation build
 CHANGELOG.rst
 LICENSE.rst
+AGENTS.md
+tests/sim_tests/legacy_xcommon_test/README.rst
 **/.pytest_cache/**
 
 # We need to ensure these are not processed twice which breaks figure numbering
