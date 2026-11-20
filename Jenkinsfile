@@ -108,6 +108,18 @@ pipeline {
                                 }
                             } // steps
                         } // stage('Simulator tests')
+
+                        stage('Legacy xcommon build') {
+                            steps {
+                                dir("${REPO_NAME}/tests/sim_tests/legacy_xcommon_test") {
+                                    withTools(params.TOOLS_VERSION_XS) {
+                                        sh 'xmake'
+                                        // xsim returns the application's exit code, so a test failure fails this step.
+                                        sh 'xsim bin/legacy_xcommon_test.xe'
+                                    }
+                                }
+                            }
+                        }
                     } // stages
                     post {
                         always {

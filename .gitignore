@@ -35,6 +35,7 @@
 *.gtkw
 **/CMakeFiles/*
 **/.vscode/*
+AGENTS.md
 
 # XMOS binaries
 *.xe
