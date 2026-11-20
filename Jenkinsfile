@@ -193,6 +193,7 @@ pipeline {
                         withTools(params.TOOLS_VERSION_VX) {
                             dir("${REPO_NAME}/tests/sim_tests/riscv32-xmos_test") {
                                 xcoreBuild(archiveBins: false)
+                                sh 'xsim bin/riscv32-xmos_test.xe'
                             }
                         }
                     }

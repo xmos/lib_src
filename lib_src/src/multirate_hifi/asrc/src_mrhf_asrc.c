@@ -484,7 +484,7 @@ ASRCReturnCodes_t                ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
 //                    ASRC_ERROR on failure                                //
 // Description:        Processes F1 and F2 for a channel                    //
 // ==================================================================== //
-#if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
+#if defined(XCC_VERSION_MAJOR) && (XCC_VERSION_MAJOR < 1402)
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
 ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)

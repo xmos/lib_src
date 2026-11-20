@@ -7,7 +7,7 @@
 #include <xcore/chanend.h>
 #include <platform.h>
 #include <xs1.h>
-#include <print.h>
+#include <basix/print.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
