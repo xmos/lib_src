@@ -340,7 +340,7 @@ SSRCReturnCodes_t                SSRC_sync(ssrc_ctrl_t* pssrc_ctrl)
 //                    SSRC_ERROR on failure                                //
 // Description:        Processes the SSRC passed as argument                //
 // ==================================================================== //
-#if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
+#if defined(XCC_VERSION_MAJOR) && (XCC_VERSION_MAJOR < 1402)
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
 SSRCReturnCodes_t                SSRC_proc(ssrc_ctrl_t* pssrc_ctrl)
@@ -448,7 +448,7 @@ SSRCReturnCodes_t                SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl)
     int*            piData;
     unsigned int    uiR;
     int                iDither;
-    __int64_t            i64Acc;
+    __int64            i64Acc;
     unsigned int    ui;
 
 
@@ -476,7 +476,7 @@ SSRCReturnCodes_t                SSRC_proc_dither(ssrc_ctrl_t* pssrc_ctrl)
 
                         //TODO - optimise this and remove IntArithmetic
             // Use MACC instruction to saturate and dither + signal
-            i64Acc        = ((__int64_t)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
+            i64Acc        = ((__int64)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
             MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
 
                         // Saturate to 31 bits

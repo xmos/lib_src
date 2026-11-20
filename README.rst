@@ -75,6 +75,7 @@ Required libraries (dependencies)
 *********************************
 
 * `lib_logging <https://www.xmos.com/file/lib_logging>`_
+* `lib_basix <https://github.com/xmos/lib_basix>`_ 0.1.1
 
 *************************
 Related application notes

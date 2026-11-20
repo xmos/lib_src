@@ -484,7 +484,7 @@ ASRCReturnCodes_t                ASRC_sync(asrc_ctrl_t* pasrc_ctrl)
 //                    ASRC_ERROR on failure                                //
 // Description:        Processes F1 and F2 for a channel                    //
 // ==================================================================== //
-#if (XCC_VERSION_MAJOR < 1402) //Beyond 14.2.0 we have proper function pointer support for C
+#if defined(XCC_VERSION_MAJOR) && (XCC_VERSION_MAJOR < 1402)
 #pragma stackfunction 64  //Generous stack allocation (probably needs just a handful through F1_F2, ASM etc).
 #endif
 ASRCReturnCodes_t                ASRC_proc_F1_F2(asrc_ctrl_t* pasrc_ctrl)
@@ -573,7 +573,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     unsigned int    uiTemp;
     int                iAlpha;
     int                iH[3]; //iH0, iH1, iH2;
-    __int64_t            i64Acc0;
+    __int64            i64Acc0;
     int*            piPhase0;
     int*            piADCoefs;
 
@@ -679,7 +679,7 @@ ASRCReturnCodes_t                ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl)
     int*            piData;
     unsigned int    uiR;
     int                iDither;
-    __int64_t            i64Acc;
+    __int64            i64Acc;
     unsigned int    ui;
 
 
@@ -710,7 +710,7 @@ ASRCReturnCodes_t                ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl)
                         //pi_Data[ui] = dither_maths_asm(piData[ui],iACCh, iACCl);
 
             // Use MACC instruction to saturate and dither + signal
-            i64Acc        = ((__int64_t)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
+            i64Acc        = ((__int64)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
             MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
             LSAT30(&i64Acc);
             // Extract 32bits result

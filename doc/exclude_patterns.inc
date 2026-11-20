@@ -1,6 +1,7 @@
 # The following patterns are to be excluded from the documentation build
 CHANGELOG.rst
 LICENSE.rst
+tests/sim_tests/riscv32-xmos_test/README.rst
 **/.pytest_cache/**
 
 # We need to ensure these are not processed twice which breaks figure numbering

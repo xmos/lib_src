@@ -5,7 +5,7 @@
 #define _asynchronous_fifo_h__
 
 #include <stdint.h>
-#include <xccompat.h>
+#include <basix/xccompat.h>
 
 #define FREQUENCY_RATIO_EXPONENT     (32)
 
