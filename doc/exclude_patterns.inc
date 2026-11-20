@@ -1,6 +1,7 @@
 # The following patterns are to be excluded from the documentation build
 CHANGELOG.rst
 LICENSE.rst
+tests/sim_tests/riscv32-xmos_test/README.rst
 AGENTS.md
 tests/sim_tests/legacy_xcommon_test/README.rst
 **/.pytest_cache/**

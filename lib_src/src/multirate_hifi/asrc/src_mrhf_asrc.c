@@ -573,7 +573,7 @@ ASRCReturnCodes_t                ASRC_proc_F3_time(asrc_ctrl_t* pasrc_ctrl)
     unsigned int    uiTemp;
     int                iAlpha;
     int                iH[3]; //iH0, iH1, iH2;
-    __int64_t            i64Acc0;
+    __int64            i64Acc0;
     int*            piPhase0;
     int*            piADCoefs;
 
@@ -679,7 +679,7 @@ ASRCReturnCodes_t                ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl)
     int*            piData;
     unsigned int    uiR;
     int                iDither;
-    __int64_t            i64Acc;
+    __int64            i64Acc;
     unsigned int    ui;
 
 
@@ -710,7 +710,7 @@ ASRCReturnCodes_t                ASRC_proc_dither(asrc_ctrl_t* pasrc_ctrl)
                         //pi_Data[ui] = dither_maths_asm(piData[ui],iACCh, iACCl);
 
             // Use MACC instruction to saturate and dither + signal
-            i64Acc        = ((__int64_t)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
+            i64Acc        = ((__int64)iDither <<32);    // On XMOS this is not necessary, just load dither in the top word of the ACC register
             MACC(&i64Acc, piData[ui], 0x7FFFFFFF);
             LSAT30(&i64Acc);
             // Extract 32bits result

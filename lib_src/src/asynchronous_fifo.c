@@ -11,7 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef ASYNC_FIFO_XSCOPE_INSTRUMENTATION
 #include <xscope.h>
+#endif
 #include "src.h"
 
 

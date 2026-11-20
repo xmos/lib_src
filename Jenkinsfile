@@ -199,8 +199,13 @@ pipeline {
                         label 'x86_64 && linux'
                     }
                     steps {
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                        }
                         withTools(params.TOOLS_VERSION_VX) {
-                            // TODO vx4 tests will be added here.
+                            dir("${REPO_NAME}/tests/sim_tests/riscv32-xmos_test") {
+                                xcoreBuild(archiveBins: false)
+                            }
                         }
                     }
                     post {
