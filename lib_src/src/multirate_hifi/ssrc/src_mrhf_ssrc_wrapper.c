@@ -5,18 +5,17 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
-#include <timer.h>
 #include "debug_print.h"
 
 // SSRC includes
 #include "src.h"
-#include "delay_vx4b.h"
+#include "basix/architecture.h"
 #include "use_vpu.h"
 
 static void ssrc_error(int code)
 {
     debug_printf("SSRC_proc Error code %d\n", code);
-    delay_milliseconds(1); //Allow xscope to display message before quit
+    basix_delay_ticks(BASIX_TIMER_HZ / 1000); //Allow xscope to display message before quit
     _Exit(code);
 }
 

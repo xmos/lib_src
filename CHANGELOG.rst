@@ -11,6 +11,7 @@ UNRELEASED
     verified against the double-precision host model on xcore.ai and xcore-400
   * CHANGED: Renamed src_mrhf_adfir_inner_loop_asm_xs3.S to
     src_mrhf_inner_loops_asm_xs3.S (contains all four VPU inner loops)
+  * ADDED: Documentation note about managing input signal levels to avoid clipping
   * REMOVED: Support for legacy cmake build system
 
 2.7.1
