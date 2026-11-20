@@ -14,7 +14,7 @@
 #include <xcore/triggerable.h>
 
 #include <stdio.h>
-#include <print.h>
+#include <basix/print.h>
 
 #include <stdbool.h>
 #include <string.h>

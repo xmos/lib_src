@@ -62,7 +62,7 @@
 #else
 #include <xcore/chanend.h>
 #include <xcore/parallel.h>
-#include <xccompat.h>
+#include <basix/xccompat.h>
 #define UNSAFE
 #endif // __XC__
 

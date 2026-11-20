@@ -24,5 +24,5 @@ The simulation returns a nonzero exit code if SSRC does not double the
 sample count and preserve silence, or if the FIFO does not return a zero
 sample from its prefill. This test is separate from the XS simulator suite.
 
-The Jenkins ``vx4 tests`` stage builds this application with
-``TOOLS_VERSION_VX``. Run ``xsim`` locally to check its runtime behavior.
+The Jenkins ``vx4 tests`` stage builds and runs this application with
+``TOOLS_VERSION_VX`` and fails if ``xsim`` exits with a nonzero status.
