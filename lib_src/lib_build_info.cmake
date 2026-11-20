@@ -2,7 +2,7 @@ set(LIB_NAME lib_src)
 set(LIB_VERSION 2.7.1)
 
 set(LIB_DEPENDENT_MODULES   "lib_logging(3.4.0)"
-                            "lib_basix(0.1.0)")
+                            "lib_basix(0.1.1)")
 
 set(LIB_COMPILER_FLAGS -Wno-missing-braces -O3 -Wall)
 
