@@ -35,7 +35,7 @@
     .word 0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff
     .word 0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff
 .L_vec_evens:                       // picks even ring slots
-    .word 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff, 0
+    .word 0x7fffffff
 .L_vec_odds:                        // picks odd ring slots
     .word 0, 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff, 0, 0x7fffffff
 .L_vec_shifts0:
@@ -45,7 +45,7 @@
 .L_vec_shifts2:
     .word 2, 2, 2, 2, 2, 2, 2, 2
 
-#define NSTACKWORDS 16
+#define NSTACKWORDS 12
 
 // ===================================================================== //
 // void src_mrhf_adfir_inner_loop_asm_vpu(int *data, int *coefs,         //
@@ -54,16 +54,14 @@
 // count must be a multiple of 8 (count/8 iterations of 16 taps).        //
 // ===================================================================== //
     .text
-    .p2align 4
+    .p2align 5
     .globl  src_mrhf_adfir_inner_loop_asm_vpu
     .type   src_mrhf_adfir_inner_loop_asm_vpu, @function
 src_mrhf_adfir_inner_loop_asm_vpu:
-    xm.entsp (NSTACKWORDS)*4
-    { li t3, 0                          ; nop                                   }
+    { li t3, 0                          ; xm.entsp (NSTACKWORDS)*4              }
     { srli a3, a3, 3                    ; xm.vsetc t3                           }
-    li t3, 32
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.brff a3, .L_adfir_reduce           }
+    { li t3, 32                         ; xm.vclrdr                             }
+    xm.brff a3, .L_adfir_reduce
 .L_adfir_loop:
     { add a0, a0, t3                    ; xm.vldc a0                            }
     { add a1, a1, t3                    ; xm.vlmaccr0 a1                        }
@@ -73,16 +71,15 @@ src_mrhf_adfir_inner_loop_asm_vpu:
 .L_adfir_reduce:
     la t3, .L_vec_shifts1
     xm.vlsat t3
-    { addi a0, sp, 0                    ; nop                                   }
+    xm.ldawsp a0, 0
     la a1, .L_vec_ones
-    { nop                               ; xm.vstr a0                            }
+    xm.vstr a0
     la t3, .L_vec_shifts0
-    { nop                               ; xm.vldc a0                            }
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.vlmaccr0 a1                        }
+    xm.vldc a0
+    xm.vclrdr
+    { xm.mkmsk a3, 4                    ; xm.vlmaccr0 a1                        }
     xm.vlsat t3
-    { xm.mkmski t3, 4                   ; nop                                   }
-    xm.vstrpv a2, t3
+    xm.vstrpv a2, a3
     xm.retsp (NSTACKWORDS)*4
 .L_adfir_end:
     .resource_const src_mrhf_adfir_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
@@ -97,16 +94,14 @@ src_mrhf_adfir_inner_loop_asm_vpu:
 // Computes result[0] = sat((sum of 2*count data*coef products) >> 31)   //
 // count must be a multiple of 8 (count/8 iterations of 16 taps).        //
 // ===================================================================== //
-    .p2align 4
+    .p2align 5
     .globl  src_mrhf_fir_inner_loop_asm_vpu
     .type   src_mrhf_fir_inner_loop_asm_vpu, @function
 src_mrhf_fir_inner_loop_asm_vpu:
-    xm.entsp (NSTACKWORDS)*4
-    { li t3, 0                          ; nop                                   }
+    { li t3, 0                          ; xm.entsp (NSTACKWORDS)*4              }
     { srli a3, a3, 3                    ; xm.vsetc t3                           }
-    li t3, 32
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.brff a3, .L_fir_reduce             }
+    { li t3, 32                         ; xm.vclrdr                             }
+    xm.brff a3, .L_fir_reduce
 .L_fir_loop:
     { add a0, a0, t3                    ; xm.vldc a0                            }
     { add a1, a1, t3                    ; xm.vlmaccr0 a1                        }
@@ -116,16 +111,15 @@ src_mrhf_fir_inner_loop_asm_vpu:
 .L_fir_reduce:
     la t3, .L_vec_shifts2
     xm.vlsat t3
-    { addi a0, sp, 0                    ; nop                                   }
+    xm.ldawsp a0, 0
     la a1, .L_vec_ones
-    { nop                               ; xm.vstr a0                            }
+    xm.vstr a0
     la t3, .L_vec_shifts0
-    { nop                               ; xm.vldc a0                            }
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.vlmaccr0 a1                        }
+    xm.vldc a0
+    xm.vclrdr
+    { xm.mkmsk a3, 4                    ; xm.vlmaccr0 a1                        }
     xm.vlsat t3
-    { xm.mkmski t3, 4                   ; nop                                   }
-    xm.vstrpv a2, t3
+    xm.vstrpv a2, a3
     xm.retsp (NSTACKWORDS)*4
 .L_fir_end:
     .resource_const src_mrhf_fir_inner_loop_asm_vpu, "stack_frame_bytes", (NSTACKWORDS)*4
@@ -142,16 +136,14 @@ src_mrhf_fir_inner_loop_asm_vpu:
 // result[0] (odd phase) and result[1] (even phase) = sat(acc >> 31).    //
 // count must be a multiple of 4 (count/4 iterations of 8 samples).      //
 // ===================================================================== //
-    .p2align 4
+    .p2align 5
     .globl  src_mrhf_fir_os_inner_loop_asm_vpu
     .type   src_mrhf_fir_os_inner_loop_asm_vpu, @function
 src_mrhf_fir_os_inner_loop_asm_vpu:
-    xm.entsp (NSTACKWORDS)*4
-    { li t3, 0                          ; nop                                   }
+    { li t3, 0                          ; xm.entsp (NSTACKWORDS)*4              }
     { srli a3, a3, 2                    ; xm.vsetc t3                           }
-    li t3, 32
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.brff a3, .L_fir_os_reduce          }
+    { li t3, 32                         ; xm.vclrdr                             }
+    xm.brff a3, .L_fir_os_reduce
 .L_fir_os_loop:
     { add a0, a0, t3                    ; xm.vldc a0                            }
     { add a1, a1, t3                    ; xm.vlmaccr0 a1                        }
@@ -160,17 +152,16 @@ src_mrhf_fir_os_inner_loop_asm_vpu:
 .L_fir_os_reduce:
     la t3, .L_vec_shifts2
     xm.vlsat t3
-    { addi a0, sp, 0                    ; nop                                   }
+    xm.ldawsp a0, 0
     la a1, .L_vec_evens
-    { nop                               ; xm.vstr a0                            }
+    xm.vstr a0
     la t3, .L_vec_odds
-    { nop                               ; xm.vldc a0                            }
-    { nop                               ; xm.vclrdr                             }
-    { nop                               ; xm.vlmaccr0 a1                        }
+    xm.vldc a0
+    xm.vclrdr
+    xm.vlmaccr0 a1
     la a1, .L_vec_shifts0
-    { nop                               ; xm.vlmaccr0 t3                        }
+    { xm.mkmsk t3, 8                    ; xm.vlmaccr0 t3                        }
     xm.vlsat a1
-    { xm.mkmski t3, 8                   ; nop                                   }
     xm.vstrpv a2, t3
     xm.retsp (NSTACKWORDS)*4
 .L_fir_os_end:
@@ -195,23 +186,21 @@ src_mrhf_fir_os_inner_loop_asm_vpu:
 
 #define ADFIR_PHASE_STRIDE ((128 + 2) * 4)  // FILTER_DEFS_ADFIR_N_PHASES + 2 words
 
-    .p2align 4
+    .p2align 5
     .globl  src_mrhf_spline_coeff_gen_inner_loop_asm_vpu
     .type   src_mrhf_spline_coeff_gen_inner_loop_asm_vpu, @function
 src_mrhf_spline_coeff_gen_inner_loop_asm_vpu:
-    xm.entsp (NSTACKWORDS)*4
-    { li t3, 0                          ; nop                                   }
-    { addi a3, sp, 0                    ; xm.vsetc t3                           }
-    { nop                               ; xm.vclrdr                             }
-    xm.vstr a3                          // zero the 8-word stack vector
-    lw t3, 0(a1)
-    sw t3, 0(sp)
-    lw t3, 4(a1)
-    sw t3, 4(sp)
-    lw t3, 8(a1)
-    sw t3, 8(sp)                        // stack vec = { H0, H1, H2, 0, 0, 0, 0, 0 }
+    { li t3, 0                          ; xm.entsp (NSTACKWORDS)*4              }
+    { xm.ldawsp a3, 0                   ; xm.vsetc t3                           }
+    { li t3, 12                         ; xm.vclrdr                             }
+    // zero the 8-word stack vector
+    { xm.mkmsk t3, t3                   ; xm.vstr a3                            }
+    xm.vldr a1
+    xm.vstrpv a3, t3                   // stack vec = { H0, H1, H2, 0, 0, 0, 0, 0 }
+    xm.vclrdr
+
     li a1, ADFIR_PHASE_STRIDE
-    { nop                               ; xm.vldc a3                            }
+    xm.vldc a3
     la t3, .L_vec_shifts2
     // taps 0..7
     { add a0, a0, a1                    ; xm.vlmaccr0 a0                        }
@@ -225,7 +214,7 @@ src_mrhf_spline_coeff_gen_inner_loop_asm_vpu:
     xm.vlsat t3
     xm.vstr a2
     addi a2, a2, 32
-    { nop                               ; xm.vclrdr                             }
+    xm.vclrdr
     // taps 8..15
     { add a0, a0, a1                    ; xm.vlmaccr0 a0                        }
     { add a0, a0, a1                    ; xm.vlmaccr0 a0                        }
