@@ -4,6 +4,7 @@ LICENSE.rst
 tests/sim_tests/riscv32-xmos_test/README.rst
 AGENTS.md
 tests/sim_tests/legacy_xcommon_test/README.rst
+**/.venv
 **/.pytest_cache/**
 
 # We need to ensure these are not processed twice which breaks figure numbering

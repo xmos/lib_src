@@ -1,154 +1,186 @@
-The ASRC algorithm runs a series of cascaded FIR filters to perform the rate conversion. The final filter is different because it uses adaptive coefficients to handle the varying rate change between the input and the output. The adaptive coefficients must be computed for each output sample period, but can be shared amongst all channels within the ASRC instance. Consequently, the MHz usage of the ASRC is expressed as two tables; :numref:`fig_asrc_mhz` quantifies the MHz required for the first channel with adaptive coefficients calculation and :numref:`fig_asrc_mhz2` specifies the MHz required for filtering of each additional channel processed by the ASRC instance.
+The ASRC uses cascaded FIR filters and computes adaptive coefficients for the
+final filter. These coefficients are shared between the channels of an ASRC
+instance. Consequently, each additional channel generally requires less
+processing than the first, because coefficient calculation is not repeated.
+For the :ref:`ASRC task <asrc_task_header>`, this is estimated to reduce the
+processing requirement by about 10% per additional channel per worker thread.
 
-.. tip::
-  The below tables show the worst case MHz consumption per sample, using the minimum block size of 4 input samples. The MHz requirement can be reduced by around 8-12% by increasing the input block size to 16.
+The tables show the peak estimated MHz per channel averaged over a two-channel
+instance; they do not separately measure the first channel or the cost of an
+additional channel. For each rate pair, the largest result from ratio deviations
+0.990099, 1.000000 and 1.009999 is shown.
 
-.. tip::
-  Typically some performance headroom is needed for buffering (especially if the system is sample orientated rather than block orientated) and inter-task communication.
+Measurements use the simulator, four input samples per block, 256 input samples
+per channel and dithering disabled. The estimates use a 100 MHz reference timer,
+a 600 MHz processor and five logical cores; values are rounded up to whole MHz.
+Scalar results are measured on XS3 and are indicative, not exact VX4 scalar
+measurements. Allow additional headroom for buffering and communication.
 
-.. tip::
-  :numref:`fig_asrc_mhz` is timed on xcore-200. On VPU-equipped xcore devices, the performance requirement is roughly halved due to VPU optimisations.
+.. BEGIN GENERATED TABLES
 
 .. _fig_asrc_mhz:
-.. list-table:: ASRC Processor Usage (MHz) for the First Channel in the ASRC Instance for xcore-200
-     :header-rows: 2
-     
-     * -
-       -
-       - Output rate
-       -
-       -
-       -
-       -
-       -
-     * -
-       -
-       - 44.1 kHz
-       - 48 kHz
-       - 88.2 kHz
-       - 96 kHz
-       - 176.4 kHz
-       - 192 kHz
-     * - Input rate
-       - 44.1 kHz
-       - 29 MHz
-       - 30 MHz
-       - 40 MHz
-       - 42 MHz
-       - 62 MHz
-       - 66 MHz
-     * -
-       - 48 kHz
-       - 33 MHz
-       - 32 MHz
-       - 42 MHz
-       - 43 MHz
-       - 63 MHz
-       - 66 MHz
-     * -
-       - 88.2 kHz
-       - 47 MHz
-       - 50 MHz
-       - 58 MHz
-       - 61 MHz
-       - 80 MHz
-       - 85 MHz
-     * -
-       - 96 kHz
-       - 55 MHz
-       - 51 MHz
-       - 67 MHz
-       - 64 MHz
-       - 84 MHz
-       - 87 MHz
-     * -
-       - 176.4 kHz
-       - 60 MHz
-       - 66 MHz
-       - 76 MHz
-       - 81 MHz
-       - 105 MHz
-       - 106 MHz
-     * -
-       - 192 kHz
-       - 69 MHz
-       - 66 MHz
-       - 82 MHz
-       - 82 MHz
-       - 109 MHz
-       - 115 MHz
 
-.. caution:: Configurations requiring more than 100 MHz may not run in real time on a single logical core. A 500 MHz xcore-200 device provides about 100 MHz per logical core (500/5), while a VPU-equipped xcore device running at 600 MHz can provide 120 MHz per logical core.
+.. list-table:: ASRC usage per channel (MHz): Scalar (xcore-200, XS3 and VX4 without VPU; XS3 measurements)
+   :header-rows: 1
 
+   * - Input / output rate
+     - 44.1 kHz
+     - 48 kHz
+     - 88.2 kHz
+     - 96 kHz
+     - 176.4 kHz
+     - 192 kHz
+   * - 44.1 kHz
+     - 30
+     - 30
+     - 37
+     - 37
+     - 52
+     - 54
+   * - 48 kHz
+     - 32
+     - 32
+     - 38
+     - 40
+     - 52
+     - 56
+   * - 88.2 kHz
+     - 50
+     - 50
+     - 59
+     - 59
+     - 74
+     - 74
+   * - 96 kHz
+     - 54
+     - 54
+     - 63
+     - 64
+     - 76
+     - 80
+   * - 176.4 kHz
+     - 69
+     - 69
+     - 80
+     - 80
+     - 100
+     - 100
+   * - 192 kHz
+     - 71
+     - 75
+     - 79
+     - 87
+     - 100
+     - 109
 
-.. tip::
-  :numref:`fig_asrc_mhz2` is timed on xcore-200. On VPU-equipped xcore devices, the performance requirement is roughly halved due to VPU optimisations.
+.. _fig_asrc_xs3a_vpu_mhz:
 
-.. _fig_asrc_mhz2:
-.. list-table:: ASRC Processor Usage (MHz) for Subsequent Channels in the ASRC Instance
-     :header-rows: 2
+.. list-table:: ASRC usage per channel (MHz): XS3 VPU
+   :header-rows: 1
 
-     * -
-       -
-       - Output rate
-       -
-       -
-       -
-       -
-       -
-     * -
-       -
-       - 44.1 kHz
-       - 48 kHz
-       - 88.2 kHz
-       - 96 kHz
-       - 176.4 kHz
-       - 192 kHz
-     * - Input rate
-       - 44.1 kHz
-       - 28 MHz
-       - 28 MHz
-       - 32 MHz
-       - 30 MHz
-       - 40 MHz
-       - 40 MHz
-     * -
-       - 48 kHz
-       - 39 MHz
-       - 31 MHz
-       - 33 MHz
-       - 36 MHz
-       - 40 MHz
-       - 45 MHz
-     * -
-       - 88.2 kHz
-       - 51 MHz
-       - 49 MHz
-       - 57 MHz
-       - 55 MHz
-       - 65 MHz
-       - 60 MHz
-     * -
-       - 96 kHz
-       - 51 MHz
-       - 56 MHz
-       - 57 MHz
-       - 62 MHz
-       - 66 MHz
-       - 71 MHz
-     * -
-       - 176.4 kHz
-       - 60 MHz
-       - 66 MHz
-       - 76 MHz
-       - 79 MHz
-       - 92 MHz
-       - 91 MHz
-     * -
-       - 192 kHz
-       - 69 MHz
-       - 66 MHz
-       - 76 MHz
-       - 82 MHz
-       - 90 MHz
-       - 100 MHz
+   * - Input / output rate
+     - 44.1 kHz
+     - 48 kHz
+     - 88.2 kHz
+     - 96 kHz
+     - 176.4 kHz
+     - 192 kHz
+   * - 44.1 kHz
+     - 13
+     - 13
+     - 17
+     - 17
+     - 25
+     - 26
+   * - 48 kHz
+     - 14
+     - 15
+     - 18
+     - 19
+     - 25
+     - 27
+   * - 88.2 kHz
+     - 20
+     - 20
+     - 26
+     - 26
+     - 34
+     - 34
+   * - 96 kHz
+     - 20
+     - 22
+     - 27
+     - 29
+     - 35
+     - 37
+   * - 176.4 kHz
+     - 31
+     - 32
+     - 36
+     - 36
+     - 50
+     - 50
+   * - 192 kHz
+     - 31
+     - 34
+     - 36
+     - 39
+     - 50
+     - 55
+
+.. _fig_asrc_vx4b_vpu_mhz:
+
+.. list-table:: ASRC usage per channel (MHz): VX4 VPU
+   :header-rows: 1
+
+   * - Input / output rate
+     - 44.1 kHz
+     - 48 kHz
+     - 88.2 kHz
+     - 96 kHz
+     - 176.4 kHz
+     - 192 kHz
+   * - 44.1 kHz
+     - 12
+     - 12
+     - 15
+     - 15
+     - 22
+     - 23
+   * - 48 kHz
+     - 12
+     - 13
+     - 16
+     - 17
+     - 23
+     - 24
+   * - 88.2 kHz
+     - 17
+     - 17
+     - 23
+     - 23
+     - 30
+     - 30
+   * - 96 kHz
+     - 18
+     - 19
+     - 24
+     - 25
+     - 31
+     - 33
+   * - 176.4 kHz
+     - 28
+     - 28
+     - 31
+     - 32
+     - 43
+     - 43
+   * - 192 kHz
+     - 27
+     - 31
+     - 31
+     - 34
+     - 44
+     - 47
+
+.. END GENERATED TABLES

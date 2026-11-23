@@ -91,24 +91,6 @@ pipeline {
                                 archiveSandbox(REPO_NAME)
                             }  
                         }
-                      
-                        stage('Simulator tests') {
-                            steps {
-                                dir("${REPO_NAME}/tests") {
-                                    withTools(params.TOOLS_VERSION_XS) {
-                                        createVenv(reqFile: "requirements.txt")
-                                        withVenv {
-                                            dir("sim_tests") {
-                                                sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
-                                                sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
-                                                archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
-                                                archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
-                                            }
-                                        }
-                                    }
-                                }
-                            } // steps
-                        } // stage('Simulator tests')
 
                         stage('Legacy xcommon build') {
                             steps {
@@ -121,6 +103,27 @@ pipeline {
                                 }
                             }
                         }
+                      
+                        stage('Simulator tests') {
+                            steps {
+                                dir("${REPO_NAME}/tests") {
+                                    withTools(params.TOOLS_VERSION_XS) {
+                                        createVenv(reqFile: "requirements.txt")
+                                        withVenv {
+                                            dir("sim_tests") {
+                                                sh "rm -f mips_report_asrc_xs3a.csv mips_report_ssrc_xs3a.csv"
+                                                sh "pytest -q ../test_resource_usage.py"
+                                                sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
+                                                sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
+                                                archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+                                                stash name: 'mips_reports_xs3a', includes: 'mips_report_asrc_xs3a.csv,mips_report_ssrc_xs3a.csv'
+                                                archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
+                                            }
+                                        }
+                                    }
+                                }
+                            } // steps
+                        } // stage('Simulator tests')
                     } // stages
                     post {
                         always {
@@ -201,7 +204,7 @@ pipeline {
                     }
                     steps {
                         dir(REPO_NAME) {
-                            checkoutScmShallow()
+                            checkout scm
                         }
                         withTools(params.TOOLS_VERSION_VX) {
                             dir("${REPO_NAME}/tests/sim_tests/riscv32-xmos_test") {
@@ -252,6 +255,7 @@ pipeline {
                                         withVenv {
                                             withEnv(["ASRC_TEST_PROFILE=vx4b", "SSRC_TEST_PROFILE=vx4b"]) {
                                                 dir("sim_tests") {
+                                                    sh "rm -f mips_report_asrc_vx4b.csv mips_report_ssrc_vx4b.csv"
                                                     sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
                                                     sh "pytest -v test_asynchronous_fifo.py::test_asynchronous_fifo_output --junitxml=pytest_vx4_fifo.xml"
                                                     sh "pytest -v 'test_mrhf.py::test_prepare[asrc]' --junitxml=pytest_vx4_asrc_prepare.xml"
@@ -259,6 +263,7 @@ pipeline {
                                                     sh "pytest -v 'test_mrhf.py::test_prepare[ssrc]' --junitxml=pytest_vx4_ssrc_prepare.xml"
                                                     sh "pytest -v -n auto test_mrhf.py::test_ssrc --junitxml=pytest_vx4_ssrc.xml"
                                                     archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+                                                    stash name: 'mips_reports_vx4b', includes: 'mips_report_asrc_vx4b.csv,mips_report_ssrc_vx4b.csv'
                                                 }
                                             }
                                         }
@@ -296,6 +301,19 @@ pipeline {
 
                     dir("doc/python") {
                         unstash 'doc_asrc_output'
+                    }
+
+                    dir("tests/sim_tests") {
+                        unstash 'mips_reports_xs3a'
+                        unstash 'mips_reports_vx4b'
+                    }
+                    dir("doc/python") {
+                        withTools(params.TOOLS_VERSION_XS) {
+                            createVenv(reqFile: "requirements.txt")
+                            withVenv {
+                                sh 'python generate_resource_usage.py ../../tests/sim_tests ../rst --source "Jenkins build ${BUILD_NUMBER}"'
+                            }
+                        }
                     }
 
                     warnError("Docs") {
