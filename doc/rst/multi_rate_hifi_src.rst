@@ -432,9 +432,9 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
   VPU optimised implementations of all four inner loops for the VX4 RISC-V xcore architecture, equivalent to the XS3 versions, selected via ``SRC_USE_VPU``.
 
 
- * src_mrhf_inner_loops_scalar_vx4b.c
+ * src_mrhf_inner_loops_scalar_asm_vx4b.S
 
-    Portable C implementations of the scalar (non-VPU) inner loops for RISC-V xcore devices, replicating the arithmetic of the legacy xcore-ISA assembler versions. With ``SRC_USE_VPU`` enabled, PPFIR phases that meet the VPU kernel's multiple-of-eight loop-count requirement use the VPU FIR implementation; other PPFIR configurations use these scalar versions. They are also used by the sample-based adaptive FIR processing path, which does not dispatch to VPU.
+    Scalar (non-VPU) assembly implementations of the FIR, oversampling FIR, adaptive FIR and spline inner loops for VX4. With ``SRC_USE_VPU`` enabled, PPFIR phases that meet the VPU kernel's multiple-of-eight loop-count requirement use the VPU FIR implementation; other PPFIR configurations use these scalar versions. They are also used by the sample-based adaptive FIR processing path, which does not dispatch to VPU.
 
 
  * src_mrhf_int_arithmetic.c / src_mrhf_int_arithmetic.h

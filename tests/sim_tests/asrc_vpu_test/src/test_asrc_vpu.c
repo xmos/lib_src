@@ -4,7 +4,9 @@
 #include <xcore/hwtimer.h>
 #include <xs1.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 #include <print.h>
 #include <platform.h>
 #include <xscope.h>
@@ -16,6 +18,7 @@
 #include "src_mrhf_fir_inner_loop_asm.h"
 #include "src_mrhf_fir_os_inner_loop_asm.h"
 #include "src_mrhf_spline_coeff_gen_inner_loop_asm.h"
+#include "use_vpu.h"
 
 int fs_code(int frequency) {
     if(frequency == 44100) {
@@ -322,6 +325,7 @@ int expected_wave_96_48[] = {
 217071043, 1664392157, 2136734916, 1357407342,
 };
 
+#if SRC_USE_VPU
 int unit_test_spline() {
 //    int DWORD_ALIGNED iH[3] = {0x12345678, 0x87654321, -12314516};
     int DWORD_ALIGNED iH[3] = { -12314516, 0x87654321,0x12345678};
@@ -360,6 +364,7 @@ int unit_test_spline() {
     printf("Spline done\n");
     return errors;
 }
+#endif
 
 
 
@@ -1041,11 +1046,111 @@ int unit_test_fir() {
 }
 
 
+#if defined(__VX4B__)
+static int scalar_reference(uint64_t bits, unsigned shift)
+{
+    int64_t value = (int64_t)bits;
+    int64_t scale = (int64_t)1 << shift;
+    if (value > (int64_t)INT_MAX * scale) return INT_MAX;
+    if (value < (int64_t)INT_MIN * scale) return INT_MIN;
+    return (int)(value >> shift);
+}
+
+static int unit_test_vx4_scalar(void)
+{
+    int data[65] __attribute__((aligned(8)));
+    int coef_storage[129] __attribute__((aligned(8)));
+    const int counts[] = {0, 1, 3, 4, 7, 8, 12, 16, 24};
+    int errors = 0;
+
+    for (unsigned i = 0; i < FILTER_DEFS_SSRC_FIR_NONE_ID; ++i) {
+        if ((uintptr_t)sSSRCFirDescriptor[i].piCoefs % 8 != 0) {
+            printf("Unaligned SSRC FIR coefficients: %u\n", i);
+            ++errors;
+        }
+    }
+    for (unsigned i = 0; i < FILTER_DEFS_N_PPFIR_ID; ++i) {
+        if ((uintptr_t)sPPFirDescriptor[i].piCoefs % 8 != 0) {
+            printf("Unaligned SSRC polyphase coefficients: %u\n", i);
+            ++errors;
+        }
+    }
+
+    for (int pattern = 0; pattern < 3; ++pattern) {
+        for (int i = 0; i < 65; ++i) {
+            data[i] = pattern == 0 ? (i * 1930123 - 40000000) :
+                      pattern == 1 ? INT_MAX : INT_MIN;
+        }
+        for (int i = 0; i < 129; ++i) {
+            coef_storage[i] = pattern == 0 ? (30000000 - i * 701123) : (1 << 29);
+        }
+        for (unsigned c = 0; c < sizeof(counts) / sizeof(counts[0]); ++c) {
+            int count = counts[c];
+            for (int alignment = 0; alignment < 4; ++alignment) {
+                int odd = alignment & 1;
+                int coef_odd = alignment >> 1;
+                int *input = data + odd;
+                int *coefs = coef_storage + coef_odd;
+                uint64_t dot = 0, os0 = 0, os1 = 0;
+                int actual[2];
+                for (int i = 0; i < 2 * count; ++i)
+                    dot += (int64_t)input[i] * coefs[i];
+                for (int i = 0; i < (count >> 2) * 8; ++i) {
+                    os0 += (int64_t)input[i] * coefs[2 * i];
+                    os1 += (int64_t)input[i] * coefs[2 * i + 1];
+                }
+                if (odd) {
+                    src_mrhf_fir_inner_loop_asm_odd(input, coefs, actual, count);
+                } else {
+                    src_mrhf_fir_inner_loop_asm(input, coefs, actual, count);
+                }
+                errors += actual[0] != scalar_reference(dot, 31);
+                if (odd) {
+                    src_mrhf_adfir_inner_loop_asm_odd(input, coefs, actual, count);
+                } else {
+                    src_mrhf_adfir_inner_loop_asm(input, coefs, actual, count);
+                }
+                errors += actual[0] != scalar_reference(dot, 30);
+                if (odd) {
+                    src_mrhf_fir_os_inner_loop_asm_odd(input, coefs, actual, count);
+                } else {
+                    src_mrhf_fir_os_inner_loop_asm(input, coefs, actual, count);
+                }
+                errors += actual[0] != scalar_reference(os0, 31);
+                errors += actual[1] != scalar_reference(os1, 31);
+            }
+        }
+        const int taps[] = {0, 1, 2, 5, 6, 16};
+        for (unsigned t = 0; t < sizeof(taps) / sizeof(taps[0]); ++t) {
+            int actual[16];
+            int weights[] = {123456789, -345678901, 234567890};
+            for (int odd = 0; odd < 2; ++odd) {
+                int *phase = data + odd;
+                src_mrhf_spline_coeff_gen_inner_loop_asm(phase, weights, actual, taps[t]);
+                for (int i = 0; i < taps[t]; ++i) {
+                    uint64_t sum = (int64_t)phase[i] * weights[2];
+                    sum += (int64_t)phase[taps[t] + i] * weights[1];
+                    sum += (int64_t)phase[2 * taps[t] + i] * weights[0];
+                    errors += actual[i] != (int32_t)(uint32_t)(sum >> 32);
+                }
+            }
+        }
+    }
+    if (errors) printf("VX4 scalar inner loops: %d errors\n", errors);
+    return errors;
+}
+#endif
+
 int main(void) {
     int errors = 0;
+#if defined(__VX4B__)
+    errors += unit_test_vx4_scalar();
+#endif
 //    errors += unit_test_asrc(8);
 //    return errors;
+#if SRC_USE_VPU
     errors += unit_test_spline();
+#endif
     errors += unit_test_fir();
     errors += unit_test_asrc(0);
     errors += unit_test_asrc(1);

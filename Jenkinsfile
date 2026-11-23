@@ -69,7 +69,8 @@ pipeline {
                             steps {
                                 println "Stage running on ${env.NODE_NAME}"
                                 dir(REPO_NAME) {
-                                    checkoutScmShallow()
+                                    // Preserve SCM extensions that check out the PR merge revision.
+                                    checkout scm
                                     dir("examples") {
                                         xcoreBuild()
                                     }
@@ -139,7 +140,7 @@ pipeline {
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
                         dir(REPO_NAME) {
-                            checkoutScmShallow()
+                            checkout scm
                             dir("tests") {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
@@ -173,7 +174,7 @@ pipeline {
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
                         dir(REPO_NAME) {
-                            checkoutScmShallow()
+                            checkout scm
                             dir("doc/python") {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
@@ -224,7 +225,7 @@ pipeline {
                         stage('Build examples') {
                             steps {
                                 dir(REPO_NAME) {
-                                    checkoutScmShallow()
+                                    checkout scm
                                 }
                                 dir("${REPO_NAME}/examples") {
                                     withTools(params.TOOLS_VERSION_VX_XCC) {
@@ -291,7 +292,7 @@ pipeline {
             steps {
                 println "Stage running on ${env.NODE_NAME}"
                 dir(REPO_NAME) {
-                    checkoutScmShallow()
+                    checkout scm
 
                     dir("doc/python") {
                         unstash 'doc_asrc_output'

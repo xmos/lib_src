@@ -1,6 +1,6 @@
 // Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#if defined(__XS2A__) || defined(__XS3A__)  // XS2/XS3 dual-issue assembly; VX4 uses src_mrhf_inner_loops_scalar_vx4b.c
+#if defined(__XS2A__) || defined(__XS3A__)
     .section    .dp.data,"awd",@progbits
     .text
 

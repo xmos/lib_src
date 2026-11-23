@@ -11,7 +11,7 @@
 #ifndef _SRC_MRHF_FIR_H
 #define _SRC_MRHF_FIR_H
 #ifndef ALIGNMENT
-#  ifdef __xcore__
+#  if defined(__xcore__) || defined(__VX4B__)
 #    define ALIGNMENT(N)  __attribute__((aligned (N)))
 #  else
 #    define ALIGNMENT(N)
