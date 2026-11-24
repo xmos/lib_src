@@ -289,7 +289,7 @@ pipeline {
         // This stage needs to wait for characterisation plots so run it last
         stage('Build documentation') {
             agent {
-                label 'x86_64&&docker'
+                label 'documentation&&linux&&x86_64'
             }
             steps {
                 println "Stage running on ${env.NODE_NAME}"
