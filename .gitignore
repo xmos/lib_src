@@ -7,6 +7,8 @@
 *.swp
 *.*~
 *.xmt
+/examples/app_ssrc/input.wav
+/examples/app_ssrc/output.wav
 *.swo
 *.swn
 *~

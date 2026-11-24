@@ -4,3 +4,4 @@ project(lib_src_examples)
 
 add_subdirectory(app_asynchronous_fifo)
 add_subdirectory(app_asrc_task)
+add_subdirectory(app_ssrc)
