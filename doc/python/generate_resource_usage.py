@@ -3,7 +3,8 @@
 
 """Update the generated tables in the resource usage RST files.
 
-Collect the four XS3 and VX4 ASRC and SSRC reports in one directory, then run:
+The xmosdoc build runs this script using the four XS3 and VX4 ASRC and SSRC
+reports collected by Jenkins in tests/sim_tests. To run it manually, use:
     python doc/python/generate_resource_usage.py <report-directory> doc/rst
 """
 

@@ -307,14 +307,11 @@ pipeline {
                     dir("doc/python") {
                         withTools(params.TOOLS_VERSION_XS) {
                             createVenv(reqFile: "requirements.txt")
-                            withVenv {
-                                sh 'python generate_resource_usage.py ../../tests/sim_tests ../rst'
-                            }
                         }
                     }
 
                     warnError("Docs") {
-                        buildDocs()
+                        buildDocs(xmosdocVenvPath: "doc/python")
                     }
                 }
             }
