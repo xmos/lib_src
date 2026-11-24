@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from sim_tests import test_mrhf
+
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
@@ -15,6 +17,35 @@ SCRIPT = (
 )
 RATES = (44100, 48000, 88200, 96000, 176400, 192000)
 DEVIATIONS = ("0.990099", "1.000000", "1.009999")
+
+
+@pytest.mark.parametrize("src_type,architecture,report_exists", [
+    ("ssrc", "xs3a", True),
+    ("asrc", "vx4b", True),
+    ("asrc", "xs3a", False),
+])
+def test_prepare_removes_only_its_mips_report(
+    tmp_path, monkeypatch, src_type, architecture, report_exists
+):
+    # Isolate report files and temporarily select the architecture.
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(f"{src_type.upper()}_TEST_PROFILE", architecture)
+    target = Path(f"mips_report_{src_type}_{architecture}.csv")
+    other = Path("mips_report_ssrc_vx4b.csv")
+    other.touch()
+    if report_exists:
+        target.touch()
+
+    # Skip builds and golden generation while checking cleanup happens first.
+    def check_cleanup(*_args):
+        assert not target.exists()
+
+    for name in ("build_host_app_xcommon_cmake", "build_firmware_xcommon_cmake", "gen_golden"):
+        monkeypatch.setattr(test_mrhf, name, check_cleanup)
+
+    test_mrhf.test_prepare(src_type)
+    assert not target.exists()
+    assert other.exists()
 
 
 def write_reports(directory):
@@ -48,10 +79,12 @@ def write_reports(directory):
                                 writer.writerow(row + [profile, value])
 
 
-def run_generator(reports, output):
+def run_generator(reports, output, source=None):
+    command = [sys.executable, str(SCRIPT), str(reports), str(output)]
+    if source is not None:
+        command.extend(["--source", source])
     return subprocess.run(
-        [sys.executable, str(SCRIPT), str(reports), str(output),
-         "--source", "test reports"],
+        command,
         capture_output=True, text=True,
     )
 
@@ -72,7 +105,7 @@ def test_generates_tables_from_correct_reports_and_deviation_maximum(tmp_path):
         "A custom introduction. The ASRC uses cascaded",
     )
     path.write_text(text + "\nA custom conclusion.\n")
-    result = run_generator(tmp_path, tmp_path)
+    result = run_generator(tmp_path, tmp_path, source="test reports")
     assert result.returncode == 0, result.stderr
 
     asrc = path.read_text()
@@ -81,10 +114,10 @@ def test_generates_tables_from_correct_reports_and_deviation_maximum(tmp_path):
         assert document.count(".. list-table::") == 3
         assert "two-channel instance" in document.replace("\n", " ")
         assert "XS3 measurements" in document
+        assert "Report source:" not in document
 
     assert asrc.startswith("A custom introduction.")
     assert asrc.endswith("\nA custom conclusion.\n")
-    assert "Report source: test reports." in asrc
     assert "archived simulator reports" not in asrc
     scalar, xs3_vpu, vx4_vpu = asrc.split(".. list-table::")[1:]
     assert "   * - 44.1 kHz\n     - 12\n     - 13" in scalar

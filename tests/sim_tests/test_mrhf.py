@@ -29,8 +29,10 @@ def get_test_architecture(src_type):
 @pytest.mark.parametrize("src_type", ["ssrc", "asrc"])
 def test_prepare(src_type):
     """ Builds firmware and host reference and generates the golden reference signals on the host """
+    architecture = get_test_architecture(src_type)
+    Path(f"mips_report_{src_type}_{architecture}.csv").unlink(missing_ok=True)
     host_app = build_host_app_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
-    if get_test_architecture(src_type) == "xs3a":
+    if architecture == "xs3a":
         build_firmware_xcommon_cmake(Path(__file__).parent / f"{src_type}_test")
     gen_golden(host_app, src_type, NUM_SAMPLES_TO_PROCESS, SR_LIST, SR_LIST, ASRC_DEVIATIONS if src_type == "asrc" else None)
 

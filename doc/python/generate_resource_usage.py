@@ -109,7 +109,7 @@ def render_table(src_type, architecture, profile, title, results, index):
     return "\n".join(lines)
 
 
-def update_document(path, src_type, reports, source):
+def update_document(path, src_type, reports):
     document = path.read_text(encoding="utf-8")
     if (document.count(BEGIN) != 1 or document.count(END) != 1
             or document.index(BEGIN) > document.index(END)):
@@ -124,7 +124,7 @@ def update_document(path, src_type, reports, source):
         for index, (architecture, profile, title) in enumerate(TABLES)
     ]
     return (
-        f"{before}{BEGIN}\n\nReport source: {source}.\n\n"
+        f"{before}{BEGIN}\n\n"
         + "\n\n".join(tables) + f"\n\n{END}{after}"
     )
 
@@ -138,8 +138,8 @@ def main():
         "output", type=Path, help="directory containing resource usage RST"
     )
     parser.add_argument(
-        "--source", default="local reports (revision not specified)",
-        help="provenance to include in the generated tables",
+        "--source",
+        help="accepted for compatibility; no longer included in the output",
     )
     args = parser.parse_args()
 
@@ -155,9 +155,7 @@ def main():
                 for architecture in ("xs3a", "vx4b")
             }
             output = args.output / f"resource_usage_{src_type}.rst"
-            documents[output] = update_document(
-                output, src_type, reports, args.source
-            )
+            documents[output] = update_document(output, src_type, reports)
         for output, document in documents.items():
             output.write_text(document, encoding="utf-8")
     except (OSError, ValueError) as error:

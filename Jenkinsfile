@@ -69,8 +69,7 @@ pipeline {
                             steps {
                                 println "Stage running on ${env.NODE_NAME}"
                                 dir(REPO_NAME) {
-                                    // Preserve SCM extensions that check out the PR merge revision.
-                                    checkout scm
+                                    checkoutScmShallow()
                                     dir("examples") {
                                         xcoreBuild()
                                     }
@@ -111,7 +110,6 @@ pipeline {
                                         createVenv(reqFile: "requirements.txt")
                                         withVenv {
                                             dir("sim_tests") {
-                                                sh "rm -f mips_report_asrc_xs3a.csv mips_report_ssrc_xs3a.csv"
                                                 sh "pytest -q ../test_resource_usage.py"
                                                 sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
                                                 sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
@@ -143,7 +141,7 @@ pipeline {
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
                         dir(REPO_NAME) {
-                            checkout scm
+                            checkoutScmShallow()
                             dir("tests") {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
@@ -177,7 +175,7 @@ pipeline {
                     steps {
                         println "Stage running on ${env.NODE_NAME}"
                         dir(REPO_NAME) {
-                            checkout scm
+                            checkoutScmShallow()
                             dir("doc/python") {
                                 withTools(params.TOOLS_VERSION_XS) {
                                     createVenv(reqFile: "requirements.txt")
@@ -204,7 +202,7 @@ pipeline {
                     }
                     steps {
                         dir(REPO_NAME) {
-                            checkout scm
+                            checkoutScmShallow()
                         }
                         withTools(params.TOOLS_VERSION_VX) {
                             dir("${REPO_NAME}/tests/sim_tests/riscv32-xmos_test") {
@@ -228,7 +226,7 @@ pipeline {
                         stage('Build examples') {
                             steps {
                                 dir(REPO_NAME) {
-                                    checkout scm
+                                    checkoutScmShallow()
                                 }
                                 dir("${REPO_NAME}/examples") {
                                     withTools(params.TOOLS_VERSION_VX_XCC) {
@@ -255,7 +253,6 @@ pipeline {
                                         withVenv {
                                             withEnv(["ASRC_TEST_PROFILE=vx4b", "SSRC_TEST_PROFILE=vx4b"]) {
                                                 dir("sim_tests") {
-                                                    sh "rm -f mips_report_asrc_vx4b.csv mips_report_ssrc_vx4b.csv"
                                                     sh "pytest -v test_mrhf.py::test_asrc_profile_selftest --junitxml=pytest_vx4_profile.xml"
                                                     sh "pytest -v test_asynchronous_fifo.py::test_asynchronous_fifo_output --junitxml=pytest_vx4_fifo.xml"
                                                     sh "pytest -v 'test_mrhf.py::test_prepare[asrc]' --junitxml=pytest_vx4_asrc_prepare.xml"
@@ -297,7 +294,7 @@ pipeline {
             steps {
                 println "Stage running on ${env.NODE_NAME}"
                 dir(REPO_NAME) {
-                    checkout scm
+                    checkoutScmShallow()
 
                     dir("doc/python") {
                         unstash 'doc_asrc_output'
@@ -311,7 +308,7 @@ pipeline {
                         withTools(params.TOOLS_VERSION_XS) {
                             createVenv(reqFile: "requirements.txt")
                             withVenv {
-                                sh 'python generate_resource_usage.py ../../tests/sim_tests ../rst --source "Jenkins build ${BUILD_NUMBER}"'
+                                sh 'python generate_resource_usage.py ../../tests/sim_tests ../rst'
                             }
                         }
                     }
