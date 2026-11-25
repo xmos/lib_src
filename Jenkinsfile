@@ -97,6 +97,9 @@ pipeline {
                                     withTools(params.TOOLS_VERSION_XS) {
                                         createVenv(reqFile: "requirements.txt")
                                         withVenv {
+                                            dir("model_tests") {
+                                                sh "pytest -v -n auto --junitxml=pytest_result_model.xml" // Python models only, no xsim
+                                            }
                                             dir("sim_tests") {
                                                 sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
                                                 sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
@@ -123,6 +126,7 @@ pipeline {
                     } // stages
                     post {
                         always {
+                            junit "${REPO_NAME}/tests/model_tests/pytest_result_model.xml"
                             junit "${REPO_NAME}/tests/sim_tests/pytest_result_prepare.xml"
                             junit "${REPO_NAME}/tests/sim_tests/pytest_result_run.xml"
                         }

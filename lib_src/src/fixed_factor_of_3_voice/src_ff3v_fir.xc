@@ -1,7 +1,8 @@
 // Copyright 2016-2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 //
-// This file is generated using src_ff3v_fir_generator.py
+// This file is generated using lib_src.voice.generate
+// python -m lib_src.voice.generate ff3v -o <output_dir>
 //
 // Do not modify it directly, changes may be overwritten!
 //

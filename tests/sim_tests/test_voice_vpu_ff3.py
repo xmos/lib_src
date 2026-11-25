@@ -12,10 +12,7 @@ import shutil
 import contextlib
 import os
 
-try:
-    from fixed_factor_vpu_voice import src_ff3_fir_gen as gf
-except ModuleNotFoundError:
-    assert False, "Could not find src_ff3_fir_gen.py script"
+from lib_src.voice import design
 
 fsup = 48000
 fsdown = 16000
@@ -159,11 +156,9 @@ def test_src_vpu_ff3(test_freq, num_taps):
     file_path = Path(__file__).parent
     xe = file_path / "vpu_ff3_test" / "bin" / f"{num_taps}t"/ f"vpu_ff3_test_{num_taps}t.xe"
     working_dir = Path(tempfile.mkdtemp(prefix="test_src_vpu_ff3", dir=file_path))
-    num_phases = 3
-    taps_per_phase = int(num_taps / num_phases)
 
     with tmp_dir(working_dir):
-        _, taps_int, _ = gf.gen_coefs(num_taps_per_phase = taps_per_phase)
+        taps_int = design.to_fixed(design.ff3_kaiser(num_taps), 31)
         _, sig_int = gen_sig(test_freq)
         run_py(sig_int, taps_int, test_freq, num_taps)
         run_c(test_freq, xe, num_taps)

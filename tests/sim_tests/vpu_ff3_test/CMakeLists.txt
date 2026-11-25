@@ -23,15 +23,15 @@ foreach(taps ${NUMTAPS})
 
     set(AUTOGEN_H_FILE  ${AUTOGEN_DIR}/test_src_${taps}t_coefs.h)
 
-    set(COEF_FILE_GEN_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/../../../python/fixed_factor_vpu_voice/src_ff3_fir_gen.py)
-    set(COEF_FILE_GEN_ARGS --output_dir ${AUTOGEN_DIR} --gen_c_files --num_taps_per_phase ${taps_per_phase} --num_phases ${NUM_PHASES} --name test_src_${taps}t)
+    set(COEF_FILE_GEN_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../python/lib_src/voice)
+    set(COEF_FILE_GEN_ARGS ff3 --output_dir ${AUTOGEN_DIR} --num_taps_per_phase ${taps_per_phase} --num_phases ${NUM_PHASES} --name test_src_${taps}t)
 
     message(STATUS "args = ${COEF_FILE_GEN_ARGS}")
 
     add_custom_command(
         OUTPUT ${AUTOGEN_C_FILE}
-        COMMAND python ${COEF_FILE_GEN_SCRIPT} ${COEF_FILE_GEN_ARGS}
-        DEPENDS ${COEF_FILE_GEN_SCRIPT}
+        COMMAND python -m lib_src.voice.generate ${COEF_FILE_GEN_ARGS}
+        DEPENDS ${COEF_FILE_GEN_DIR}/generate.py ${COEF_FILE_GEN_DIR}/design.py ${COEF_FILE_GEN_DIR}/codegen.py
         COMMENT "Generate ff3 filter coefficients file"
         VERBATIM
     )
