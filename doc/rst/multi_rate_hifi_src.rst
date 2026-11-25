@@ -394,7 +394,7 @@ All source files for the SSRC and ASRC are located within the ``multirate_hifi``
 
  * /FilterData directory (various files)
 
-   This directory contains the pre-computed coefficients for all of the fixed FIR filters. The numbers are stored as signed Q1.31 format and are directly included in the source of FilterDefs.c. Both the .dat files used by the C compiler and the .sfp ScopeFIR (http://iowegian.com/scopefir/) design source files, used to originally create the filters, are included.
+   This directory contains the pre-computed coefficients for all of the fixed FIR filters. The numbers are stored as signed Q1.31 format and are directly included in the source of FilterDefs.c. Both the .dat files used by the C compiler and the .sfp design source files originally created with the ScopeFIR tool are included.
 
 
  * src_mrhf_fir_inner_loop_asm.S / src_mrhf_fir_inner_loop_asm.h
@@ -452,3 +452,11 @@ ASRC API
 
 .. doxygengroup:: src_asrc
    :content-only:
+
+.. include:: ssrc_example.rst
+
+ASRC example
+============
+
+See the :ref:`ASRC task example <asrc_task_example>`. The ASRC task provides
+the additional logic required for a practical ASRC block.

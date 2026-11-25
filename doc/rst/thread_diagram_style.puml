@@ -1,0 +1,23 @@
+' Shared style for the example thread diagrams.
+' Use a clean documentation build after editing this file: PlantUML images may be cached.
+!$diagramLineColor = "#3399FF"
+<style>
+root {
+  FontName Manrope
+  FontSize 14
+}
+rectangle {
+  BackgroundColor white
+  LineColor $diagramLineColor
+  RoundCorner 15
+}
+.thread {
+  FontStyle bold
+  BackgroundColor #C58BF4
+  LineColor #7952A3
+  RoundCorner 0
+}
+arrow {
+  LineColor $diagramLineColor
+}
+</style>

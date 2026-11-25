@@ -13,6 +13,8 @@ else()
 endif()
 
 set(APP_COMPILER_FLAGS -Os -g -Wall -report -fcmdline-buffer-bytes=256)
+set(APP_C_SRCS src/main.c ../shared_utils/sine_generator.c ../shared_utils/wav_writer.c)
+set(APP_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../shared_utils)
 include(${CMAKE_CURRENT_LIST_DIR}/../deps.cmake)
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 

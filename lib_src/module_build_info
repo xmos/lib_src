@@ -10,9 +10,9 @@ MODULE_XCC_FLAGS = $(XCC_FLAGS) \
 OPTIONAL_HEADERS += src_conf.h asrc_task_config.h
 
 EXPORT_INCLUDE_DIRS = api \
-                      src/fixed_factor_of_3 \
-                      src/fixed_factor_of_3/ds3 \
-                      src/fixed_factor_of_3/os3 \
+                      src/fixed_factor_of_3_hifi \
+                      src/fixed_factor_of_3_hifi/ds3 \
+                      src/fixed_factor_of_3_hifi/os3 \
                       src/fixed_factor_of_3_voice \
                       src/multirate_hifi \
                       src/multirate_hifi/asrc \

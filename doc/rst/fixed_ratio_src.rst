@@ -79,6 +79,8 @@ HiFi quality OS3 API
 
 .. doxygenfunction:: src_os3_proc
 
+.. include:: ff3_example.rst
+
 ***********************************
 Voice quality fixed factor of 3 SRC
 ***********************************
