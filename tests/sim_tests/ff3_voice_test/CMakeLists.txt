@@ -15,7 +15,7 @@ foreach(arch ${ARCH})
     elseif(arch STREQUAL "xs2")
         set(target "XCORE-200-EXPLORER")
     endif()
-    project(ds3_voice_test)
+    project(ff3_voice_test)
     set(APP_HW_TARGET ${target})
     set(APP_COMPILER_FLAGS_${arch}  -O3
                                     -g
