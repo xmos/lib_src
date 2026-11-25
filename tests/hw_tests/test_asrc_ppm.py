@@ -15,7 +15,7 @@ import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import itertools
-from utils.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 import csv
 from pathlib import Path
 

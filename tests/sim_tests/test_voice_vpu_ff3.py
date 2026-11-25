@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 import subprocess
 import pytest
-from utils.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 from utils.src_test_utils import build_firmware_xcommon_cmake
 import tempfile
 import shutil
@@ -16,14 +16,28 @@ from lib_src.voice import design
 
 fsup = 48000
 fsdown = 16000
+# Long enough for the AES17 THD+N method in audio_test_tools: at 16 kHz this
+# gives more than one 8192 sample Welch segment, and leaves plenty of signal
+# after the notch filter settling time is discarded.
+sig_len_s = 1.0
+
+# THD+N limits in dB for (16 kHz, 48 kHz) outputs, keyed by (num_taps, test_freq).
+# Shared by the Python reference and the C implementation, ~3 dB above measured.
+# The 16 kHz output of a decimated pure tone is limited only by arithmetic
+# precision (~-172..-190 dB); the 48 kHz output is limited by image rejection.
+thdn_limits = {
+    (96, 1000): (-160, -79),
+    (96, 7000): (-160, -66),
+    (72, 1000): (-160, -73),
+    (72, 7000): (-160, -38),
+}
 
 def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
     assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
     assert thdn < thdn_ex, f"THDN {thdn} is higher then the threshold of {thdn_ex} dB"
 
 def gen_sig(f):
-    length = 0.5
-    time = np.arange(0, length, 1/fsup)
+    time = np.arange(0, sig_len_s, 1/fsup)
     vol = 0.8
     sig_fl = vol * np.sin(2 * np.pi * f * time)
     sig_int = (sig_fl * (2**31)).astype(np.int32)
@@ -31,7 +45,7 @@ def gen_sig(f):
 
     name = f"sig_{str(48) if fsup == 48000.0 else str(16)}k"
     sig_int.tofile(str(name + ".bin"))
-    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), 48000)
+    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), 48000, fund_freq=f)
     print(f"NP 48k THDN: {thdn}, fc: {freq}")
 
     return sig_fl, sig_int
@@ -45,17 +59,12 @@ def conv_simple(h, x):
 
 def run_py(sig48k_int, taps, fc, num_taps):
 
-    if num_taps == 96:
-        bounds = [-75, -75]
-        if fc == 7000: bounds[1] = -60
-    else:
-        bounds = [-75, -75]
-        if fc == 7000: bounds[1] = -35
+    bounds = thdn_limits[(num_taps, fc)]
 
     sig16k_int = np.zeros(len(sig48k_int) // 3, np.int32)
     if True:
         sig16k_int64 = np.zeros(len(sig48k_int) // 3, np.int64)
-        sig16k_int64 = signal.convolve(sig48k_int.astype(np.int64), taps.astype(np.int64), "same", "direct")
+        sig16k_int64 = signal.convolve(sig48k_int.astype(np.int64), taps.astype(np.int64), "full", "direct")[:len(sig48k_int)]
         sig16k_int = (sig16k_int64[0::3] * 2 ** (-31)).astype(np.int32)
     else:
         state = np.zeros(mixed_taps.shape, np.int64)
@@ -72,7 +81,7 @@ def run_py(sig48k_int, taps, fc, num_taps):
 
             sig16k_int[i] = (acc * 2 ** (-30)).astype(np.int32)
 
-    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown)
+    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown, fund_freq=fc)
     print(f"PY 16k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[0], fc)
 
@@ -80,7 +89,7 @@ def run_py(sig48k_int, taps, fc, num_taps):
     if True:
         sig48k_int64 = np.zeros(len(sig48k_int), np.int64)
         sig48k_int64[0::3] = sig16k_int.astype(np.int64)
-        sig48k_int64 = signal.convolve(sig48k_int64.astype(np.int64), taps.astype(np.int64), "same", "direct")
+        sig48k_int64 = signal.convolve(sig48k_int64.astype(np.int64), taps.astype(np.int64), "full", "direct")[:len(sig48k_int64)]
         sig48k_int = (sig48k_int64 * 3 * 2 ** (-31)).astype(np.int32)
     else:
         state = np.zeros(mixed_taps.shape[1], np.int64)
@@ -91,19 +100,14 @@ def run_py(sig48k_int, taps, fc, num_taps):
             sig48k_int[i * 3 + 1] = (conv_simple(mixed_taps[1], state) * 3 * 2 ** (-30)).astype(np.int32)
             sig48k_int[i * 3 + 2] = (conv_simple(mixed_taps[0], state) * 3 * 2 ** (-30)).astype(np.int32)
 
-    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup, fund_freq=fc)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 
 
 def run_c(fc, xe_name, num_taps):
 
-    if num_taps == 96:
-        bounds = [-75, -75]
-        if fc == 7000: bounds[1] = -60
-    else:
-        bounds = [-60, -55]
-        if fc == 7000: bounds[1] = -35
+    bounds = thdn_limits[(num_taps, fc)]
 
     cmd = f"xsim {xe_name}"
     stdout = subprocess.check_output(cmd.split())
@@ -117,12 +121,12 @@ def run_c(fc, xe_name, num_taps):
     assert sig_bin.is_file(), "could not find sig_c_48k.bin"
     sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
 
-    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown)
+    thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown, fund_freq=fc)
     print(f"C  16k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[0], fc)
 
 
-    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup, fund_freq=fc)
     print(f"C  48k THDN: {thdn}, fc: {freq}")
     assert_thdn_and_fc(thdn, freq, bounds[1], fc)
 

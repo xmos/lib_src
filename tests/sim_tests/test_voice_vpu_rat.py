@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import pytest
 import soundfile as sf
-from utils.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 from utils.src_test_utils import build_firmware_xcommon_cmake
 import tempfile
 import shutil
@@ -14,20 +14,32 @@ import contextlib
 import os
 from lib_src.voice import codegen, design
 
+# Long enough for the AES17 THD+N method in audio_test_tools: more than one
+# 8192 sample Welch segment at every rate, and plenty of signal left after the
+# notch filter settling time is discarded.
+sig_len_s = 1.0
+
+# THD+N limits in dB for (32 kHz, 48 kHz) outputs, keyed by test frequency.
+# Shared by the Python reference and the C implementation, ~3 dB above measured.
+thdn_limits = {
+    100: (-99, -93),
+    14000: (-130, -60),
+}
+
 def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
     assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
     assert thdn < thdn_ex, f"THDN {thdn} is higher then the threshold of {thdn_ex} dB"
 
 def get_sig(frequency):
     fs = 48000
-    time = np.arange(0, 0.5, 1/fs)
+    time = np.arange(0, sig_len_s, 1/fs)
     #print(len(time))
     sig_fl = 0.9 * np.sin(2 * np.pi * frequency * time)
     #sig_fl = 0.9 * signal.sawtooth(2 * np.pi * frequency * time)
     sig_int = (sig_fl * (2 ** 31)).astype(np.int32)
     name = f"sig_48k"
     sig_int.tofile(str(name + ".bin"))
-    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), fs)
+    thdn, freq = THDN_and_freq(sig_int.astype(np.float64), fs, fund_freq=frequency)
     #print(f"NP 48k THDN: {thdn}, fc: {freq}")
 
     return sig_fl, sig_int
@@ -47,7 +59,7 @@ def upsample(sig32k_fl, orig_taps, poly_taps, fc_ex):
     if True:
         buff = np.zeros(len(sig32k_fl) * fact_up)
         buff[0::fact_up] = sig32k_fl
-        buff = signal.convolve(buff, orig_taps, "same", "direct") * fact_up
+        buff = signal.convolve(buff, orig_taps, "full", "direct")[:len(buff)] * fact_up
         sig48k = buff[0::fact_down]
     else:
         state = np.zeros(32)
@@ -60,9 +72,9 @@ def upsample(sig32k_fl, orig_taps, poly_taps, fc_ex):
             state[0] = sig32k_fl[i * 2 + 1]
             sig48k[i * 3 + 2] = conv_simple(poly_taps[1], state) * fact_up
 
-    thdn, freq = THDN_and_freq(sig48k.astype(np.float64), 48000)
+    thdn, freq = THDN_and_freq(sig48k.astype(np.float64), 48000, fund_freq=fc_ex)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, -60, fc_ex)
+    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][1], fc_ex)
     return sig48k
 
 def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
@@ -73,7 +85,7 @@ def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
     if True:
         buff = np.zeros(len(sig48k_fl) * fact_up)
         buff[0::2] = sig48k_fl
-        buff = signal.convolve(buff, orig_taps, "same", "direct") * fact_up
+        buff = signal.convolve(buff, orig_taps, "full", "direct")[:len(buff)] * fact_up
         sig32k = buff[0::3]
     else:
         state = np.zeros(48)
@@ -86,9 +98,9 @@ def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
             state[0] = sig48k_fl[i * 3 + 2]
             sig32k[i * 2 + 1] = conv_simple(poly_taps[1], state) * fact_up
 
-    thdn, freq = THDN_and_freq(sig32k.astype(np.float64), 32000)
+    thdn, freq = THDN_and_freq(sig32k.astype(np.float64), 32000, fund_freq=fc_ex)
     print(f"PY 32k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, -70, fc_ex)
+    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][0], fc_ex)
     return sig32k
 
 def build_c(poly_ds_int, poly_us_int):
@@ -112,18 +124,18 @@ def run_c(fc_ex):
     sig32k_int = np.fromfile(sig_bin, dtype=np.int32)
 
     sf.write("sig_c_32k.wav", sig32k_int, 32000, "PCM_32")
-    thdn, freq = THDN_and_freq(sig32k_int.astype(np.float64), 32000)
+    thdn, freq = THDN_and_freq(sig32k_int.astype(np.float64), 32000, fund_freq=fc_ex)
     print(f"C 32k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, -70, fc_ex)
+    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][0], fc_ex)
 
     sig_bin = Path("sig_c_48k.bin")
     assert sig_bin.is_file(), "could not find output bin"
     sig48k_int = np.fromfile(sig_bin, dtype=np.int32)
 
     sf.write("sig_c_48k.wav", sig48k_int, 48000, "PCM_32")
-    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), 48000)
+    thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), 48000, fund_freq=fc_ex)
     print(f"C 48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, -60, fc_ex)
+    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][1], fc_ex)
 
 @contextlib.contextmanager
 def tmp_dir(new_dir):
