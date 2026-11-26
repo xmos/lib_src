@@ -112,6 +112,9 @@ def test_generates_tables_from_correct_reports_and_deviation_maximum(tmp_path):
     ssrc = (tmp_path / "resource_usage_ssrc.rst").read_text()
     for document in (asrc, ssrc):
         assert document.count(".. list-table::") == 3
+        for table in document.split(".. list-table::")[1:]:
+            assert "   :width: 100%\n" in table
+            assert "   :widths: 22 13 13 13 13 13 13\n" in table
         assert "two-channel instance" in document.replace("\n", " ")
         assert "XS3 measurements" in document
         assert "Report source:" not in document
