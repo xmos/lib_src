@@ -7,8 +7,7 @@
 // Do not modify it directly, changes may be overwritten!
 //
 
-#ifndef _SRC_FF3V_FIR_H_
-#define _SRC_FF3V_FIR_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -30,5 +29,3 @@ extern const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE];
 extern const int32_t (*src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE];
 #define src_ff3v_fir_coefs src_ff3v_fir_coefs_c
 #endif
-
-#endif // _SRC_FF3V_FIR_H_

@@ -68,8 +68,7 @@ def write_ff3_files(output_dir, name, taps_q31, coefs_q30, cmd, years="2023-2026
 
 {banner}
 
-#ifndef _SRC_FF3_COEFS_H_
-#define _SRC_FF3_COEFS_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -83,8 +82,6 @@ extern const int32_t {name}_coefs_debug[{name_up}_NUM_PHASES * {name_up}_TAPS_PE
 
 /** q30 coefficients to use for the ff3 48 - 16 kHz polyphase FIR filtering */
 extern const int32_t {name}_coefs[{name_up}_NUM_PHASES][{name_up}_TAPS_PER_PHASE];
-
-#endif // _SRC_FF3_COEFS_H_
 
 """
 
@@ -123,8 +120,7 @@ def write_rat_files(output_dir, coefs_ds_q30, coefs_us_q30, cmd, years="2023-202
 
 {banner}
 
-#ifndef _SRC_RAT_COEFS_H_
-#define _SRC_RAT_COEFS_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -141,8 +137,6 @@ extern const int32_t src_rat_fir_ds_coefs[SRC_RAT_FIR_NUM_PHASES_DS][SRC_RAT_FIR
 
 /** q30 coefficients to use for the 32 -> 48 kHz polyphase rational factor upsampling */
 extern const int32_t src_rat_fir_us_coefs[SRC_RAT_FIR_NUM_PHASES_US][SRC_RAT_FIR_TAPS_PER_PHASE_US];
-
-#endif // _SRC_RAT_COEFS_H_
 
 """
 
@@ -186,8 +180,7 @@ def write_legacy_ff3v_files(output_dir, legacy, cmd, years="2016-2026"):
 // Do not modify it directly, changes may be overwritten!
 //
 
-#ifndef _SRC_FF3V_FIR_H_
-#define _SRC_FF3V_FIR_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -209,8 +202,6 @@ extern const int32_t (*src_ff3v_fir_coefs_xc)[SRC_FF3V_FIR_TAPS_PER_PHASE];
 extern const int32_t (*src_ff3v_fir_coefs_c)[SRC_FF3V_FIR_TAPS_PER_PHASE];
 #define src_ff3v_fir_coefs src_ff3v_fir_coefs_c
 #endif
-
-#endif // _SRC_FF3V_FIR_H_
 """
 
     source = f"""\

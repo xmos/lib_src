@@ -8,8 +8,7 @@
 // Use lib_src.voice.generate to regenerate this file
 // python -m lib_src.voice.generate ff3 -o <output_dir> -n src_ff3_fir -ntp 32 -np 3
 
-#ifndef _SRC_FF3_COEFS_H_
-#define _SRC_FF3_COEFS_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -29,6 +28,4 @@ extern const int32_t src_ff3_fir_coefs_debug[SRC_FF3_FIR_NUM_PHASES * SRC_FF3_FI
 
 /** q30 coefficients to use for the ff3 48 - 16 kHz polyphase FIR filtering */
 extern const int32_t src_ff3_fir_coefs[SRC_FF3_FIR_NUM_PHASES][SRC_FF3_FIR_TAPS_PER_PHASE];
-
-#endif // _SRC_FF3_COEFS_H_
 
