@@ -93,6 +93,8 @@ def render_table(src_type, architecture, profile, title, results, index):
         "",
         f".. list-table:: {src_type.upper()} usage per channel (MHz): {title}",
         "   :header-rows: 1",
+        "   :width: 100%",
+        "   :widths: 22 13 13 13 13 13 13",
         "",
         "   * - Input / output rate",
     ]

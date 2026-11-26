@@ -37,6 +37,8 @@ lib_src components
   * Integration support:
 
     * Asynchronous FIFO with controller for use with ASRC
+    * ASRC task which combines the Asynchronous FIFO and the ASRC function to porovide a re-usable ASRC solution
+      for applications.
 
 The component listing above includes three different component options that support fixed factor of
 3 up/downsampling. To order to choose which one to use follow these steps:

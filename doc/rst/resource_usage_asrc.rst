@@ -22,6 +22,8 @@ measurements. Allow additional headroom for buffering and communication.
 
 .. list-table:: ASRC usage per channel (MHz): Scalar (xcore-200, XS3 and VX4 without VPU; XS3 measurements)
    :header-rows: 1
+   :width: 100%
+   :widths: 22 13 13 13 13 13 13
 
    * - Input / output rate
      - 44.1 kHz
@@ -77,6 +79,8 @@ measurements. Allow additional headroom for buffering and communication.
 
 .. list-table:: ASRC usage per channel (MHz): XS3 VPU
    :header-rows: 1
+   :width: 100%
+   :widths: 22 13 13 13 13 13 13
 
    * - Input / output rate
      - 44.1 kHz
@@ -132,6 +136,8 @@ measurements. Allow additional headroom for buffering and communication.
 
 .. list-table:: ASRC usage per channel (MHz): VX4 VPU
    :header-rows: 1
+   :width: 100%
+   :widths: 22 13 13 13 13 13 13
 
    * - Input / output rate
      - 44.1 kHz
