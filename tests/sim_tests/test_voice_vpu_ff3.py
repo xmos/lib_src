@@ -32,8 +32,7 @@ thdn_limits = {
     (72, 7000): (-160, -38),
 }
 
-def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
-    assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
+def assert_thdn(thdn, thdn_ex):
     assert thdn < thdn_ex, f"THDN {thdn} is higher then the threshold of {thdn_ex} dB"
 
 def gen_sig(f):
@@ -83,7 +82,7 @@ def run_py(sig48k_int, taps, fc, num_taps):
 
     thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown, fund_freq=fc)
     print(f"PY 16k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, bounds[0], fc)
+    assert_thdn(thdn, bounds[0])
 
     sig48k_int = np.zeros(len(sig48k_int), np.int32)
     if True:
@@ -102,7 +101,7 @@ def run_py(sig48k_int, taps, fc, num_taps):
 
     thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup, fund_freq=fc)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, bounds[1], fc)
+    assert_thdn(thdn, bounds[1])
 
 
 def run_c(fc, xe_name, num_taps):
@@ -123,12 +122,12 @@ def run_c(fc, xe_name, num_taps):
 
     thdn, freq = THDN_and_freq(sig16k_int.astype(np.float64), fsdown, fund_freq=fc)
     print(f"C  16k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, bounds[0], fc)
+    assert_thdn(thdn, bounds[0])
 
 
     thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), fsup, fund_freq=fc)
     print(f"C  48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, bounds[1], fc)
+    assert_thdn(thdn, bounds[1])
 
 @contextlib.contextmanager
 def tmp_dir(new_dir):

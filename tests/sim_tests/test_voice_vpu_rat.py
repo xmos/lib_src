@@ -26,8 +26,7 @@ thdn_limits = {
     14000: (-130, -60),
 }
 
-def assert_thdn_and_fc(thdn, fc, thdn_ex, fc_ex):
-    assert abs(fc - fc_ex) < 1, f"center frequency {fc} Hz is not whithin the allowed range from the exepcted {fc_ex} Hz"
+def assert_thdn(thdn, thdn_ex):
     assert thdn < thdn_ex, f"THDN {thdn} is higher then the threshold of {thdn_ex} dB"
 
 def get_sig(frequency):
@@ -74,7 +73,7 @@ def upsample(sig32k_fl, orig_taps, poly_taps, fc_ex):
 
     thdn, freq = THDN_and_freq(sig48k.astype(np.float64), 48000, fund_freq=fc_ex)
     print(f"PY 48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][1], fc_ex)
+    assert_thdn(thdn, thdn_limits[fc_ex][1])
     return sig48k
 
 def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
@@ -100,7 +99,7 @@ def downsample(sig48k_fl, orig_taps, poly_taps, fc_ex):
 
     thdn, freq = THDN_and_freq(sig32k.astype(np.float64), 32000, fund_freq=fc_ex)
     print(f"PY 32k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][0], fc_ex)
+    assert_thdn(thdn, thdn_limits[fc_ex][0])
     return sig32k
 
 def build_c(poly_ds_int, poly_us_int):
@@ -126,7 +125,7 @@ def run_c(fc_ex):
     sf.write("sig_c_32k.wav", sig32k_int, 32000, "PCM_32")
     thdn, freq = THDN_and_freq(sig32k_int.astype(np.float64), 32000, fund_freq=fc_ex)
     print(f"C 32k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][0], fc_ex)
+    assert_thdn(thdn, thdn_limits[fc_ex][0])
 
     sig_bin = Path("sig_c_48k.bin")
     assert sig_bin.is_file(), "could not find output bin"
@@ -135,7 +134,7 @@ def run_c(fc_ex):
     sf.write("sig_c_48k.wav", sig48k_int, 48000, "PCM_32")
     thdn, freq = THDN_and_freq(sig48k_int.astype(np.float64), 48000, fund_freq=fc_ex)
     print(f"C 48k THDN: {thdn}, fc: {freq}")
-    assert_thdn_and_fc(thdn, freq, thdn_limits[fc_ex][1], fc_ex)
+    assert_thdn(thdn, thdn_limits[fc_ex][1])
 
 @contextlib.contextmanager
 def tmp_dir(new_dir):

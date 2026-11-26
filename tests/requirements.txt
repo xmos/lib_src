@@ -35,7 +35,7 @@ pyyaml==6.0.3
 # If this repository uses the setup functionality (e.g., script entry points)
 # of its own setup.py file, then this list must include an entry for that
 # setup.py file, e.g., '-e .' or '-e ./python' (without the quotes).
--e git+ssh://git@github.com/xmos/audio_test_tools@develop#egg=audio_test_tools&subdirectory=python
+-e git+ssh://git@github.com/xmos/audio_test_tools@v4.6.0#egg=audio_test_tools&subdirectory=python
 -e git+ssh://git@github.com/xmos/xscope_fileio@v1.3.1#egg=xscope_fileio
 -e git+ssh://git@github0.xmos.com/xmos-int/xtagctl@v3.0.0#egg=xtagctl
 -e ../python
