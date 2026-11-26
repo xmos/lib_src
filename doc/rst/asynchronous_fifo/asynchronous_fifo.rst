@@ -27,7 +27,7 @@ match the rate of the producer and consumer.
 
 .. _asynchronous_FIFO_use_cases:
 
-.. figure:: images/use-cases.*
+.. figure:: images/use-cases.svg
             :width: 75%
 
             Use cases for the asynchronous FIFO
@@ -306,7 +306,7 @@ sample.
 
 .. _asynchronous_FIFO_phase_difference:
 
-.. figure:: images/phase-difference.*
+.. figure:: images/phase-difference.svg
             :width: 75%
 
             Measurement of the phase difference

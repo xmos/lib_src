@@ -74,7 +74,7 @@ Processing
 Following initialisation, the processing API is called for each block of input samples which will then produce a block of output samples as shown in :numref:`fig_src_proc`.
 
 .. _fig_src_proc:
-.. figure:: images/src_proc.pdf
+.. figure:: images/src_proc.svg
    :width: 100%
 
    SRC Operation
@@ -114,7 +114,7 @@ The format of the sample buffers sent and received from each SRC instance is tim
 In the case where two channels are handled by a single SRC instance :numref:`fig_st_si` shows that the samples are interleaved into a single buffer of size 8.
 
 .. _fig_st_si:
-.. figure:: images/stereo_single_instance.pdf
+.. figure:: images/stereo_single_instance.svg
    :width: 25%
 
    Buffer Format for Single Stereo SRC instance
@@ -122,7 +122,7 @@ In the case where two channels are handled by a single SRC instance :numref:`fig
 Where a single audio channel is mapped to a single instance, the buffers are simply an array of samples starting with the oldest sample and ending with the newest sample as shown in :numref:`fig_m_si`.
 
 .. _fig_m_si:
-.. figure:: images/stereo_dual_instance.pdf
+.. figure:: images/stereo_dual_instance.svg
    :width: 50%
 
    Buffer Format for Dual Mono SRC instances
@@ -130,7 +130,7 @@ Where a single audio channel is mapped to a single instance, the buffers are sim
 In the case where four channels are processed by two instances, channels 0 & 1 are processed by SRC instance 0 and channels 2 & 3 are processed by SRC instance 1 as shown in :numref:`fig_4_di`. For each instance, four pairs of samples are passed into the SRC processing function and n pairs of samples are returned, where n depends on the input and output sample rate ratio.
 
 .. _fig_4_di:
-.. figure:: images/quad_dual_instance.pdf
+.. figure:: images/quad_dual_instance.svg
    :width: 50%
 
    Buffer Format for Dual Stereo SRC instances (4 channels total)
@@ -193,7 +193,7 @@ SSRC structure
 The SSRC algorithm is based on three cascaded FIR filter stages (F1, F2 and F3). These stages are configured differently depending on rate change and only part of them is used in certain cases. :numref:`fig_ssrc_struct` shows an overall view of the SSRC algorithm:
 
 .. _fig_ssrc_struct:
-.. figure:: images/ssrc_structure.pdf
+.. figure:: images/ssrc_structure.svg
    :width: 90%
 
    SSRC Algorithm Structure
@@ -209,7 +209,7 @@ ASRC structure
 Similar to the SSRC, the ASRC algorithm is based on three cascaded FIR filters (F1, F2 and F3). These are configured differently depending on rate change and F2 is not used in certain rate changes. :numref:`fig_asrc_struct` shows an overall view of the ASRC algorithm:
 
 .. _fig_asrc_struct:
-.. figure:: images/asrc_structure.pdf
+.. figure:: images/asrc_structure.svg
    :width: 90%
 
    ASRC Algorithm Structure
