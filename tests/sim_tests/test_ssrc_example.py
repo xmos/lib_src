@@ -12,18 +12,29 @@ import wave
 import pytest
 
 
-@pytest.fixture(scope="module")
-def example_executable(tmp_path_factory):
-    app = Path(__file__).resolve().parents[2] / "examples" / "app_ssrc"
+APP_DIR = Path(__file__).resolve().parents[2] / "examples" / "app_ssrc"
+EXAMPLE_EXECUTABLE = APP_DIR / "bin" / "app_ssrc.xe"
+
+
+@pytest.mark.prepare
+def test_prepare_ssrc_example(tmp_path_factory):
     build = tmp_path_factory.mktemp("ssrc-example-build")
     target = os.environ.get("SSRC_EXAMPLE_TARGET", "XK-EVK-XU316")
     subprocess.run(
-        ["cmake", "-G", "Unix Makefiles", "-S", str(app), "-B", str(build),
+        ["cmake", "-G", "Unix Makefiles", "-S", str(APP_DIR), "-B", str(build),
          f"-DAPP_HW_TARGET={target}"],
         check=True,
     )
     subprocess.run(["xmake", "-C", str(build), "-j4"], check=True)
-    return app / "bin" / "app_ssrc.xe"
+    assert EXAMPLE_EXECUTABLE.is_file(), f"Executable {EXAMPLE_EXECUTABLE} doesn't exist"
+
+
+@pytest.fixture(scope="module")
+def example_executable():
+    assert EXAMPLE_EXECUTABLE.is_file(), (
+        f"Executable {EXAMPLE_EXECUTABLE} doesn't exist; run the prepare tests first"
+    )
+    return EXAMPLE_EXECUTABLE
 
 
 @pytest.mark.main

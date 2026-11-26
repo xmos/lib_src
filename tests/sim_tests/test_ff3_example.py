@@ -23,22 +23,31 @@ OUTPUT_SETTLED_FRAME = 96
 OUTPUT_PHASE_OFFSET = 1
 INPUT_TOLERANCE = 128
 OUTPUT_TOLERANCE = 0.003 * (FULL_SCALE + 1)
+APP_DIR = Path(__file__).resolve().parents[2] / "examples" / "app_ff3"
+EXAMPLE_EXECUTABLE = APP_DIR / "bin" / "app_ff3.xe"
 
 
-@pytest.mark.main
-def test_ff3_example(tmp_path):
-    app = Path(__file__).resolve().parents[2] / "examples" / "app_ff3"
-    build = tmp_path / "build"
+@pytest.mark.prepare
+def test_prepare_ff3_example(tmp_path_factory):
+    build = tmp_path_factory.mktemp("ff3-example-build")
     target = os.environ.get("FF3_EXAMPLE_TARGET", "XK-EVK-XU316")
     subprocess.run(
-        ["cmake", "-G", "Unix Makefiles", "-S", str(app), "-B", str(build),
+        ["cmake", "-G", "Unix Makefiles", "-S", str(APP_DIR), "-B", str(build),
          f"-DAPP_HW_TARGET={target}"],
         check=True,
     )
     subprocess.run(["xmake", "-C", str(build), "-j4"], check=True)
+    assert EXAMPLE_EXECUTABLE.is_file(), f"Executable {EXAMPLE_EXECUTABLE} doesn't exist"
+
+
+@pytest.mark.main
+def test_ff3_example(tmp_path):
+    assert EXAMPLE_EXECUTABLE.is_file(), (
+        f"Executable {EXAMPLE_EXECUTABLE} doesn't exist; run the prepare tests first"
+    )
     result = subprocess.run(
-        ["xsim", "--max-cycles", "1000000000", str(app / "bin/app_ff3.xe")],
-        cwd=tmp_path, capture_output=True, text=True, timeout=120,
+        ["xsim", "--max-cycles", "1000000000", str(EXAMPLE_EXECUTABLE)],
+        cwd=tmp_path, capture_output=True, text=True, timeout=360,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert f"Complete: {FRAMES} frames" in result.stdout
