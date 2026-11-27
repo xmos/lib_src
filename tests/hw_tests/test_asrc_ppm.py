@@ -15,7 +15,7 @@ import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import itertools
-from utils.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 import csv
 from pathlib import Path
 
@@ -23,14 +23,17 @@ from pathlib import Path
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
 
 
+HW_TESTS_DIR = Path(__file__).parent
+
+
 def build_vcd_to_csv():
-    path = "asrc_task_test_ppm/host"
+    path = HW_TESTS_DIR / "asrc_task_test_ppm" / "host"
     bin_name = "vcd_to_csv"
     cmd = f"gcc -O3 vcd_to_csv.c -o {bin_name}"
     print(f"running: {cmd}") # so we can try locally
     output = subprocess.run(cmd, shell=True, capture_output=True, check=True, text=True, cwd=path)
 
-    return path + "/" + bin_name
+    return path / bin_name
 
 def run_dut(bin_name, cmds, timeout=180, xscope=True):
     """
@@ -64,7 +67,11 @@ def build_xes():
     return xes
 
 
-def analyse_thd(data, in_sr, out_sr, max_thd=None):
+def analyse_thd(data, in_sr, out_sr, out_sr_actual, max_thd=None):
+    """
+    THD+N of the ASRC output. The output is analysed at the nominal out_sr, but the consumer
+    really takes samples at out_sr_actual, so the tone appears scaled by out_sr / out_sr_actual.
+    """
     start_chop_s = 2.0
 
     audio_vcd = data[1:, 1]
@@ -73,16 +80,19 @@ def analyse_thd(data, in_sr, out_sr, max_thd=None):
     data = audio_vcd[mask].astype(np.int32)
 
     data = (data[int(out_sr*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
-    thd, freq = THDN_and_freq(data, out_sr)
 
     wavfile.write("thd.wav", out_sr, data)
 
-    expected_freq = (44100 / 44) * in_sr / 44100
-    print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
+    # The producer plays a 44 sample sine table at in_sr
+    expected_freq = in_sr / 44 * out_sr / out_sr_actual
+    # The AES17 notch method needs the exact fundamental: its own Welch-based estimate
+    # is only good to ~0.3 Hz, which limits the measured THD+N to about -55 dB.
+    # With the notch fixed at expected_freq, an ASRC rate tracking error shows up as THD+N.
+    thd, _ = THDN_and_freq(data, out_sr, fund_freq=expected_freq)
+    print(F"THD: {thd:.2f}, expected_freq: {expected_freq:.4f}")
 
     if max_thd is not None:
         assert thd < max_thd
-        assert np.isclose(freq, expected_freq, rtol = 0.0001)
 
     return thd
 
@@ -187,7 +197,9 @@ def characterise_asrc_fn_latency():
     Needs an xcore ai target attached (any)
     Takes 10 mins or so. Needs to only be run again if the filters change
     """
-    build_xe = "asrc_test/bin/asrc_test.xe"
+    asrc_test_dir = HW_TESTS_DIR.parent / "sim_tests" / "asrc_test"
+    build_firmware_xcommon_cmake(asrc_test_dir, config="scalar")
+    build_xe = asrc_test_dir / "bin" / "scalar" / "asrc_test_scalar.xe"
     num_samples = 300
     step_delay = 100
 
@@ -203,8 +215,9 @@ def characterise_asrc_fn_latency():
         input_file = gen_step_dat(sr_in, num_samples, step_delay)
         output_file = "step_out.dat"
         for sr_out in SR_LIST:
-            sr_ratio = sr_in / sr_out
-            cmd_list = [f"-i {input_file} -o {output_file} -f {sr_in} -g {sr_out} -n {num_samples} -e {sr_ratio}".split(" ")]
+            # The app processes two channels: feed the step to both and ignore the second output.
+            # -e scales the nominal rate ratio, so 1.0 means no deviation.
+            cmd_list = [f"-i {input_file} {input_file} -o {output_file} step_out_1.dat -f {sr_in} -g {sr_out} -n {num_samples} -e 1.0".split(" ")]
             output = run_dut(build_xe, cmd_list, timeout=60, xscope=False) # Time to run + enough time for XTAG to come up
             out_data = np.fromfile(output_file, sep="\n", dtype=np.int32)
             latency_at_output_sr = analyse_latency(out_data, sr_out, 0, specialised=False)
@@ -254,12 +267,13 @@ def characterise_asrc_range(input_sr):
                 for ppm in ppm_list if mode == "SINE" else [0]:
                     # for fifo_len in fifo_len_list if mode == "SINE" else [fifo_len_list[-1]]:
                     for fifo_len in [fifo_len_list[-1]]:
-                        cmd_list = [[sr_in, sr_out, apply_ppm(sr_out, ppm), test_len_s, fifo_len]]
+                        sr_out_actual = apply_ppm(sr_out, ppm)
+                        cmd_list = [[sr_in, sr_out, sr_out_actual, test_len_s, fifo_len]]
                         print() # newline
                         output = run_dut(build_xe, cmd_list, timeout=3 * (test_len_s + 10)) # add enough time for XTAG to come up
                         print("Analysing...")
 
-                        subprocess.run(f"./{vcd_bin} trace.vcd trace.csv", shell=True)
+                        subprocess.run(f"{vcd_bin} trace.vcd trace.csv", shell=True, check=True)
                         data = np.loadtxt("trace.csv", delimiter=",", dtype=str)
 
                         parameters['sr_in'] = sr_in
@@ -268,7 +282,7 @@ def characterise_asrc_range(input_sr):
 
                         if mode == "SINE":
 
-                            thd = analyse_thd(data, sr_in, sr_out)
+                            thd = analyse_thd(data, sr_in, sr_out, sr_out_actual)
 
                             # if thd < -60:
                             if True:

@@ -14,9 +14,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'matplotlib==3.11.2',
-        'numpy==2.5.4',
+        'numpy==1.26.4',
         'soundfile==0.14.0',
-        'scipy==1.18.1',
+        'scipy==1.17.1',
         'mpmath==1.4.1',
         'bitstring==5.0.0'
     ],

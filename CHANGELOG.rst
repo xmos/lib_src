@@ -13,6 +13,12 @@ UNRELEASED
     src_mrhf_inner_loops_asm_xs3.S (contains all four VPU inner loops)
   * ADDED: Documentation note about managing input signal levels to avoid clipping
   * REMOVED: Support for legacy cmake build system
+  * ADDED: lib_src.voice Python package with filter design, float models and
+    coefficient generation for the voice fixed factor of 3 and 3/2 SRCs, and
+    host-only model tests
+  * CHANGED: Voice SRC coefficient files are now generated with
+    ``python -m lib_src.voice.generate``. This replaces src_ff3_fir_gen.py,
+    src_rat_fir_gen.py and src_ff3v_fir_generator.py
 
 2.7.1
 -----

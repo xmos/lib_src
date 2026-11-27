@@ -15,7 +15,7 @@ from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 import itertools
 import re
-from utils.thdncalculator import THDN_and_freq
+from thdncalculator import THDN_and_freq
 from pathlib import Path
 
 SR_LIST = (44100, 48000, 88200, 96000, 176400, 192000)
@@ -175,17 +175,22 @@ def test_asrc_task_zero_transition(build_xe):
     output = run_dut(build_xe, cmd_list, timeout=180)
     parse_output_for_changes(output, cmd_list)
 
-def analyse_thd(wav_file, max_thd=-90):
+def analyse_thd(wav_file, max_thd=-110):
     sample_rate, data = wavfile.read(wav_file)
-    start_chop_s = 0.02
+    # Skip the ASRC rate lock: the output frequency deviates by up to ~40 ppm for the
+    # first few seconds, which the AES17 notch counts as THD+N (-81 dB from 0 s, -114 dB from 4 s)
+    start_chop_s = 4
     data = (data[int(sample_rate*start_chop_s):] / ((1<<31) - 1)).astype(np.float64)
-    thd, freq = THDN_and_freq(data, sample_rate)
 
     expected_freq = (44100 / 44) * sample_rate / 44100
-    print(F"THD: {thd:.2f}, freq: {freq:.4f}, expected_freq: {expected_freq:.4f}")
+    # The AES17 notch method needs the exact fundamental: its own Welch-based estimate
+    # is only good to ~0.3 Hz, which limits the measured THD+N to about -55 dB.
+    # With the notch fixed at expected_freq this also checks the output frequency:
+    # an error of ~0.5 ppm alone measures about -110 dB.
+    thd, _ = THDN_and_freq(data, sample_rate, fund_freq=expected_freq)
+    print(F"THD: {thd:.2f}, expected_freq: {expected_freq:.4f}")
 
     assert thd < max_thd
-    assert np.isclose(freq, expected_freq, rtol = 0.0001)
 
 def test_asrc_task_longish_run(build_xe):
     """

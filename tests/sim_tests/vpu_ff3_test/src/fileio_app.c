@@ -29,6 +29,8 @@
 #endif
 
 
+#define BLOCK_FRAMES 160 // 10 ms at 16 kHz
+
 const char bin_in_48k[70] = "sig_48k.bin\0";
 const char bin_out_16k[70] = "sig_c_16k.bin\0";
 const char bin_out_48k[70] = "sig_c_48k.bin\0";
@@ -58,33 +60,42 @@ int main()
     fseek(in_48k_fp, 0, SEEK_SET);
     int out_len = in_len / NUM_PHASES;
 
-    for(int i = 0; i < out_len ; i ++)
+    // xsim host file I/O gets slower per call as the files grow, so move data
+    // in blocks rather than one frame at a time.
+    static int32_t in_48k[BLOCK_FRAMES * 3];
+    static int32_t out_16k[BLOCK_FRAMES];
+    static int32_t out_48k[BLOCK_FRAMES * 3];
+
+    for(int i = 0; i < out_len; i += BLOCK_FRAMES)
     {
-        int32_t in_48k[3] = {0};
-        int32_t out_16k[1] = {0};
-        int32_t out_48k[3] = {0};
-        int64_t acc = 0;
+        int n = (out_len - i < BLOCK_FRAMES) ? (out_len - i) : BLOCK_FRAMES;
+        fread(in_48k, sizeof(int32_t), n * 3, in_48k_fp);
 
-        fread(in_48k, sizeof(int32_t), 3, in_48k_fp);
+        for(int j = 0; j < n; j++)
+        {
+            int64_t acc = 0;
 
-        // Not testing the high-level API for now
-        //downsample(in_48k, out_16k, coefs, state_ds);
-        acc += do_fir(state_ds[0], &coefs[0][0], in_48k[0]);
-        acc += do_fir(state_ds[1], &coefs[1][0], in_48k[1]);
-        acc += do_fir(state_ds[2], &coefs[2][0], in_48k[2]);
-        out_16k[0] = (int32_t)acc;
+            // Not testing the high-level API for now
+            //downsample(&in_48k[j * 3], &out_16k[j], coefs, state_ds);
+            acc += do_fir(state_ds[0], &coefs[0][0], in_48k[j * 3 + 0]);
+            acc += do_fir(state_ds[1], &coefs[1][0], in_48k[j * 3 + 1]);
+            acc += do_fir(state_ds[2], &coefs[2][0], in_48k[j * 3 + 2]);
+            out_16k[j] = (int32_t)acc;
 
+            // Not testing the high-level API for now
+            //upsample(&out_16k[j], &out_48k[j * 3], coefs, state_us);
+            out_48k[j * 3 + 0] = do_fir(state_us, &coefs[2][0], out_16k[j]) * 3;
+            out_48k[j * 3 + 1] = do_conv(state_us, &coefs[1][0]) * 3;
+            out_48k[j * 3 + 2] = do_conv(state_us, &coefs[0][0]) * 3;
+        }
 
-        fwrite(out_16k, sizeof(int32_t), 1, out_16k_fp);
-
-        // Not testing the high-level API for now
-        //upsample(out_16k, out_48k, coefs, state_us);
-        out_48k[0] = do_fir(state_us, &coefs[2][0], out_16k[0]) * 3;
-        out_48k[1] = do_conv(state_us, &coefs[1][0]) * 3;
-        out_48k[2] = do_conv(state_us, &coefs[0][0]) * 3;
-
-        fwrite(out_48k, sizeof(int32_t), 3, out_48k_fp);
+        fwrite(out_16k, sizeof(int32_t), n, out_16k_fp);
+        fwrite(out_48k, sizeof(int32_t), n * 3, out_48k_fp);
     }
-    
+
+    fclose(in_48k_fp);
+    fclose(out_16k_fp);
+    fclose(out_48k_fp);
+
     return 0;
 }

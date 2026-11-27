@@ -8,6 +8,8 @@
 #include "src_poly.h"
 #include "src_rat_fir_coefs.h"
 
+#define BLOCK_FRAMES 160 // 10 ms at 16 kHz
+
 const char bin_in_48k[70] = "sig_48k.bin\0";
 const char bin_out_32k[70] = "sig_c_32k.bin\0";
 const char bin_out_48k[70] = "sig_c_48k.bin\0";
@@ -37,21 +39,30 @@ int main()
     fseek(in_48k_fp, 0, SEEK_SET);
     int loop_len = in_len / 3;
 
-    for(size_t i = 0; i < loop_len ; i ++)
+    // xsim host file I/O gets slower per call as the files grow, so move data
+    // in blocks rather than one frame at a time.
+    static int32_t in_48k[BLOCK_FRAMES * 3];
+    static int32_t out_32k[BLOCK_FRAMES * 2];
+    static int32_t out_48k[BLOCK_FRAMES * 3];
+
+    for(int i = 0; i < loop_len; i += BLOCK_FRAMES)
     {
-        int32_t in_48k[3] = {0};
-        int32_t out_32k[2] = {0};
-        int32_t out_48k[3] = {0};
-        fread(in_48k, sizeof(int32_t), 3, in_48k_fp);
+        int n = (loop_len - i < BLOCK_FRAMES) ? (loop_len - i) : BLOCK_FRAMES;
+        fread(in_48k, sizeof(int32_t), n * 3, in_48k_fp);
 
-        src_rat_2_3_96t_ds(in_48k, out_32k, src_rat_fir_ds_coefs, state_ds);
+        for(int j = 0; j < n; j++)
+        {
+            src_rat_2_3_96t_ds(&in_48k[j * 3], &out_32k[j * 2], src_rat_fir_ds_coefs, state_ds);
+            src_rat_3_2_96t_us(&out_32k[j * 2], &out_48k[j * 3], src_rat_fir_us_coefs, state_us);
+        }
 
-        fwrite(out_32k, sizeof(int32_t), 2, out_32k_fp);
-
-        src_rat_3_2_96t_us(out_32k, out_48k, src_rat_fir_us_coefs, state_us);
-
-        fwrite(out_48k, sizeof(int32_t), 3, out_48k_fp);
+        fwrite(out_32k, sizeof(int32_t), n * 2, out_32k_fp);
+        fwrite(out_48k, sizeof(int32_t), n * 3, out_48k_fp);
     }
-    
+
+    fclose(in_48k_fp);
+    fclose(out_32k_fp);
+    fclose(out_48k_fp);
+
     return 0;
 }
