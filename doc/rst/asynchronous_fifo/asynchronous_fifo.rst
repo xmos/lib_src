@@ -137,6 +137,30 @@ The application sends a sequence of squared sample indices through the FIFO. The
 half-full with zero-filled samples, so the output begins with zeros before the generated values
 appear.
 
+.. uml::
+   :caption: Asynchronous FIFO example threads and data flow
+   :alt: A producer sends squared sample indices through a shared FIFO to a consumer. The captured samples are printed after both threads finish.
+
+   @startuml
+   left to right direction
+   hide stereotype
+
+   !include ../thread_diagram_style.puml
+
+   rectangle "Producer thread" <<thread>> {
+     rectangle "Generate squared\nsample indices" as producer
+   }
+   rectangle "Asynchronous FIFO\n(shared memory)" as fifo
+   rectangle "Consumer thread" <<thread>> {
+     rectangle "Capture samples" as consumer
+   }
+   rectangle "Print output\nafter threads join" as output
+
+   producer --> fifo : put
+   fifo --> consumer : get
+   consumer --> output : output buffer
+   @enduml
+
 .. _asynchronous_FIFO_design_parameters:
 
 Design parameters

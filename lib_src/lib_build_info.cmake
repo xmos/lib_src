@@ -15,9 +15,9 @@ endif()
 set(LIB_OPTIONAL_HEADERS src_conf.h asrc_task_config.h)
 
 set(LIB_INCLUDES   api
-                   src/fixed_factor_of_3
-                   src/fixed_factor_of_3/ds3
-                   src/fixed_factor_of_3/os3
+                   src/fixed_factor_of_3_hifi
+                   src/fixed_factor_of_3_hifi/ds3
+                   src/fixed_factor_of_3_hifi/os3
                    src/fixed_factor_of_3_voice
                    src/multirate_hifi
                    src/multirate_hifi/asrc
@@ -31,8 +31,8 @@ if(DEFINED APP_HW_TARGET_VX OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
          RELATIVE "${CMAKE_CURRENT_LIST_DIR}"
          "${CMAKE_CURRENT_LIST_DIR}/src/*.c")
     list(REMOVE_ITEM LIB_C_SRCS
-         "src/fixed_factor_of_3/ds3/src_ff3_ds3.c"
-         "src/fixed_factor_of_3/os3/src_ff3_os3.c")
+         "src/fixed_factor_of_3_hifi/ds3/src_ff3_ds3.c"
+         "src/fixed_factor_of_3_hifi/os3/src_ff3_os3.c")
 endif()
 
 XMOS_REGISTER_MODULE()

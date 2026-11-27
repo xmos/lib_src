@@ -4,3 +4,7 @@ project(lib_src_examples)
 
 add_subdirectory(app_asynchronous_fifo)
 add_subdirectory(app_asrc_task)
+add_subdirectory(app_ssrc)
+if(NOT DEFINED APP_HW_TARGET_VX AND NOT APP_HW_TARGET STREQUAL "XK-EVK-XU416")
+    add_subdirectory(app_ff3)
+endif()

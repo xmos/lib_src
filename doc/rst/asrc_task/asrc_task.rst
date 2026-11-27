@@ -140,6 +140,8 @@ Because a `streaming` channel is used the back-pressure on the producer side wil
 
 This callback function helps bridge between `sample based` systems and the block-based nature of the underlying ASRC functions without consuming an extra thread.
 
+.. _asrc_task_example:
+
 Running the example
 -------------------
 
@@ -151,6 +153,44 @@ The example application is in ``examples/app_asrc_task``. With the XMOS XTC tool
     xrun --xscope-file xscope bin/app_asrc_task.xe
 
 The application runs continuously and generates a 1 kHz sine wave on 8 channels which is upsampled from 44.1 kHz to 96 kHz.
+The example's producer and consumer run alongside the ASRC task. The ASRC
+task forks additional workers as needed; the FIFO is shared memory, not a
+separate thread.
+
+.. uml::
+   :caption: ASRC task example threads and data flow
+   :alt: A producer sends eight-channel audio to the ASRC task over a channel. ASRC workers process the audio, which passes through a shared FIFO to a consumer. The producer and consumer also send probes to xscope.
+
+   @startuml
+   left to right direction
+   hide stereotype
+
+   !include ../thread_diagram_style.puml
+
+   rectangle "Producer thread" <<thread>> {
+     rectangle "Sine generator\n8 channels, 44.1 kHz" as producer
+     rectangle "xscope input\n2 channels" as input_probe
+   }
+   rectangle "ASRC task thread" <<thread>> {
+     rectangle "Receive samples\nand process ASRC" as asrc
+   }
+   rectangle "Additional ASRC\nworker threads" <<thread>> {
+     rectangle "ASRC workers\nup to 3" as workers
+   }
+   rectangle "Asynchronous FIFO\n(shared memory)" as fifo
+   rectangle "Consumer thread" <<thread>> {
+     rectangle "Pull samples\n8 channels, 96 kHz" as consumer
+     rectangle "xscope output\n2 channels" as output_probe
+   }
+
+   producer --> asrc : channel
+   asrc ..> workers : fork / join
+   asrc --> fifo : put
+   fifo --> consumer : get
+   producer -[norank]-> input_probe
+   consumer -[norank]-> output_probe
+   @enduml
+
 Stop the run with Ctrl-C after about one second to keep the xscope capture short.
 The command writes ``xscope.vcd`` in the application directory.
 Open it with a VCD viewer such as GTKWave, select the input and output probes, and set their display format to signed decimal and analog.

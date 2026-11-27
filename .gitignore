@@ -7,6 +7,10 @@
 *.swp
 *.*~
 *.xmt
+/examples/app_ssrc/input.wav
+/examples/app_ssrc/output.wav
+/examples/app_ff3/input.wav
+/examples/app_ff3/output.wav
 *.swo
 *.swn
 *~
