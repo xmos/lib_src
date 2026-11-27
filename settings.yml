@@ -6,6 +6,8 @@ title: '{{lib_name}}: Sample rate conversion'
 version: 2.7.1
 
 documentation:
+  run_before: |
+    python doc/python/generate_resource_usage.py tests/sim_tests doc/rst
   exclude_patterns_path: doc/exclude_patterns.inc
   root_doc: doc/rst/lib_src.rst
   cognidox_part_number: XM-010383-UG

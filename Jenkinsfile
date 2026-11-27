@@ -90,24 +90,6 @@ pipeline {
                                 archiveSandbox(REPO_NAME)
                             }  
                         }
-                      
-                        stage('Simulator tests') {
-                            steps {
-                                dir("${REPO_NAME}/tests") {
-                                    withTools(params.TOOLS_VERSION_XS) {
-                                        createVenv(reqFile: "requirements.txt")
-                                        withVenv {
-                                            dir("sim_tests") {
-                                                sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
-                                                sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
-                                                archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
-                                                archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
-                                            }
-                                        }
-                                    }
-                                }
-                            } // steps
-                        } // stage('Simulator tests')
 
                         stage('Legacy xcommon build') {
                             steps {
@@ -120,6 +102,26 @@ pipeline {
                                 }
                             }
                         }
+                      
+                        stage('Simulator tests') {
+                            steps {
+                                dir("${REPO_NAME}/tests") {
+                                    withTools(params.TOOLS_VERSION_XS) {
+                                        createVenv(reqFile: "requirements.txt")
+                                        withVenv {
+                                            dir("sim_tests") {
+                                                sh "pytest -q ../test_resource_usage.py"
+                                                sh "pytest -n 1 -m prepare --junitxml=pytest_result_prepare.xml" // Build stage
+                                                sh "pytest -v -n auto -m main --junitxml=pytest_result_run.xml" // Run in parallel
+                                                archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+                                                stash name: 'mips_reports_xs3a', includes: 'mips_report_asrc_xs3a.csv,mips_report_ssrc_xs3a.csv'
+                                                archiveArtifacts artifacts: "gprof_results*/*.png", allowEmptyArchive: true
+                                            }
+                                        }
+                                    }
+                                }
+                            } // steps
+                        } // stage('Simulator tests')
                     } // stages
                     post {
                         always {
@@ -258,6 +260,7 @@ pipeline {
                                                     sh "pytest -v 'test_mrhf.py::test_prepare[ssrc]' --junitxml=pytest_vx4_ssrc_prepare.xml"
                                                     sh "pytest -v -n auto test_mrhf.py::test_ssrc --junitxml=pytest_vx4_ssrc.xml"
                                                     archiveArtifacts artifacts: "mips_report*.csv", allowEmptyArchive: true
+                                                    stash name: 'mips_reports_vx4b', includes: 'mips_report_asrc_vx4b.csv,mips_report_ssrc_vx4b.csv'
                                                 }
                                             }
                                         }
@@ -286,7 +289,7 @@ pipeline {
         // This stage needs to wait for characterisation plots so run it last
         stage('Build documentation') {
             agent {
-                label 'x86_64&&docker'
+                label 'documentation&&linux&&x86_64'
             }
             steps {
                 println "Stage running on ${env.NODE_NAME}"
@@ -297,8 +300,18 @@ pipeline {
                         unstash 'doc_asrc_output'
                     }
 
+                    dir("tests/sim_tests") {
+                        unstash 'mips_reports_xs3a'
+                        unstash 'mips_reports_vx4b'
+                    }
+                    dir("doc/python") {
+                        withTools(params.TOOLS_VERSION_XS) {
+                            createVenv(reqFile: "requirements.txt")
+                        }
+                    }
+
                     warnError("Docs") {
-                        buildDocs()
+                        buildDocs(xmosdocVenvPath: "doc/python")
                     }
                 }
             }

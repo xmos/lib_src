@@ -71,41 +71,42 @@ FIRDescriptor_t            sASRCFirDescriptor[FILTER_DEFS_ASRC_N_FIR_ID] =
     {FIR_TYPE_SYNC,                            0,                                    0}                        // FILTER_DEFS_FIR_NONE_ID
 };
 
+// Double-word alignment enables the VX4 scalar kernels' paired loads.
 // FIR filters coefficients
-int                    iFirBLCoefs[FILTER_DEFS_FIR_BL_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBLCoefs[FILTER_DEFS_FIR_BL_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BL_FILE
 };
-int                    iFirBL9644Coefs[FILTER_DEFS_FIR_BL9644_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBL9644Coefs[FILTER_DEFS_FIR_BL9644_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BL9644_FILE
 };
-int                    iFirBL8848[FILTER_DEFS_FIR_BL8848_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBL8848[FILTER_DEFS_FIR_BL8848_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BL8848_FILE
 };
-int                    iFirBLFCoefs[FILTER_DEFS_FIR_BLF_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBLFCoefs[FILTER_DEFS_FIR_BLF_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BLF_FILE
 };
-int                    iFirBL19288Coefs[FILTER_DEFS_FIR_BL19288_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBL19288Coefs[FILTER_DEFS_FIR_BL19288_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BL19288_FILE
 };
-int                    iFirBL17696[FILTER_DEFS_FIR_BL17696_N_TAPS]     = {
+int DWORD_ALIGNED      iFirBL17696[FILTER_DEFS_FIR_BL17696_N_TAPS]     = {
     #include FILTER_DEFS_FIR_BL17696_FILE
 };
-int                    iFirUPCoefs[FILTER_DEFS_FIR_UP_N_TAPS]     = {
+int DWORD_ALIGNED      iFirUPCoefs[FILTER_DEFS_FIR_UP_N_TAPS]     = {
     #include FILTER_DEFS_FIR_UP_FILE
 };
-int                    iFirUP4844Coefs[FILTER_DEFS_FIR_UP4844_N_TAPS]     = {
+int DWORD_ALIGNED      iFirUP4844Coefs[FILTER_DEFS_FIR_UP4844_N_TAPS]     = {
     #include FILTER_DEFS_FIR_UP4844_FILE
 };
-int                    iFirUPFCoefs[FILTER_DEFS_FIR_UPF_N_TAPS]     = {
+int DWORD_ALIGNED      iFirUPFCoefs[FILTER_DEFS_FIR_UPF_N_TAPS]     = {
     #include FILTER_DEFS_FIR_UPF_FILE
 };
-int                    iFirUP192176Coefs[FILTER_DEFS_FIR_UP192176_N_TAPS]     = {
+int DWORD_ALIGNED      iFirUP192176Coefs[FILTER_DEFS_FIR_UP192176_N_TAPS]     = {
     #include FILTER_DEFS_FIR_UP192176_FILE
 };
-int                    iFirDSCoefs[FILTER_DEFS_FIR_DS_N_TAPS]     = {
+int DWORD_ALIGNED      iFirDSCoefs[FILTER_DEFS_FIR_DS_N_TAPS]     = {
     #include FILTER_DEFS_FIR_DS_FILE
 };
-int                    iFirOSCoefs[FILTER_DEFS_FIR_OS_N_TAPS]     = {
+int DWORD_ALIGNED      iFirOSCoefs[FILTER_DEFS_FIR_OS_N_TAPS]     = {
     #include FILTER_DEFS_FIR_OS_FILE
 };
 
@@ -136,10 +137,10 @@ PPFIRDescriptor_t        sPPFirDescriptor[FILTER_DEFS_N_PPFIR_ID] =
 };
 
 // PPFIR filters coefficients
-int                    iPPFirHS294Coefs[FILTER_DEFS_PPFIR_HS294_N_TAPS]  = {
+int DWORD_ALIGNED      iPPFirHS294Coefs[FILTER_DEFS_PPFIR_HS294_N_TAPS]  = {
     #include FILTER_DEFS_PPFIR_HS294_FILE
 };
-int                    iPPFirHS320Coefs[FILTER_DEFS_PPFIR_HS320_N_TAPS]  = {
+int DWORD_ALIGNED      iPPFirHS320Coefs[FILTER_DEFS_PPFIR_HS320_N_TAPS]  = {
     #include FILTER_DEFS_PPFIR_HS320_FILE
 };
 
